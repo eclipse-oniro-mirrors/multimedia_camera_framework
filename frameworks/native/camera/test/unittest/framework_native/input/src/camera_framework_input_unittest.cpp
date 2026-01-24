@@ -33,6 +33,7 @@
 #include "test_token.h"
 #include "token_setproc.h"
 #include "utils/camera_rotation_api_utils.h"
+#include "utils/logic_camera_utils.h"
 
 using namespace testing::ext;
 
@@ -1482,6 +1483,85 @@ HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_066, TestSize
     }
     EXPECT_NE(input->Open(cameraConcurrentType), 0);
     EXPECT_EQ(input->Close(), SERVICE_FATL_ERROR);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CameraFrameworkInput with GetLogicCameraConfig
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CameraFrameworkInput with GetLogicCameraConfig
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_067, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+
+    bool isVariable = false;
+    int ret = camInput->IsPhysicalCameraOrientationVariable(&isVariable);
+
+    std::string clientName = "";
+    std::vector<int32_t> useLogicCamera = {};
+    std::vector<int32_t> customLogicDirection = {};
+    ret = camInput->GetLogicCameraConfig(clientName, useLogicCamera, customLogicDirection);
+    if (ret != 7400102) {
+        EXPECT_EQ(ret, 0);
+        EXPECT_EQ(useLogicCamera.empty(), true);
+        EXPECT_EQ(customLogicDirection.empty(), true);
+    }
+}
+
+/*
+ * Feature: Framework
+ * Function: Test LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection when map is empty
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_068, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    uint32_t foldStatus = 1;
+    uint32_t orientation = 0;
+    std::unordered_map<uint32_t, std::vector<uint32_t>> foldWithDirectionOrientationMap = {};
+    int32_t ret = LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection(foldStatus, orientation,
+        foldWithDirectionOrientationMap);
+    EXPECT_EQ(ret, CAMERA_INVALID_STATE);
+    EXPECT_EQ(orientation, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection when map is normal
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection
+ */
+HWTEST_F(CameraFrameworkInputUnit, camera_framework_input_unittest_069, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    uint32_t foldStatus = 1;
+    uint32_t orientation = 0;
+    std::unordered_map<uint32_t, std::vector<uint32_t>> foldWithDirectionOrientationMap =
+        { {1, {0, 90, 1, 90, 2, 90, 3, 90}} };
+    int32_t ret = LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection(foldStatus, orientation,
+        foldWithDirectionOrientationMap);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(orientation, 90);
 }
 }
 }

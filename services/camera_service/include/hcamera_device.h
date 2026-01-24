@@ -42,7 +42,7 @@
 #include "v1_0/icamera_host.h"
 #include "camera_rotate_strategy_parser.h"
 #include "icamera_ipc_checker.h"
-#include "camera_applist_manager.h"
+#include "applist_manager/camera_applist_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -187,7 +187,7 @@ public:
         isDeviceOpenedByConcurrent_ = enable;
     }
 
-    void UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree = false);
+    int32_t UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree = false);
     int32_t GetCameraOrientation();
     int32_t GetOriginalCameraOrientation();
     bool IsPhysicalCameraOrientationVariable();
@@ -250,6 +250,8 @@ private:
     std::mutex isHasFitedRotationMutex_;
     bool isHasFitedRotation_ = false;
 
+    bool isLogicCamera_  = false;
+    std::string foldScreenType_;
     std::string clientName_ = "";
     uint64_t openCamTime_ = 0;
     int clientUserId_;
@@ -268,6 +270,8 @@ private:
 
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
+    int32_t UpdateRotateAngleForSpecialBundle(bool isResetDegree);
+    bool GetUseLogicCamera(int32_t displayMode);
 
     sptr<ICameraDeviceServiceCallback> GetDeviceServiceCallback();
     inline void SetDeviceServiceCallback(sptr<ICameraDeviceServiceCallback> callback)
@@ -332,7 +336,6 @@ private:
     std::mutex fpsRangeLock_;
     std::mutex originCameraIdLock_;
     std::mutex usePhysicalCameraOrientationMutex_;
-    std::mutex dataShareHelperMutex_;
     std::mutex sensorLock_;
     std::mutex cameraCloseListenerMutex_;
     std::mutex foldStateListenerMutex_;

@@ -1587,17 +1587,22 @@ void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_
     CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "cameraDevice is nullptr.");
     CameraRotateStrategyInfo strategyInfo;
     CHECK_RETURN_ELOG(!(cameraDevice_->GetSigleStrategyInfo(strategyInfo)), "Update roteta angle not supported");
-    OHOS::Rosen::FoldStatus foldstatus = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
     OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode();
-    bool isValidDisplayStatus = (foldstatus == OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND) &&
+    std::string foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
+    bool isValidDisplayStatus = !foldScreenType.empty() && (foldScreenType[0] == '6') &&
         (displayMode == OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL);
-    CHECK_RETURN(!isValidDisplayStatus);
+    bool isSpecialDisplayStatus = !foldScreenType.empty() && (foldScreenType[0] == '7') && (
+        (displayMode == OHOS::Rosen::FoldDisplayMode::FULL) ||
+        (displayMode == OHOS::Rosen::FoldDisplayMode::COORDINATION));
+    CHECK_RETURN(!(isValidDisplayStatus || isSpecialDisplayStatus));
     int32_t imageRotation = (sensorRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
         rotation = (imageRotation + sensorOrientation) % ROTATION_360_DEGREES;
     } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
         rotation = (sensorOrientation - imageRotation + ROTATION_360_DEGREES) % ROTATION_360_DEGREES;
     }
+    MEDIA_INFO_LOG("UpdateOrientationBaseGravity sensorOrientation: %{public}d, deviceDegree: %{public}d, "
+        "rotation: %{public}d", sensorOrientation, imageRotation, rotation);
 
     std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice_->GetDeviceAbility();
     CHECK_RETURN(ability == nullptr);
@@ -1608,13 +1613,18 @@ void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_
     CHECK_RETURN_ILOG(!isVariable, "HStreamOperator::UpdateOrientationBaseGravity isVariable is False");
 
     int32_t rotateDegree = strategyInfo.rotateDegree;
-    CHECK_RETURN_ILOG(rotateDegree < 0 || rotateDegree > ROTATION_360_DEGREES,
-        "HStreamOperator::UpdateOrientationBaseGravity no need correct rotation");
-    rotateDegree = cameraPosition == OHOS_CAMERA_POSITION_BACK ?
-        ROTATION_360_DEGREES - strategyInfo.rotateDegree : strategyInfo.rotateDegree;
-    rotation = (rotation - rotateDegree + ROTATION_360_DEGREES) % ROTATION_360_DEGREES;
-    MEDIA_INFO_LOG("UpdateOrientationBaseGravity sensorRotation is : %{public}d, rotation is %{public}d,",
-        sensorRotation, rotation);
+    int32_t captureDegreeOffset = 0;
+    if (cameraPosition == OHOS_CAMERA_POSITION_BACK) {
+        rotateDegree = strategyInfo.rotateBackDegree == -1 ? ROTATION_360_DEGREES - strategyInfo.rotateDegree :
+            strategyInfo.rotateBackDegree;
+        captureDegreeOffset = strategyInfo.captureBackDegree == -1 ? 0 : strategyInfo.captureBackDegree;
+    } else if (cameraPosition == OHOS_CAMERA_POSITION_FRONT) {
+        captureDegreeOffset = strategyInfo.captureDegree == -1 ? 0 : ROTATION_360_DEGREES - strategyInfo.captureDegree;
+    }
+    CHECK_EXECUTE(rotateDegree < 0 || rotateDegree > ROTATION_360_DEGREES, rotateDegree = 0);
+    rotation = (rotation - rotateDegree + ROTATION_360_DEGREES + captureDegreeOffset) % ROTATION_360_DEGREES;
+    MEDIA_INFO_LOG("UpdateOrientationBaseGravity rotation is : %{public}d, rotateDegree is %{public}d, "
+        "captureDegree is %{public}d", rotation, rotateDegree, captureDegreeOffset);
     // LCOV_EXCL_STOP
 }
 

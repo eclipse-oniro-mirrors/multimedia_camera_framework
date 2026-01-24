@@ -365,6 +365,7 @@ void HCameraHostManager::CameraHostInfo::UpdateCameraAbility(std::shared_ptr<OHO
     }
     MEDIA_DEBUG_LOG("CameraHostInfo::UpdateCameraAbility sensorOrientation: %{public}d", sensorOrientation);
     auto outputCapability = CameraFwkMetadataUtils::CopyMetadata(inAbility);
+    CHECK_RETURN_ELOG(outputCapability == nullptr, "CameraHostInfo::UpdateCameraAbility outputCapability is nullptr");
     outputCapability->updateEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
     inAbility = outputCapability;
 }

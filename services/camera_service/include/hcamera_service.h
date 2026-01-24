@@ -236,6 +236,9 @@ public:
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     int32_t GetOnBoardDisplayId(int32_t& displayId) override;
     int32_t SetUsePhysicalCameraOrientation(bool isUsed) override;
+    int32_t GetAppNaturalDirection(int32_t& naturalDirection) override;
+    int32_t GetLogicCameraConfig(const std::string& clientName, std::vector<int32_t>& useLogicCamera,
+        std::vector<int32_t>& customLogicDirection) override;
     bool GetUsePhysicalCameraOrientation();
     inline void SetSessionForControlCenter(sptr<HCaptureSession> session)
     {
@@ -413,6 +416,8 @@ private:
     bool isControlCenterEnabled_ = false;
     std::atomic<bool> controlCenterPrecondition_ = true;
     bool usePhysicalCameraOrientation_ = false;
+    bool isLogicCamera_ = false;
+    std::string foldScreenType_ = "";
     string preCameraId_;
     string preCameraClient_;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;

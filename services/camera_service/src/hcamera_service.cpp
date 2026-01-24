@@ -176,6 +176,8 @@ void HCameraService::OnStart()
         CameraRoateParamManager::GetInstance().SubscriberEvent();
     }
 #endif
+    isLogicCamera_ = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
+    foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
     cameraHostManager_->ParseJsonFileToMap(SAVE_RESTORE_FILE_PATH, preCameraClient_, preCameraId_);
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
@@ -255,6 +257,40 @@ bool HCameraService::GetUsePhysicalCameraOrientation()
 {
     lock_guard<mutex> lock(usePhysicalCameraOrientationMutex_);
     return usePhysicalCameraOrientation_;
+}
+
+int32_t HCameraService::GetAppNaturalDirection(int32_t& naturalDirection)
+{
+    naturalDirection = 0;
+    CHECK_RETURN_RET(!isLogicCamera_, CAMERA_INVALID_STATE);
+    int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+    std::string clientName = GetClientNameByToken(tokenId);
+    CameraApplistManager::GetInstance()->GetAppNaturalDirectionByBundleName(clientName, naturalDirection);
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetLogicCameraConfig(const std::string& clientName, std::vector<int32_t>& useLogicCamera,
+    std::vector<int32_t>& customLogicDirection)
+{
+    MEDIA_DEBUG_LOG("HCameraService::GetLogicCameraConfig is called");
+    useLogicCamera = {};
+    customLogicDirection = {};
+    CHECK_RETURN_RET(!isLogicCamera_ || foldScreenType_.empty() || foldScreenType_[0] != '7',
+        CAMERA_OPERATION_NOT_ALLOWED);
+    auto appConfigure = CameraApplistManager::GetInstance()->GetConfigureByBundleName(clientName);
+    CHECK_RETURN_RET_DLOG(
+        appConfigure == nullptr, CAMERA_OK, "HCameraService::GetLogicCameraConfig appConfigure is nullptr");
+    std::map<int32_t, int32_t> innerUseLogicCamera = appConfigure->useLogicCamera;
+    for (auto &[key, value] : innerUseLogicCamera) {
+        useLogicCamera.emplace_back(key);
+        useLogicCamera.emplace_back(value);
+    }
+    std::map<int32_t, int32_t> innerCustomLogicDirection = appConfigure->useLogicCamera;
+    for (auto &[key, value] : innerCustomLogicDirection) {
+        customLogicDirection.emplace_back(key);
+        customLogicDirection.emplace_back(value);
+    }
+    return CAMERA_OK;
 }
 
 void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
@@ -513,6 +549,7 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             MEDIA_INFO_LOG("OnAddSystemAbility RegisterObserver start");
             if (cameraDataShareHelper_->IsDataShareReady()) {
                 SetMuteModeFromDataShareHelper();
+                CHECK_EXECUTE(isLogicCamera_, CameraApplistManager::GetInstance()->Init());
             }
             break;
         case COMMON_EVENT_SERVICE_ID:

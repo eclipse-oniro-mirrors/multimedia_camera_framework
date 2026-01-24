@@ -20,6 +20,7 @@
 #include "camera_metadata_info.h"
 #include "camera_log.h"
 #include "camera_util.h"
+#include "logic_camera_utils.h"
 #include "camera_manager.h"
 #include "camera_rotation_api_utils.h"
 #include "input/camera_device.h"
@@ -247,6 +248,10 @@ void CameraDevice::InitVariableOrientation(common_metadata_header_t* metadata)
         MEDIA_INFO_LOG("CameraDevice::InitVariableOrientation foldStatus: %{public}d, orientation:%{public}d",
             innerFoldState, innerOrientation);
     }
+
+    std::unordered_map<uint32_t, std::vector<uint32_t>> foldWithDirectionOrientationMap = {};
+    ret = LogicCameraUtils::GetFoldWithDirectionOrientationMap(metadata, foldWithDirectionOrientationMap);
+    CHECK_EXECUTE(ret == CAMERA_OK, foldWithDirectionOrientationMap_ = foldWithDirectionOrientationMap);
 }
 
 std::string CameraDevice::GetID()
@@ -367,6 +372,15 @@ uint32_t CameraDevice::GetCameraOrientation()
         uint32_t displayMode =
             static_cast<uint32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
         uint32_t curFoldStatus = CameraManager::GetInstance()->DisplayModeToFoldStatus(displayMode);
+        uint32_t tempOrientation;
+        int32_t retCode = LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection(curFoldStatus, tempOrientation,
+            foldWithDirectionOrientationMap_);
+        if (retCode == CAMERA_OK) {
+            cameraOrientation = tempOrientation;
+            MEDIA_DEBUG_LOG("CameraDevice::GetCameraOrientation foldStatus: %{public}d, orientation: %{public}d",
+                curFoldStatus, cameraOrientation);
+            return cameraOrientation;
+        }
         auto itr = foldStateSensorOrientationMap_.find(curFoldStatus);
         if (itr != foldStateSensorOrientationMap_.end()) {
             cameraOrientation = itr->second;

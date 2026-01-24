@@ -39,11 +39,14 @@ const std::string EVENT_INFO_SUBTYPE = "subtype";
 const std::string RECEIVE_UPDATE_PERMISSION = "ohos.permission.RECEIVE_UPDATE_MESSAGE";
 const std::string CONFIG_UPDATED_ACTION = "usual.event.DUE_SA_CFG_UPDATED";
 const std::string CONFIG_TYPE = "camera";
-
 const char* XML_CAMERA_STRATEGY = "strategy";
 const char* XML_CAMERA_BUDLE_NAME = "bundleName";
 const char* XML_CAMERA_WIDE_VALUE = "wideValue";
 const char* XML_CAMERA_ROTATE_DEGREE = "rotateDegree";
+const char* XML_CAMERA_ROTATE_BACK_DEGREE = "rotateBackDegree";
+const char* XML_CAMERA_CAPTURE_DEGREE = "captureDegree";
+const char* XML_CAMERA_CAPTURE_BACK_DEGREE = "captureBackDegree";
+
 const char* XML_CAMERA_FPS = "fps";
 }
 // LCOV_EXCL_START
@@ -213,38 +216,48 @@ void CameraRoateParamManager::ParserStrategyInfo(std::shared_ptr<CameraXmlNode> 
         curNode->GetProp(XML_CAMERA_WIDE_VALUE, pValue);
         char* endPtr;
         wideValue = std::strtof(pValue.c_str(), &endPtr);
-        if (*endPtr != '\0' || pValue.empty()) {
-            wideValue = -1.0;
-        }
+        wideValue = (*endPtr != '\0' || pValue.empty()) ? -1.0 : wideValue;
         info.wideValue = wideValue;
         endPtr = nullptr;
 
         int rotateDegree = -1;
         curNode->GetProp(XML_CAMERA_ROTATE_DEGREE, pValue);
         long result = strtol(pValue.c_str(), &endPtr, DECIMAL);
-
-        if (*endPtr != '\0' || pValue.empty()) {
-            rotateDegree = -1;
-        } else {
-            rotateDegree = static_cast<int16_t>(result);
-        }
+        rotateDegree = (*endPtr != '\0' || pValue.empty()) ? -1 : static_cast<int16_t>(result);
         info.rotateDegree = rotateDegree;
+        endPtr = nullptr;
+
+        int rotateBackDegree = -1;
+        curNode->GetProp(XML_CAMERA_ROTATE_BACK_DEGREE, pValue);
+        result = strtol(pValue.c_str(), &endPtr, DECIMAL);
+        rotateBackDegree = (*endPtr != '\0' || pValue.empty()) ? -1 : static_cast<int16_t>(result);
+        info.rotateBackDegree = rotateBackDegree;
+        endPtr = nullptr;
+
+        int captureDegree = -1;
+        curNode->GetProp(XML_CAMERA_CAPTURE_DEGREE, pValue);
+        result = strtol(pValue.c_str(), &endPtr, DECIMAL);
+        captureDegree = (*endPtr != '\0' || pValue.empty()) ? -1 : static_cast<int16_t>(result);
+        info.captureDegree = captureDegree;
+        endPtr = nullptr;
+
+        int captureBackDegree = -1;
+        curNode->GetProp(XML_CAMERA_CAPTURE_BACK_DEGREE, pValue);
+        result = strtol(pValue.c_str(), &endPtr, DECIMAL);
+        captureBackDegree = (*endPtr != '\0' || pValue.empty()) ? -1 : static_cast<int16_t>(result);
+        info.captureBackDegree = captureBackDegree;
+        endPtr = nullptr;
 
         int16_t fps = -1;
         curNode->GetProp(XML_CAMERA_FPS, pValue);
-        endPtr = nullptr;
         result = strtol(pValue.c_str(), &endPtr, DECIMAL);
-
-        if (*endPtr != '\0' || pValue.empty()) {
-            fps = -1;
-        } else {
-            fps = static_cast<int16_t>(result);
-        }
+        fps = (*endPtr != '\0' || pValue.empty()) ? -1 : static_cast<int16_t>(result);
         info.fps = fps;
         cameraRotateStrategyInfos_.push_back(info);
-        MEDIA_INFO_LOG("ParserStrategyInfo: bundleName:%{public}s, wideValue:%{public}f, "
-            "rotateDegree:%{public}d, fps:%{public}d",
-            info.bundleName.c_str(), info.wideValue, info.rotateDegree, info.fps);
+        MEDIA_INFO_LOG("ParserStrategyInfo: bundleName:%{public}s, wideValue:%{public}f, rotateDegree:%{public}d, "
+            "rotateBackDegree:%{public}d, captureDegree:%{public}d, captureBackDegree:%{public}d, fps:%{public}d",
+            info.bundleName.c_str(), info.wideValue, info.rotateDegree, info.rotateBackDegree, info.captureDegree,
+            info.captureBackDegree, info.fps);
     }
 }
 

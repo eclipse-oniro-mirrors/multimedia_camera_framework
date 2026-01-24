@@ -22,6 +22,9 @@ struct CameraRotateStrategyInfo {
     std::string bundleName;
     float wideValue;
     int32_t rotateDegree;
+    int32_t rotateBackDegree;
+    int32_t captureDegree;
+    int32_t captureBackDegree;
     int16_t fps;
 };
 class Parser {

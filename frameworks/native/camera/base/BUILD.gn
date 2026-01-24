@@ -94,6 +94,7 @@ common_sources = [
   "src/utils/camera_security_utils.cpp",
   "src/utils/camera_thread_utils.cpp",
   "src/utils/dps_metadata_info.cpp",
+  "src/utils/logic_camera_utils.cpp",
   "src/utils/metadata_common_utils.cpp",
 ]
 

@@ -396,7 +396,8 @@ public:
     std::shared_ptr<camera_metadata_item_t> GetMetaSetting(uint32_t metaTag);
 
     int32_t GetCameraAllVendorTags(std::vector<vendorTag_t> &infos);
-
+    int32_t GetLogicCameraConfig(std::string clientName, std::vector<int32_t>& useLogicCamera,
+        std::vector<int32_t>& customLogicDirection);
     bool MergeMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> srcMetadata,
         std::shared_ptr<OHOS::Camera::CameraMetadata> dstMetadata);
     void SwitchCameraDevice(sptr<ICameraDeviceService> &deviceObj, sptr<CameraDevice> &cameraObj);
@@ -426,14 +427,16 @@ private:
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     void CameraServerDied(pid_t pid);
     int32_t UpdateSetting(std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
-    bool InitVariableOrientation(sptr<ICameraDeviceService> deviceObj,
+    void InitVariableOrientation(sptr<ICameraDeviceService> deviceObj,
         std::shared_ptr<OHOS::Camera::CameraMetadata> metaData);
     void InputRemoveDeathRecipient();
     std::map<CameraPosition, camera_position_enum> positionMapping;
+    bool isLogicCamera_ = false;
     bool isCloseDelayed_ = false;
     bool isVariable_ = false;
     uint32_t staticOrientation_ = 0;
-    std::map<uint32_t, uint32_t> foldStateSensorOrientationMap_;
+    std::map<uint32_t, uint32_t> foldStateSensorOrientationMap_ = {};
+    std::unordered_map<uint32_t, std::vector<uint32_t>> foldWithDirectionOrientationMap_ = {};
 };
 
 class CameraDeviceServiceCallback : public CameraDeviceServiceCallbackStub {
