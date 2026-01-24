@@ -121,7 +121,7 @@ int32_t VideoEncoder::ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord)
 
 int32_t VideoEncoder::DetachCodecBuffer(sptr<SurfaceBuffer> &surfaceBuffer, sptr<FrameRecord> frameRecord)
 {
-    CHECK_RETURN_RET_ELOG(frameRecord == nullptr, 1, "frameRecord is null");
+    CHECK_RETURN_RET_ELOG(frameRecord == nullptr || frameRecord->GetFrameSize() == nullptr, 1, "frameRecord is null");
     std::lock_guard<std::mutex> lock(surfaceMutex_);
     CHECK_RETURN_RET_ELOG(codecSurface_ == nullptr, 1, "codecSurface_ is null");
     // LCOV_EXCL_START

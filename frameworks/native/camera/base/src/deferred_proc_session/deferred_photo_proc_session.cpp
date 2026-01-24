@@ -186,7 +186,7 @@ DeferredPhotoProcSession::DeferredPhotoProcSession(int userId,
 DeferredPhotoProcSession::~DeferredPhotoProcSession()
 {
     MEDIA_INFO_LOG("DeferredPhotoProcSession::DeferredPhotoProcSession Destructor!");
-    CHECK_RETURN(remoteSession_ == nullptr);
+    CHECK_RETURN(remoteSession_ == nullptr || remoteSession_->AsObject() == nullptr);
     (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
     remoteSession_ = nullptr;
 }
@@ -293,7 +293,7 @@ void DeferredPhotoProcSession::CameraServerDied(pid_t pid)
 {
     // LCOV_EXCL_START
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (remoteSession_ != nullptr) {
+    if (remoteSession_ != nullptr && remoteSession_->AsObject() != nullptr) {
         (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
         remoteSession_ = nullptr;
     }

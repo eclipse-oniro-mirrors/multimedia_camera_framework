@@ -1279,7 +1279,7 @@ void CameraManager::RemoveServiceProxyDeathRecipient()
 {
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     auto serviceProxy = GetServiceProxy();
-    if (serviceProxy != nullptr) {
+    if (serviceProxy != nullptr && serviceProxy->AsObject() != nullptr) {
         (void)serviceProxy->AsObject()->RemoveDeathRecipient(deathRecipient_);
     }
     deathRecipient_ = nullptr;

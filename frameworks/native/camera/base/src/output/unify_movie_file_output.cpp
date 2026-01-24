@@ -433,6 +433,9 @@ int32_t UnifyMovieFileOutputListenerManager::OnRecordingPause()
     auto output = GetUnifyMovieFileOutput();
     CHECK_RETURN_RET_ELOG(
         output == nullptr, CAMERA_OK, "UnifyMovieFileOutputListenerManager::OnRecordingPause output is null");
+    CHECK_RETURN_RET_ELOG(
+        output->GetUnifyMovieFileOutputListenerManager() == nullptr, CAMERA_OK,
+        "UnifyMovieFileOutputListenerManager::GetUnifyMovieFileOutputListenerManager is null");
     output->GetUnifyMovieFileOutputListenerManager()->TriggerListener([](auto listener) { listener->OnPause(); });
     return CAMERA_OK;
 }
@@ -443,6 +446,9 @@ int32_t UnifyMovieFileOutputListenerManager::OnRecordingResume()
     auto output = GetUnifyMovieFileOutput();
     CHECK_RETURN_RET_ELOG(
         output == nullptr, CAMERA_OK, "UnifyMovieFileOutputListenerManager::OnRecordingResume output is null");
+    CHECK_RETURN_RET_ELOG(
+        output->GetUnifyMovieFileOutputListenerManager() == nullptr, CAMERA_OK,
+        "UnifyMovieFileOutputListenerManager::GetUnifyMovieFileOutputListenerManager is null");
     output->GetUnifyMovieFileOutputListenerManager()->TriggerListener([](auto listener) { listener->OnResume(); });
     return CAMERA_OK;
 }
@@ -453,6 +459,9 @@ int32_t UnifyMovieFileOutputListenerManager::OnRecordingStop()
     auto output = GetUnifyMovieFileOutput();
     CHECK_RETURN_RET_ELOG(
         output == nullptr, CAMERA_OK, "UnifyMovieFileOutputListenerManager::OnRecordingStop output is null");
+    CHECK_RETURN_RET_ELOG(
+        output->GetUnifyMovieFileOutputListenerManager() == nullptr, CAMERA_OK,
+        "UnifyMovieFileOutputListenerManager::GetUnifyMovieFileOutputListenerManager is null");
     output->GetUnifyMovieFileOutputListenerManager()->TriggerListener([](auto listener) { listener->OnStop(); });
     return CAMERA_OK;
 }
@@ -463,6 +472,9 @@ int32_t UnifyMovieFileOutputListenerManager::OnMovieInfoAvailable(int32_t captur
     auto output = GetUnifyMovieFileOutput();
     CHECK_RETURN_RET_ELOG(
         output == nullptr, CAMERA_OK, "UnifyMovieFileOutputListenerManager::OnMovieInfoAvailable output is null");
+    CHECK_RETURN_RET_ELOG(
+        output->GetUnifyMovieFileOutputListenerManager() == nullptr, CAMERA_OK,
+        "UnifyMovieFileOutputListenerManager::GetUnifyMovieFileOutputListenerManager is null");
     output->GetUnifyMovieFileOutputListenerManager()->TriggerListener(
         [captureId, uri](auto listener) { listener->OnMovieInfoAvailable(captureId, uri); });
     return CAMERA_OK;
@@ -473,6 +485,9 @@ int32_t UnifyMovieFileOutputListenerManager::OnError(const int32_t errorCode)
     CAMERA_SYNC_TRACE;
     auto output = GetUnifyMovieFileOutput();
     CHECK_RETURN_RET_ELOG(output == nullptr, CAMERA_OK, "UnifyMovieFileOutputListenerManager::OnError output is null");
+    CHECK_RETURN_RET_ELOG(
+        output->GetUnifyMovieFileOutputListenerManager() == nullptr, CAMERA_OK,
+        "UnifyMovieFileOutputListenerManager::GetUnifyMovieFileOutputListenerManager is null");
     output->GetUnifyMovieFileOutputListenerManager()->TriggerListener(
         [errorCode](auto listener) { listener->OnError(errorCode); });
     return CAMERA_OK;

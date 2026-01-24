@@ -2388,12 +2388,12 @@ int32_t CaptureSession::GetExposureValue(float& exposureValue)
     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS, "GetExposureValue camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
         "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
     int32_t exposureCompensation = item.data.i32[0];
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_STEP, &item);
     CHECK_RETURN_RET_ELOG(
-        ret != CAM_META_SUCCESS, 0, "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
+        ret != CAM_META_SUCCESS || item.count <= 0, 0, "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
     int32_t stepNumerator = item.data.r->numerator;
     int32_t stepDenominator = item.data.r->denominator;
     if (stepDenominator == 0) {
