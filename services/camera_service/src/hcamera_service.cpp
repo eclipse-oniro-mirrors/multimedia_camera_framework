@@ -700,7 +700,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
             camera->cameraId.c_str(), camera->position, camera->connectionType);
         if (any_of(choosedCameras.begin(), choosedCameras.end(),
             [camera](const auto& defaultCamera) {
-                return (camera->connectionType != OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN &&
+                return (camera->connectionType == OHOS_CAMERA_CONNECTION_TYPE_BUILTIN &&
                     defaultCamera->position == camera->position &&
                     defaultCamera->connectionType == camera->connectionType &&
                     defaultCamera->foldStatus == camera->foldStatus);
