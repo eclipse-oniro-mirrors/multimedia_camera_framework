@@ -226,11 +226,8 @@ HCameraDevice::HCameraDevice(
     sptr<CameraPrivacy> cameraPrivacy = new CameraPrivacy(callingTokenId, IPCSkeleton::GetCallingPid());
     SetCameraPrivacy(cameraPrivacy);
     cameraPid_ = IPCSkeleton::GetCallingPid();
-
-    if (system::GetParameter("const.system.sensor_correction_enable", "0") == "1") {
-        std::lock_guard<std::mutex> lock(dataShareHelperMutex_);
-        CameraApplistManager::GetInstance()->InitApplistConfigures();
-    }
+    isLogicCamera_ = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
+    foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
 
     {
         std::lock_guard<std::mutex> lock(g_cameraHostManagerMutex);
@@ -465,10 +462,9 @@ int32_t HCameraDevice::Open()
     int32_t result = OpenDevice();
     int32_t position = GetCameraPosition();
     auto foldStatus = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
-    auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
     MEDIA_INFO_LOG("HCameraDevice::Open %{public}d, %{public}d", position, foldStatus);
 #ifdef CAMERA_XCOMPONENT_TOAST
-    if (!foldScreenType.empty() && foldScreenType[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '6' && position == OHOS_CAMERA_POSITION_FRONT &&
         foldStatus == OHOS::Rosen::FoldStatus::EXPAND) {
         MEDIA_DEBUG_LOG("HCameraDevice::Open dialog start");
         NoFrontCameraDialog::GetInstance()->ShowCameraDialog();
@@ -1195,19 +1191,22 @@ bool HCameraDevice::GetIsHasFitedRotation()
     return isHasFitedRotation_;
 }
 
-void HCameraDevice::UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree)
+int32_t HCameraDevice::UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRateRange, bool isResetDegree)
 {
     CameraRotateStrategyInfo strategyInfo;
-    CHECK_RETURN_ELOG(!GetSigleStrategyInfo(strategyInfo) || GetIsHasFitedRotation(),
+    CHECK_RETURN_RET_ELOG(!GetSigleStrategyInfo(strategyInfo) || GetIsHasFitedRotation(), CAMERA_INVALID_ARG,
         "Update rotate angle not supported");
     auto flag = false;
     CHECK_EXECUTE(strategyInfo.fps <= 0, flag = true);
     CHECK_EXECUTE(strategyInfo.fps > 0 && frameRateRange.size() > 1 &&
                   strategyInfo.fps == frameRateRange[1], flag = true);
-    CHECK_RETURN(!flag);
+    CHECK_RETURN_RET(!flag, CAMERA_INVALID_ARG);
     std::shared_ptr<OHOS::Camera::CameraMetadata> settings = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
-    int32_t rotateDegree = GetCameraPosition() == OHOS_CAMERA_POSITION_BACK ?
-        BASE_DEGREE - strategyInfo.rotateDegree : strategyInfo.rotateDegree;
+    int32_t rotateDegree = strategyInfo.rotateDegree;
+    if (GetCameraPosition() == OHOS_CAMERA_POSITION_BACK) {
+        rotateDegree = strategyInfo.rotateBackDegree == -1 ? BASE_DEGREE - strategyInfo.rotateDegree :
+            strategyInfo.rotateBackDegree;
+    }
     CHECK_EXECUTE(isResetDegree, rotateDegree = 0);
     MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngleAndZoom rotateDegree: %{public}d.", rotateDegree);
     CHECK_EXECUTE(rotateDegree >= 0, settings->addEntry(OHOS_CONTROL_ROTATE_ANGLE, &rotateDegree, 1));
@@ -1216,6 +1215,7 @@ void HCameraDevice::UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &frameRa
     CHECK_EXECUTE(zoom >= 0, settings->addEntry(OHOS_CONTROL_ZOOM_RATIO, &zoom, 1));
     UpdateSettingOnce(settings);
     MEDIA_INFO_LOG("UpdateCameraRotateAngleAndZoom success.");
+    return CAMERA_OK;
 }
 
 int32_t HCameraDevice::GetCameraOrientation()
@@ -1242,7 +1242,6 @@ int32_t HCameraDevice::GetOriginalCameraOrientation()
 int32_t HCameraDevice::GetNaturalDirectionCorrect(bool& isNaturalDirectionCorrect)
 {
     std::string clientName = GetClientName();
-    std::lock_guard<std::mutex> lock(dataShareHelperMutex_);
     isNaturalDirectionCorrect = false;
     if (!CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName,
         isNaturalDirectionCorrect)) {
@@ -1274,6 +1273,27 @@ bool HCameraDevice::IsPhysicalCameraOrientationVariable()
     return isVariable;
 }
 
+bool HCameraDevice::GetUseLogicCamera(int32_t displayMode)
+{
+    auto appConfigure = CameraApplistManager::GetInstance()->GetConfigureByBundleName(GetClientName());
+    CHECK_RETURN_RET(appConfigure == nullptr, true);
+    std::map<int32_t, int32_t> useLogicCamera = appConfigure->useLogicCamera;
+    auto itr = useLogicCamera.find(displayMode);
+    CHECK_RETURN_RET(itr != useLogicCamera.end() && !(itr->second), false);
+    return true;
+}
+
+int32_t HCameraDevice::UpdateRotateAngleForSpecialBundle(bool isResetDegree)
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::UpdateRotateAngleForSpecialBundle Logical Camera is closed");
+    std::vector<int32_t> frameRateRange = GetFrameRateRange();
+    MEDIA_INFO_LOG("HCameraDevice::UpdateRotateAngleForSpecialBundle, frameRateRange size: %{public}zu, "
+        "frameRateRange: %{public}s", frameRateRange.size(),
+        Container2String(frameRateRange.begin(), frameRateRange.end()).c_str());
+    int32_t retCode = UpdateCameraRotateAngleAndZoom(frameRateRange, isResetDegree);
+    return retCode;
+}
+
 void HCameraDevice::UpdateCameraRotateAngle()
 {
     bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
@@ -1285,15 +1305,21 @@ void HCameraDevice::UpdateCameraRotateAngle()
         CHECK_RETURN(!isFoldable || deviceAbility_ == nullptr || lastDisplayMode_ == curDisplayMode);
         lastDisplayMode_ = curDisplayMode;
     }
-    if (system::GetParameter("const.system.sensor_correction_enable", "0") != "1"
-        || !IsPhysicalCameraOrientationVariable()) {
-        MEDIA_DEBUG_LOG("HCameraDevice::UpdateCameraRotateAngle variable orientation is closed");
-        std::vector<int32_t> frameRateRange = GetFrameRateRange();
-        MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle, frameRateRange size: %{public}zu, "
-            "frameRateRange: %{public}s", frameRateRange.size(),
-            Container2String(frameRateRange.begin(), frameRateRange.end()).c_str());
-        UpdateCameraRotateAngleAndZoom(frameRateRange,
-            curDisplayMode != static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
+    bool isResetDegree = false;
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '6') {
+        if (!isLogicCamera_ || !IsPhysicalCameraOrientationVariable()) {
+            isResetDegree = (curDisplayMode != static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
+            UpdateRotateAngleForSpecialBundle(isResetDegree);
+            return;
+        }
+    } else if (!foldScreenType_.empty() && foldScreenType_[0] == '7') {
+        isResetDegree = !(curDisplayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::FULL) ||
+            curDisplayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::COORDINATION));
+        int32_t retCode = UpdateRotateAngleForSpecialBundle(isResetDegree);
+        CHECK_RETURN_DLOG(retCode == CAMERA_OK, "HCameraDevice::UpdateCameraRotateAngle Use HAL Rotate WhiteList");
+        CHECK_RETURN_DLOG(!isLogicCamera_ || !IsPhysicalCameraOrientationVariable() || usePhysicalCameraOrientation_,
+            "HCameraDevice::UpdateCameraRotateAngle not use Logic Camera");
+    } else {
         return;
     }
     int cameraOrientation = GetOriginalCameraOrientation();
@@ -1303,6 +1329,7 @@ void HCameraDevice::UpdateCameraRotateAngle()
         truthCameraOrientation, curDisplayMode);
     CHECK_RETURN(ret != CAM_META_SUCCESS || truthCameraOrientation == -1);
     int32_t rotateDegree = (truthCameraOrientation - cameraOrientation + BASE_DEGREE) % BASE_DEGREE;
+    CHECK_EXECUTE(!GetUseLogicCamera(curDisplayMode), rotateDegree = 0);
     MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle cameraOrientation: %{public}d, truthCameraOrientation: "
         "%{public}d, rotateDegree: %{public}d.", cameraOrientation, truthCameraOrientation, rotateDegree);
     CHECK_RETURN_ELOG(usePhysicalCameraOrientation_, "HCameraDevice::UpdateCameraRotateAngle do not need HAL rotate");

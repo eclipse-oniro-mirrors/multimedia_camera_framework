@@ -394,6 +394,7 @@ private:
     bool isRetractable_ = false;
     std::vector<int32_t> lensEquivalentFocalLength_ = {};
     std::unordered_map<uint32_t, uint32_t> foldStateSensorOrientationMap_ = {};
+    std::unordered_map<uint32_t, std::vector<uint32_t>> foldWithDirectionOrientationMap_ = {};
     uint32_t moduleType_ = 0;
     uint32_t foldStatus_ = 0;
     std::vector<SceneMode> supportedModes_ = {};

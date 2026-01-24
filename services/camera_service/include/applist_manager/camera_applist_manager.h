@@ -31,10 +31,13 @@ static const std::string SETTINGS_DATA_KEY_URI = "&key=";
 static const std::string SETTINGS_DATA_COLUMN_KEYWORD = "KEYWORD";
 static const std::string SETTINGS_DATA_COLUMN_VALUE = "VALUE";
 static const std::string COMPATIBLE_APP_STRATEGY = "COMPATIBLE_APP_STRATEGY";
+static const std::string APP_LOGICAL_DEVICE_CONFIGURATION = "APP_LOGICAL_DEVICE_CONFIGURATION";
 
 struct ApplistConfigure {
     std::string bundleName;
-    bool exemptNaturalDirectionCorrect;
+    bool exemptNaturalDirectionCorrect = false;
+    std::map<int32_t, int32_t> useLogicCamera;
+    std::map<int32_t, int32_t> customLogicDirection;
 };
 
 class CameraApplistManager : public AAFwk::DataAbilityObserverStub {
@@ -45,11 +48,13 @@ public:
     ApplistConfigure* GetConfigureByBundleName(const std::string& bundleName);
     bool GetNaturalDirectionCorrectByBundleName(const std::string& bundleName,
         bool& exemptNaturalDirectionCorrect);
+    void GetAppNaturalDirectionByBundleName(const std::string& bundleName, int32_t& naturalDirection);
     void OnChange() override;
 
 private:
     CameraApplistManager();
 
+    int32_t GetLogicCameraScreenStatus();
     std::shared_ptr<DataShare::DataShareHelper> CreateCameraDataShareHelper();
     bool RegisterCameraApplistManagerObserver();
     void UnregisterCameraApplistManagerObserver();
@@ -61,6 +66,11 @@ private:
 private:
     static sptr<CameraApplistManager> cameraApplistManager_;
     std::map<std::string, ApplistConfigure*> applistConfigures_;
+    std::map<int32_t, int32_t> displayModeToNaturalDirectionMap_;
+
+    bool isLogicCamera_ = false;
+    std::string foldScreenType_ = "";
+    std::string uriForWhiteList_ = "";
 
     bool initResult_ = false;
     bool registerResult_ = false;

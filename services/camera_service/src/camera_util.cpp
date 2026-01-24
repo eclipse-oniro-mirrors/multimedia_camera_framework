@@ -26,6 +26,7 @@
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
 #include "display_manager_lite.h"
+#include "applist_manager/camera_applist_manager.h"
 #include "display/composer/v1_1/display_composer_type.h"
 #include "iservice_registry.h"
 #include "bundle_mgr_interface.h"
@@ -655,6 +656,46 @@ int32_t DisplayModeToFoldStatus(int32_t displayMode)
     return foldStatus;
 }
 
+int32_t GetPhysicalOrientationByFoldAndDirection(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
+    int32_t& sensorOrientation, int32_t foldStatus)
+{
+    camera_metadata_item item;
+
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(),
+        OHOS_FOLD_STATE_AND_NATURAL_DIRECTION_SENSOR_ORIENTATION_MAP, &item);
+    CHECK_RETURN_RET_DLOG(ret != CAMERA_OK, ret,
+        "GetPhysicalOrientationByFoldAndDirection FindCameraMetadataItem Failed");
+    int32_t count = item.count;
+    CHECK_RETURN_RET_ELOG(count % MAP_STEP_NINE, CAMERA_INVALID_STATE,
+        "GetPhysicalOrientationByFoldAndDirection FindCameraMetadataItem Count 9 Error");
+    int32_t unitLength = count / MAP_STEP_NINE;
+    int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+    std::string clientName = GetClientNameByToken(tokenId);
+    int32_t targetNaturalDirection = 0;
+    CameraApplistManager::GetInstance()->GetAppNaturalDirectionByBundleName(clientName, targetNaturalDirection);
+
+    for (int32_t index = 0; index < unitLength; index++) {
+        int32_t innerFoldState = item.data.i32[index * MAP_STEP_NINE];
+        CHECK_CONTINUE(innerFoldState != foldStatus);
+        std::vector<int32_t> orientationWithNaturalDirection = {};
+        for (int32_t i = 1; i <= MAP_STEP_FOUR * MAP_STEP_TWO; i++) {
+            orientationWithNaturalDirection.emplace_back(item.data.i32[index * MAP_STEP_NINE + i]);
+        }
+        CHECK_RETURN_RET_ELOG(orientationWithNaturalDirection.size() != MAP_STEP_FOUR * MAP_STEP_TWO,
+            CAMERA_INVALID_STATE, "GetPhysicalOrientationByFoldAndDirection vector size error");
+        for (int32_t index = 0; index < MAP_STEP_FOUR; index++) {
+            int32_t innerNaturalDirection = orientationWithNaturalDirection[index * MAP_STEP_TWO];
+            CHECK_CONTINUE(innerNaturalDirection != targetNaturalDirection);
+            sensorOrientation = orientationWithNaturalDirection[index * MAP_STEP_TWO + MAP_STEP_ONE];
+            MEDIA_DEBUG_LOG("GetPhysicalOrientationByFoldAndDirection naturalDirection: %{public}d, foldStatus: "
+                "%{public}d, orientation: %{public}d", targetNaturalDirection, foldStatus, sensorOrientation);
+            return CAMERA_OK;
+        }
+    }
+    MEDIA_ERR_LOG("GetPhysicalOrientationByFoldAndDirection failed");
+    return CAMERA_INVALID_STATE;
+}
+
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
     int32_t& sensorOrientation, int32_t displayMode)
 {
@@ -662,7 +703,9 @@ int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadat
     displayMode = displayMode >= 0 ? displayMode :
         static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
     int32_t curFoldStatus = DisplayModeToFoldStatus(displayMode);
-    int32_t ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP,
+    int32_t ret = GetPhysicalOrientationByFoldAndDirection(cameraAbility, sensorOrientation, curFoldStatus);
+    CHECK_RETURN_RET(ret == CAMERA_OK, CAMERA_OK);
+    ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP,
         &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || !item.count, ret, "CameraUtil::GetPhysicalCameraOrientation "
         "FindCameraMetadataItem Error");

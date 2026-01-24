@@ -762,7 +762,7 @@ int32_t HCaptureSession::LinkInputAndOutputs()
 #ifdef CAMERA_MOVIE_FILE
     auto hcameraMovieFileOutput = weakCameraMovieFileOutput_.promote();
     if (hcameraMovieFileOutput) {
-       hcameraMovieFileOutput->SetCameraPosition(device->GetCameraPosition());
+        hcameraMovieFileOutput->SetCameraPosition(device->GetCameraPosition());
     }
 #endif
     rc = hStreamOperatorSptr->LinkInputAndOutputs(settings, GetopMode());

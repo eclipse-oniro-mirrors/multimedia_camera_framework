@@ -88,6 +88,7 @@ const int32_t STEP_ONE = 1;
 const int32_t STEP_TWO = 2;
 const int32_t STEP_THREE = 3;
 const int32_t STEP_FOUR = 4;
+const int32_t STEP_NINE = 9;
 
 class CameraAbilityParseUtil {
 public:

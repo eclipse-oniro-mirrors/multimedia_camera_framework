@@ -42,6 +42,10 @@ namespace CameraStandard {
 class HStreamCommon;
 static const int32_t MAP_STEP_ONE = 1;
 static const int32_t MAP_STEP_TWO = 2;
+static const int32_t MAP_STEP_FOUR = 4;
+static const int32_t MAP_STEP_NINE = 9;
+static const int32_t SIZE_TWO = 2;
+static const int32_t SIZE_FOUR = 4;
 static const int32_t STREAM_ROTATE_0 = 0;
 static const int32_t STREAM_ROTATE_90 = 90;
 static const int32_t STREAM_ROTATE_180 = 180;
@@ -266,6 +270,8 @@ int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode = -1);
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
     int32_t& sensorOrientation, int32_t displayMode = -1);
+int32_t GetPhysicalOrientationByFoldAndDirection(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
+    int32_t& sensorOrientation, int32_t foldStatus);
 int32_t GetDisplayId(int32_t& displayId);
 int32_t GetDisplayRotation(int32_t& displayRotation);
 } // namespace CameraStandard
