@@ -21,7 +21,7 @@ pipeline_unit_test_cflags = [
   "-fno-rtti",
   "-fexceptions",
   "-Wall",
-  "-fno-common",  
+  "-fno-common",
   "-Wshadow",
   "-FPIC",
   "-FS",

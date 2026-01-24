@@ -76,7 +76,7 @@ ohos_shared_library("camera_service") {
   cflags = [
     "-fPIC",
     "-Wall",
-    "-Os",    
+    "-Os",
     "-fno-merge-all-constants",
     "-flto",
     "-ffunction-sections"
