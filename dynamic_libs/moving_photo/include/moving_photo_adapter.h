@@ -18,6 +18,7 @@
 
 #include "moving_photo_interface.h"
 #include "moving_photo_manager.h"
+#include "avcodec_task_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -27,8 +28,8 @@ public:
     ~AvcodecTaskManagerAdapter() override;
     int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
         VideoCodecType type, int32_t colorSpace) override;
-    int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, std::shared_ptr<Size> size,
-        sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) override;
+    int32_t CreateAvcodecTaskManagerForAudio(wptr<Surface> movingSurface, std::shared_ptr<Size> size,
+        sptr<AudioTaskManagerIntf> audioTaskManagerIntf, VideoCodecType type, int32_t colorSpace) override;
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) override;
     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
     uint32_t GetDeferredVideoEnhanceFlag(int32_t captureId) override;
@@ -38,7 +39,6 @@ public:
     bool isEmptyVideoFdMap() override;
     bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) override;
     bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) override;
-    void SetMutexMap(int64_t timestamp) override;
     void RecordVideoType(int32_t captureId, VideoType type) override;
     sptr<AvcodecTaskManager> GetTaskManager() const;
 private:
@@ -81,6 +81,19 @@ public:
     void Release() override;
 private:
     sptr<MovingPhotoManager> movingPhotoManager_ = nullptr;
+};
+
+class AudioTaskManagerAdapter : public AudioTaskManagerIntf {
+public:
+    AudioTaskManagerAdapter();
+    ~AudioTaskManagerAdapter() override;
+    void CreateAudioTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf) override;
+    sptr<AudioTaskManager> GetAudioTaskManager() const;
+    void SubmitTask(std::function<void()> task) override;
+    void ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp) override;
+
+private:
+    sptr<AudioTaskManager> audioTaskManager_ = {nullptr};
 };
 } // namespace CameraStandard
 } // namespace OHOS

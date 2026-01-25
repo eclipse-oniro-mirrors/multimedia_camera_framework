@@ -73,6 +73,15 @@ public:
         lock_guard<mutex> lock(xtTypeMutex_);
         return listenerXtStyleType_;
     }
+    
+    inline int64_t GetTopTimeStamp()
+    {
+        CHECK_RETURN_RET_ELOG(recorderBufferQueue_.Empty(), 0, "recorderBufferQueue_ is empty");
+        if (recorderBufferQueue_.Front() != nullptr) {
+            return recorderBufferQueue_.Front()->GetTimeStamp();
+        }
+        return 0;
+    }
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
 private:
     VideoType listenerXtStyleType_ = VideoType::ORIGIN_VIDEO;

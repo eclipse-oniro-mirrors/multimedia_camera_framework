@@ -60,9 +60,9 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fd
     int64_t shutterTime = fdp.ConsumeIntegral<int64_t>();
     int64_t timeStamp;
     fuzz_->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId, timeStamp);
-    vector<sptr<AudioRecord>> audioRecordVec;
+    vector<sptr<FrameRecord>> frameRecordVec;
     sptr<AudioVideoMuxer> muxer;
-    fuzz_->CollectAudioBuffer(audioRecordVec, muxer, true);
+    fuzz_->CollectAudioBuffer(frameRecordVec, muxer, true);
     fuzz_->videoEncoder_ = nullptr;
     fuzz_->audioEncoder_ = make_unique<AudioEncoder>();
     fuzz_->Stop();

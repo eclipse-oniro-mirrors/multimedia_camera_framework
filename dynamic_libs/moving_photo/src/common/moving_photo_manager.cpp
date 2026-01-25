@@ -41,6 +41,12 @@ void MovingPhotoResource::StartOnceRecord(uint64_t timestamp, int32_t rotation, 
     livephotoListener_->DrainOutImage(imageCallback);
 }
 
+void MovingPhotoResource::StartProcessAudioTask(int32_t captureId, int64_t startTimeStamp)
+{
+    CHECK_EXECUTE(audioTaskManagerProxy_ && startTimeStamp != 0,
+        audioTaskManagerProxy_->ProcessAudioBuffer(captureId, startTimeStamp));
+}
+
 void MovingPhotoResource::InsertStartTime(int32_t captureId, int64_t startTimeStamp)
 {
     auto avcodecTaskManager = avcodecTaskManagerProxy_;
@@ -134,14 +140,21 @@ void MovingPhotoManager::StartRecord(uint64_t timestamp, int32_t rotation, int32
 {
     MEDIA_DEBUG_LOG("MovingPhotoManager::StartRecord is callled");
     CHECK_RETURN(movingPhotoResource_.avcodecTaskManagerProxy_ == nullptr);
-    CHECK_EXECUTE(colorStylePhotoType == ORIGIN_AND_EFFECT,
-        movingPhotoResource_.avcodecTaskManagerProxy_->SetMutexMap(timestamp));
     // LCOV_EXCL_START
     auto weakThis = wptr<MovingPhotoManager>(this);
     movingPhotoResource_.avcodecTaskManagerProxy_->SubmitTask([weakThis, timestamp, rotation, captureId]() {
         auto manager = weakThis.promote();
         CHECK_RETURN(!manager);
         manager->StartOnceRecord(timestamp, rotation, captureId, ORIGIN_VIDEO);
+    });
+    auto weakThisForAudioTask = wptr<MovingPhotoManager>(this);
+    CHECK_RETURN_ELOG(!movingPhotoResource_.livephotoListener_,
+        "MovingPhotoResource livephotoListener is nullptr");
+    int64_t startTimeStamp = movingPhotoResource_.livephotoListener_->GetTopTimeStamp();
+    movingPhotoResource_.audioTaskManagerProxy_->SubmitTask([weakThisForAudioTask, captureId, startTimeStamp]() {
+        auto manager = weakThisForAudioTask.promote();
+        CHECK_RETURN(!manager);
+        manager->StartProcessAudioTask(captureId, startTimeStamp);
     });
     CHECK_RETURN(colorStylePhotoType != ORIGIN_AND_EFFECT || !isXtStyleEnabled ||
         !xtStyleMovingPhotoResource_.avcodecTaskManagerProxy_);
@@ -160,6 +173,12 @@ void MovingPhotoManager::StartOnceRecord(uint64_t timestamp, int32_t rotation, i
     std::lock_guard<std::mutex> lock(GetLock(videoType));
     streamStruct.StartOnceRecord(timestamp, rotation, captureId);
     MEDIA_INFO_LOG("StartOnceRecord END");
+}
+
+void MovingPhotoManager::StartProcessAudioTask(int32_t captureId, int64_t startTimeStamp)
+{
+    MEDIA_DEBUG_LOG("MovingPhotoManager::StartProcessAudioTask is callled");
+    movingPhotoResource_.StartProcessAudioTask(captureId, startTimeStamp);
 }
 
 void MovingPhotoManager::InsertStartTime(int32_t captureId, int64_t startTimeStamp)
@@ -287,14 +306,19 @@ void MovingPhotoManager::ExpandMovingPhoto(VideoType videoType, int32_t width, i
         audioCapturerSessionProxy_ = AudioCapturerSessionProxy::CreateAudioCapturerSessionProxy();
         CHECK_EXECUTE(audioCapturerSessionProxy_, audioCapturerSessionProxy_->CreateAudioSession());
     }
-    bool isExec = !streamStruct.avcodecTaskManagerProxy_ && audioCapturerSessionProxy_;
+    if (!streamStruct.audioTaskManagerProxy_ && audioCapturerSessionProxy_) {
+        sptr<AudioTaskManagerIntf> audioTaskManager = AudioTaskManagerProxy::CreateAudioTaskManagerProxy();
+        audioTaskManager->CreateAudioTaskManager(audioCapturerSessionProxy_);
+        streamStruct.audioTaskManagerProxy_ = audioTaskManager;
+    }
+    bool isExec = !streamStruct.avcodecTaskManagerProxy_ && streamStruct.audioTaskManagerProxy_;
     if (isExec) {
         shared_ptr<Size> size = std::make_shared<Size>();
         size->width = static_cast<uint32_t>(width);
         size->height = static_cast<uint32_t>(height);
         avcodecTaskManager = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
-        avcodecTaskManager->CreateAvcodecTaskManager(videoSurface,
-            size, audioCapturerSessionProxy_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC, colorspace);
+        avcodecTaskManager->CreateAvcodecTaskManagerForAudio(videoSurface,
+            size, streamStruct.audioTaskManagerProxy_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC, colorspace);
         avcodecTaskManager->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);
         streamStruct.avcodecTaskManagerProxy_ = avcodecTaskManager;
     }

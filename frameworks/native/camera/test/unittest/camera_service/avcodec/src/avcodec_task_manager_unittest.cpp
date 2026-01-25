@@ -133,10 +133,25 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_003, TestSize
     int64_t timeStamp = 0;
     taskManager->ChooseVideoBuffer(frameRecords, choosedBuffer, shutterTime, captureId, timeStamp);
     EXPECT_EQ(choosedBuffer.size(), 0);
-    vector<sptr<AudioRecord>> audioRecordVec;
+    vector<sptr<FrameRecord>> frameRecordVec;
+    
+    int64_t timestamp1 = 1000;
+    sptr<SurfaceBuffer> surfaceBuffer1 = SurfaceBuffer::Create();
+    GraphicTransformType type1 = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord1 = new FrameRecord(surfaceBuffer1, timestamp1, type1);
+    ASSERT_NE(frameRecord1, nullptr);
+    frameRecordVec.push_back(frameRecord1);
+    
+    int64_t timestamp2 = 2000;
+    sptr<SurfaceBuffer> surfaceBuffer2 = SurfaceBuffer::Create();
+    GraphicTransformType type2 = GRAPHIC_ROTATE_90;
+    sptr<FrameRecord> frameRecord2 = new FrameRecord(surfaceBuffer2, timestamp2, type2);
+    ASSERT_NE(frameRecord2, nullptr);
+    frameRecordVec.push_back(frameRecord2);
+    
     sptr<AudioVideoMuxer> muxer;
-    taskManager->CollectAudioBuffer(audioRecordVec, muxer, true);
-    EXPECT_EQ(audioRecordVec.size(), 0);
+    taskManager->CollectAudioBuffer(frameRecordVec, muxer, true);
+    EXPECT_EQ(frameRecordVec.size(), 2);
 }
 
 /*
@@ -339,11 +354,9 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_011, TestSize
     taskManager->videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
     taskManager->videoEncoder_->isStarted_ = true;
     taskManager->audioEncoder_ = nullptr;
-    taskManager->timerId_ = 0;
-
+    
     taskManager->Release();
     EXPECT_EQ(taskManager->audioEncoder_, nullptr);
-    EXPECT_EQ(taskManager->timerId_, 0);
 }
 
 /*
@@ -365,11 +378,9 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_012, TestSize
     taskManager->audioEncoder_ = make_unique<AudioEncoder>();
     taskManager->audioEncoder_->encoder_ = nullptr;
     taskManager->audioEncoder_->isStarted_ = true;
-    taskManager->timerId_ = 0;
 
     taskManager->Release();
     EXPECT_EQ(taskManager->videoEncoder_, nullptr);
-    EXPECT_EQ(taskManager->timerId_, 0);
 }
 
 /*
@@ -526,5 +537,301 @@ HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_016, TestSize
     EXPECT_EQ(choosedBuffer.size(), 1);
 }
 
+/*
+ * Feature: Framework
+ * Function: Test ProcessAudioBuffer for once record.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessAudioBuffer for once record.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_017, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    int32_t captureId = 1;
+    int64_t timeStamp = 1000;
+    audioTaskManager->ProcessAudioBuffer(captureId, timeStamp);
+    EXPECT_EQ(audioTaskManager->curCaptureIdToTimeMap_.size(), 1);
+    bool isCbFuncNull = audioCaptureSession->GetProcessedCbFunc();
+    EXPECT_EQ(isCbFuncNull, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AudioTaskManager OnAudioBufferArrival for once audioBuffer return.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AudioTaskManager OnAudioBufferArrival for once audioBuffer return.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_018, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    sptr<AudioRecord> audioRecord = new AudioRecord(1);
+    int32_t bufferLen = 32;
+    auto buffer = new uint8_t[bufferLen];
+    audioRecord->SetAudioBuffer(buffer, bufferLen);
+    audioTaskManager->OnAudioBufferArrival(audioRecord, false);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AudioTaskManager OnAudioBufferArrival for process normal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AudioTaskManager OnAudioBufferArrival for process normal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_019, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    int32_t bufferLen = 32;
+    sptr<AudioRecord> audioRecord1 = new AudioRecord(1);
+    auto audioBuffer1 = new uint8_t[bufferLen];
+    audioRecord1->SetAudioBuffer(audioBuffer1, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord1);
+    sptr<AudioRecord> audioRecord2 = new AudioRecord(2);
+    auto audioBuffer2 = new uint8_t[bufferLen];
+    audioRecord2->SetAudioBuffer(audioBuffer2, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord2);
+    sptr<AudioRecord> audioRecord3 = new AudioRecord(3);
+    auto audioBuffer3 = new uint8_t[bufferLen];
+    audioRecord3->SetAudioBuffer(audioBuffer3, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord3);
+    sptr<AudioRecord> audioRecord4 = new AudioRecord(4);
+    auto audioBuffer4 = new uint8_t[bufferLen];
+    audioRecord4->SetAudioBuffer(audioBuffer4, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord4);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 4);
+    audioTaskManager->SetIsBufferArrivalFinished(true);
+    sptr<AudioRecord> audioRecord5 = new AudioRecord(5);
+    auto audioBuffer5 = new uint8_t[bufferLen];
+    audioRecord4->SetAudioBuffer(audioBuffer5, bufferLen);
+    audioTaskManager->OnAudioBufferArrival(audioRecord5, true);
+    EXPECT_EQ(audioTaskManager->processedAudioRecordCache_.size(), 0);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 5);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AudioTaskManager OnAudioBufferArrival for process abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AudioTaskManager OnAudioBufferArrival for process abnormal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_020, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    int32_t bufferLen = 32;
+    sptr<AudioRecord> audioRecord1 = new AudioRecord(1);
+    auto audioBuffer1 = new uint8_t[bufferLen];
+    audioRecord1->SetAudioBuffer(audioBuffer1, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord1);
+    sptr<AudioRecord> audioRecord2 = new AudioRecord(2);
+    auto audioBuffer2 = new uint8_t[bufferLen];
+    audioRecord2->SetAudioBuffer(audioBuffer2, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord2);
+    sptr<AudioRecord> audioRecord3 = new AudioRecord(3);
+    auto audioBuffer3 = new uint8_t[bufferLen];
+    audioRecord3->SetAudioBuffer(audioBuffer3, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord3);
+    sptr<AudioRecord> audioRecord4 = new AudioRecord(4);
+    auto audioBuffer4 = new uint8_t[bufferLen];
+    audioRecord4->SetAudioBuffer(audioBuffer4, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord4);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 4);
+    audioTaskManager->SetIsBufferArrivalFinished(false);
+    sptr<AudioRecord> audioRecord5 = new AudioRecord(5);
+    auto audioBuffer5 = new uint8_t[bufferLen];
+    audioRecord4->SetAudioBuffer(audioBuffer5, bufferLen);
+    audioTaskManager->OnAudioBufferArrival(audioRecord5, true);
+    EXPECT_EQ(audioTaskManager->processedAudioRecordCache_.size(), 0);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 5);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AudioTaskManager OnAudioBufferArrival for process abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AudioTaskManager OnAudioBufferArrival for process abnormal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_021, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    int32_t bufferLen = 32;
+    sptr<AudioRecord> audioRecord1 = new AudioRecord(1000);
+    auto audioBuffer1 = new uint8_t[bufferLen];
+    audioRecord1->SetAudioBuffer(audioBuffer1, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord1);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 1);
+    audioTaskManager->RegisterAudioBuffeArrivalCallback(1002);
+    EXPECT_EQ(audioCaptureSession->GetProcessedCbFunc(), false);
+    sptr<AudioRecord> audioRecord2 = new AudioRecord(1001);
+    auto audioBuffer2 = new uint8_t[bufferLen];
+    audioRecord2->SetAudioBuffer(audioBuffer2, bufferLen);
+    audioCaptureSession->processCallback_(audioRecord2, true);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test normal branches for AudioTaskManager RegisterAudioBuffeArrivalCallback.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test normal branches for AudioTaskManager RegisterAudioBuffeArrivalCallback.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_022, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    audioTaskManager->RegisterAudioBuffeArrivalCallback(1000);
+    EXPECT_EQ(audioCaptureSession->GetProcessedCbFunc(), false);
+    sptr<AudioRecord> audioRecord = new AudioRecord(1001);
+    int32_t bufferLen = 32;
+    auto buffer = new uint8_t[bufferLen];
+    audioRecord->SetAudioBuffer(buffer, bufferLen);
+    audioCaptureSession->processCallback_(audioRecord, false);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Release normal branches when AudioBufferQueue_ is not nullptr.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Release normal branches when AudioBufferQueue_ is not nullptr.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_023, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    int32_t bufferLen = 32;
+    sptr<AudioRecord> audioRecord = new AudioRecord(1001);
+    auto buffer = new uint8_t[bufferLen];
+    audioRecord->SetAudioBuffer(buffer, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord);
+    sptr<AudioRecord> audioRecord1 = new AudioRecord(1001);
+    auto buffer1 = new uint8_t[bufferLen];
+    audioRecord1->SetAudioBuffer(buffer1, bufferLen);
+    audioTaskManager->processedAudioRecordCache_.emplace_back(audioRecord1);
+    audioTaskManager->timerId_ = 0;
+    audioTaskManager->curCaptureIdToTimeMap_[1] = 100;
+
+    audioTaskManager->Release();
+    EXPECT_EQ(audioTaskManager->processedAudioRecordCache_.size(), 0);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 0);
+    EXPECT_EQ(audioTaskManager->timerId_, 0);
+    EXPECT_EQ(audioTaskManager->curCaptureIdToTimeMap_.size(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test normal branches for AudioTaskManager PrepareAudioBuffer.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test normal branches for AudioTaskManager PrepareAudioBuffer.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_024, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    int32_t bufferLen = 32;
+    sptr<AudioRecord> audioRecord1 = new AudioRecord(99);
+    auto audioBuffer1 = new uint8_t[bufferLen];
+    audioRecord1->SetAudioBuffer(audioBuffer1, bufferLen);
+    audioCaptureSession->audioBufferQueue_.Push(audioRecord1);
+    sptr<AudioRecord> audioRecord2 = new AudioRecord(200);
+    auto audioBuffer2 = new uint8_t[bufferLen];
+    audioRecord2->SetAudioBuffer(audioBuffer2, bufferLen);
+    audioCaptureSession->audioBufferQueue_.Push(audioRecord2);
+    audioTaskManager->PrepareAudioBuffer(100000000);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AudioTaskManager GetAudioTaskManager and GetAudioProcessManager normal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AudioTaskManager GetAudioTaskManager and GetAudioProcessManager normal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_025, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    shared_ptr<TaskManager> manager = audioTaskManager->GetAudioTaskManager();
+    ASSERT_NE(manager, nullptr);
+    audioTaskManager->audioProcessTaskManager_ = make_unique<TaskManager>("AudioTaskManager",
+        DEFAULT_AUDIO_TASK_THREAD_NUMBER, false);
+    manager = audioTaskManager->GetAudioTaskManager();
+    ASSERT_NE(manager, nullptr);
+
+    manager = audioTaskManager->GetAudioProcessManager();
+    ASSERT_NE(manager, nullptr);
+    audioTaskManager->audioRecordProcessManager_ = make_unique<TaskManager>("AudioProcessTaskManager",
+        DEFAULT_PROCESSED_THREAD_NUMBER, false);
+    manager = audioTaskManager->GetAudioProcessManager();
+    ASSERT_NE(manager, nullptr);
+    audioTaskManager->SubmitTask(MyFunction);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AvcodecTaskManager WaitForAudioRecordFinished abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AvcodecTaskManager WaitForAudioRecordFinished abnormal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_026, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+
+    vector<sptr<FrameRecord>> choosedBuffer;
+    taskManager->WaitForAudioRecordFinished(choosedBuffer);
+    EXPECT_TRUE(choosedBuffer.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test AvcodecTaskManager CollectAudioBuffer abnormal branches.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AvcodecTaskManager CollectAudioBuffer abnormal branches.
+ */
+HWTEST_F(AvcodecTaskManagerUnitTest, avcodec_task_manager_unittest_027, TestSize.Level0)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    VideoCodecType type = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace = ColorSpace::DISPLAY_P3;
+    sptr<AvcodecTaskManager> taskManager = new AvcodecTaskManager(session, type, colorSpace);
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    audioTaskManager->processedAudioRecordCache_.clear();
+    EXPECT_TRUE(audioTaskManager->processedAudioRecordCache_.empty());
+
+    vector<sptr<FrameRecord>> choosedBuffer;
+    EXPECT_EQ(choosedBuffer.size(), 0);
+    sptr<AudioVideoMuxer> muxer;
+    taskManager->CollectAudioBuffer(choosedBuffer, muxer, true);
+    EXPECT_EQ(choosedBuffer.size(), 0);
+}
 } // CameraStandard
 } // OHOS

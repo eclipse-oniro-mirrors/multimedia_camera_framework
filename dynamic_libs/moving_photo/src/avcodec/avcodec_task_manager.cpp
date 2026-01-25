@@ -47,9 +47,6 @@ using namespace std::chrono_literals;
 namespace OHOS {
 namespace CameraStandard {
 
-SafeMap<uint64_t, shared_ptr<std::mutex>> AvcodecTaskManager::mutexMap_;
-SafeMap<uint64_t, vector<sptr<AudioRecord>>> AvcodecTaskManager::processedAudioRecordsMap_;
-
 AvcodecTaskManager::~AvcodecTaskManager()
 {
     CAMERA_SYNC_TRACE;
@@ -59,7 +56,7 @@ AvcodecTaskManager::~AvcodecTaskManager()
 
 AvcodecTaskManager::AvcodecTaskManager(
     sptr<AudioCapturerSession> audioCaptureSession, VideoCodecType type, ColorSpace colorSpace) :
-        videoCodecType_(type), colorSpace_(colorSpace)
+    videoCodecType_(type), colorSpace_(colorSpace)
 {
     CAMERA_SYNC_TRACE;
     audioCapturerSession_ = audioCaptureSession;
@@ -69,11 +66,11 @@ AvcodecTaskManager::AvcodecTaskManager(
 }
 
 AvcodecTaskManager::AvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
-    sptr<AudioCapturerSession> audioCaptureSession, VideoCodecType type, ColorSpace colorSpace)
+    sptr<AudioTaskManager> audioTaskManager, VideoCodecType type, ColorSpace colorSpace)
     :videoCodecType_(type), colorSpace_(colorSpace), movingSurface_(movingSurface), size_(size)
 {
     CAMERA_SYNC_TRACE;
-    audioCapturerSession_ = audioCaptureSession;
+    audioTaskManager_ = audioTaskManager;
     audioEncoder_ = make_unique<AudioEncoder>();
     // Create Task Manager
     videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
@@ -301,8 +298,15 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captur
     MEDIA_INFO_LOG("PhotoAssetProxy notify enter videotype:%{public}d", static_cast<int32_t>(videoTypeMap_[captureId]));
     CHECK_RETURN(!proxy);
     proxy->NotifyVideoSaveFinished(videoTypeMap_[captureId]);
-    lock_guard<mutex> lock(videoFdMutex_);
-    videoFdMap_.erase(captureId);
+    {
+        lock_guard<mutex> lock(videoFdMutex_);
+        videoFdMap_.erase(captureId);
+    }
+    if (audioTaskManager_) {
+        int32_t retCode = audioTaskManager_->ClearProcessedAudioCache(captureId);
+        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "ClearProcessedAudioCache failed");
+        audioTaskManager_->RemovePreviousCaptureForTimeMap(captureId);
+    }
     MEDIA_INFO_LOG("finishMuxer end, videoFdMap_ size is %{public}zu", videoFdMap_.size());
     // LCOV_EXCL_STOP
 }
@@ -324,7 +328,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto taskManager = GetTaskManager();
     CHECK_RETURN_ELOG(taskManager == nullptr, "GetTaskManager is null");
-    GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation, captureId, taskName]() {
+    GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation, captureId]() {
         CAMERA_SYNC_TRACE;
         MEDIA_INFO_LOG("CreateAVMuxer with %{public}zu, captureId: %{public}d", frameRecords.size(), captureId);
         vector<sptr<FrameRecord>> choosedBuffer;
@@ -374,7 +378,7 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
             }
             choosedBuffer[index]->UnLockMetaBuffer();
         }
-        thisPtr->ReuseAudioBuffer(choosedBuffer, muxer, taskName, backTimestamp);
+        thisPtr->CollectAudioBuffer(choosedBuffer, muxer, true);
         thisPtr->FinishMuxer(muxer, captureId);
     });
     // LCOV_EXCL_STOP
@@ -455,7 +459,7 @@ void AvcodecTaskManager::IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords,
 }
 
 void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords,
-    vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId,int64_t& backTimestamp)
+    vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId, int64_t& backTimestamp)
 {
     CHECK_RETURN_ELOG(frameRecords.empty(), "frameRecords is empty!");
     // LCOV_EXCL_START
@@ -504,89 +508,73 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     // LCOV_EXCL_STOP
 }
 
-void AvcodecTaskManager::ReuseAudioBuffer(
-    vector<sptr<FrameRecord>>& choosedBuffer, sptr<AudioVideoMuxer> muxer, uint64_t taskName, int64_t& backTimestamp)
-{
-    bool eraseMutexFlag = false;
-    vector<sptr<AudioRecord>> audioRecords;
-    shared_ptr<std::mutex> curMutex;
-    if (!mutexMap_.Find(taskName, curMutex)) {
-        vector<sptr<AudioRecord>> processedAudioRecords;
-        PrepareAudioBuffer(choosedBuffer, audioRecords, processedAudioRecords, backTimestamp);
-        CollectAudioBuffer(processedAudioRecords, muxer, true);
-    } else {
-        std::lock_guard<std::mutex> muxerLock(*curMutex);
-        vector<sptr<AudioRecord>> processedAudioRecords;
-        auto isFind = processedAudioRecordsMap_.Find(taskName, processedAudioRecords);
-        if (!isFind || processedAudioRecords.empty()) {
-            PrepareAudioBuffer(choosedBuffer, audioRecords, processedAudioRecords, backTimestamp);
-            MEDIA_INFO_LOG("processAudioBuffer %{public}" PRIu64, taskName);
-            processedAudioRecordsMap_.EnsureInsert(taskName, processedAudioRecords);
-            CollectAudioBuffer(processedAudioRecords, muxer, true);
-        } else {
-            MEDIA_INFO_LOG("reuseAudioBuffer %{public}" PRIu64, taskName);
-            CollectAudioBuffer(processedAudioRecordsMap_.ReadVal(taskName), muxer, false);
-            processedAudioRecordsMap_.Erase(taskName);
-            eraseMutexFlag = true;
-        }
-        CHECK_EXECUTE(eraseMutexFlag, mutexMap_.Erase(taskName));
-    }
-}
-
-void AvcodecTaskManager::PrepareAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
-    vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords, int64_t& backTimestamp)
+void AvcodecTaskManager::WaitForAudioRecordFinished(vector<sptr<FrameRecord>>& choosedBuffer)
 {
     // LCOV_EXCL_START
-    CAMERA_SYNC_TRACE;
-    int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
-    if (audioCapturerSession_) {
-        int64_t startTime = NanosecToMillisec(videoStartTime);
-        int64_t endTime = NanosecToMillisec(backTimestamp);
-        audioCapturerSession_->GetAudioRecords(startTime, endTime, audioRecords);
-        for (auto ptr: audioRecords) {
-            processedAudioRecords.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
-        }
-        AudioDeferredProcessSingle& audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
-        audioDeferredProcessSingle.ConfigAndProcess(audioCapturerSession_, audioRecords, processedAudioRecords);
-        auto weakThis = wptr<AvcodecTaskManager>(this);
-        if (timerId_) {
-            MEDIA_INFO_LOG("audioDP release time reset, %{public}u", timerId_);
-            CameraTimer::GetInstance().Unregister(timerId_);
-        }
-        timerId_ = CameraTimer::GetInstance().Register([weakThis]()-> void {
-            auto sharedThis = weakThis.promote();
-            CHECK_RETURN(sharedThis == nullptr);
-            AudioDeferredProcessSingle& audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
-            audioDeferredProcessSingle.TimerDestroyAudioDeferredProcess();
-            MEDIA_INFO_LOG("AvcodecTaskManager::delete audioDeferredProcessPtr_.");
-            sharedThis->timerId_ = 0;
-        }, RELEASE_WAIT_TIME, true);
+    CHECK_RETURN_ELOG(choosedBuffer.empty(), "WaitForAudioRecordFinished choosedBuffer is empty");
+    MEDIA_DEBUG_LOG("AvcodecTaskManager::WaitForAudioRecordFinished enter");
+    int64_t endChooseBufferTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
+    auto thisPtr = sptr<AvcodecTaskManager>(this);
+    for (size_t count = 0; count < WAIT_AUDIO_PROCESS; count++) {
+        std::unique_lock<std::mutex> lock(audioProcessMutex_);
+        audioProcessFinish_.wait_for(lock, std::chrono::milliseconds(WAIT_AUDIO_PROCESSED_EXPIREATION_TIME),
+            [thisPtr, endChooseBufferTime] {
+                int64_t endCacheTime = 0;
+                bool isExecuted = thisPtr && thisPtr->audioTaskManager_;
+                if (isExecuted) {
+                    std::lock_guard<std::mutex> lock(thisPtr->audioTaskManager_->audioCacheMutex_);
+                    auto &audioCache = thisPtr->audioTaskManager_->GetProcessedAudioRecordCache();
+                    CHECK_EXECUTE(!audioCache.empty() && audioCache.back(),
+                        endCacheTime = audioCache.back()->GetTimeStamp());
+                }
+                return endCacheTime >= endChooseBufferTime;
+        });
     }
+    MEDIA_DEBUG_LOG("AvcodecTaskManager::WaitForAudioRecordFinished end");
     // LCOV_EXCL_STOP
 }
 
-void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<AudioRecord>> audioRecordVec, sptr<AudioVideoMuxer> muxer,
-    bool isNeedEncode)
+void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
+    sptr<AudioVideoMuxer> muxer, bool isNeedEncode)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_ELOG(choosedBuffer.empty(), "CollectAudioBuffer choosedBuffer is empty");
+    WaitForAudioRecordFinished(choosedBuffer);
+    CHECK_RETURN_ELOG(!audioTaskManager_, "audioTaskManager_ is nullptr");
+    std::lock_guard<std::mutex> lock(audioTaskManager_->audioCacheMutex_);
+    vector<sptr<AudioRecord>> &audioRecordVec = audioTaskManager_->GetProcessedAudioRecordCache();
+    CHECK_RETURN_ELOG(audioRecordVec.empty(),
+        "AvcodecTaskManager::CollectAudioBuffer audioRecordVec is empty");
     MEDIA_INFO_LOG("CollectAudioBuffer start with size %{public}zu", audioRecordVec.size());
+    int64_t videoStartTime = NanosecToMillisec(choosedBuffer.front()->GetTimeStamp());
+    int64_t videoEndTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
+    vector<sptr<AudioRecord>> processedAudioRecords;
+    vector<sptr<AudioRecord>> encodeAudioRecords;
+    for (auto audioRecord : audioRecordVec) {
+        if (audioRecord->GetTimeStamp() >= videoStartTime && audioRecord->GetTimeStamp() < videoEndTime) {
+            processedAudioRecords.emplace_back(audioRecord);
+            encodeAudioRecords.emplace_back(new AudioRecord(audioRecord->GetTimeStamp()));
+        }
+    }
+    CHECK_EXECUTE(audioTaskManager_ && !processedAudioRecords.empty() && !encodeAudioRecords.empty(),
+        audioTaskManager_->ProcessAudioBufferToMuted(processedAudioRecords, encodeAudioRecords));
     bool isEncodeSuccess = false;
-    CHECK_RETURN_ELOG(!audioEncoder_ || audioRecordVec.empty() || !muxer,
+    CHECK_RETURN_ELOG(!audioEncoder_ || encodeAudioRecords.empty() || !muxer,
         "CollectAudioBuffer cannot find useful data");
     // LCOV_EXCL_START
     if (isNeedEncode) {
-        isEncodeSuccess = audioEncoder_->EncodeAudioBuffer(audioRecordVec);
+        isEncodeSuccess = audioEncoder_->EncodeAudioBuffer(encodeAudioRecords);
         MEDIA_DEBUG_LOG("encode audio buffer result %{public}d", isEncodeSuccess);
     }
-    size_t maxFrameCount = std::min(audioRecordVec.size(), MAX_AUDIO_FRAME_COUNT);
+    size_t maxFrameCount = std::min(encodeAudioRecords.size(), MAX_AUDIO_FRAME_COUNT);
     for (size_t index = 0; index < maxFrameCount; index++) {
         OH_AVCodecBufferAttr attr = { 0, 0, 0, AVCODEC_BUFFER_FLAGS_NONE };
-        OH_AVBuffer* buffer = audioRecordVec[index]->encodedBuffer;
+        OH_AVBuffer* buffer = encodeAudioRecords[index]->encodedBuffer;
         CHECK_CONTINUE_WLOG(buffer == nullptr, "audio encodedBuffer is null");
         OH_AVBuffer_GetBufferAttr(buffer, &attr);
         attr.pts = static_cast<int64_t>(index * AUDIO_FRAME_INTERVAL);
-        if (audioRecordVec.size() > 0) {
-            if (index == audioRecordVec.size() - 1) {
+        if (encodeAudioRecords.size() > 0) {
+            if (index == encodeAudioRecords.size() - 1) {
                 attr.flags = AVCODEC_BUFFER_FLAGS_EOS;
             }
         }
@@ -605,9 +593,6 @@ void AvcodecTaskManager::Release()
     videoEncoder_ = nullptr;
     CHECK_EXECUTE(audioEncoder_ != nullptr, audioEncoder_->Release());
     audioEncoder_ = nullptr;
-    CHECK_EXECUTE(timerId_ != 0, CameraTimer::GetInstance().Unregister(timerId_));
-    AudioDeferredProcessSingle& audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
-    audioDeferredProcessSingle.DestroyAudioDeferredProcess();
     unique_lock<mutex> lock(videoFdMutex_);
     MEDIA_INFO_LOG("AvcodecTaskManager::Release videoFdMap_ size is %{public}zu", videoFdMap_.size());
     for (auto videoFdPair : videoFdMap_) {
@@ -722,23 +707,350 @@ AudioDeferredProcessSingle& AudioDeferredProcessSingle::GetInstance()
     return audioDeferredProcessSingle;
 }
 
-void AudioDeferredProcessSingle::ConfigAndProcess(sptr<AudioCapturerSession> audioCapturerSession_,
+void AudioDeferredProcessSingle::ConfigAndProcess(sptr<AudioCapturerSession> audioCapturerSession,
     vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& processedAudioRecords)
 {
     std::lock_guard<mutex> lock(deferredProcessMutex_);
     if (audioDeferredProcessPtr_ == nullptr) {
-        MEDIA_INFO_LOG("AvcodecTaskManager::create audioDeferredProcessPtr_.");
-        audioDeferredProcessPtr_ = std::make_unique<AudioDeferredProcess>();
-        audioDeferredProcessPtr_->StoreOptions(
-            audioCapturerSession_->deferredInputOptions_, audioCapturerSession_->deferredOutputOptions_);
-        CHECK_RETURN(audioDeferredProcessPtr_->GetOfflineEffectChain() != 0);
-        CHECK_RETURN(audioDeferredProcessPtr_->ConfigOfflineAudioEffectChain() != 0);
-        CHECK_RETURN(audioDeferredProcessPtr_->PrepareOfflineAudioEffectChain() != 0);
-        CHECK_RETURN(audioDeferredProcessPtr_->GetMaxBufferSize(audioCapturerSession_->deferredInputOptions_,
-                         audioCapturerSession_->deferredOutputOptions_) != 0);
+        CreateAudioDeferredProcess(audioCapturerSession);
     }
     CHECK_RETURN(!audioDeferredProcessPtr_);
     audioDeferredProcessPtr_->Process(audioRecords, processedAudioRecords);
+}
+
+void AudioDeferredProcessSingle::CreateAudioDeferredProcess(sptr<AudioCapturerSession> audioCapturerSession)
+{
+    MEDIA_INFO_LOG("AudioDeferredProcessSingle::create audioDeferredProcessPtr_.");
+    CHECK_RETURN_ELOG(!audioCapturerSession, "CreateAudioDeferredProcess audioCaptureSession is nullptr");
+    audioDeferredProcessPtr_ = std::make_unique<AudioDeferredProcess>();
+    audioDeferredProcessPtr_->StoreOptions(
+        audioCapturerSession->deferredInputOptions_, audioCapturerSession->deferredOutputOptions_);
+    CHECK_RETURN(audioDeferredProcessPtr_->GetOfflineEffectChain() != 0);
+    CHECK_RETURN(audioDeferredProcessPtr_->ConfigOfflineAudioEffectChain() != 0);
+    CHECK_RETURN(audioDeferredProcessPtr_->PrepareOfflineAudioEffectChain() != 0);
+    CHECK_RETURN(audioDeferredProcessPtr_->GetMaxBufferSize(audioCapturerSession->deferredInputOptions_,
+                                                            audioCapturerSession->deferredOutputOptions_) != 0);
+}
+
+void AudioDeferredProcessSingle::ProcessMutedAudioBufferForVecs(sptr<AudioCapturerSession> audioCapturerSession,
+    vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& encodeAudioRecords)
+{
+    MEDIA_DEBUG_LOG("AudioDeferredProcessSingle::ProcessMutedAudioBufferForVecs enter");
+    std::lock_guard<mutex> lock(deferredProcessMutex_);
+    if (audioDeferredProcessPtr_ == nullptr) {
+        CreateAudioDeferredProcess(audioCapturerSession);
+    }
+    CHECK_RETURN_ELOG(!audioDeferredProcessPtr_,
+                      "AudioDeferredProcessSingle::ProcessMutedAudioBufferForVecs audioDeferredProcessPtr_ is nullptr");
+    audioDeferredProcessPtr_->SetMutedAudioRecordForVecs(audioRecords, encodeAudioRecords);
+}
+
+AudioTaskManager::AudioTaskManager(sptr<AudioCapturerSession> audioCaptureSession)
+    : arrivalAudioBufferQueue_("audioArrivalCache", AUDIO_RECORD_CACHE_SIZE)
+{
+    CAMERA_SYNC_TRACE;
+    audioCapturerSession_ = audioCaptureSession;
+    MEDIA_DEBUG_LOG("AudioTaskManager is called");
+}
+
+AudioTaskManager::~AudioTaskManager()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("~AudioTaskManager is called");
+    Release();
+    ClearTaskResource();
+}
+
+void AudioTaskManager::Release()
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_EXECUTE(timerId_ != 0, CameraTimer::GetInstance().Unregister(timerId_));
+    AudioDeferredProcessSingle& audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
+    audioDeferredProcessSingle.DestroyAudioDeferredProcess();
+    {
+        std::lock_guard<std::mutex> lock(captureIdToTimMutex_);
+        curCaptureIdToTimeMap_.clear();
+    }
+    {
+        std::lock_guard<std::mutex> lock(audioCacheMutex_);
+        processedAudioRecordCache_.clear();
+    }
+
+    arrivalAudioBufferQueue_.Clear();
+    ClearTaskResource();
+}
+
+void AudioTaskManager::ClearTaskResource()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("AudioTaskManager ClearTaskResource start");
+    {
+        lock_guard<mutex> lock(audioTaskManagerMutex_);
+        isAudioTaskActive_ = false;
+        if (audioProcessTaskManager_ != nullptr) {
+            audioProcessTaskManager_->CancelAllTasks();
+            audioProcessTaskManager_.reset();
+        }
+    }
+    {
+        lock_guard<mutex> lock(audioProcessManagerMutex_);
+        isAudioTaskActive_ = false;
+        if (audioRecordProcessManager_ != nullptr) {
+            audioRecordProcessManager_->CancelAllTasks();
+            audioRecordProcessManager_.reset();
+        }
+    }
+}
+
+void AudioTaskManager::SubmitTask(function<void()> task)
+{
+    auto audioTaskManager = GetAudioTaskManager();
+    CHECK_RETURN(!audioTaskManager);
+    audioTaskManager->SubmitTask(task);
+}
+
+int32_t AudioTaskManager::ClearProcessedAudioCache(int32_t captureId)
+{
+    int32_t startTimeStamp = 0;
+    {
+        std::lock_guard<std::mutex> lock(captureIdToTimMutex_);
+        auto &captureIdTimeMap = GetCurrentCaptureIdToTimeMap();
+        CHECK_RETURN_RET_ELOG(captureIdTimeMap.empty(), -1, "Current captureIdTimeMap is empty");
+        auto itr = captureIdTimeMap.find(captureId);
+        CHECK_RETURN_RET_ELOG(itr == captureIdTimeMap.end(), -1, "Current captureId not found in map");
+        startTimeStamp = itr->second;
+    }
+    {
+        std::lock_guard<std::mutex> lock(audioCacheMutex_);
+        auto &processedAudioRecordCache = GetProcessedAudioRecordCache();
+        CHECK_RETURN_RET_ELOG(processedAudioRecordCache.empty(), -1,
+                              "Current processedAudioRecordCache is empty");
+        processedAudioRecordCache.erase(std::remove_if(processedAudioRecordCache.begin(),
+            processedAudioRecordCache.end(), [startTimeStamp](const auto &audioRecord) {
+                return audioRecord->GetTimeStamp() < startTimeStamp;
+            }), processedAudioRecordCache.end());
+    }
+    return CAMERA_OK;
+}
+
+void AudioTaskManager::RemovePreviousCaptureForTimeMap(int32_t captureId)
+{
+    std::lock_guard<std::mutex> lock(captureIdToTimMutex_);
+    auto &audioCaptureIdToTimeMap = GetCurrentCaptureIdToTimeMap();
+    CHECK_EXECUTE(audioCaptureIdToTimeMap.size() >= 2, {
+        auto lastItr = --audioCaptureIdToTimeMap.end();
+        audioCaptureIdToTimeMap.erase(audioCaptureIdToTimeMap.begin(), lastItr);
+        MEDIA_DEBUG_LOG("RemovePreviousCaptureForTimeMap sucess");
+    });
+}
+
+shared_ptr<TaskManager>& AudioTaskManager::GetAudioTaskManager()
+{
+    lock_guard<mutex> lock(audioTaskManagerMutex_);
+    bool shouldCreateTaskManager = audioProcessTaskManager_ == nullptr && isAudioTaskActive_.load();
+    if (shouldCreateTaskManager) {
+        audioProcessTaskManager_ = make_unique<TaskManager>("AudioTaskManager",
+                                                            DEFAULT_AUDIO_TASK_THREAD_NUMBER, false);
+    }
+    return audioProcessTaskManager_;
+}
+
+shared_ptr<TaskManager>& AudioTaskManager::GetAudioProcessManager()
+{
+    lock_guard<mutex> lock(audioProcessManagerMutex_);
+    bool shouldCreateTaskManager = audioRecordProcessManager_ == nullptr && isAudioTaskActive_.load();
+    if (shouldCreateTaskManager) {
+        audioRecordProcessManager_ = make_unique<TaskManager>("AudioProcessTaskManager",
+                                                              DEFAULT_PROCESSED_THREAD_NUMBER, false);
+    }
+    return audioRecordProcessManager_;
+}
+
+void AudioTaskManager::RegisterAudioBuffeArrivalCallback(int64_t startTimeStamp)
+{
+    MEDIA_DEBUG_LOG("AudioTaskManager::RegisterAudioBuffeArrivalCallback time :%{public}" PRIu64, startTimeStamp);
+    int64_t endTime = NanosecToMillisec(startTimeStamp + MAX_NANOSEC_RANGE);
+    int64_t startTime = NanosecToMillisec(startTimeStamp);
+    if (audioCapturerSession_) {
+        auto weakThis = wptr<AudioTaskManager>(this);
+        CHECK_RETURN_ELOG(weakThis == nullptr, "RegisterAudioBuffeArrivalCallback audioTaskManager is nullptr");
+        audioCapturerSession_->ExecuteOnceRecord(startTime, endTime,
+            [weakThis](sptr<AudioRecord> audioRecord, bool isFinished) {
+                auto sharedThis = weakThis.promote();
+                CHECK_RETURN_ELOG(sharedThis == nullptr, "RegisterAudioBuffeArrivalCallback sharedThis is nullptr");
+                sharedThis->OnAudioBufferArrival(audioRecord, isFinished);
+            });
+    }
+}
+
+void AudioTaskManager::OnAudioBufferArrival(sptr<AudioRecord>& audioRecord, bool isFinished)
+{
+    // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("AudioTaskManager::OnAudioBufferArrival timeStamp: %{public}" PRIu64, audioRecord->GetTimeStamp());
+    if (arrivalAudioBufferQueue_.Full()) {
+        sptr<AudioRecord> audioRecord = arrivalAudioBufferQueue_.Pop();
+        CHECK_EXECUTE(audioRecord->IsFinishCache() && audioRecord->GetFinishProcessedStatus(),
+                      audioRecord->ReleaseAudioBuffer());
+    }
+    CHECK_RETURN(!audioRecord);
+    arrivalAudioBufferQueue_.Push(audioRecord);
+    MEDIA_DEBUG_LOG("AudioTaskManager::OnAudioBufferArrival current size: %{public}zu",
+                    arrivalAudioBufferQueue_.Size());
+    CHECK_RETURN(!isFinished && arrivalAudioBufferQueue_.Size() % AUDIO_PROCESS_MATCH_SIZE != 0);
+    if (isFinished && arrivalAudioBufferQueue_.Size() % AUDIO_PROCESS_MATCH_SIZE != 0) {
+        size_t number = arrivalAudioBufferQueue_.Size() % AUDIO_PROCESS_MATCH_SIZE;
+        while (number > 0) {
+            sptr<AudioRecord> backAudioRecord = arrivalAudioBufferQueue_.PopBack();
+            CHECK_EXECUTE(backAudioRecord->IsFinishCache() && backAudioRecord->GetFinishProcessedStatus(),
+                          backAudioRecord->ReleaseAudioBuffer());
+            number--;
+        }
+    }
+    MEDIA_DEBUG_LOG("AudioTaskManager::OnAudioBufferArrival enter process size: %{public}zu",
+                    arrivalAudioBufferQueue_.Size());
+    if (isFinished && !isBufferArrivalFinished_) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        auto thisPtr = sptr<AudioTaskManager>(this);
+        CHECK_RETURN_ELOG(!thisPtr, "OnAudioBufferArrival current audioTaskManager is nullptr");
+        for (size_t count = 0; count < AUDIO_PROCESS_MATCH_SIZE; count++) {
+            arrivalVarible_.wait_for(
+                lock, std::chrono::milliseconds(WAIT_AUDIO_PROCESSED_DURATION_TIME),
+                [thisPtr] { return thisPtr->GetIsBufferArrivalFinished(); });
+        }
+    }
+    CHECK_RETURN_ELOG(!isFinished && !isBufferArrivalFinished_,
+                      "AudioTaskManager::OnAudioBufferArrival proceesed failed");
+    SetIsBufferArrivalFinished(false);
+    ProcessAudioFromAudioBufferQueue();
+    // LCOV_EXCL_STOP
+}
+
+void AudioTaskManager::ProcessAudioFromAudioBufferQueue()
+{
+    // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue enter");
+    auto processTaskManager = GetAudioProcessManager();
+    auto weakThis = wptr<AudioTaskManager>(this);
+    CHECK_RETURN_ELOG(weakThis == nullptr || processTaskManager == nullptr,
+                      "ProcessAudioFromAudioBufferQueue failed");
+    processTaskManager->SubmitTask([weakThis]() {
+        CAMERA_SYNC_TRACE;
+        auto sharedThis = weakThis.promote();
+        CHECK_RETURN_ELOG(sharedThis == nullptr, "ProcessAudioFromAudioBufferQueue current sharedThis is nullptr");
+        vector<sptr<AudioRecord>> audioRecords = sharedThis->GetArrivalAudioBufferQueue().GetAllElements();
+        CHECK_RETURN_ELOG(audioRecords.size() == 0, "ProcessAudioFromAudioBufferQueue currenter audioRecords is empty");
+        auto &arrivalAudiBufferQueue = sharedThis->GetArrivalAudioBufferQueue();
+        for (size_t index = 0; index < audioRecords.size(); index++) {
+            CHECK_EXECUTE(arrivalAudiBufferQueue.Front()->GetTimeStamp() <= audioRecords.back()->GetTimeStamp(),
+                          arrivalAudiBufferQueue.Pop());
+        }
+        MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue audioRecords.size(): %{public}zu",
+                       audioRecords.size());
+        vector<sptr<AudioRecord>> audioRecordVec;
+        for (auto ptr : audioRecords) {
+            audioRecordVec.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
+        }
+        AudioDeferredProcessSingle &audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
+        CHECK_RETURN_ELOG(!sharedThis || !sharedThis->audioCapturerSession_,
+                          "ProcessAudioFromAudioBufferQueue current sharedThis is nullptr");
+        audioDeferredProcessSingle.ConfigAndProcess(
+            sharedThis->audioCapturerSession_, audioRecords, audioRecordVec);
+        sharedThis->SetTimerForAudioDeferredProcess();
+        for (auto &record : audioRecords) {
+            CHECK_EXECUTE(record != nullptr, record->SetFinishedProcessedStatus(true));
+        }
+        {
+            std::lock_guard<std::mutex> lock(sharedThis->audioCacheMutex_);
+            auto &processedAudioRecordCache = sharedThis->GetProcessedAudioRecordCache();
+            processedAudioRecordCache.insert(processedAudioRecordCache.end(),
+                audioRecordVec.begin(), audioRecordVec.end());
+            std::sort(processedAudioRecordCache.begin(), processedAudioRecordCache.end(),
+                [](const sptr<AudioRecord> &audioRecordA, const sptr<AudioRecord> &audioRecordB) {
+                    return audioRecordA->GetTimeStamp() < audioRecordB->GetTimeStamp();
+                });
+        }
+        sharedThis->SetIsBufferArrivalFinished(true);
+        MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue isFinished %{public}d",
+                       sharedThis->isBufferArrivalFinished_.load());
+    });
+    MEDIA_DEBUG_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue end");
+    // LCOV_EXCL_STOP
+}
+
+void AudioTaskManager::ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp)
+{
+    // LCOV_EXCL_START
+    MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioBuffer enter captureId: %{public}d,"
+                   "startTimeStamp: %{public}" PRIu64 ", curCaptureIdToTimeMap_: %{public}zu", captureId,
+                   startTimeStamp, curCaptureIdToTimeMap_.size());
+    auto audioCapturerSession = GetAudioCaptureSession();
+    CHECK_RETURN_ELOG(!audioCapturerSession, "current audioCapturerSession is nullptr");
+    {
+        std::lock_guard<std::mutex> lock(captureIdToTimMutex_);
+        if (!curCaptureIdToTimeMap_.empty() && !audioCapturerSession->GetProcessedCbFunc()) {
+            auto last_itr = curCaptureIdToTimeMap_.rbegin();
+            if (NanosecToMillisec(startTimeStamp) <= (last_itr->second + MAX_AUDIO_NANOSEC_RANGE)
+                && !audioCapturerSession->GetProcessedCbFunc()) {
+                audioCapturerSession->UpdateCaptureTimeRangeForEnd(
+                    NanosecToMillisec(startTimeStamp + MAX_NANOSEC_RANGE));
+                curCaptureIdToTimeMap_[captureId] = NanosecToMillisec(startTimeStamp);
+                return;
+            }
+        }
+        CHECK_EXECUTE(audioCapturerSession && !audioCapturerSession->GetProcessedCbFunc(),
+                      audioCapturerSession->SetAudioBufferCallback(nullptr));
+        curCaptureIdToTimeMap_[captureId] = NanosecToMillisec(startTimeStamp);
+    }
+    RegisterAudioBuffeArrivalCallback(startTimeStamp);
+    PrepareAudioBuffer(startTimeStamp);
+    // LCOV_EXCL_STOP
+}
+
+void AudioTaskManager::PrepareAudioBuffer(int64_t startTime)
+{
+    // LCOV_EXCL_START
+    CAMERA_SYNC_TRACE;
+    int64_t startTimeStamp = NanosecToMillisec(startTime);
+    int64_t endTimeStamp = NanosecToMillisec(startTime + MAX_NANOSEC_RANGE);
+    if (audioCapturerSession_) {
+        std::vector<sptr<AudioRecord>> audioRecords;
+        audioCapturerSession_->GetAudioRecords(startTimeStamp, endTimeStamp, audioRecords);
+        for (auto &audioRecord : audioRecords) {
+            arrivalAudioBufferQueue_.Push(audioRecord);
+        }
+    }
+    // LCOV_EXCL_STOP
+}
+
+void AudioTaskManager::ProcessAudioBufferToMuted(vector<sptr<AudioRecord>>& audioRecords,
+                                                 vector<sptr<AudioRecord>>& encodeAudioRecords)
+{
+    // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("AudioTaskManager::ProcessAudioBufferToMuted enter");
+    AudioDeferredProcessSingle &audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
+    if (audioCapturerSession_) {
+        audioDeferredProcessSingle.ProcessMutedAudioBufferForVecs(audioCapturerSession_,
+                                                                  audioRecords, encodeAudioRecords);
+    }
+    SetTimerForAudioDeferredProcess();
+    // LCOV_EXCL_STOP
+}
+
+void AudioTaskManager::SetTimerForAudioDeferredProcess()
+{
+    auto weakThis = wptr<AudioTaskManager>(this);
+    if (timerId_) {
+        MEDIA_INFO_LOG("audioDP release time reset, %{public}u", timerId_);
+        CameraTimer::GetInstance().Unregister(timerId_);
+    }
+    timerId_ = CameraTimer::GetInstance().Register([weakThis]()-> void {
+        auto sharedThis = weakThis.promote();
+        CHECK_RETURN(sharedThis == nullptr);
+        AudioDeferredProcessSingle& audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
+        audioDeferredProcessSingle.TimerDestroyAudioDeferredProcess();
+        MEDIA_INFO_LOG("AvcodecTaskManager::delete audioDeferredProcessPtr_.");
+        sharedThis->timerId_ = 0;
+    }, RELEASE_WAIT_TIME, true);
 }
 } // namespace CameraStandard
 } // namespace OHOS
