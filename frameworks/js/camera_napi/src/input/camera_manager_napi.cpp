@@ -1982,7 +1982,10 @@ const CameraManagerNapi::EmitterFunctions& CameraManagerNapi::GetEmitterFunction
             &CameraManagerNapi::UnregisterFoldStatusCallbackListener } },
         { "controlCenterStatusChange", {
             &CameraManagerNapi::RegisterControlCenterStatusCallbackListener,
-            &CameraManagerNapi::UnregisterControlCenterStatusCallbackListener } } };
+            &CameraManagerNapi::UnregisterControlCenterStatusCallbackListener } },
+        { "cameraSharedStatus", {
+            &CameraManagerNapi::RegisterCameraSharedStatusCallbackListener,
+            &CameraManagerNapi::UnregisterCameraSharedStatusCallbackListener } }, };
     return funMap;
 }
 

@@ -6697,5 +6697,132 @@ void CaptureSession::SetDefaultColorSpace()
         SetColorSpace(ColorSpace::BT2020_HLG);
     }
 }
+
+int32_t CaptureSession::GetActiveImagingMode(ImagingMode& imagingMode)
+{
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetActiveImagingMode Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetActiveImagingMode camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetActiveImagingMode camera device is null");
+    imagingMode = ImagingMode::IMAGING_MODE_AUTO;
+    bool isSupported = false;
+    sptr<CameraDevice> cameraObj_;
+    cameraObj_ = inputDeviceInfo;
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(
+        metadata == nullptr, CameraErrorCode::SUCCESS, "GetActiveImagingMode camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_IMAGING_MODE, &item);
+    if (ret == CAM_META_SUCCESS) {
+        auto itr = g_metaImagingModesMap_.find(static_cast<camera_imaging_mode_enum_t>(item.data.u8[0]));
+        if (itr != g_metaImagingModesMap_.end()) {
+            imagingMode = itr->second;
+            isSupported = true;
+        }
+    }
+    CHECK_PRINT_ELOG(!isSupported || ret != CAM_META_SUCCESS,
+        "CaptureSession::GetActiveImagingMode Failed with return code %{public}d", ret);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetImagingMode(ImagingMode imagingMode)
+{
+    CHECK_RETURN_RET(!IsImagingModeSupported(imagingMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetImagingMode Session is not Commited");
+    auto itr = g_fwkImagingModesMap_.find(imagingMode);
+    if ((itr == g_fwkImagingModesMap_.end())) {
+        MEDIA_ERR_LOG("CaptureSession::SetImagingMode Mode: %{public}d not supported", imagingMode);
+    }
+
+    uint32_t count = 1;
+    uint8_t imagingMode_ = imagingMode;
+
+    this->LockForControl();
+    MEDIA_DEBUG_LOG("CaptureSession::SetImagingMode ImagingMode : %{public}d", imagingMode_);
+    if (!(this->changedMetadata_->addEntry(OHOS_CONTROL_IMAGING_MODE, &imagingMode_, count))) {
+        MEDIA_DEBUG_LOG("CaptureSession::SetImagingMode Failed to set imaging mode");
+    } else {
+        wptr<CaptureSession> weakThis(this);
+        AddFunctionToMap(std::to_string(OHOS_CONTROL_IMAGING_MODE), [weakThis, imagingMode]() {
+            auto sharedThis = weakThis.promote();
+            CHECK_RETURN_ELOG(!sharedThis, "SetImagingMode session is nullptr");
+            int32_t retCode = sharedThis->SetImagingMode(imagingMode);
+            CHECK_EXECUTE(retCode != CameraErrorCode::SUCCESS,
+                          sharedThis->SetDeviceCapabilityChangeStatus(true));
+        });
+    }
+    int32_t errCode = this->UnlockForControl();
+    CHECK_PRINT_DLOG(errCode != CameraErrorCode::SUCCESS,
+        "CaptureSession::SetImagingMode Failed to set imaging mode");
+    return CameraErrorCode::SUCCESS;
+}
+
+bool CaptureSession::IsImagingModeSupported(ImagingMode imagingMode)
+{
+    CHECK_RETURN_RET(!CameraSecurity::CheckSystemApp(), false);
+    std::vector<ImagingMode> imagingModes;
+    GetSupportedImagingMode(imagingModes);
+    if (std::find(imagingModes.begin(), imagingModes.end(), imagingMode) != imagingModes.end()) {
+        return true;
+    }
+    return false;
+}
+
+int32_t CaptureSession::IsImagingModeSupported(ImagingMode imagingMode, bool& isSupported)
+{
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::IsImagingModeSupported Session is not Commited");
+    isSupported = false;
+    std::vector<ImagingMode> imagingModes;
+    GetSupportedImagingMode(imagingModes);
+    if (std::find(imagingModes.begin(), imagingModes.end(), imagingMode) !=
+        imagingModes.end()) {
+        isSupported = true;
+        return CameraErrorCode::SUCCESS;
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSupportedImagingMode(std::vector<ImagingMode>& imagingMode)
+{
+    imagingMode.clear();
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetSupportedImagingMode Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedImagingMode camera device is null");
+    // 多摄同开应该不涉及
+    // sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
+    // bool isLimtedCapabilitySave = cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1;
+    // if (isLimtedCapabilitySave) {
+    //     for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.imagingModes.count; i++) {
+    //         auto num = static_cast<camera_imaging_mode_enum_t>(cameraDevNow->limtedCapabilitySave_.
+    //             imagingModes.mode[i]);
+    //         auto itr = g_metaImagingModesMap_.find(num);
+    //         if (itr != g_metaImagingModesMap_.end()) {
+    //             imagingMode.emplace_back(itr->second);
+    //         }
+    //     }
+    //     return CameraErrorCode::SUCCESS;
+    // }
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_RETURN_RET_ELOG(
+        metadata == nullptr, CameraErrorCode::SUCCESS, "GetSupportedImagingMode camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_IMAGING_MODES, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedImagingMode Failed with return code %{public}d", ret);
+
+    for (uint32_t i = 0; i < item.count; i++) {
+        auto itr = g_metaImagingModesMap_.find(static_cast<camera_imaging_mode_enum_t>(item.data.u8[i]));
+        CHECK_EXECUTE(itr != g_metaImagingModesMap_.end(), imagingMode.emplace_back(itr->second));
+    }
+    return CameraErrorCode::SUCCESS;
+}
 } // namespace CameraStandard
 } // namespace OHOS

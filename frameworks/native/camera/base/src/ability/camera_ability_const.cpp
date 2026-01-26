@@ -319,5 +319,17 @@ const std::unordered_map<ColorReservationType, camera_color_reservation_type_t>
     {ColorReservationType::COLOR_RESERVATION_TYPE_NONE, OHOS_CAMERA_COLOR_RESERVATION_NONE},
     {ColorReservationType::COLOR_RESERVATION_TYPE_PORTRAIT, OHOS_CAMERA_COLOR_RESERVATION_PORTRAIT}
 };
+
+const std::unordered_map<camera_imaging_mode_enum_t, ImagingMode> g_metaImagingModesMap_ = {
+    {OHOS_CAMERA_IMAGING_MODE_AUTO, IMAGING_MODE_AUTO},
+    {OHOS_CAMERA_IMAGING_MODE_RGB, IMAGING_MODE_RGB},
+    {OHOS_CAMERA_IMAGING_MODE_IR, IMAGING_MODE_IR}
+};
+
+const std::unordered_map<ImagingMode, camera_imaging_mode_enum_t> g_fwkImagingModesMap_ = {
+    {IMAGING_MODE_AUTO, OHOS_CAMERA_IMAGING_MODE_AUTO},
+    {IMAGING_MODE_RGB, OHOS_CAMERA_IMAGING_MODE_RGB},
+    {IMAGING_MODE_IR, OHOS_CAMERA_IMAGING_MODE_IR}
+};
 } // namespace CameraStandard
 } // namespace OHOS

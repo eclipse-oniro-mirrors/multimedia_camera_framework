@@ -2184,6 +2184,12 @@ public:
     uint32_t GetIsoValue();
     int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
     int32_t SetExposureMeteringMode(MeteringMode mode);
+
+    bool IsImagingModeSupported(ImagingMode iamgingMode);
+    int32_t IsImagingModeSupported(ImagingMode imagingMode, bool& isSupported);
+    int32_t GetActiveImagingMode(ImagingMode& imagingMode);
+    int32_t SetImagingMode(ImagingMode imagingMode);
+    int32_t GetSupportedImagingMode(std::vector<ImagingMode>& imagingMode);
 protected:
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
     static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> fwkWhiteBalanceModeMap_;
