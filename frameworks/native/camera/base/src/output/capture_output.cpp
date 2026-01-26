@@ -78,7 +78,7 @@ void CaptureOutput::UnregisterStreamBinderDied()
     std::lock_guard<std::mutex> lock(deathRecipientMutex_);
     CHECK_RETURN(deathRecipient_ == nullptr);
     auto stream = GetStream();
-    if (stream != nullptr) {
+    if (stream != nullptr && stream->AsObject() != nullptr) {
         stream->AsObject()->RemoveDeathRecipient(deathRecipient_);
         deathRecipient_ = nullptr;
     }

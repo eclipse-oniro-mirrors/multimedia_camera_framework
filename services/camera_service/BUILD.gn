@@ -77,7 +77,6 @@ ohos_shared_library("camera_service") {
     "-fPIC",
     "-Wall",
     "-Os",
-    "-fstack-protector-strong",
     "-fno-merge-all-constants",
     "-flto",
     "-ffunction-sections"

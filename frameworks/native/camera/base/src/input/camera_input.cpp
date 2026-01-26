@@ -212,7 +212,7 @@ void CameraInput::CameraServerDied(pid_t pid)
 void CameraInput::InputRemoveDeathRecipient()
 {
     auto deviceObj = GetCameraDevice();
-    if (deviceObj != nullptr) {
+    if (deviceObj != nullptr && deviceObj->AsObject() != nullptr) {
         (void)deviceObj->AsObject()->RemoveDeathRecipient(deathRecipient_);
         SetCameraDevice(nullptr);
     }

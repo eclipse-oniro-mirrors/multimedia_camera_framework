@@ -171,7 +171,7 @@ int32_t DeferredVideoProcSession::SetDeferredVideoSession(
 void DeferredVideoProcSession::CameraServerDied(pid_t pid)
 {
     MEDIA_ERR_LOG("camera server has died, pid:%{public}d!", pid);
-    if (remoteSession_ != nullptr) {
+    if (remoteSession_ != nullptr && remoteSession_->AsObject() != nullptr) {
         (void)remoteSession_->AsObject()->RemoveDeathRecipient(deathRecipient_);
         remoteSession_ = nullptr;
     }

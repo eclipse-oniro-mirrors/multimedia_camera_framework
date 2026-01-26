@@ -143,7 +143,6 @@ ohos_shared_library("deferred_processing_service") {
   cflags = [
     "-fPIC",
     "-Wall",
-    "-fstack-protector-strong",
   ]
 
   ldflags = [
