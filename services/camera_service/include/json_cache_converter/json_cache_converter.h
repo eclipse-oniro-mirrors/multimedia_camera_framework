@@ -99,8 +99,7 @@ private:
     static bool OutputToJsonFile(const std::string& jsonFilePath, const nlohmann::json& pmapJson,
                                  const nlohmann::json& tmapJson, const nlohmann::json& indexJson);
     static bool CreateProducerForPrelaunch(OHOS::HDI::Camera::V1_0::StreamInfo &v1_0);
-    static bool CreateProducerForPrelaunch(std::vector<OHOS::HDI::Camera::V1_1::ExtendedStreamInfo>
-                                           &extendedStreamInfos);
+    static bool CreateProducerForPrelaunch(OHOS::HDI::Camera::V1_1::ExtendedStreamInfo &extendedStreamInfo);
 };
 } // namespace CameraStandard
 } // namespace OHOS
