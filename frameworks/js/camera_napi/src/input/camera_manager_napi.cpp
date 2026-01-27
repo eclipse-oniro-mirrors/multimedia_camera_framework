@@ -392,6 +392,61 @@ void ControlCenterStatusListenerNapi::OnControlCenterStatusChanged(bool status) 
     OnControlCenterStatusCallbackAsync(status);
 }
 
+CameraSharedStatusListenerNapi::CameraSharedStatusListenerNapi(napi_env env): ListenerBase(env)
+{
+    MEDIA_DEBUG_LOG("CameraSharedStatusListenerNapi is called.");
+}
+
+CameraSharedStatusListenerNapi::~CameraSharedStatusListenerNapi()
+{
+    MEDIA_DEBUG_LOG("~CameraSharedStatusListenerNapi is called.");
+}
+
+void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallbackAsync(CameraSharedStatus status) const
+{
+    MEDIA_INFO_LOG("OnCameraSharedStatusCallbackAsync is called, status: %{public}d", status);
+    std::unique_ptr<CameraSharedStatusCallbackInfo> callbackInfo =
+        std::make_unique<CameraSharedStatusCallbackInfo>(status, shared_from_this());
+    CameraSharedStatusCallbackInfo *event = callbackInfo.get();
+    auto task = [event]() {
+        CameraSharedStatusCallbackInfo* callbackInfo = reinterpret_cast<CameraSharedStatusCallbackInfo *>(event);
+        if (callbackInfo) {
+            auto listener = callbackInfo->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnCameraSharedStatusCallback(callbackInfo->cameraSharedStatus_);
+            }
+            delete callbackInfo;
+        }
+    };
+    std::unordered_map<std::string, std::string> params = {
+        {"status", std::to_string(status)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("CameraSharedStatusListenerNapi::OnCameraSharedStatusCallbackAsync", params);
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+        MEDIA_ERR_LOG("Failed to execute work");
+    } else {
+        callbackInfo.release();
+    }
+}
+
+void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallback(CameraSharedStatus status) const
+{
+    MEDIA_INFO_LOG("OnCameraSharedStatusCallback is called, status: %{public}d", status);
+    ExecuteCallbackScopeSafe("cameraSharedStatus",[&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value result;
+        napi_create_int32(env_, static_cast<int32_t>(status), &result);
+        return ExecuteCallbackData(env_, errCode, result);
+    });
+}
+
+void CameraSharedStatusListenerNapi::OnCameraSharedStatusChanged(CameraSharedStatus status) const
+{
+    MEDIA_INFO_LOG("OnCameraSharedStatusChanged is called, status: %{public}d", status);
+    OnCameraSharedStatusCallbackAsync(status);
+}
+
 TorchListenerNapi::TorchListenerNapi(napi_env env): ListenerBase(env)
 {
     MEDIA_INFO_LOG("TorchListenerNapi is called.");
@@ -1962,6 +2017,37 @@ void CameraManagerNapi::UnregisterControlCenterStatusCallbackListener(
     CHECK_RETURN(listener == nullptr);
     if (listener->IsEmpty(eventName)) {
         cameraManager_->UnregisterControlCenterStatusListener(listener);
+    }
+}
+
+void CameraManagerNapi::RegisterCameraSharedStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::RegisterCameraSharedStatusCallbackListener is called.");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi On cameraSharedStatus is called!");
+        return;
+    }
+    auto listener = CameraNapiEventListener<CameraSharedStatusListenerNapi>::RegisterCallbackListener(
+        eventName, env, callback, args, isOnce);
+    CHECK_RETURN_ELOG(
+        listener == nullptr, "CameraManagerNapi::RegisterCameraSharedStatusCallbackListener listener is null");
+    cameraManager_->RegisterCameraSharedStatusListener(listener);
+}
+
+void CameraManagerNapi::UnregisterCameraSharedStatusCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+     MEDIA_INFO_LOG("CameraManagerNapi::UnregisterCameraSharedStatusCallbackListener is called.");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi On cameraSharedStatus is called!");
+        return;
+    }
+    auto listener = CameraNapiEventListener<CameraSharedStatusListenerNapi>::UnregisterCallbackListener(
+        eventName, env, callback, args);
+    CHECK_RETURN(listener == nullptr);
+    if (listener->IsEmpty(eventName)) {
+        cameraManager_->UnregisterCameraSharedStatusListener(listener);
     }
 }
 

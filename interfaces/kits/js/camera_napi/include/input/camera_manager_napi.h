@@ -90,6 +90,25 @@ struct ControlCenterStatusCallbackInfo {
     ~ControlCenterStatusCallbackInfo() {}
 };
 
+class CameraSharedStatusListenerNapi : public CameraSharedStatusListener, public ListenerBase,
+    public std::enable_shared_from_this<CameraSharedStatusListenerNapi> {
+public:
+    explicit CameraSharedStatusListenerNapi(napi_env env);
+    virtual ~CameraSharedStatusListenerNapi();
+    void OnCameraSharedStatusChanged(CameraSharedStatus status) const override;
+private:
+    void OnCameraSharedStatusCallback(CameraSharedStatus status) const;
+    void OnCameraSharedStatusCallbackAsync(CameraSharedStatus status) const;
+};
+
+struct CameraSharedStatusCallbackInfo {
+    CameraSharedStatus cameraSharedStatus_;
+    weak_ptr<const CameraSharedStatusListenerNapi> listener_;
+    CameraSharedStatusCallbackInfo(CameraSharedStatus status, shared_ptr<const CameraSharedStatusListenerNapi> listener)
+        : cameraSharedStatus_(status), listener_(listener) {}
+    ~CameraSharedStatusCallbackInfo() {}
+};
+
 struct CameraMuteCallbackInfo {
     bool muteMode_;
     weak_ptr<const CameraMuteListenerNapi> listener_;
@@ -150,6 +169,7 @@ class CameraManagerNapi : public CameraNapiEventEmitter<CameraManagerNapi>,
                           public CameraNapiEventListener<CameraManagerCallbackNapi>,
                           public CameraNapiEventListener<CameraMuteListenerNapi>,
                           public CameraNapiEventListener<ControlCenterStatusListenerNapi>,
+                          public CameraNapiEventListener<CameraSharedStatusListenerNapi>,
                           public CameraNapiEventListener<FoldListenerNapi> {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -239,6 +259,10 @@ private:
     void RegisterControlCenterStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce);
     void UnregisterControlCenterStatusCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
+    void RegisterCameraSharedStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce);
+    void UnregisterCameraSharedStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;

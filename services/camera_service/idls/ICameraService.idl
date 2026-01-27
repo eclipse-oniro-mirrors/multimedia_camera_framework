@@ -17,6 +17,7 @@ package OHOS.CameraStandard;
 import CameraTypes;
 import ICameraDeviceService;
 import ICameraMuteServiceCallback;
+import ICameraSharedServiceCallback;
 import IControlCenterStatusCallback;
 import ICaptureSession;
 import IFoldServiceCallback;
@@ -102,6 +103,8 @@ interface ICameraService{
   [ipccode 57] void SetUsePhysicalCameraOrientation([in] boolean isUsed);
   [ipccode 58] void CreateCameraSwitchSession([out] ICameraSwitchSession session);
   [ipccode 60] void GetDeviceControlCenterAbility([out] boolean ability);
+  [ipccode 61] void SetCameraSharedStatusCallback([in] ICameraSharedServiceCallback callbackFunc);
+  [ipccode 62] void UnSetCameraSharedStatusCallback();
   [ipccode 73] void GetOnBoardDisplayId([out] int displayId);
   [ipccode 74] void GetAppNaturalDirection([out] int naturalDirection);
   [ipccode 75] void GetLogicCameraConfig([in] String clientName, [out] List<int> useLogicCamera, [out] List<int> customLogicDirection);
