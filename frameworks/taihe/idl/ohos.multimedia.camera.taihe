@@ -717,7 +717,7 @@ enum SystemPressureLevel: i32 {
   SYSTEM_PRESSURE_SHUTDOWN = 4
 }
 
-interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance {
+interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ImagingMode {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
@@ -1730,6 +1730,8 @@ interface CameraManager {
               this.onFoldStatusChange(callback as (err: BusinessError<void>, data: FoldStatusInfo)=> void);
             } else if (type === "torchStatusChange") {
               this.onTorchStatusChange(callback as (err: BusinessError<void>, data: TorchStatusInfo)=> void);
+            } else if (type === "cameraSharedStatus") {
+              this.onCameraSharedStatusChange(callback as (err: BusinessError<void>, data: CameraSharedStatus)=> void);
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1746,6 +1748,8 @@ interface CameraManager {
               this.offFoldStatusChange(callback as (((err: BusinessError<void>, data: FoldStatusInfo)=> void) | undefined));
             } else if (type === "torchStatusChange") {
               this.offTorchStatusChange(callback as (((err: BusinessError<void>, data: TorchStatusInfo)=> void) | undefined));
+            } else if (type === "cameraSharedStatus") {
+              this.offCameraSharedStatusChange(callback as (err: BusinessError<void>, data: CameraSharedStatus)=> void);
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1762,6 +1766,8 @@ interface CameraManager {
   OffTorchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void>): void;
   OnControlCenterStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
   OffControlCenterStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
+  onCameraSharedStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void): void;
+  offCameraSharedStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void>): void;
   IsControlCenterActive(): bool;
   CreateControlCenterSession(): ControlCenterSession;
 }
@@ -2745,6 +2751,26 @@ interface QuickThumbnail {
   @get GetThumbnailImage(): PixelMap;
   @gen_promise("release")
   ReleaseSync(): void;
+}
+
+enum CameraSharedStatus : i32 {
+  CAMERA_SHARED_STATUS_SHARED = 0,
+  CAMERA_SHARED_STATUS_UNSHARED = 1
+}
+
+enum ImagingMode : i32 {
+  AUTO = 0,
+  RGB = 1,
+  IR = 2
+}
+
+interface ImagingModeQuery {
+  isImagingModeSupported(mode: ImagingMode): bool;
+}
+
+interface ImagingMode : ImagingModeQuery {
+  getActiveImagingMode(): ImagingMode;
+  setImagingMode(mode: ImagingMode): void;
 }
 
 // transfer functions

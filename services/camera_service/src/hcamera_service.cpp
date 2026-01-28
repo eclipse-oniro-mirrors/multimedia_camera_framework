@@ -1524,7 +1524,7 @@ int32_t HCameraService::CheckControlCenterPermission()
     return CAMERA_OK;
 }
 
-int32_t HCameraService::SetCameraSharedStatusCallback(const sptr<IControlCenterStatusCallback>& callback)
+int32_t HCameraService::SetCameraSharedStatusCallback(const sptr<ICameraSharedServiceCallback>& callback)
 {
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     lock_guard<mutex> lock(cameraSharedStatusMutex_);

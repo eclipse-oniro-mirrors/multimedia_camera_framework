@@ -1404,5 +1404,37 @@ void AutoDeviceSwitchImpl::EnableAutoDeviceSwitch(bool enabled)
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
         "AutoDeviceSwitchImpl::EnableAutoDeviceSwitch fail %{public}d", retCode);
 }
+
+bool ImagingModeQueryImpl::IsImagingModeSupported(ImagingMode mode)
+{
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, false,
+        "IsVideoStabilizationModeSupported captureSession_ is null");
+    bool isSupported = false;
+    int32_t retCode = captureSession_->IsImagingModeSupported(
+        static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()), isSupported);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), false);
+    return isSupported;
+}
+
+ImagingMode ImagingModeImpl::GetActiveImagingMode()
+{
+    MEDIA_DEBUG_LOG("GetActiveImagingMode is called");
+    ImagingMode errType = ImagingMode(static_cast<ImagingMode::key_t>(-1));
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, errType,
+        "GetActiveImagingMode captureSession_ is null");
+    OHOS::CameraStandard::ImagingMode mode;
+    int32_t retCode = captureSession_->GetActiveImagingMode(mode);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), errType);
+    return ImagingMode(static_cast<ImagingMode::key_t>(mode));
+}
+
+void ImagingModeImpl::SetImagingMode(ImagingMode mode)
+{
+    MEDIA_DEBUG_LOG("SetImagingMode is called");
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetImagingMode captureSession_ is null!");
+    int retCode = captureSession_->SetImagingMode(
+        static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()));
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "SetImagingMode call Failed!");
+}
 } // namespace Ani
 } // namespace Camera
