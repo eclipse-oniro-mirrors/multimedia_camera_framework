@@ -339,9 +339,20 @@ PickerResult GetPickerResult(ohos::multimedia::cameraPicker::weak::CameraPickerJ
     }
     return res;
 }
+
+PickerProfile PickerProfileCtor()
+{
+    PickerProfile profile = {
+        .cameraPosition = CameraPosition::key_t::CAMERA_POSITION_UNSPECIFIED,
+        .saveUri = std::nullopt,
+        .videoDuration = std::nullopt,
+    };
+    return profile;
+}
 } // namespace Camera
 } // namespace Ani
 
 TH_EXPORT_CPP_API_PickStart(Ani::Camera::PickStart);
 TH_EXPORT_CPP_API_PickAsync(Ani::Camera::PickAsync);
 TH_EXPORT_CPP_API_GetPickerResult(Ani::Camera::GetPickerResult);
+TH_EXPORT_CPP_API_PickerProfileCtor(Ani::Camera::PickerProfileCtor);

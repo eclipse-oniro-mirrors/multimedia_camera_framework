@@ -24,9 +24,13 @@ from ohos.multimedia.camera use CameraPosition;
 @class
 struct PickerProfile {
   cameraPosition: CameraPosition;
+  @optional
   saveUri: Optional<String>;
+  @optional
   videoDuration: Optional<i32>;
 }
+@ctor("PickerProfile")
+function PickerProfileCtor(): PickerProfile;
 
 enum PickerMediaType : String {
   PHOTO = "photo",
