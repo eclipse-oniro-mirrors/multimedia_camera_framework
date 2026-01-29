@@ -311,7 +311,8 @@ int32_t HCameraDevice::GetSensorOrientation()
 {
     auto ability = GetDeviceAbility();
     int32_t sensorOrientation = 0;
-    int ret = GetCorrectedCameraOrientation(GetUsePhysicalCameraOrientation(), ability, sensorOrientation);
+    int ret =
+        GetCorrectedCameraOrientation(GetUsePhysicalCameraOrientation(), sensorOrientation, ability, GetClientName());
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
     return sensorOrientation;
 }
@@ -1221,7 +1222,8 @@ int32_t HCameraDevice::UpdateCameraRotateAngleAndZoom(std::vector<int32_t> &fram
 int32_t HCameraDevice::GetCameraOrientation()
 {
     int32_t truthCameraOrientation = -1;
-    GetCorrectedCameraOrientation(usePhysicalCameraOrientation_, deviceAbility_, truthCameraOrientation);
+    GetCorrectedCameraOrientation(
+        usePhysicalCameraOrientation_, truthCameraOrientation, deviceAbility_, GetClientName());
     return truthCameraOrientation;
 }
 
@@ -1325,8 +1327,8 @@ void HCameraDevice::UpdateCameraRotateAngle()
     int cameraOrientation = GetOriginalCameraOrientation();
     CHECK_RETURN(cameraOrientation == -1);
     int32_t truthCameraOrientation = -1;
-    int32_t ret = GetCorrectedCameraOrientation(!usePhysicalCameraOrientation_, deviceAbility_,
-        truthCameraOrientation, curDisplayMode);
+    int32_t ret = GetCorrectedCameraOrientation(!usePhysicalCameraOrientation_, truthCameraOrientation, deviceAbility_,
+        GetClientName(), curDisplayMode);
     CHECK_RETURN(ret != CAM_META_SUCCESS || truthCameraOrientation == -1);
     int32_t rotateDegree = (truthCameraOrientation - cameraOrientation + BASE_DEGREE) % BASE_DEGREE;
     CHECK_EXECUTE(!GetUseLogicCamera(curDisplayMode), rotateDegree = 0);
