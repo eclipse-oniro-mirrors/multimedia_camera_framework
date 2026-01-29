@@ -17,6 +17,7 @@
 #include <fstream>
 #include <regex>
 #include <securec.h>
+#include <string>
 #include <sys/stat.h>
 #include <exception>
 #include <parameter.h>
@@ -561,6 +562,21 @@ bool isIntegerRegex(const std::string& input)
         CHECK_RETURN_RET(!std::isdigit(input[i]), false);
     }
     return true;
+}
+
+bool IsDoubleRegex(const std::string& input)
+{
+    std::istringstream iss(input);
+    double val;
+    iss >> val;
+    return iss.eof() && !iss.fail();
+}
+
+bool IsUint8Regex(const std::string& input)
+{
+    CHECK_RETURN_RET(!isIntegerRegex(input), false);
+    int number = std::stoi(input);
+    return (number >= MIN_UINT8) && (number <= MAX_UINT8);
 }
 
 std::string GetValidCameraId(std::string& cameraId)

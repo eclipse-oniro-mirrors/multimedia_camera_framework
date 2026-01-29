@@ -111,7 +111,10 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_pr
     DECLARE_NAPI_FUNCTION("once", CameraSessionNapi::Once),
     DECLARE_NAPI_FUNCTION("off", CameraSessionNapi::Off),
 
-    DECLARE_NAPI_FUNCTION("setParameters", CameraSessionNapi::SetParameters)
+    DECLARE_NAPI_FUNCTION("setParameters", CameraSessionNapi::SetParameters),
+    DECLARE_NAPI_FUNCTION("getParameters", CameraSessionNapi::GetParameters),
+    DECLARE_NAPI_FUNCTION("getSupportedKeys", CameraSessionNapi::GetSupportedKeys),
+    DECLARE_NAPI_FUNCTION("getActiveParameter", CameraSessionNapi::GetActiveParameter),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_sys_props = {
@@ -3532,6 +3535,102 @@ napi_value CameraSessionNapi::SetParameters(napi_env env, napi_callback_info inf
             CameraSessionNapi->cameraSession_->SetParameters(kvPairs);
         CameraSessionNapi->cameraSession_->UnlockForControl();
         CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetParameters(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::GetParameters is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
+            "System api can be invoked only by system applications");
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    CameraSessionNapi* CameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&CameraSessionNapi));
+    if (status == napi_ok && CameraSessionNapi != nullptr && CameraSessionNapi->cameraSession_ != nullptr) {
+        size_t sizeofres;
+        char buffer[PATH_MAX];
+        napi_get_value_string_utf8(env, argv[0], buffer, PATH_MAX, &sizeofres);
+        std::string key = std::string(buffer);
+        std::vector<std::string> values;
+        int32_t retCode =
+            CameraSessionNapi->cameraSession_->GetParameters(key, values);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        napi_create_array(env, &result);
+        for (size_t i = 0; i < values.size(); ++i) {
+            napi_value jsStr;
+            napi_create_string_utf8(env, values[i].c_str(), NAPI_AUTO_LENGTH, &jsStr);
+            napi_set_element(env, result, i, jsStr);
+        }
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetSupportedKeys(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedKeys is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
+            "System api can be invoked only by system applications");
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    CameraSessionNapi* CameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&CameraSessionNapi));
+    if (status == napi_ok && CameraSessionNapi != nullptr && CameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<std::string> keys;
+        int32_t retCode =
+            CameraSessionNapi->cameraSession_->GetSupportedKeys(keys);
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedKeys retCode:: %{public}d", retCode);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        napi_create_array(env, &result);
+        for (size_t i = 0; i < keys.size(); ++i) {
+            napi_value jsStr;
+            napi_create_string_utf8(env, keys[i].c_str(), NAPI_AUTO_LENGTH, &jsStr);
+            napi_set_element(env, result, i, jsStr);
+        }
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetActiveParameter(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::GetActiveParameter is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
+            "System api can be invoked only by system applications");
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    CameraSessionNapi* CameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&CameraSessionNapi));
+    if (status == napi_ok && CameraSessionNapi != nullptr && CameraSessionNapi->cameraSession_ != nullptr) {
+        size_t sizeofres;
+        char buffer[PATH_MAX];
+        napi_get_value_string_utf8(env, argv[0], buffer, PATH_MAX, &sizeofres);
+        std::string key = std::string(buffer);
+        std::string value;
+        int32_t retCode =
+            CameraSessionNapi->cameraSession_->GetActiveParameter(key, value);
+        CHECK_RETURN_RET(retCode != 0 && !CameraNapiUtils::CheckError(env, retCode), result);
+        napi_create_string_utf8(env, value.c_str(), NAPI_AUTO_LENGTH, &result);
     }
     return result;
 }
