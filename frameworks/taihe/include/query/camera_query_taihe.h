@@ -378,15 +378,15 @@ class ImagingModeQueryImpl : virtual public SessionBase {
 public:
     explicit ImagingModeQueryImpl() {}
     virtual ~ImagingModeQueryImpl() = default;
-    bool IsImagingModeSupported(ImagingMode mode);
+    bool IsImagingModeSupported(ImagingModeType mode);
 };
 
 class ImagingModeImpl : public ImagingModeQueryImpl {
 public:
     explicit ImagingModeImpl() {}
     virtual ~ImagingModeImpl() = default;
-    ImagingMode GetActiveImagingMode();
-    void SetImagingModee(ImagingMode mode);
+    ImagingModeType GetActiveImagingMode();
+    void SetImagingMode(ImagingModeType mode);
 };
 } // namespace Camera
 } // namespace Ani

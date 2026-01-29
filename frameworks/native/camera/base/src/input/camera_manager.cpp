@@ -1488,6 +1488,7 @@ sptr<ControlCenterStatusListenerManager> CameraManager::GetControlCenterStatusLi
 void CameraManager::RegisterCameraSharedStatusListener(std::shared_ptr<CameraSharedStatusListener> listener)
 {
     // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("CameraManager::RegisterCameraSharedStatusListener");
     CHECK_RETURN(listener == nullptr);
     bool isSuccess = cameraSharedStatusListenerManager_->AddListener(listener);
     CHECK_RETURN(!isSuccess);
@@ -1502,6 +1503,7 @@ void CameraManager::RegisterCameraSharedStatusListener(std::shared_ptr<CameraSha
 void CameraManager::UnregisterCameraSharedStatusListener(std::shared_ptr<CameraSharedStatusListener> listener)
 {
     // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("CameraManager::UnregisterCameraSharedStatusListener");
     CHECK_RETURN(listener == nullptr);
     cameraSharedStatusListenerManager_->RemoveListener(listener);
     if (cameraSharedStatusListenerManager_->GetListenerCount() == 0) {
@@ -1510,7 +1512,7 @@ void CameraManager::UnregisterCameraSharedStatusListener(std::shared_ptr<CameraS
     // LCOV_EXCL_STOP
 }
 
-sptr<ControlCenterStatusListenerManager> CameraManager::GetCameraSharedStatusListenerManager()
+sptr<CameraSharedStatusListenerManager> CameraManager::GetCameraSharedStatusListenerManager()
 {
     return cameraSharedStatusListenerManager_;
 }
@@ -3107,7 +3109,7 @@ int32_t ControlCenterStatusListenerManager::OnControlCenterStatusChanged(bool st
     // LCOV_EXCL_STOP
 }
 
-int32_t CameraSharedStatusListenerManager::OnCameraSharedStatusChanged(CameraSharedStatus status)
+int32_t CameraSharedStatusListenerManager::OnCameraSharedStatusChanged(int32_t cameraSharedStatus)
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("OnCameraSharedStatusChanged");
@@ -3115,6 +3117,7 @@ int32_t CameraSharedStatusListenerManager::OnCameraSharedStatusChanged(CameraSha
     CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_OK, "CameraManager is nullptr.");
     auto listenerManager = cameraManager->GetControlCenterStatusListenerManager();
     MEDIA_INFO_LOG("CameraSharedStatusListener size %{public}zu", listenerManager->GetListenerCount());
+    CameraSharedStatus status = static_cast<CameraSharedStatus>(cameraSharedStatus);
     listenerManager->TriggerListener([&](auto listener) { listener->OnControlCenterStatusChanged(status); });
     return CAMERA_OK;
     // LCOV_EXCL_STOP
@@ -3247,6 +3250,7 @@ int32_t CameraManager::UnSetControlCenterStatusCallback()
 int32_t CameraManager::SetCameraSharedStatusCallback(sptr<ICameraSharedServiceCallback>& callback)
 {
     // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("CameraManager::SetCameraSharedStatusCallback");
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
         "CameraManager::SetCameraSharedStatusCallback serviceProxy is null");
@@ -3260,6 +3264,7 @@ int32_t CameraManager::SetCameraSharedStatusCallback(sptr<ICameraSharedServiceCa
 int32_t CameraManager::UnSetCameraSharedStatusCallback()
 {
     // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("CameraManager::UnSetCameraSharedStatusCallback");
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR,
         "CameraManager::UnSetCameraSharedStatusCallback serviceProxy is null");

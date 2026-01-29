@@ -1369,7 +1369,7 @@ class CameraSharedStatusListenerManager : public CameraManagerGetter,
                                        public CameraSharedServiceCallbackStub,
                                        public CameraListenerManager<CameraSharedStatusListener> {
 public:
-    int32_t OnCameraSharedStatusChanged(const CameraSharedStatus status) override;
+    int32_t OnCameraSharedStatusChanged(const int32_t status) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

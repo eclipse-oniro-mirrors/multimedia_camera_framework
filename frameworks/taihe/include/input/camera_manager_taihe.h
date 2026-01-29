@@ -102,20 +102,10 @@ class CameraSharedStatusListenerAni : public OHOS::CameraStandard::CameraSharedS
 public:
     explicit CameraSharedStatusListenerAni(ani_env *env);
     virtual ~CameraSharedStatusListenerAni();
-    void OnCameraSharedStatusChanged(CameraSharedStatus status) const override;
+    void OnCameraSharedStatusChanged(const OHOS::CameraStandard::CameraSharedStatus status) const override;
 
 private:
-    void OnCameraSharedStatusCallback(CameraSharedStatus status) const;
-};
-
-struct CameraSharedStatusCallbackInfoAni {
-    CameraSharedStatus cameraSharedStatus_;
-    std::weak_ptr<const CameraSharedStatusListenerAni> listener_;
-    CameraSharedStatusCallbackInfoAni(bool status, std::shared_ptr<const CameraSharedStatusListenerAni> listener)
-        : cameraSharedStatus_(status), listener_(listener)
-    {}
-    ~CameraSharedStatusCallbackInfoAni()
-    {}
+    void OnCameraSharedStatusCallback(const OHOS::CameraStandard::CameraSharedStatus status) const;
 };
 
 class CameraManagerImpl : public CameraAniEventEmitter<CameraManagerImpl>,

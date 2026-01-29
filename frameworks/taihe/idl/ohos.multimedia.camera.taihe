@@ -1766,8 +1766,8 @@ interface CameraManager {
   OffTorchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void>): void;
   OnControlCenterStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
   OffControlCenterStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
-  onCameraSharedStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void): void;
-  offCameraSharedStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void>): void;
+  OnCameraSharedStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void): void;
+  OffCameraSharedStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void>): void;
   IsControlCenterActive(): bool;
   CreateControlCenterSession(): ControlCenterSession;
 }
@@ -2758,19 +2758,19 @@ enum CameraSharedStatus : i32 {
   CAMERA_SHARED_STATUS_UNSHARED = 1
 }
 
-enum ImagingMode : i32 {
+enum ImagingModeType : i32 {
   AUTO = 0,
   RGB = 1,
   IR = 2
 }
 
 interface ImagingModeQuery {
-  isImagingModeSupported(mode: ImagingMode): bool;
+  isImagingModeSupported(mode: ImagingModeType): bool;
 }
 
 interface ImagingMode : ImagingModeQuery {
-  getActiveImagingMode(): ImagingMode;
-  setImagingMode(mode: ImagingMode): void;
+  getActiveImagingMode(): ImagingModeType;
+  setImagingMode(mode: ImagingModeType): void;
 }
 
 // transfer functions

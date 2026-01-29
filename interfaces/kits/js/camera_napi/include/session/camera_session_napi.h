@@ -542,7 +542,7 @@ public:
 
     static napi_value IsImagingModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetActiveImagingMode(napi_env env, napi_callback_info info);
-    static napi_value SetActiveImagingMode(napi_env env, napi_callback_info info);
+    static napi_value SetImagingMode(napi_env env, napi_callback_info info);
 
     napi_env env_;
     sptr<CaptureSession> cameraSession_;

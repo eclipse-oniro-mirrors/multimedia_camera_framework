@@ -214,8 +214,3 @@ struct dmDeviceInfo {
     int deviceTypeId;
     String networkId;
 };
-
-enum CameraSharedStatus {
-    CAMERA_SHARED_STATUS_SHARED = 0,
-    CAMERA_SHARED_STATUS_UNSHARED
-}

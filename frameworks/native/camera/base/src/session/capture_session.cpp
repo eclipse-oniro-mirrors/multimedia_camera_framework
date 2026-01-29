@@ -6700,8 +6700,7 @@ void CaptureSession::SetDefaultColorSpace()
 
 int32_t CaptureSession::GetActiveImagingMode(ImagingMode& imagingMode)
 {
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::GetActiveImagingMode Session is not Commited");
+    MEDIA_DEBUG_LOG("CaptureSession::GetActiveImagingMode is called");
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
         "CaptureSession::GetActiveImagingMode camera device is null");
@@ -6726,14 +6725,14 @@ int32_t CaptureSession::GetActiveImagingMode(ImagingMode& imagingMode)
     }
     CHECK_PRINT_ELOG(!isSupported || ret != CAM_META_SUCCESS,
         "CaptureSession::GetActiveImagingMode Failed with return code %{public}d", ret);
+    MEDIA_DEBUG_LOG("CaptureSession::GetActiveImagingMode imagingMode: %{public}d", imagingMode);
     return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSession::SetImagingMode(ImagingMode imagingMode)
 {
+    MEDIA_DEBUG_LOG("CaptureSession::SetImagingMode is called with mode: %{public}d", imagingMode);
     CHECK_RETURN_RET(!IsImagingModeSupported(imagingMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::SetImagingMode Session is not Commited");
     auto itr = g_fwkImagingModesMap_.find(imagingMode);
     if ((itr == g_fwkImagingModesMap_.end())) {
         MEDIA_ERR_LOG("CaptureSession::SetImagingMode Mode: %{public}d not supported", imagingMode);
@@ -6764,6 +6763,7 @@ int32_t CaptureSession::SetImagingMode(ImagingMode imagingMode)
 
 bool CaptureSession::IsImagingModeSupported(ImagingMode imagingMode)
 {
+    MEDIA_DEBUG_LOG("CaptureSession::IsImagingModeSupported is called with mode: %{public}d", imagingMode);
     CHECK_RETURN_RET(!CameraSecurity::CheckSystemApp(), false);
     std::vector<ImagingMode> imagingModes;
     GetSupportedImagingMode(imagingModes);
@@ -6775,8 +6775,7 @@ bool CaptureSession::IsImagingModeSupported(ImagingMode imagingMode)
 
 int32_t CaptureSession::IsImagingModeSupported(ImagingMode imagingMode, bool& isSupported)
 {
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::IsImagingModeSupported Session is not Commited");
+    MEDIA_DEBUG_LOG("CaptureSession::IsImagingModeSupported is called with mode: %{public}d", imagingMode);
     isSupported = false;
     std::vector<ImagingMode> imagingModes;
     GetSupportedImagingMode(imagingModes);
@@ -6790,26 +6789,11 @@ int32_t CaptureSession::IsImagingModeSupported(ImagingMode imagingMode, bool& is
 
 int32_t CaptureSession::GetSupportedImagingMode(std::vector<ImagingMode>& imagingMode)
 {
+    MEDIA_DEBUG_LOG("CaptureSession::GetSupportedImagingMode is called");
     imagingMode.clear();
-    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::GetSupportedImagingMode Session is not Commited");
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedImagingMode camera device is null");
-    // 多摄同开应该不涉及
-    // sptr<CameraDevice> cameraDevNow = inputDevice->GetCameraDeviceInfo();
-    // bool isLimtedCapabilitySave = cameraDevNow != nullptr && cameraDevNow->isConcurrentLimted_ == 1;
-    // if (isLimtedCapabilitySave) {
-    //     for (int i = 0; i < cameraDevNow->limtedCapabilitySave_.imagingModes.count; i++) {
-    //         auto num = static_cast<camera_imaging_mode_enum_t>(cameraDevNow->limtedCapabilitySave_.
-    //             imagingModes.mode[i]);
-    //         auto itr = g_metaImagingModesMap_.find(num);
-    //         if (itr != g_metaImagingModesMap_.end()) {
-    //             imagingMode.emplace_back(itr->second);
-    //         }
-    //     }
-    //     return CameraErrorCode::SUCCESS;
-    // }
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_RETURN_RET_ELOG(
         metadata == nullptr, CameraErrorCode::SUCCESS, "GetSupportedImagingMode camera metadata is null");

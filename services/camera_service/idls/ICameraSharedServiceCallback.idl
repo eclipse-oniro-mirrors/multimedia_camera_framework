@@ -17,5 +17,5 @@ package OHOS.CameraStandard;
 import CameraTypes;
 
 interface ICameraSharedServiceCallback {
-  [ipccode 0, oneway] void OnCameraSharedStatusChange([in] CameraSharedStatus status);
+  [ipccode 0, oneway] void OnCameraSharedStatusChanged([in] int status);
 }
