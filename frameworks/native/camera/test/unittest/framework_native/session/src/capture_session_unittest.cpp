@@ -14914,5 +14914,279 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_195, TestSize.Level0)
     cameraInput->Release();
     captureSession->Release();
 }
+
+/*  
+ * Feature: Framework
+ * Function: Test GetSupportedKeys after CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedKeys after CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_210, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    std::vector<std::string> keys;
+    int32_t retCode = session->GetSupportedKeys(keys);
+    EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*  
+ * Feature: Framework
+ * Function: Test GetSupportedKeys before CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedKeys before CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_211, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    session->LockForControl();
+    std::vector<std::string> keys;
+    int32_t retCode = session->GetSupportedKeys(keys);
+    EXPECT_EQ(retCode, CameraErrorCode::SESSION_NOT_CONFIG);
+    session->UnlockForControl();
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetParameters after CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetParameters after CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_212, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    std::vector<std::string> keys;
+    int32_t retCode = session->GetSupportedKeys(keys);
+    EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
+    for (const std::string& key: keys) {
+        std::vector<std::string> values;
+        retCode = session->GetParameters(key, values);
+        EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
+    }
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*  
+ * Feature: Framework
+ * Function: Test GetParameters before CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetParameters before CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_213, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    session->LockForControl();
+    std::vector<std::string> values;
+    int32_t retCode = session->GetParameters("abc", values);
+    EXPECT_EQ(retCode, CameraErrorCode::SESSION_NOT_CONFIG);
+    session->UnlockForControl();
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*  
+ * Feature: Framework
+ * Function: Test SetParameters before CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetParameters before CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_214, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    session->LockForControl();
+    std::unordered_map<std::string, std::string> kvPairs;
+    int32_t retCode = session->SetParameters(kvPairs);
+    EXPECT_EQ(retCode, CameraErrorCode::SESSION_NOT_CONFIG);
+    session->UnlockForControl();
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*  
+ * Feature: Framework
+ * Function: Test SetParameters invalid parameter.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetParameters invalid parameter.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_215, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    std::vector<std::string> keys;
+    int32_t retCode = session->GetSupportedKeys(keys);
+    EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
+    std::unordered_map<std::string, std::string> kvPairs;
+    
+    kvPairs.insert(std::make_pair("abc", "def"));
+    retCode = session->SetParameters(kvPairs);
+    EXPECT_EQ(retCode, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetActiveParameter before CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveParameter before CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_216, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+
+    session->LockForControl();
+    std::unordered_map<std::string, std::string> kvPairs;
+    std::string value;
+    int32_t retCode = session->GetActiveParameter("abc" ,value);
+    EXPECT_EQ(retCode, CameraErrorCode::SESSION_NOT_CONFIG);
+    session->UnlockForControl();
+
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
 }
 }

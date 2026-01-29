@@ -105,6 +105,10 @@ interface ICameraService{
   [ipccode 73] void GetOnBoardDisplayId([out] int displayId);
   [ipccode 74] void GetAppNaturalDirection([out] int naturalDirection);
   [ipccode 75] void GetLogicCameraConfig([in] String clientName, [out] List<int> useLogicCamera, [out] List<int> customLogicDirection);
+  [ipccode 76] void SetParameters([in] Map<String, String> kvPairs);
+  [ipccode 77] void GetParameters([in] String key, [out] List<String> values);
+  [ipccode 78] void GetSupportedKeys([out] List<String> keys);
+  [ipccode 79] void GetActiveParameter([in] String key, [out] String value);
   [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);
