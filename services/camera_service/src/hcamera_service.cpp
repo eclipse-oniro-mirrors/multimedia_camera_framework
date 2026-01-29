@@ -1418,7 +1418,7 @@ void HCameraService::ExecutePidSetCallback(const sptr<ICameraServiceCallback>& c
     }
 }
 
-int32_t HCameraService::SetCameraCallback(const sptr<ICameraServiceCallback>& callback)
+int32_t HCameraService::SetCameraCallback(const sptr<ICameraServiceCallback>& callback, bool executeCallbackNow)
 {
     std::vector<std::string> cameraIds;
     GetCameraIds(cameraIds);
@@ -1433,7 +1433,7 @@ int32_t HCameraService::SetCameraCallback(const sptr<ICameraServiceCallback>& ca
         (void)cameraServiceCallbacks_.erase(callbackItem);
     }
     cameraServiceCallbacks_.insert(make_pair(pid, callback));
-    ExecutePidSetCallback(callback, cameraIds);
+    CHECK_EXECUTE(executeCallbackNow, ExecutePidSetCallback(callback, cameraIds));
     return CAMERA_OK;
 }
 

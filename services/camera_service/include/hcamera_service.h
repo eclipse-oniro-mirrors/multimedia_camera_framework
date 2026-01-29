@@ -161,7 +161,7 @@ public:
         const IpcVideoProfile& videoProfile, sptr<IMovieFileOutput>& movieFileOutput) override;
     int32_t UnSetAllCallback(pid_t pid);
     int32_t CloseCameraForDestory(pid_t pid);
-    int32_t SetCameraCallback(const sptr<ICameraServiceCallback>& callback) override;
+    int32_t SetCameraCallback(const sptr<ICameraServiceCallback>& callback, bool executeCallbackNow) override;
     int32_t UnSetCameraCallback() override;
     int32_t SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback) override;
     int32_t UnSetMuteCallback() override;

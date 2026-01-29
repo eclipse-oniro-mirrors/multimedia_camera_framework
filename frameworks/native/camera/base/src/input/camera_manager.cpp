@@ -207,12 +207,16 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
         cameraManager->ClearCameraDeviceListCache();
         cameraManager->ClearCameraDeviceAbilitySupportMap();
     }
-    // LCOV_EXCL_STOP
     sptr<CameraDevice> cameraInfo = cameraManager->GetCameraDeviceFromId(cameraId);
-    cameraStatusInfo.cameraDevice = cameraInfo;
-    if (status == static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR)) {
-        cameraManager->RemoveCameraDeviceFromCache(cameraId);
+    if (status != static_cast<int32_t>(CameraStatus::CAMERA_STATUS_APPEAR) &&
+        status != static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR) && cameraManager->ShouldClearCache() &&
+        !cameraInfo) {
+        cameraManager->ClearCameraDeviceListCache();
+        cameraManager->ClearCameraDeviceAbilitySupportMap();
+        cameraInfo = cameraManager->GetCameraDeviceFromId(cameraId);
     }
+    // LCOV_EXCL_STOP
+    cameraStatusInfo.cameraDevice = cameraInfo;
     cameraStatusInfo.cameraStatus = static_cast<CameraStatus>(status);
     cameraStatusInfo.bundleName = bundleName;
     CHECK_EXECUTE(!CheckCameraStatusValid(cameraInfo), return CAMERA_OK);
@@ -221,6 +225,9 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
         MEDIA_DEBUG_LOG("CameraStatusListenerManager listeners size: %{public}zu", listenerManager->GetListenerCount());
         listenerManager->TriggerListener([&](auto listener) { listener->OnCameraStatusChanged(cameraStatusInfo); });
         listenerManager->CacheCameraStatus(cameraId, std::make_shared<CameraStatusInfo>(cameraStatusInfo));
+        if (status == static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR)) {
+            cameraManager->RemoveCameraDeviceFromCache(cameraId);
+        }
     }
     return CAMERA_OK;
 }
@@ -1115,6 +1122,28 @@ void CameraManager::InitCameraManager()
     bundleName_ = system::GetParameter("const.camera.folded_lens_change", "default");
     curBundleName_ = GetBundleName();
     MEDIA_DEBUG_LOG("IsSystemApp = %{public}d", isSystemApp_);
+    CHECK_RETURN_ELOG(cameraStatusListenerManager_ == nullptr, "cameraStatusListenerManager is nullptr");
+    sptr<ICameraServiceCallback> callback = cameraStatusListenerManager_;
+    SetCameraServiceCallback(callback, false);
+}
+
+bool CameraManager::ShouldClearCache()
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false, "ShouldClearCache serviceProxy is nullptr");
+    std::vector<std::string> cameraIds;
+    int32_t retCode = serviceProxy->GetCameraIds(cameraIds);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "ShouldClearCache GetCameraIds call failed");
+    std::vector<std::string> cacheCameraIds;
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceListMutex_);
+        for (auto& deviceInfo : cameraDeviceList_) {
+            CHECK_EXECUTE(deviceInfo, cacheCameraIds.push_back(deviceInfo->GetID()));
+        }
+    }
+    CHECK_RETURN_RET_DLOG(cameraIds.size() != cacheCameraIds.size() || cacheCameraIds != cameraIds, true,
+        "The cache needs to be cleared");
+    return false;
 }
 
 std::string CameraManager::GetBundleName()
@@ -1194,7 +1223,7 @@ void CameraManager::OnCameraServerAlive()
     int32_t ret = RefreshServiceProxy();
     CHECK_RETURN_ELOG(ret != CameraErrorCode::SUCCESS, "RefreshServiceProxy fail , ret = %{public}d", ret);
     AddServiceProxyDeathRecipient();
-    if (cameraStatusListenerManager_->GetListenerCount() > 0) {
+    if (cameraStatusListenerManager_) {
         sptr<ICameraServiceCallback> callback = cameraStatusListenerManager_;
         SetCameraServiceCallback(callback);
     }
@@ -1349,9 +1378,6 @@ void CameraManager::UnregisterCameraStatusCallback(std::shared_ptr<CameraManager
     // LCOV_EXCL_START
     CHECK_RETURN(listener == nullptr);
     cameraStatusListenerManager_->RemoveListener(listener);
-    if (cameraStatusListenerManager_->GetListenerCount() == 0) {
-        UnSetCameraServiceCallback();
-    }
     // LCOV_EXCL_STOP
 }
 
@@ -3092,12 +3118,12 @@ int32_t ControlCenterStatusListenerManager::OnControlCenterStatusChanged(bool st
     // LCOV_EXCL_STOP
 }
 
-int32_t CameraManager::SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback)
+int32_t CameraManager::SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback, bool executeCallbackNow)
 {
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(
         serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CameraManager::SetCameraServiceCallback serviceProxy is null");
-    int32_t retCode = serviceProxy->SetCameraCallback(callback);
+    int32_t retCode = serviceProxy->SetCameraCallback(callback, executeCallbackNow);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
         "SetCameraServiceCallback Set service Callback failed, retCode: %{public}d", retCode);
     return CAMERA_OK;

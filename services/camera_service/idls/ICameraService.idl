@@ -43,7 +43,7 @@ option_stub_hooks on;
 
 interface ICameraService{
   [ipccode 0] void CreateCameraDevice([in] String cameraId, [out] ICameraDeviceService device);
-  [ipccode 1] void SetCameraCallback([in] ICameraServiceCallback callbackFunc);
+  [ipccode 1] void SetCameraCallback([in] ICameraServiceCallback callbackFunc, [in] boolean executeCallbackNow);
   [ipccode 2] void SetMuteCallback([in] ICameraMuteServiceCallback callbackFunc);
   [ipccode 3] void SetTorchCallback([in] ITorchServiceCallback callbackFunc);
   [ipccode 4] void GetCameras([out] List<String> cameraIds, [out] List<sharedptr<CameraMetadata>> cameraAbilityList);

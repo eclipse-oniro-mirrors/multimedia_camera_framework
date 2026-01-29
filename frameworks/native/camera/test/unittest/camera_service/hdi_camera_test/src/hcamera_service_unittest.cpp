@@ -1791,11 +1791,11 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_047, TestSize.Level0)
     device->Open();
 
     sptr<ICameraServiceCallback> callback = nullptr;
-    int32_t intResult = cameraService_->SetCameraCallback(callback);
+    int32_t intResult = cameraService_->SetCameraCallback(callback, true);
     EXPECT_EQ(intResult, 2);
     callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
-    intResult = cameraService_->SetCameraCallback(callback);
+    intResult = cameraService_->SetCameraCallback(callback, true);
     EXPECT_EQ(intResult, 0);
     ASSERT_NE(device, nullptr);
     sptr<ICameraMuteServiceCallback> callback_2 = nullptr;
