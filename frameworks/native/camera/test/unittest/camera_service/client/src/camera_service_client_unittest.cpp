@@ -558,7 +558,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_002, TestSize.L
     ASSERT_NE(serviceProxy, nullptr);
 
     sptr<ICameraServiceCallback> callback = nullptr;
-    int32_t intResult = serviceProxy->SetCameraCallback(callback);
+    int32_t intResult = serviceProxy->SetCameraCallback(callback, true);
     EXPECT_EQ(intResult, 5);
 
     sptr<ICameraMuteServiceCallback> callback_2 = nullptr;
@@ -621,7 +621,7 @@ HWTEST_F(CameraServiceClientUnit, camera_service_client_unittest_003, TestSize.L
 
     sptr<ICameraServiceCallback> callback = manager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
-    int32_t intResult = serviceProxy->SetCameraCallback(callback);
+    int32_t intResult = serviceProxy->SetCameraCallback(callback, true);
     EXPECT_EQ(intResult, 1);
 
     sptr<ICameraMuteServiceCallback> callback_2 = manager_->GetCameraMuteListenerManager();

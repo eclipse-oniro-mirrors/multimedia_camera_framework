@@ -1030,6 +1030,7 @@ public:
     std::string GetBundleName();
     void GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList);
     std::vector<sptr<CameraDevice>> GetCameraDevices();
+    bool ShouldClearCache();
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
@@ -1048,7 +1049,7 @@ private:
 
     explicit CameraManager();
     void InitCameraManager();
-    int32_t SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback);
+    int32_t SetCameraServiceCallback(sptr<ICameraServiceCallback>& callback, bool executeCallbackNow = true);
     int32_t UnSetCameraServiceCallback();
 
     int32_t SetCameraMuteServiceCallback(sptr<ICameraMuteServiceCallback>& callback);
