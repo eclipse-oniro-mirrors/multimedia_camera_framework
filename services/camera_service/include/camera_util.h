@@ -266,12 +266,12 @@ std::string GetValidCameraId(std::string& cameraId);
 std::string ControlCenterMapToString(const std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> &data);
 std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToControlCenterMap(const std::string& str);
 int32_t DisplayModeToFoldStatus(int32_t displayMode);
-int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode = -1);
+int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,  int32_t& sensorOrientation,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, std::string clientName, int32_t displayMode = -1);
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t& sensorOrientation, int32_t displayMode = -1);
+    int32_t& sensorOrientation, std::string clientName, int32_t displayMode = -1);
 int32_t GetPhysicalOrientationByFoldAndDirection(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t& sensorOrientation, int32_t foldStatus);
+    int32_t& sensorOrientation, int32_t foldStatus, std::string clientName);
 int32_t GetDisplayId(int32_t& displayId);
 int32_t GetDisplayRotation(int32_t& displayRotation);
 } // namespace CameraStandard

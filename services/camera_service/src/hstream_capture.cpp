@@ -971,7 +971,8 @@ void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetad
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         CHECK_RETURN(cameraAbility_ == nullptr);
         // LCOV_EXCL_START
-        result = GetCorrectedCameraOrientation(usePhysicalCameraOrientation_, cameraAbility_, sensorOrientation);
+        result = GetCorrectedCameraOrientation(
+            usePhysicalCameraOrientation_, sensorOrientation, cameraAbility_, HStreamCommon::GetClientName());
         CHECK_RETURN(result != CAM_META_SUCCESS);
         MEDIA_INFO_LOG("set rotation sensor orientation %{public}d", sensorOrientation);
         result = OHOS::Camera::FindCameraMetadataItem(cameraAbility_->get(), OHOS_ABILITY_CAMERA_POSITION, &item);

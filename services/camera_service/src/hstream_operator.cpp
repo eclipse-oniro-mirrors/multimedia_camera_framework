@@ -751,6 +751,7 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
     for (auto& stream : allStream) {
         CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, 0, "HStreamOperator::LinkInputAndOutputs cameraDevice is null");
         stream->SetUsePhysicalCameraOrientation(cameraDevice_->GetUsePhysicalCameraOrientation());
+        stream->SetClientName(cameraDevice_->GetClientName());
         SetBasicInfo(stream);
         rc = stream->LinkInput(streamOperator_, settings);
         CHECK_RETURN_RET_ELOG(rc != CAMERA_OK, rc, "HStreamOperator::LinkInputAndOutputs IsValidMode false");

@@ -657,7 +657,7 @@ int32_t DisplayModeToFoldStatus(int32_t displayMode)
 }
 
 int32_t GetPhysicalOrientationByFoldAndDirection(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t& sensorOrientation, int32_t foldStatus)
+    int32_t& sensorOrientation, int32_t foldStatus, std::string clientName)
 {
     camera_metadata_item item;
 
@@ -669,8 +669,6 @@ int32_t GetPhysicalOrientationByFoldAndDirection(std::shared_ptr<OHOS::Camera::C
     CHECK_RETURN_RET_ELOG(count % MAP_STEP_NINE, CAMERA_INVALID_STATE,
         "GetPhysicalOrientationByFoldAndDirection FindCameraMetadataItem Count 9 Error");
     int32_t unitLength = count / MAP_STEP_NINE;
-    int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
-    std::string clientName = GetClientNameByToken(tokenId);
     int32_t targetNaturalDirection = 0;
     CameraApplistManager::GetInstance()->GetAppNaturalDirectionByBundleName(clientName, targetNaturalDirection);
 
@@ -697,13 +695,13 @@ int32_t GetPhysicalOrientationByFoldAndDirection(std::shared_ptr<OHOS::Camera::C
 }
 
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t& sensorOrientation, int32_t displayMode)
+    int32_t& sensorOrientation, std::string clientName, int32_t displayMode)
 {
     camera_metadata_item item;
     displayMode = displayMode >= 0 ? displayMode :
         static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
     int32_t curFoldStatus = DisplayModeToFoldStatus(displayMode);
-    int32_t ret = GetPhysicalOrientationByFoldAndDirection(cameraAbility, sensorOrientation, curFoldStatus);
+    int32_t ret = GetPhysicalOrientationByFoldAndDirection(cameraAbility, sensorOrientation, curFoldStatus, clientName);
     CHECK_RETURN_RET(ret == CAMERA_OK, CAMERA_OK);
     ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP,
         &item);
@@ -725,13 +723,13 @@ int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadat
     return ret;
 }
 
-int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode)
+int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,  int32_t& sensorOrientation,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, std::string clientName, int32_t displayMode)
 {
     int32_t ret = CAM_META_FAILURE;
     CHECK_RETURN_RET(cameraAbility == nullptr, ret);
     CHECK_EXECUTE(usePhysicalCameraOrientation, ret =
-        GetPhysicalCameraOrientation(cameraAbility, sensorOrientation, displayMode));
+        GetPhysicalCameraOrientation(cameraAbility, sensorOrientation, clientName, displayMode));
     CHECK_RETURN_RET(ret == CAM_META_SUCCESS, CAM_META_SUCCESS);
 
     camera_metadata_item item;
