@@ -2765,12 +2765,12 @@ enum ImagingModeType : i32 {
 }
 
 interface ImagingModeQuery {
-  isImagingModeSupported(mode: ImagingModeType): bool;
+  IsImagingModeSupported(mode: ImagingModeType): bool;
 }
 
 interface ImagingMode : ImagingModeQuery {
-  getActiveImagingMode(): ImagingModeType;
-  setImagingMode(mode: ImagingModeType): void;
+  GetActiveImagingMode(): ImagingModeType;
+  SetImagingMode(mode: ImagingModeType): void;
 }
 
 // transfer functions
