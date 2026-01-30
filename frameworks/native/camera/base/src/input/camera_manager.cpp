@@ -1223,7 +1223,7 @@ void CameraManager::OnCameraServerAlive()
     int32_t ret = RefreshServiceProxy();
     CHECK_RETURN_ELOG(ret != CameraErrorCode::SUCCESS, "RefreshServiceProxy fail , ret = %{public}d", ret);
     AddServiceProxyDeathRecipient();
-    if (cameraStatusListenerManager_) {
+    if (cameraStatusListenerManager_->GetListenerCount() > 0) {
         sptr<ICameraServiceCallback> callback = cameraStatusListenerManager_;
         SetCameraServiceCallback(callback);
     }
