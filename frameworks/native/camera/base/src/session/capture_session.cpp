@@ -2388,12 +2388,13 @@ int32_t CaptureSession::GetExposureValue(float& exposureValue)
     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS, "GetExposureValue camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_AE_EXPOSURE_COMPENSATION, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
         "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
     int32_t exposureCompensation = item.data.i32[0];
     ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_STEP, &item);
     CHECK_RETURN_RET_ELOG(
-        ret != CAM_META_SUCCESS, 0, "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
+        ret != CAM_META_SUCCESS || item.count <= 0, 0,
+        "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
     int32_t stepNumerator = item.data.r->numerator;
     int32_t stepDenominator = item.data.r->denominator;
     if (stepDenominator == 0) {
@@ -6642,6 +6643,54 @@ int32_t CaptureSession::SetParameters(std::vector<std::pair<std::string, std::st
         }
     }
     return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetParameters(const std::unordered_map<std::string, std::string>& kvPairs)
+{
+    MEDIA_INFO_LOG("CaptureSession::SetParameters is called");
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetParameters Session is not Commited");
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "SetParameters serviceProxy is null");
+    int32_t retCode = serviceProxy->SetParameters(kvPairs);
+    return ServiceToCameraError(retCode);
+}
+
+int32_t CaptureSession::GetParameters(const std::string& key, std::vector<std::string>& values)
+{
+    MEDIA_INFO_LOG("CaptureSession::GetParameters is called");
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetParameters Session is not Commited");
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+        "GetParameters serviceProxy is null");
+    int32_t retCode = serviceProxy->GetParameters(key, values);
+    return ServiceToCameraError(retCode);
+}
+
+int32_t CaptureSession::GetSupportedKeys(std::vector<std::string>& keys)
+{
+    MEDIA_INFO_LOG("CaptureSession::GetSupportedKeys is called");
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetSupportedKeys Session is not Commited");
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
+        "GetSupportedKeys serviceProxy is null");
+    int32_t retCode = serviceProxy->GetSupportedKeys(keys);
+    return ServiceToCameraError(retCode);
+}
+
+int32_t CaptureSession::GetActiveParameter(const std::string& key, std::string& value)
+{
+    MEDIA_INFO_LOG("CaptureSession::GetActiveParameter is called");
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetActiveParameter Session is not Commited");
+    auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr,  CameraErrorCode::SERVICE_FATL_ERROR,
+        "GetActiveParameter serviceProxy is null");
+    int32_t retCode = serviceProxy->GetActiveParameter(key, value);
+    return ServiceToCameraError(retCode);
 }
 
 int32_t CaptureSession::SetExposureMeteringMode(MeteringMode mode)

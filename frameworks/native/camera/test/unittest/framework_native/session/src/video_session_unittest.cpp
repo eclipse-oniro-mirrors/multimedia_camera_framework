@@ -236,7 +236,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_001, TestSize.Level1
 
     sptr<ICameraServiceCallback> callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
-    int32_t intResult = cameraService->SetCameraCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback, true);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();
@@ -281,7 +281,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_002, TestSize.Level0
 
     sptr<ICameraServiceCallback> callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
-    int32_t intResult = cameraService->SetCameraCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback, true);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();

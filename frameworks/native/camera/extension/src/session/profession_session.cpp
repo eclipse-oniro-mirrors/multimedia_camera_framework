@@ -832,7 +832,7 @@ void ProfessionSession::ProcessSensorExposureTimeChange(const std::shared_ptr<OH
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_SENSOR_EXPOSURE_TIME, &item);
-    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    CHECK_RETURN(ret != CAM_META_SUCCESS || item.count == 0);
     int32_t numerator = item.data.r->numerator;
     int32_t denominator = item.data.r->denominator;
     MEDIA_DEBUG_LOG("SensorExposureTime: %{public}d/%{public}d", numerator, denominator);

@@ -537,8 +537,12 @@ public:
     static napi_value OnIsoInfoChange(napi_env env, napi_callback_info info);
     static napi_value OffIsoInfoChange(napi_env env, napi_callback_info info);
 
-    static napi_value SetParameters(napi_env env, napi_callback_info info);
     static napi_value SetExposureMeteringMode(napi_env env, napi_callback_info info);
+
+    static napi_value SetParameters(napi_env env, napi_callback_info info);
+    static napi_value GetParameters(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedKeys(napi_env env, napi_callback_info info);
+    static napi_value GetActiveParameter(napi_env env, napi_callback_info info);
 
     static napi_value IsImagingModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetActiveImagingMode(napi_env env, napi_callback_info info);

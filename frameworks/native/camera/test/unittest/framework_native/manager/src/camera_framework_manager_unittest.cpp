@@ -2247,7 +2247,23 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_102, Test
     ret = cameraManager_->GetTorchMode();
     EXPECT_EQ(ret, TorchMode::TORCH_MODE_OFF);
 }
-
 #endif
+
+/*
+ * Feature: Framework
+ * Function: Test ShouldClearCache
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ShouldClearCache
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_103, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    EXPECT_FALSE(cameraManager_->ShouldClearCache());
+    cameraManager_->cameraDeviceList_.clear();
+    EXPECT_TRUE(cameraManager_->ShouldClearCache());
+}
 }
 }

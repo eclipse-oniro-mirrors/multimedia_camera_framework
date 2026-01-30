@@ -246,6 +246,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     muxer->Create(format, photoAssetProxy, videoTypeMap_[captureId]);
     muxer->SetRotation(captureRotation);
     if (!choosedBuffer.empty()) {
+        CHECK_RETURN_RET_ELOG(choosedBuffer.front() == nullptr, nullptr, "choosedBuffer.front() is null");
         muxer->SetCoverTime(MovingPhotoNanosecToMillisec(
             std::min(timestamp, backTimestamp) - choosedBuffer.front()->GetTimeStamp()));
         muxer->SetStartTime(MovingPhotoNanosecToMillisec(choosedBuffer.front()->GetTimeStamp()));
@@ -264,6 +265,8 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     if (isHevcAndHdrSupported) {
         formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_IS_HDR_VIVID, IS_HDR_VIVID);
     }
+    CHECK_RETURN_RET_ELOG(frameRecords[0] == nullptr || frameRecords[0]->GetFrameSize() == nullptr, nullptr,
+        "AvcodecTaskManager::CreateAVMuxer GetFrameSize is null");
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
     formatVideo->PutDoubleValue(MediaDescriptionKey::MD_KEY_FRAME_RATE, VIDEO_FRAME_RATE);

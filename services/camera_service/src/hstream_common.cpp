@@ -315,6 +315,18 @@ bool HStreamCommon::GetUsePhysicalCameraOrientation()
     return usePhysicalCameraOrientation_;
 }
 
+void HStreamCommon::SetClientName(const std::string clientName)
+{
+    std::lock_guard<std::mutex> lock(clientNameMutex_);
+    clientName_ = clientName;
+}
+
+std::string HStreamCommon::GetClientName()
+{
+    std::lock_guard<std::mutex> lock(clientNameMutex_);
+    return clientName_;
+}
+
 void HStreamCommon::PrintCaptureDebugLog(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_)
 {
     CHECK_RETURN_ELOG(

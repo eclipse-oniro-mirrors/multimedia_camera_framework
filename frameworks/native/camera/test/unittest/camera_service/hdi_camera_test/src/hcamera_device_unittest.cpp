@@ -602,12 +602,12 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_022, TestSize.Level0)
     ASSERT_NE(cameraService, nullptr);
 
     sptr<ICameraServiceCallback> callback = nullptr;
-    int32_t intResult = cameraService->SetCameraCallback(callback);
+    int32_t intResult = cameraService->SetCameraCallback(callback, true);
     EXPECT_EQ(intResult, 2);
 
     callback = cameraManager_->GetCameraStatusListenerManager();
     ASSERT_NE(callback, nullptr);
-    intResult = cameraService->SetCameraCallback(callback);
+    intResult = cameraService->SetCameraCallback(callback, true);
     EXPECT_EQ(intResult, 0);
 
     sptr<ICameraDeviceService> deviceObj = camInput->GetCameraDevice();

@@ -2182,8 +2182,12 @@ public:
     std::vector<NightSubMode> GetSupportedNightSubModeTypes();
     void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
     uint32_t GetIsoValue();
-    int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
     int32_t SetExposureMeteringMode(MeteringMode mode);
+    int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
+    int32_t SetParameters(const std::unordered_map<std::string, std::string>& kvPairs);
+    int32_t GetParameters(const std::string& key, std::vector<std::string>& values);
+    int32_t GetSupportedKeys(std::vector<std::string>& keys);
+    int32_t GetActiveParameter(const std::string& key, std::string& value);
 
     bool IsImagingModeSupported(ImagingMode iamgingMode);
     int32_t IsImagingModeSupported(ImagingMode imagingMode, bool& isSupported);

@@ -1115,7 +1115,8 @@ void HStreamRepeat::SetStreamTransform(int displayRotation)
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         CHECK_RETURN(cameraAbility_ == nullptr);
-        int ret = GetCorrectedCameraOrientation(usePhysicalCameraOrientation_, cameraAbility_, sensorOrientation);
+        int ret = GetCorrectedCameraOrientation(HStreamCommon::GetUsePhysicalCameraOrientation(), sensorOrientation,
+            cameraAbility_, HStreamCommon::GetClientName());
         CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "HStreamRepeat::SetStreamTransform get sensor "
             "orientation failed");
         MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);
@@ -1607,8 +1608,8 @@ int32_t HStreamRepeat::GetMuxerRotation(int32_t motionRotation)
     {
         std::lock_guard<std::mutex> lock(cameraAbilityLock_);
         CHECK_RETURN_RET(cameraAbility_ == nullptr, -1);
-        int ret = GetCorrectedCameraOrientation(HStreamCommon::GetUsePhysicalCameraOrientation(),
-            cameraAbility_, sensorOrientation);
+        int ret = GetCorrectedCameraOrientation(HStreamCommon::GetUsePhysicalCameraOrientation(), sensorOrientation,
+            cameraAbility_, HStreamCommon::GetClientName());
         CHECK_RETURN_RET_ELOG(
             ret != CAM_META_SUCCESS, -1, "HStreamRepeat::GetMuxerRotation get sensor orientation failed");
         MEDIA_DEBUG_LOG("HStreamRepeat::SetStreamTransform sensor orientation %{public}d", sensorOrientation);

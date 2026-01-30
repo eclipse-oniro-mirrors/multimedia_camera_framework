@@ -100,7 +100,7 @@ void CreateCameraDevice(FuzzedDataProvider& provider)
 void SetCameraCallback(FuzzedDataProvider& provider)
 {
     auto cb = sptr<MockCameraServiceCallback>::MakeSptr();
-    GetInstance().SetCameraCallback(cb);
+    GetInstance().SetCameraCallback(cb, true);
 }
 
 void SetMuteCallback(FuzzedDataProvider& provider)

@@ -161,7 +161,7 @@ public:
         const IpcVideoProfile& videoProfile, sptr<IMovieFileOutput>& movieFileOutput) override;
     int32_t UnSetAllCallback(pid_t pid);
     int32_t CloseCameraForDestory(pid_t pid);
-    int32_t SetCameraCallback(const sptr<ICameraServiceCallback>& callback) override;
+    int32_t SetCameraCallback(const sptr<ICameraServiceCallback>& callback, bool executeCallbackNow) override;
     int32_t UnSetCameraCallback() override;
     int32_t SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback) override;
     int32_t UnSetMuteCallback() override;
@@ -253,6 +253,10 @@ public:
         std::lock_guard<std::mutex> lock(videoSessionMutex_);
         return videoSessionForControlCenter_;
     }
+    int32_t SetParameters(const std::unordered_map<std::string, std::string>& kvPairs) override;
+    int32_t GetParameters(const std::string& key, std::vector<std::string>& values) override;
+    int32_t GetSupportedKeys(std::vector<std::string>& keys) override;
+    int32_t GetActiveParameter(const std::string& key, std::string& value) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -285,6 +289,8 @@ private:
     void ClearCameraListenerByPid(pid_t pid);
     int DestroyStubForPid(pid_t pid);
     void ClientDied(pid_t pid);
+    void InitParameters();
+    int32_t GetSupportedAbilities(const uint32_t& tagId, const uint8_t& tagType, std::vector<std::string>& abilities);
     sptr<HCaptureSession> videoSessionForControlCenter_;
     bool deviceControlCenterAbility_ = false;
 
@@ -381,6 +387,9 @@ private:
         RestoreParamTypeOhos restoreParamType, int activeTime, EffectParam effectParam,
         sptr<HCaptureSession> captureSession);
     void SetPrelaunchScanCameraConfig(const std::string& bundleName);
+    void SetParameterSetting(const uint32_t& tagId, const uint8_t& tagType, const std::string& valueStr,
+        std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
+    int32_t UpdateParameterSetting(const uint32_t& tagId, const uint8_t& tagType, const std::string& valueStr);
 
     mutex mutex_;
     mutex cameraCbMutex_;
@@ -450,6 +459,8 @@ private:
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     sptr<ResSchedToCameraEventListener> eventListener_ = nullptr;
 #endif
+    std::once_flag initParameterFlag_;
+    std::mutex parameterMutex_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -136,6 +136,8 @@ public:
 
     int32_t SetUsePhysicalCameraOrientation(bool isUsed);
     bool GetUsePhysicalCameraOrientation();
+    void SetClientName(const std::string clientName);
+    std::string GetClientName();
 
     int32_t format_;
     int32_t width_;
@@ -183,6 +185,8 @@ protected:
     int32_t captureIdForConfirmCapture_ = CAPTURE_ID_UNSET;
     bool usePhysicalCameraOrientation_ = false;
     std::mutex usePhysicalCameraOrientationMutex_;
+    std::string clientName_ = "";
+    std::mutex clientNameMutex_;
 
 private:
     StreamType streamType_;

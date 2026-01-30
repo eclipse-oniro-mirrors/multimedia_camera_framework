@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <tuple>
 
 #include "ability/camera_ability_const.h"
 #include "access_token.h"
@@ -44,6 +45,7 @@
 #include "camera_util.h"
 #include "camera_common_event_manager.h"
 #include "camera_metadata.h"
+#include "camera_parameters_config_parser.h"
 #include "datashare_predicates.h"
 #include "datashare_result_set.h"
 #include "deferred_processing_service.h"
@@ -101,6 +103,12 @@ const std::string NO_NEED_RESTORE_NAME = "no_save_restore";
 const std::string PRE_SCAN_REASON = "SCAN_PRELAUNCH";
 const std::string PRE_SCAN_NAME = "camera_service";
 constexpr int32_t ACTIVE_TIME_DEFAULT = 0;
+// <tagName, std::tuple<tagId, tagType, std::map<k, v>>>
+static std::map<std::string, std::tuple<uint32_t, uint8_t, std::map<std::string, std::string>>> SUPPORTED_PARAMETERS;
+static std::map<std::string, std::string> CURRENT_PARAMETERS;
+constexpr int32_t DEFAULT_ITEMS = 1;
+constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+constexpr int32_t DEFAULT_COUNT = 1;
 
 std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_VIDEO_STABILIZATION_MODE,
@@ -1398,6 +1406,78 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     return CAMERA_OK;
 }
 
+int32_t HCameraService::SetParameters(const std::unordered_map<std::string, std::string>& parameters)
+{
+    MEDIA_INFO_LOG("HCameraService::SetParameters is called");
+    InitParameters();
+    for (const auto& [key, value] : parameters) {
+        auto iterator = SUPPORTED_PARAMETERS.find(key);
+        CHECK_RETURN_RET_ELOG(iterator == SUPPORTED_PARAMETERS.end(), CAMERA_OPERATION_NOT_ALLOWED,
+            "HCameraService::SetParameters invalid key");
+        auto kvPairs = std::get<NUMBER_TWO>(iterator->second);
+        CHECK_RETURN_RET_ELOG(kvPairs.find(value) == kvPairs.end(), CAMERA_OPERATION_NOT_ALLOWED,
+            "HCameraService::SetParameters invalid value");
+    }
+    std::lock_guard<std::mutex> lock(parameterMutex_);
+    for (const auto& [key, value] : parameters) {
+        auto iterator = SUPPORTED_PARAMETERS.find(key);
+        uint32_t tagId = std::get<0>(iterator->second);
+        uint8_t tagType = std::get<1>(iterator->second);
+        std::map<std::string, std::string> kvPairs = std::get<NUMBER_TWO>(iterator->second);
+        std::string valueStr = kvPairs[value];
+        CHECK_CONTINUE_ELOG(!IsDoubleRegex(valueStr)
+            || ((tagType == META_TYPE_BYTE) && (std::stoi(valueStr) < MIN_UINT8 || std::stoi(valueStr) > MAX_UINT8)),
+            "HCameraService::SetParameters invalid config, value:%{public}s", valueStr.c_str());
+        MEDIA_INFO_LOG("HCameraService::SetParameters key:%{public}s, value:%{public}s", key.c_str(), value.c_str());
+        int32_t ret = UpdateParameterSetting(tagId, tagType, valueStr);
+        MEDIA_INFO_LOG("HCameraService::SetParameters UpdateParameterSetting ret:%{public}d", ret);
+        CHECK_EXECUTE(ret == CAMERA_OK, CURRENT_PARAMETERS[key] = value);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetParameters(const std::string& key, std::vector<std::string>& values)
+{
+    MEDIA_INFO_LOG("HCameraService::GetParameters is called");
+    InitParameters();
+    auto iterator = SUPPORTED_PARAMETERS.find(key);
+    CHECK_RETURN_RET(iterator == SUPPORTED_PARAMETERS.end(), CAMERA_OPERATION_NOT_ALLOWED);
+
+    uint32_t tagId = std::get<0>(iterator->second);
+    uint8_t tagType = std::get<1>(iterator->second);
+    std::vector<std::string> abilities;
+    GetSupportedAbilities(tagId, tagType, abilities);
+
+    auto kvPairs = std::get<2>(iterator->second);
+    for (const auto& [k, v] : kvPairs) {
+        if (std::find(abilities.begin(), abilities.end(), k) != abilities.end()) {
+            values.push_back(v);
+        }
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetSupportedKeys(std::vector<std::string>& keys)
+{
+    MEDIA_INFO_LOG("HCameraService::GetSupportedKeys is called");
+    InitParameters();
+    for (const auto& [key, value] : SUPPORTED_PARAMETERS) {
+        keys.push_back(key);
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetActiveParameter(const std::string& key, std::string& value)
+{
+    std::lock_guard<std::mutex> lock(parameterMutex_);
+    MEDIA_INFO_LOG("HCameraService::GetActiveParameter is called, key:%{public}s", key.c_str());
+    auto pair = CURRENT_PARAMETERS.find(key);
+    if (pair != CURRENT_PARAMETERS.end()) {
+        value = pair->second;
+    }
+    return CAMERA_OK;
+}
+
 void HCameraService::ExecutePidSetCallback(const sptr<ICameraServiceCallback>& callback,
     std::vector<std::string>& cameraIds)
 {
@@ -1418,7 +1498,7 @@ void HCameraService::ExecutePidSetCallback(const sptr<ICameraServiceCallback>& c
     }
 }
 
-int32_t HCameraService::SetCameraCallback(const sptr<ICameraServiceCallback>& callback)
+int32_t HCameraService::SetCameraCallback(const sptr<ICameraServiceCallback>& callback, bool executeCallbackNow)
 {
     std::vector<std::string> cameraIds;
     GetCameraIds(cameraIds);
@@ -1433,7 +1513,7 @@ int32_t HCameraService::SetCameraCallback(const sptr<ICameraServiceCallback>& ca
         (void)cameraServiceCallbacks_.erase(callbackItem);
     }
     cameraServiceCallbacks_.insert(make_pair(pid, callback));
-    ExecutePidSetCallback(callback, cameraIds);
+    CHECK_EXECUTE(executeCallbackNow, ExecutePidSetCallback(callback, cameraIds));
     return CAMERA_OK;
 }
 
@@ -2839,6 +2919,67 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
     return defaultSettings;
 }
 
+void HCameraService::SetParameterSetting(const uint32_t& tagId, const uint8_t& tagType,  const std::string& valueStr,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)
+{
+    switch (tagType) {
+        case META_TYPE_BYTE: {
+            auto valueByte = static_cast<uint8_t>(std::stoi(valueStr));
+            AddOrUpdateMetadata(changedMetadata, tagId, &valueByte, DEFAULT_COUNT);
+            break;
+        }
+        case META_TYPE_INT32: {
+            auto valueInt32 = static_cast<int32_t>(std::stoi(valueStr));
+            AddOrUpdateMetadata(changedMetadata, tagId, &valueInt32, DEFAULT_COUNT);
+            break;
+        }
+        case META_TYPE_UINT32: {
+            auto valueUint32 = static_cast<uint32_t>(std::stoi(valueStr));
+            AddOrUpdateMetadata(changedMetadata, tagId, &valueUint32, DEFAULT_COUNT);
+            break;
+        }
+        case META_TYPE_FLOAT: {
+            auto valueFloat = static_cast<float>(std::stof(valueStr));
+            AddOrUpdateMetadata(changedMetadata, tagId, &valueFloat, DEFAULT_COUNT);
+            break;
+        }
+        case META_TYPE_INT64: {
+            auto valueInt64 = static_cast<int64_t>(std::stoll(valueStr));
+            AddOrUpdateMetadata(changedMetadata, tagId, &valueInt64, DEFAULT_COUNT);
+            break;
+        }
+        case META_TYPE_DOUBLE: {
+            auto valueDouble = static_cast<double>(std::stod(valueStr));
+            AddOrUpdateMetadata(changedMetadata, tagId, &valueDouble, DEFAULT_COUNT);
+            break;
+        }
+        default: {
+            auto value = std::stoi(valueStr);
+            AddOrUpdateMetadata(changedMetadata, tagId, &value, DEFAULT_COUNT);
+            break;
+        }
+    }
+}
+
+int32_t HCameraService::UpdateParameterSetting(const uint32_t& tagId, const uint8_t& tagType,
+    const std::string& valueStr)
+{
+    int32_t ret = -1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    SetParameterSetting(tagId, tagType, valueStr, changedMetadata);
+    sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+    std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = deviceManager->GetActiveCameraHolders();
+    for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
+        sptr<HCameraDevice> activeDevice = activeDeviceHolder->GetDevice();
+        CHECK_CONTINUE(!(activeDevice != nullptr && activeDevice->IsOpenedCameraDevice()));
+        activeDevice->UpdateSetting(changedMetadata);
+        ret = CAMERA_OK;
+        MEDIA_INFO_LOG("start UpdateParameterSetting");
+    }
+    return ret;
+}
+
 std::string g_toString(std::set<int32_t>& pidList)
 {
     std::ostringstream oss;
@@ -3123,6 +3264,74 @@ void HCameraService::clearPreScanConfig()
         preScanCameraPageName_.clear();
         preScanCameraMode_ = PrelaunchScanModeOhos::NO_NEED_PRE_CAMERA;
     }
+}
+
+void HCameraService::InitParameters()
+{
+    std::call_once(initParameterFlag_, []() {
+        MEDIA_INFO_LOG("HCameraService::InitParameters is called");
+        CameraParametersConfigParser parser;
+        std::map<std::string, Parameter> parameters = parser.ParseXML();
+        std::vector<vendorTag_t> infos;
+        int32_t retCode = OHOS::Camera::GetAllVendorTags(infos);
+        CHECK_RETURN_ELOG(retCode != CAM_META_SUCCESS, "HCameraService::InitParameters GetAllVendorTags failed!");
+        for (auto info : infos) {
+            auto parameter = parameters.find(info.tagName);
+            CHECK_CONTINUE(parameter == parameters.end());
+            SUPPORTED_PARAMETERS.insert(std::make_pair(info.tagName,
+                std::make_tuple(info.tagId, parameter->second.type, parameter->second.kvPairs)));
+        }
+    });
+}
+
+int32_t HCameraService::GetSupportedAbilities(const uint32_t& tagId, const uint8_t& tagType,
+    std::vector<std::string>& abilities)
+{
+    MEDIA_INFO_LOG("HCameraService::GetSupportedAbilities is called");
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "HCameraService::GetSupportedAbilities failed");
+    for (auto& cameraAbility : cameraAbilityList) {
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(),
+            tagId, &item);
+        CHECK_CONTINUE_WLOG(!(ret == CAM_META_SUCCESS && item.count > 0), "ability is not found");
+        for (uint32_t i = 0; i < item.count; i++) {
+            switch (tagType) {
+                case META_TYPE_BYTE: {
+                    abilities.emplace_back(std::to_string(item.data.u8[i]));
+                    break;
+                }
+                case META_TYPE_INT32: {
+                    abilities.emplace_back(std::to_string(item.data.i32[i]));
+                    break;
+                }
+                case META_TYPE_UINT32: {
+                    abilities.emplace_back(std::to_string(item.data.ui32[i]));
+                    break;
+                }
+                case META_TYPE_FLOAT: {
+                    abilities.emplace_back(std::to_string(item.data.f[i]));
+                    break;
+                }
+                case META_TYPE_INT64: {
+                    abilities.emplace_back(std::to_string(item.data.i64[i]));
+                    break;
+                }
+                case META_TYPE_DOUBLE: {
+                    abilities.emplace_back(std::to_string(item.data.d[i]));
+                    break;
+                }
+                default: {
+                    abilities.emplace_back(std::to_string(item.data.i32[i]));
+                    break;
+                }
+            }
+        }
+        break;
+    }
+    return retCode;
 }
 
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION

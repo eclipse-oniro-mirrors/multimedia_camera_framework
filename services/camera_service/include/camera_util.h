@@ -87,6 +87,10 @@ static const int32_t CONTROL_CENTER_APERTURE_INDEX = 2;
 static const int32_t CONTROL_CENTER_DATA_PRECISION = 9;
 static constexpr int32_t UID_CAMERA = 1047;
 
+static const uint8_t MAX_UINT8 = 255;
+static const uint8_t MIN_UINT8 = 0;
+static const uint32_t NUMBER_TWO = 2;
+
 enum CamType {
     SYSTEM = 0,
     OTHER
@@ -262,16 +266,18 @@ bool RemoveFile(const std::string& path);
 bool CheckPathExist(const char *path);
 
 bool isIntegerRegex(const std::string& input);
+bool IsDoubleRegex(const std::string& input);
+bool IsUint8Regex(const std::string& input);
 std::string GetValidCameraId(std::string& cameraId);
 std::string ControlCenterMapToString(const std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> &data);
 std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToControlCenterMap(const std::string& str);
 int32_t DisplayModeToFoldStatus(int32_t displayMode);
-int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,
-    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, int32_t& sensorOrientation, int32_t displayMode = -1);
+int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,  int32_t& sensorOrientation,
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility, std::string clientName, int32_t displayMode = -1);
 int32_t GetPhysicalCameraOrientation(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t& sensorOrientation, int32_t displayMode = -1);
+    int32_t& sensorOrientation, std::string clientName, int32_t displayMode = -1);
 int32_t GetPhysicalOrientationByFoldAndDirection(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility,
-    int32_t& sensorOrientation, int32_t foldStatus);
+    int32_t& sensorOrientation, int32_t foldStatus, std::string clientName);
 int32_t GetDisplayId(int32_t& displayId);
 int32_t GetDisplayRotation(int32_t& displayRotation);
 } // namespace CameraStandard

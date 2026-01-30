@@ -100,6 +100,8 @@ void DepthDataListener::ExecuteDepthData(sptr<SurfaceBuffer> surfaceBuffer) cons
     napi_value qualityLevel;
     napi_get_undefined(env_, &qualityLevel);
     int32_t nativeQualityLevel = 0;
+    CHECK_RETURN_ELOG(surfaceBuffer == nullptr || surfaceBuffer->GetExtraData() == nullptr,
+        "DepthDataOutputNapi defined class failed");
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::depthDataQualityLevel, nativeQualityLevel);
     napi_create_int32(env_, nativeQualityLevel, &qualityLevel);
 

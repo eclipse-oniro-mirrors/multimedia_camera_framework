@@ -1176,6 +1176,10 @@ napi_value PhotoOutputNapi::EnableMirror(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("PhotoOutputNapi::EnableMirror invalid argument");
         return nullptr;
     }
+    if (photoOutputNapi->GetPhotoOutput() == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableMirror GetPhotoOutput is nullptr.");
+        return result;
+    }
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
         photoOutputNapi->isMirrorEnabled_ = isMirror;

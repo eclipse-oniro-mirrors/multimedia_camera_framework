@@ -60,7 +60,7 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest2(FuzzedDataProvider &fdp)
     CHECK_RETURN_ELOG(!foldCallback, "foldCallback is nullptr");
     sptr<ICameraMuteServiceCallback> muteCallback = new ICameraMuteServiceCallbackFuzz();
     CHECK_RETURN_ELOG(!muteCallback, "muteCallback is nullptr");
-    fuzz_->SetCameraCallback(serviceCallback);
+    fuzz_->SetCameraCallback(serviceCallback, true);
     fuzz_->SetMuteCallback(muteCallback);
     fuzz_->SetTorchCallback(torchCallback);
     bool isInnerCallback = fdp.ConsumeBool();
@@ -74,7 +74,7 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest2(FuzzedDataProvider &fdp)
     torchCallback = nullptr;
     foldCallback = nullptr;
     muteCallback = nullptr;
-    fuzz_->SetCameraCallback(serviceCallback);
+    fuzz_->SetCameraCallback(serviceCallback, true);
     fuzz_->SetMuteCallback(muteCallback);
     fuzz_->SetTorchCallback(torchCallback);
     fuzz_->SetFoldStatusCallback(foldCallback, isInnerCallback);

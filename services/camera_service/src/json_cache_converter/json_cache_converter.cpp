@@ -167,14 +167,14 @@ bool JsonCacheConverter::ParseJsonToStreamInfos(const nlohmann::json& streamInfo
         nlohmann::json streamInfoV1_0Json = streamInfoJson["v1_0"];
         OHOS::HDI::Camera::V1_0::StreamInfo v1_0;
         CHECK_RETURN_RET(!ParseJsonToStreamInfoV1_0(streamInfoV1_0Json, v1_0), false);
-        CHECK_RETURN_RET(!CreateProducerForPrelaunch(v1_0), false);
+        bool hasBufferQueue = streamInfoV1_0Json["hasBufferQueue"];
+ 	    CHECK_EXECUTE(hasBufferQueue, CHECK_RETURN_RET(!CreateProducerForPrelaunch(v1_0), false));
 
         CHECK_RETURN_RET_ELOG(!streamInfoJson.contains("extendedStreamInfos"), false,
                               "key extendedStreamInfos not in streamInfoJson.");
         nlohmann::json extendedInfosJson = streamInfoJson["extendedStreamInfos"];
         std::vector<OHOS::HDI::Camera::V1_1::ExtendedStreamInfo> extendedStreamInfos;
         CHECK_RETURN_RET(!ParseJsonToExtendedInfo(extendedInfosJson, extendedStreamInfos), false);
-        CHECK_RETURN_RET(!CreateProducerForPrelaunch(extendedStreamInfos), false);
         streamInfo.v1_0 = v1_0;
         streamInfo.extendedStreamInfos = extendedStreamInfos;
         streamInfos.push_back(streamInfo);
@@ -211,6 +211,7 @@ bool JsonCacheConverter::CheckStreamInfoV1_0Json(const nlohmann::json& streamInf
         {"tunneledMode", JsonKeyType::BOOLEAN, 0, 0},
         {"minFrameDuration", JsonKeyType::INTEGER, 0, 0},
         {"encodeType", JsonKeyType::ENUMERATION, ENCODE_TYPE_NULL, ENUM_LIMIT},
+        {"hasBufferQueue", JsonKeyType::BOOLEAN, 0, 0}
     };
 
     for (const auto& keyInfo : keyInfos) {
@@ -276,6 +277,11 @@ bool JsonCacheConverter::ParseJsonToExtendedInfo(const nlohmann::json& extendedI
         CHECK_RETURN_RET_ELOG(!extendedInfoJson["dataspace"].is_number_integer(), false,
                               "ParseJsonToExtendedInfo : dataspace from json is not int.");
         extendedInfo.dataspace = extendedInfoJson["dataspace"].get<int32_t>();
+
+        CHECK_RETURN_RET_ELOG(!extendedInfoJson["hasBufferQueue"].is_boolean(), false,
+ 	                          "extendedInfoJson : hasBufferQueue from json is not bool.");
+ 	    bool hasBufferQueue = extendedInfoJson["hasBufferQueue"];
+ 	    CHECK_EXECUTE(hasBufferQueue, CHECK_RETURN_RET(!CreateProducerForPrelaunch(extendedInfo), false));
         extendedStreamInfos.push_back(extendedInfo);
     }
     return true;
@@ -424,6 +430,7 @@ void JsonCacheConverter::SaveStreamInfosToJson(const std::vector<StreamInfo_V1_1
         streamInfoV1_0Json["tunneledMode"] = v1_0.tunneledMode_;
         streamInfoV1_0Json["minFrameDuration"] = v1_0.minFrameDuration_;
         streamInfoV1_0Json["encodeType"] = static_cast<int>(v1_0.encodeType_);
+        streamInfoV1_0Json["hasBufferQueue"] = v1_0.bufferQueue_ == nullptr ? false:true;
         streamInfoJson["v1_0"] = streamInfoV1_0Json;
 
         const auto& extendedInfos = streamInfo.extendedStreamInfos;
@@ -435,6 +442,7 @@ void JsonCacheConverter::SaveStreamInfosToJson(const std::vector<StreamInfo_V1_1
             extendedInfoJson["height"] = extendedInfo.height;
             extendedInfoJson["format"] = extendedInfo.format;
             extendedInfoJson["dataspace"] = extendedInfo.dataspace;
+            extendedInfoJson["hasBufferQueue"] = extendedInfo.bufferQueue == nullptr ? false:true;
             extendedInfosJson.push_back(extendedInfoJson);
         }
         streamInfoJson["extendedStreamInfos"] = extendedInfosJson;
@@ -517,18 +525,15 @@ bool JsonCacheConverter::CreateProducerForPrelaunch(OHOS::HDI::Camera::V1_0::Str
     return true;
 }
 
-bool JsonCacheConverter::CreateProducerForPrelaunch(std::vector<OHOS::HDI::Camera::V1_1::ExtendedStreamInfo>
-                                                    &extendedStreamInfos)
+bool JsonCacheConverter::CreateProducerForPrelaunch(OHOS::HDI::Camera::V1_1::ExtendedStreamInfo &extendedStreamInfo)
 {
     MEDIA_DEBUG_LOG("Create Producer of ExtendedStreamInfo For Prelaunch !");
-    for (auto& extendedStreamInfo : extendedStreamInfos) {
-        sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(extendedStreamInfo.format,
-                                                                            extendedStreamInfo.width,
-                                                                            extendedStreamInfo.height);
-        CHECK_RETURN_RET_ELOG(streamCapture == nullptr, false, "Failed to create streamCapture");
-        CHECK_RETURN_RET_ELOG(streamCapture->surface_ == nullptr, false, "surface_ == nullptr");
-        extendedStreamInfo.bufferQueue = new BufferProducerSequenceable(streamCapture->surface_->GetProducer());
-    }
+    sptr<HStreamCapture> streamCapture = new (std::nothrow) HStreamCapture(extendedStreamInfo.format,
+                                                                           extendedStreamInfo.width,
+                                                                           extendedStreamInfo.height);
+    CHECK_RETURN_RET_ELOG(streamCapture == nullptr, false, "Failed to create streamCapture");
+    CHECK_RETURN_RET_ELOG(streamCapture->surface_ == nullptr, false, "surface_ == nullptr");
+    extendedStreamInfo.bufferQueue = new BufferProducerSequenceable(streamCapture->surface_->GetProducer());
     return true;
 }
 }

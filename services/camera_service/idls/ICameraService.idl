@@ -44,7 +44,7 @@ option_stub_hooks on;
 
 interface ICameraService{
   [ipccode 0] void CreateCameraDevice([in] String cameraId, [out] ICameraDeviceService device);
-  [ipccode 1] void SetCameraCallback([in] ICameraServiceCallback callbackFunc);
+  [ipccode 1] void SetCameraCallback([in] ICameraServiceCallback callbackFunc, [in] boolean executeCallbackNow);
   [ipccode 2] void SetMuteCallback([in] ICameraMuteServiceCallback callbackFunc);
   [ipccode 3] void SetTorchCallback([in] ITorchServiceCallback callbackFunc);
   [ipccode 4] void GetCameras([out] List<String> cameraIds, [out] List<sharedptr<CameraMetadata>> cameraAbilityList);
@@ -106,8 +106,12 @@ interface ICameraService{
   [ipccode 73] void GetOnBoardDisplayId([out] int displayId);
   [ipccode 74] void GetAppNaturalDirection([out] int naturalDirection);
   [ipccode 75] void GetLogicCameraConfig([in] String clientName, [out] List<int> useLogicCamera, [out] List<int> customLogicDirection);
-  [ipccode 76] void SetCameraSharedStatusCallback([in] ICameraSharedServiceCallback callbackFunc);
-  [ipccode 77] void UnSetCameraSharedStatusCallback();
+  [ipccode 76] void SetParameters([in] Map<String, String> kvPairs);
+  [ipccode 77] void GetParameters([in] String key, [out] List<String> values);
+  [ipccode 78] void GetSupportedKeys([out] List<String> keys);
+  [ipccode 79] void GetActiveParameter([in] String key, [out] String value);
+  [ipccode 80] void SetCameraSharedStatusCallback([in] ICameraSharedServiceCallback callbackFunc);
+  [ipccode 81] void UnSetCameraSharedStatusCallback();
   [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);

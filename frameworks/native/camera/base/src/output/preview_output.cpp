@@ -127,6 +127,9 @@ int32_t PreviewOutputListenerManager::OnFrameStarted()
     auto previewOutput = GetPreviewOutput();
     CHECK_RETURN_RET_ELOG(
         previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameStarted previewOutput is null");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput->GetPreviewOutputListenerManager() == nullptr, CAMERA_OK,
+        "PreviewOutputListenerManager::GetPreviewOutputListenerManager is null");
     previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
         [](auto listener) { listener->OnFrameStarted(); });
     return CAMERA_OK;
@@ -140,6 +143,9 @@ int32_t PreviewOutputListenerManager::OnFrameEnded(int32_t frameCount)
     auto previewOutput = GetPreviewOutput();
     CHECK_RETURN_RET_ELOG(
         previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameEnded previewOutput is null");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput->GetPreviewOutputListenerManager() == nullptr, CAMERA_OK,
+        "PreviewOutputListenerManager::GetPreviewOutputListenerManager is null");
     previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
         [&frameCount](auto listener) { listener->OnFrameEnded(frameCount); });
     return CAMERA_OK;
@@ -153,6 +159,9 @@ int32_t PreviewOutputListenerManager::OnFrameError(int32_t errorCode)
     auto previewOutput = GetPreviewOutput();
     CHECK_RETURN_RET_ELOG(
         previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameError previewOutput is null");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput->GetPreviewOutputListenerManager() == nullptr, CAMERA_OK,
+        "PreviewOutputListenerManager::GetPreviewOutputListenerManager is null");
     previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
         [&errorCode](auto listener) { listener->OnError(errorCode); });
     return CAMERA_OK;
@@ -199,6 +208,9 @@ int32_t PreviewOutputListenerManager::OnFramePaused()
     auto previewOutput = GetPreviewOutput();
     CHECK_RETURN_RET_ELOG(
         previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFramePaused previewOutput is null");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput->GetPreviewOutputListenerManager() == nullptr, CAMERA_OK,
+        "PreviewOutputListenerManager::GetPreviewOutputListenerManager is null");
     previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
         [](auto listener) { listener->OnFramePaused(); });
     return CAMERA_OK;
@@ -212,6 +224,9 @@ int32_t PreviewOutputListenerManager::OnFrameResumed()
     auto previewOutput = GetPreviewOutput();
     CHECK_RETURN_RET_ELOG(
         previewOutput == nullptr, CAMERA_OK, "PreviewOutputListenerManager::OnFrameResumed previewOutput is null");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput->GetPreviewOutputListenerManager() == nullptr, CAMERA_OK,
+        "PreviewOutputListenerManager::GetPreviewOutputListenerManager is null");
     previewOutput->GetPreviewOutputListenerManager()->TriggerListener(
         [](auto listener) { listener->OnFrameResumed(); });
     return CAMERA_OK;
