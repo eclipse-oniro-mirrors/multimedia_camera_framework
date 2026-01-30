@@ -15188,5 +15188,218 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_216, TestSize.Level0)
     input->Release();
     session->Release();
 }
+/*  
+ * Feature: Framework
+ * Function: Test GetSupportedImagingMode after CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedImagingMode after CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_217, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    std::vector<ImagingMode> imagingModes;
+    int32_t retCode = session->GetSupportedImagingMode(imagingModes);
+    EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
+    EXPECT_EQ(session->UnlockForControl(), CameraErrorCode::SUCCESS);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*  
+ * Feature: Framework
+ * Function: Test GetSupportedImagingMode and IsImagingModeSupported when all modes are supported.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedImagingMode and IsImagingModeSupported when all modes are supported.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_218, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    std::shared_ptr<Camera::CameraMetadata> metadata = session->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    std::vector<uint8_t> testTypes = {OHOS_CAMERA_IMAGING_MODE_AUTO, OHOS_CAMERA_IMAGING_MODE_RGB,
+        OHOS_CAMERA_IMAGING_MODE_IR};
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_IMAGING_MODES);
+    session->changedMetadata_->addEntry(OHOS_ABILITY_IMAGING_MODES, testTypes.data(), testTypes.size());
+    EXPECT_EQ(session->UnlockForControl(), CameraErrorCode::SUCCESS);
+
+    session->LockForControl();
+    std::vector<ImagingMode> imagingModes;
+    int32_t retCode = session->GetSupportedImagingMode(imagingModes);
+    EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
+    EXPECT_NE(imagingModes.size(), 0);
+    EXPECT_EQ(session->UnlockForControl(), CameraErrorCode::SUCCESS);
+
+    bool isSupported;
+    EXPECT_EQ(session->IsImagingModeSupported(ImagingMode::IMAGING_MODE_RGB, isSupported), CameraErrorCode::SUCCESS);
+    EXPECT_TRUE(isSupported);
+
+    ImagingMode imagingMode = static_cast<ImagingMode>(5);
+    EXPECT_FALSE(session->IsImagingModeSupported(imagingMode));
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetImagingMode when mode is invalid.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetImagingMode when mode is invalid.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_219, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+ 
+    ImagingMode imagingMode = static_cast<ImagingMode>(5);
+    ASSERT_NE(session->SetImagingMode(imagingMode), 0);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetImagingMode after CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetImagingMode after CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_0220, TestSize.Level0)
+{
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+ 
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    ImagingMode imagingMode = ImagingMode::IMAGING_MODE_RGB;
+    bool isSupported;
+    EXPECT_EQ(session->IsImagingModeSupported(imagingMode, isSupported), CameraErrorCode::SUCCESS);
+    if (isSupported) {
+        EXPECT_TRUE(session->IsImagingModeSupported(imagingMode));
+        EXPECT_EQ(session->SetImagingMode(imagingMode), CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(session->SetImagingMode(imagingMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    }
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*  
+ * Feature: Framework
+ * Function: Test GetActiveImagingMode after CommitConfig.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetActiveImagingMode after CommitConfig.
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_221, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    session->LockForControl();
+    std::shared_ptr<Camera::CameraMetadata> metadata = session->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    uint8_t testType = OHOS_CAMERA_IMAGING_MODE_AUTO;
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_CONTROL_IMAGING_MODE);
+    session->changedMetadata_->addEntry(OHOS_CONTROL_IMAGING_MODE, &testType, 1);
+    EXPECT_EQ(session->UnlockForControl(), CameraErrorCode::SUCCESS);
+
+    ImagingMode imagingMode;
+    int32_t retCode = session->GetActiveImagingMode(imagingMode);
+    EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
+    EXPECT_EQ(imagingMode, ImagingMode::IMAGING_MODE_AUTO);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
 }
 }

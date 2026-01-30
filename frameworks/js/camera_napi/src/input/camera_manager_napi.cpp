@@ -433,7 +433,7 @@ void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallbackAsync(CameraSha
 void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallback(CameraSharedStatus status) const
 {
     MEDIA_INFO_LOG("OnCameraSharedStatusCallback is called, status: %{public}d", status);
-    ExecuteCallbackScopeSafe("cameraSharedStatus",[&]() {
+    ExecuteCallbackScopeSafe("cameraSharedStatus", [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value result;
         napi_create_int32(env_, static_cast<int32_t>(status), &result);
@@ -2038,7 +2038,7 @@ void CameraManagerNapi::RegisterCameraSharedStatusCallbackListener(
 void CameraManagerNapi::UnregisterCameraSharedStatusCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-     MEDIA_INFO_LOG("CameraManagerNapi::UnregisterCameraSharedStatusCallbackListener is called.");
+    MEDIA_INFO_LOG("CameraManagerNapi::UnregisterCameraSharedStatusCallbackListener is called.");
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi On cameraSharedStatus is called!");
         return;
