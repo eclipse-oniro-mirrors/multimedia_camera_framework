@@ -23,6 +23,7 @@
 #include "graphic_common_c.h"
 #include "surface_type.h"
 #include "sync_fence.h"
+#include "utils/camera_xcollie.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -77,6 +78,9 @@ bool MovingPhotoSurfaceWrapper::InitVideoSurface(sptr<Surface> videoSurface, int
 
 void MovingPhotoSurfaceWrapper::OnBufferArrival()
 {
+    CAMERA_SYNC_TRACE;
+    CameraXCollie cameraXCollie = CameraXCollie("MovingPhotoSurfaceWrapper::OnBufferArrival",
+        (HiviewDFX::XCOLLIE_FLAG_LOG | HiviewDFX::XCOLLIE_FLAG_RECOVERY), 3, nullptr, nullptr);
     std::lock_guard<std::recursive_mutex> lock(videoSurfaceMutex_);
     auto videoSurface = videoSurface_.promote();
     CHECK_RETURN_ELOG(videoSurface == nullptr, "MovingPhotoSurfaceWrapper::OnBufferArrival surface is nullptr");
