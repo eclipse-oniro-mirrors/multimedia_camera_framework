@@ -187,6 +187,7 @@ void HCameraService::OnStart()
     isLogicCamera_ = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
     foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
     cameraHostManager_->ParseJsonFileToMap(SAVE_RESTORE_FILE_PATH, preCameraClient_, preCameraId_);
+    RefreshRssCameraStatus();
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
@@ -581,6 +582,7 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
         case RES_SCHED_SYS_ABILITY_ID:
             MEDIA_INFO_LOG("OnAddSystemAbility RES_SCHED_SYS_ABILITY_ID");
             RegisterSuspendObserver();
+            RefreshRssCameraStatus();
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
             RegisterEventListenerToRss();
 #endif
@@ -1284,6 +1286,25 @@ void HCameraService::OnCameraStatus(const string& cameraId, CameraStatus status,
             CreateMsg("OnCameraStatusChanged! for cameraId:%s, current Camera Status:%d", cameraId.c_str(), status));
     }
     ReportRssCameraStatus(cameraId, status, bundleName);
+}
+
+void HCameraService::RefreshRssCameraStatus()
+{
+    MEDIA_INFO_LOG("HCameraService::RefreshRssCameraStatus is called");
+    auto thisPtr = sptr<HCameraService>(this);
+    std::thread thread([thisPtr]() {
+        CHECK_RETURN(thisPtr == nullptr);
+        std::vector<std::string> cameraIds;
+        thisPtr->GetCameraIds(cameraIds);
+        for (const auto& cameraId : cameraIds) {
+            auto info = thisPtr->GetCachedCameraStatus(cameraId);
+            int32_t status = static_cast<int32_t>(info ? info->status : CAMERA_STATUS_AVAILABLE);
+            std::string bundleName = info ? info->bundleName : "";
+            thisPtr->ReportRssCameraStatus(cameraId, status, bundleName);
+        }
+        MEDIA_INFO_LOG("HCameraService::RefreshRssCameraStatus completed in thread");
+    });
+    thread.detach();
 }
 
 void HCameraService::ReportRssCameraStatus(const std::string& cameraId, int32_t status, const std::string& bundleName)

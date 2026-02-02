@@ -340,6 +340,7 @@ private:
         wptr<HCameraService> cameraService_;
     };
 
+    void RefreshRssCameraStatus();
     void ReportRssCameraStatus(const std::string& cameraId, int32_t status, const std::string& bundleName);
     void FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
         vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
