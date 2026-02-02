@@ -65,9 +65,7 @@
 #include "camera_dialog_manager.h"
 #endif
 #include "tokenid_kit.h"
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
 #include "camera_metadata.h"
-#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -895,6 +893,18 @@ void HCameraDevice::HandleFoldableDevice()
     RegisterDisplayModeListener();
 }
 
+void HCameraDevice::HandleScanScene(std::string clientName)
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene clientName:%s", clientName.c_str());
+    bool isEnableScan = system::GetParameter("const.camera_service.scan_enable", "false") == "true";
+    MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene isEnableScan:%d", isEnableScan);
+    if (clientName != SYSTEM_CAMERA && isEnableScan){
+        bool isScanSceneSupport = GetScanScene();
+        CHECK_EXECUTE(
+            isScanSceneSupport, UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_SPEED));
+    }
+}
+
 void HCameraDevice::ReleaseSessionBeforeCloseDevice()
 {
     std::lock_guard<std::mutex> lock(cameraCloseListenerMutex_);
@@ -911,6 +921,7 @@ int32_t HCameraDevice::CloseDevice()
     bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     CHECK_EXECUTE(isFoldable, UnregisterDisplayModeListener());
+    UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_RETURN_RET_ELOG(
@@ -2184,5 +2195,39 @@ void HCameraDevice::UpdateLiveStreamSceneMetadata(uint32_t mode)
     return;
 }
 #endif
+
+bool HCameraDevice::GetScanScene()
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::GetScanScene E");
+    bool isScanSceneSupport = false;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = GetDeviceAbility();
+    CHECK_RETURN_RET(ability == nullptr, 0);
+    camera_metadata_item_t item;
+    int32_t ret =
+        OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_CAMERA_PREVIEW_QUALITY_PRIORITIZATION, &item);
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
+        isScanSceneSupport = static_cast<uint32_t>(item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::GetScanScene res:%{public}d", isScanSceneSupport);
+    }
+    return isScanSceneSupport;
+}
+
+void HCameraDevice::UpdateScanSceneMetadata(uint32_t previewQuality)
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::UpdateScanSceneMetadata E");
+    CHECK_RETURN_ELOG(GetCameraConnectType() == OHOS_CAMERA_CONNECTION_TYPE_REMOTE, "remote device exit");
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    int32_t count = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    CHECK_RETURN_ELOG(changedMetadata == nullptr, "changedMetadata is nullptr");
+    bool status = AddOrUpdateMetadata(
+        changedMetadata, OHOS_CONTROL_CAMERA_PREVIEW_QUALITY_PRIORITIZATION, &previewQuality, count);
+    CHECK_RETURN_ELOG(!status, "AddOrUpdateMetadata camera scan scene Failed");
+    int32_t ret = UpdateSetting(changedMetadata);
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "UpdateSetting camera scan scene Failed");
+    return;
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -1809,6 +1809,15 @@ bool HStreamOperator::IsIpsRotateSupported()
     return ipsRotateSupported;
 }
 
+bool HStreamOperator::IsCaptureStreamExist()
+{
+    MEDIA_DEBUG_LOG("IsCaptureStreamExist E");
+    const auto& captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
+    bool isCaptureStreamExist = !captureStreams.empty();
+    MEDIA_DEBUG_LOG("IsCaptureStreamExist res:%{public}d", isCaptureStreamExist);
+    return isCaptureStreamExist;
+}
+
 std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captureId,
     std::shared_ptr<PictureIntf> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
     std::string& uri)

@@ -248,6 +248,7 @@ public:
 #ifdef CAMERA_USE_SENSOR
     void RegisterSensorCallback();
 #endif
+    bool IsCaptureStreamExist();
 
     class DisplayRotationListener : public Rosen::DisplayManagerLite::IDisplayListener {
     public:
