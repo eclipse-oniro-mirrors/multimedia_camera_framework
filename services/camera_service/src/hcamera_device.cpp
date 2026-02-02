@@ -898,7 +898,7 @@ void HCameraDevice::HandleScanScene(std::string clientName)
     MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene clientName:%s", clientName.c_str());
     bool isEnableScan = system::GetParameter("const.camera_service.scan_enable", "false") == "true";
     MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene isEnableScan:%d", isEnableScan);
-    if (clientName != SYSTEM_CAMERA && isEnableScan){
+    if (clientName != SYSTEM_CAMERA && isEnableScan) {
         bool isScanSceneSupport = GetScanScene();
         CHECK_EXECUTE(
             isScanSceneSupport, UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_SPEED));
@@ -924,8 +924,7 @@ int32_t HCameraDevice::CloseDevice()
     UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
     {
         std::lock_guard<std::mutex> lock(opMutex_);
-        CHECK_RETURN_RET_ELOG(
-            !isOpenedCameraDevice_.load(), CAMERA_OK, "HCameraDevice::CloseDevice device has benn closed");
+        CHECK_RETURN_RET_ELOG(!isOpenedCameraDevice_.load(), CAMERA_OK, "CloseDevice device has benn closed");
         if (hdiCameraDevice_ != nullptr) {
             isOpenedCameraDevice_.store(false);
             HILOG_COMM_INFO("Closing camera device: %{public}s start", cameraID_.c_str());
