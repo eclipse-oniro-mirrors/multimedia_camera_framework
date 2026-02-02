@@ -566,7 +566,7 @@ int32_t VideoOutput::GetVideoRotation(int32_t imageRotation)
     sensorOrientation = static_cast<int32_t>(cameraObj->GetCameraOrientation());
     if (imageRotation < 0) {
         imageRotation = CAPTURE_ROTATION_BASE + imageRotation % CAPTURE_ROTATION_BASE;
-        MEDIA_INFO_LOG("currentVideoRotation is negative number, After conversion: %{public}d." imageRotation);
+        MEDIA_INFO_LOG("currentVideoRotation is negative number, After conversion: %{public}d.", imageRotation);
     }
     imageRotation = (imageRotation + ROTATION_45_DEGREES) / ROTATION_90_DEGREES * ROTATION_90_DEGREES;
     if (cameraPosition == CAMERA_POSITION_BACK) {
