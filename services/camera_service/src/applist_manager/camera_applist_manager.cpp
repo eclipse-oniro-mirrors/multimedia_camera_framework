@@ -69,8 +69,9 @@ int32_t CameraApplistManager::GetLogicCameraScreenStatus()
     for (const std::string& ele : elems) {
         CHECK_CONTINUE(ele.find(",") == std::string::npos);
         std::vector<std::string> subElems = SplitString(ele, ',');
-        CHECK_RETURN_RET_ELOG(
-            subElems.size() != SIZE_TWO, CAMERA_INVALID_STATE, "GetLogicCameraScreenStatus subElems.size is Error");
+        CHECK_RETURN_RET_ELOG((subElems.size() != SIZE_TWO) ||
+            !(isIntegerRegex(subElems[0]) && isIntegerRegex(subElems[1])), CAMERA_INVALID_STATE,
+            "GetLogicCameraScreenStatus subElems isIntegerRegex false");
         int32_t logicDisplayMode = std::stoi(subElems[0]);
         int32_t systemNaturalDirection = std::stoi(subElems[1]);
         displayModeToNaturalDirectionMap_[logicDisplayMode] = systemNaturalDirection;
@@ -182,7 +183,7 @@ void CameraApplistManager::ParseApplistConfigureJsonStr(const std::string& cfgJs
         std::map<int32_t, int32_t> useLogicCamera = {};
         if (info.contains("useLogicCamera") && info["useLogicCamera"].is_object()) {
             for (const auto &[key, value] : info["useLogicCamera"].items()) {
-                CHECK_CONTINUE(key.empty() || !value.is_number_integer());
+                CHECK_CONTINUE(key.empty() || !isIntegerRegex(key) || !value.is_number_integer());
                 useLogicCamera[std::stoi(key)] = value.get<int>();
             }
         }
@@ -191,7 +192,7 @@ void CameraApplistManager::ParseApplistConfigureJsonStr(const std::string& cfgJs
         std::map<int32_t, int32_t> customLogicDirection = {};
         if (info.contains("customLogicDirection") && info["customLogicDirection"].is_object()) {
             for (const auto &[key, value] : info["customLogicDirection"].items()) {
-                CHECK_CONTINUE(key.empty() || !value.is_number_integer());
+                CHECK_CONTINUE(key.empty() || !isIntegerRegex(key) || !value.is_number_integer());
                 customLogicDirection[std::stoi(key)] = value.get<int>();
             }
         }
@@ -278,7 +279,7 @@ void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string&
         MEDIA_DEBUG_LOG("CameraApplistManager::GetAppNaturalDirectionByBundleName default naturalDirection: %{public}d",
             naturalDirection);
     }
-    CHECK_RETURN_DLOG(bundleName.empty(),
+    CHECK_RETURN_ELOG(bundleName.empty(),
         "CameraApplistManager::GetAppNaturalDirectionByBundleName bundleName is empty");
     CHECK_EXECUTE(!initResult_ || !registerResult_, Init());
     ApplistConfigure* appConfigure = nullptr;
