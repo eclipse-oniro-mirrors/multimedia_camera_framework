@@ -19,13 +19,13 @@
 namespace OHOS {
 namespace CameraStandard {
 struct CameraRotateStrategyInfo {
-    std::string bundleName;
-    float wideValue;
-    int32_t rotateDegree;
-    int32_t rotateBackDegree;
-    int32_t captureDegree;
-    int32_t captureBackDegree;
-    int16_t fps;
+    std::string bundleName = "";
+    float wideValue = -1.0;
+    int32_t rotateDegree = -1;
+    int32_t rotateBackDegree = -1;
+    int32_t captureDegree = -1;
+    int32_t captureBackDegree = -1;
+    int16_t fps = -1;
 };
 class Parser {
 public:
