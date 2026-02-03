@@ -115,6 +115,8 @@ public:
 
     static Camera_ErrorCode GetHostDeviceType(Camera_Device* camera, Camera_HostDeviceType* hostDeviceType);
 
+    static Camera_ErrorCode GetAutomotiveCameraPosition(Camera_Device* camera, Camera_AutomotivePosition* position);
+
     static Camera_ErrorCode GetSupportedSceneModes(Camera_Device* camera,
         Camera_SceneMode** sceneModes, uint32_t* size);
 

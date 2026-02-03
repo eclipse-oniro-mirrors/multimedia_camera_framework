@@ -89,6 +89,7 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
     auto cameraOrientation = Hold<int32_t>(cameraDevice_.GetStaticCameraOrientation());
     auto isRetractable = Hold<bool>(cameraDevice_.GetisRetractable());
     auto lensEquivalentFocalLength = Hold<std::vector<int32_t>>(cameraDevice_.GetLensEquivalentFocalLength());
+    auto automotiveCameraPosition = Hold<int32_t>(cameraDevice_.GetAutomotivePosition());
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
         { "cameraId", cameraId },
         { "cameraPosition", cameraPosition },
@@ -98,7 +99,8 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
         { "hostDeviceType", hostDeviceType },
         { "cameraOrientation", cameraOrientation },
         { "isRetractable", isRetractable },
-        { "lensEquivalentFocalLength", lensEquivalentFocalLength } });
+        { "lensEquivalentFocalLength", lensEquivalentFocalLength },
+        { "automotiveCameraPosition", automotiveCameraPosition } });
 }
 
 CameraNapiObject& CameraNapiBoundingBox::GetCameraNapiObject()

@@ -125,6 +125,7 @@ CameraDevice CameraUtilsTaihe::GetNullCameraDevice()
         .hostDeviceName = CameraUtilsTaihe::ToTaiheString(defaultString),
         .cameraOrientation = 0,
         .lensEquivalentFocalLength = optional<array<int32_t>>(std::nullopt),
+        .automotiveCameraPosition = optional<AutomotiveCameraPosition>(std::nullopt),
     };
     return cameraTaihe;
 }
@@ -151,6 +152,8 @@ CameraDevice CameraUtilsTaihe::ToTaiheCameraDevice(sptr<OHOS::CameraStandard::Ca
     std::vector<int32_t> lensEquivalentFocalLength = obj->GetLensEquivalentFocalLength();
     cameraTaihe.lensEquivalentFocalLength =
         optional<array<int32_t>>(std::in_place, array<int32_t>(lensEquivalentFocalLength));
+    cameraTaihe.automotiveCameraPosition = optional<AutomotiveCameraPosition>(std::in_place,
+        AutomotiveCameraPosition::from_value(static_cast<int32_t>(obj->GetAutomotivePosition())));
     return cameraTaihe;
 }
 
