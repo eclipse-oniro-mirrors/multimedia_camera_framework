@@ -26,7 +26,7 @@ using namespace ohos::multimedia::camera;
 
 class PhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public AutoExposureImpl,
                          public ColorManagementImpl, public AutoDeviceSwitchImpl, public FocusImpl,
-                         public WhiteBalanceImpl, public MacroImpl, public ImagingModeImpl {
+                         public WhiteBalanceImpl, public MacroImpl {
 public:
     explicit PhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {

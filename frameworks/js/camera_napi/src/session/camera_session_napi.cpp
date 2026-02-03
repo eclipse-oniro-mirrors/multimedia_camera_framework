@@ -288,12 +288,6 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::iso_props = {
     DECLARE_NAPI_FUNCTION("offIsoInfoChange", CameraSessionNapi::OffIsoInfoChange)
 };
 
-const std::vector<napi_property_descriptor> CameraSessionNapi::imaging_mode_props = {
-    DECLARE_NAPI_FUNCTION("isImagingModeSupported", CameraSessionNapi::IsImagingModeSupported),
-    DECLARE_NAPI_FUNCTION("getActiveImagingMode", CameraSessionNapi::GetActiveImagingMode),
-    DECLARE_NAPI_FUNCTION("setImagingMode", CameraSessionNapi::SetImagingMode)
-};
-
 void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info, bool isSync) const
 {
     MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackAsync is called");
@@ -4813,91 +4807,6 @@ napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callbac
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetExposureMeteringMode call Failed!");
-    }
-    return result;
-}
-
-napi_value CameraSessionNapi::IsImagingModeSupported(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("IsImagingModeSupported is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
-        int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
-        ImagingMode imagingMode = static_cast<ImagingMode>(value);
-        bool isSupported;
-        int32_t retCode = cameraSessionNapi->cameraSession_->IsImagingModeSupported(imagingMode, isSupported);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        napi_get_boolean(env, isSupported, &result);
-    } else {
-        MEDIA_ERR_LOG("IsImagingModeSupported call Failed!");
-    }
-    return result;
-}
-
-napi_value CameraSessionNapi::GetActiveImagingMode(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("GetActiveImagingMode is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
-        ImagingMode imagingMode;
-        int32_t retCode = cameraSessionNapi->cameraSession_->GetActiveImagingMode(imagingMode);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-        napi_create_int32(env, imagingMode, &result);
-    } else {
-        MEDIA_ERR_LOG("GetActiveImagingMode call Failed!");
-    }
-    return result;
-}
-
-napi_value CameraSessionNapi::SetImagingMode(napi_env env, napi_callback_info info)
-{
-    MEDIA_DEBUG_LOG("SetImagingMode is called");
-    napi_status status;
-    napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
-    napi_get_undefined(env, &result);
-    CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
-        int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
-        ImagingMode imagingMode = static_cast<ImagingMode>(value);
-        int retCode = cameraSessionNapi->cameraSession_->SetImagingMode(imagingMode);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
-        }
-    } else {
-        MEDIA_ERR_LOG("SetImagingMode call Failed!");
     }
     return result;
 }

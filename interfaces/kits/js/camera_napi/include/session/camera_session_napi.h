@@ -544,10 +544,6 @@ public:
     static napi_value GetSupportedKeys(napi_env env, napi_callback_info info);
     static napi_value GetActiveParameter(napi_env env, napi_callback_info info);
 
-    static napi_value IsImagingModeSupported(napi_env env, napi_callback_info info);
-    static napi_value GetActiveImagingMode(napi_env env, napi_callback_info info);
-    static napi_value SetImagingMode(napi_env env, napi_callback_info info);
-
     napi_env env_;
     sptr<CaptureSession> cameraSession_;
     std::shared_ptr<IsoInfoCallbackListener> isoInfoCallback_ = nullptr;
@@ -600,7 +596,6 @@ public:
     static const std::vector<napi_property_descriptor> image_stabilization_guide_props;
     static const std::vector<napi_property_descriptor> focus_tracking_props;
     static const std::vector<napi_property_descriptor> iso_props;
-    static const std::vector<napi_property_descriptor> imaging_mode_props;
 
 private:
     static const EmitterFunctions fun_map_;

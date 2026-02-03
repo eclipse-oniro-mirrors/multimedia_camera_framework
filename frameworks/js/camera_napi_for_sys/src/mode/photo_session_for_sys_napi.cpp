@@ -61,7 +61,8 @@ void PhotoSessionForSysNapi::Init(napi_env env)
         CameraSessionForSysNapi::focus_sys_props, zoom_props, CameraSessionForSysNapi::zoom_sys_props,
         color_management_props, macro_props, beauty_sys_props, color_effect_sys_props, scene_detection_sys_props,
         effect_suggestion_sys_props, depth_fusion_sys_props, moon_capture_boost_props, filter_props,
-        stage_boost_props, PhotoSessionForSysNapi::photo_session_sys_props, manual_focus_sys_props};
+        stage_boost_props, PhotoSessionForSysNapi::photo_session_sys_props, manual_focus_sys_props,
+        CameraSessionForSysNapi::imaging_mode_sys_props};
     std::vector<napi_property_descriptor> photo_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PHOTO_SESSION_FOR_SYS_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PhotoSessionForSysNapiConstructor, nullptr,

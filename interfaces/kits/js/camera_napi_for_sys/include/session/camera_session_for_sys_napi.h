@@ -164,6 +164,10 @@ public:
     static napi_value GetColorReservation(napi_env env, napi_callback_info info);
     static napi_value SetColorReservation(napi_env env, napi_callback_info info);
 
+    static napi_value IsImagingModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetActiveImagingMode(napi_env env, napi_callback_info info);
+    static napi_value SetImagingMode(napi_env env, napi_callback_info info);
+
     sptr<CaptureSessionForSys> cameraSessionForSys_ = nullptr;
     static thread_local sptr<CaptureSessionForSys> sCameraSessionForSys_;
     static const std::map<SceneMode, FunctionsType> modeToFunctionTypeMap_;
@@ -183,6 +187,7 @@ public:
     static const std::vector<napi_property_descriptor> effect_suggestion_sys_props;
     static const std::vector<napi_property_descriptor> aperture_sys_props;
     static const std::vector<napi_property_descriptor> color_reservation_sys_props;
+    static const std::vector<napi_property_descriptor> imaging_mode_sys_props;
 
     std::shared_ptr<LcdFlashStatusCallbackListener> lcdFlashStatusCallback_ = nullptr;
     std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_ = nullptr;

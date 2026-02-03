@@ -1407,10 +1407,12 @@ void AutoDeviceSwitchImpl::EnableAutoDeviceSwitch(bool enabled)
 
 bool ImagingModeQueryImpl::IsImagingModeSupported(ImagingModeType mode)
 {
-    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, false,
-        "IsVideoStabilizationModeSupported captureSession_ is null");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        false, "SystemApi IsImagingModeSupported is called!");
+    CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, false,
+        "IsImagingModeSupported captureSessionForSys_ is null");
     bool isSupported = false;
-    int32_t retCode = captureSession_->IsImagingModeSupported(
+    int32_t retCode = captureSessionForSys_->IsImagingModeSupported(
         static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()), isSupported);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), false);
     return isSupported;
@@ -1418,21 +1420,23 @@ bool ImagingModeQueryImpl::IsImagingModeSupported(ImagingModeType mode)
 
 ImagingModeType ImagingModeImpl::GetActiveImagingMode()
 {
-    MEDIA_DEBUG_LOG("GetActiveImagingMode is called");
     ImagingModeType errType = ImagingModeType(static_cast<ImagingModeType::key_t>(-1));
-    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, errType,
-        "GetActiveImagingMode captureSession_ is null");
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), errType,
+        "SystemApi GetActiveImagingMode is called!");
+    CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, errType,
+        "GetActiveImagingMode captureSessionForSys_ is null");
     OHOS::CameraStandard::ImagingMode mode;
-    int32_t retCode = captureSession_->GetActiveImagingMode(mode);
+    int32_t retCode = captureSessionForSys_->GetActiveImagingMode(mode);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), errType);
     return ImagingModeType(static_cast<ImagingModeType::key_t>(mode));
 }
 
 void ImagingModeImpl::SetImagingMode(ImagingModeType mode)
 {
-    MEDIA_DEBUG_LOG("SetImagingMode is called");
-    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetImagingMode captureSession_ is null!");
-    int retCode = captureSession_->SetImagingMode(
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetImagingMode is called!");
+    CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "SetImagingMode captureSessionForSys_ is null!");
+    int retCode = captureSessionForSys_->SetImagingMode(
         static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()));
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "SetImagingMode call Failed!");
 }

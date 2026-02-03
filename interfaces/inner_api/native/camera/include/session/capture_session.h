@@ -2188,12 +2188,6 @@ public:
     int32_t GetParameters(const std::string& key, std::vector<std::string>& values);
     int32_t GetSupportedKeys(std::vector<std::string>& keys);
     int32_t GetActiveParameter(const std::string& key, std::string& value);
-
-    bool IsImagingModeSupported(ImagingMode iamgingMode);
-    int32_t IsImagingModeSupported(ImagingMode imagingMode, bool& isSupported);
-    int32_t GetActiveImagingMode(ImagingMode& imagingMode);
-    int32_t SetImagingMode(ImagingMode imagingMode);
-    int32_t GetSupportedImagingMode(std::vector<ImagingMode>& imagingMode);
 protected:
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
     static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> fwkWhiteBalanceModeMap_;

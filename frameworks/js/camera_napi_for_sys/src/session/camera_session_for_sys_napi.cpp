@@ -162,6 +162,12 @@ const std::vector<napi_property_descriptor> CameraSessionForSysNapi::color_reser
     DECLARE_NAPI_FUNCTION("setColorReservation", CameraSessionForSysNapi::SetColorReservation)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionForSysNapi::imaging_mode_sys_props = {
+    DECLARE_NAPI_FUNCTION("isImagingModeSupported", CameraSessionForSysNapi::IsImagingModeSupported),
+    DECLARE_NAPI_FUNCTION("getActiveImagingMode", CameraSessionForSysNapi::GetActiveImagingMode),
+    DECLARE_NAPI_FUNCTION("setImagingMode", CameraSessionForSysNapi::SetImagingMode)
+};
+
 CameraSessionForSysNapi::~CameraSessionForSysNapi()
 {
     MEDIA_INFO_LOG("CameraSessionForSysNapi::~CameraSessionForSysNapi");
@@ -1617,6 +1623,92 @@ napi_value CameraSessionForSysNapi::SetColorReservation(napi_env env, napi_callb
         return nullptr;
     }
     return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionForSysNapi::IsImagingModeSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsImagingModeSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
+    if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        ImagingMode imagingMode = static_cast<ImagingMode>(value);
+        bool isSupported;
+        int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->IsImagingModeSupported(imagingMode,
+            isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsImagingModeSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionForSysNapi::GetActiveImagingMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetActiveImagingMode is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
+    if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
+        ImagingMode imagingMode;
+        int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetActiveImagingMode(imagingMode);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_create_int32(env, imagingMode, &result);
+    } else {
+        MEDIA_ERR_LOG("GetActiveImagingMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionForSysNapi::SetImagingMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetImagingMode is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
+    if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        ImagingMode imagingMode = static_cast<ImagingMode>(value);
+        int retCode = cameraSessionForSysNapi->cameraSessionForSys_->SetImagingMode(imagingMode);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("SetImagingMode call Failed!");
+    }
+    return result;
 }
 
 void CameraSessionForSysNapi::RegisterSlowMotionStateCb(

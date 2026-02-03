@@ -717,7 +717,7 @@ enum SystemPressureLevel: i32 {
   SYSTEM_PRESSURE_SHUTDOWN = 4
 }
 
-interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ImagingMode {
+interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
@@ -829,7 +829,7 @@ interface PhotoConflictFunctions : ZoomQuery, MacroQuery {
 interface PhotoFunctions : FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery {
 }
 
-interface PhotoSessionForSys : PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, EffectSuggestion, DepthFusion, SceneDetection {
+interface PhotoSessionForSys : PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, EffectSuggestion, DepthFusion, SceneDetection, ImagingMode {
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
   @!sts_inject_into_interface("on(type: string, featureType: SceneFeatureType, callback: (err: BusinessError<void>, data: object)=> void): void;")
