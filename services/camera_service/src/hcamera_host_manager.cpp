@@ -112,7 +112,7 @@ public:
     int32_t OnFlashlightStatus(const std::string& cameraId, FlashlightStatus status) override;
     int32_t OnFlashlightStatus_V1_2(FlashlightStatus status) override;
     int32_t OnCameraEvent(const std::string &cameraId, CameraEvent event) override;
-
+    bool IsUsbCamera(const std::string& cameraId);
 private:
     std::shared_ptr<CameraDeviceInfo> FindCameraDeviceInfo(const std::string& cameraId);
     void NotifyCameraHostDied();
@@ -839,6 +839,17 @@ void HCameraHostManager::CameraHostInfo::RemoveDevice(const std::string& cameraI
     }
 }
 
+bool HCameraHostManager::CameraHostInfo::IsUsbCamera(const std::string& cameraId)
+{
+    std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+    int32_t ret = GetCameraAbility(cameraId, cameraAbility);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || cameraAbility == nullptr, false, "get camera ability failed");
+    camera_metadata_item_t item;
+    ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, false, "No corresponding target found");
+    return static_cast<camera_connection_type_t>(item.data.u8[0]) == OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN;
+}
+
 HCameraHostManager::HCameraHostManager(std::shared_ptr<StatusCallback> statusCallback)
     : statusCallback_(statusCallback), cameraHostInfos_(), muteMode_(false)
 {
@@ -1338,6 +1349,8 @@ void HCameraHostManager::AddCameraHost(const std::string& svcName)
     bool canSetOnTorchStatus = statusCallback && cameraHost->GetCameras(cameraIds) == CAMERA_OK;
     if (canSetOnTorchStatus) {
         for (const auto& cameraId : cameraIds) {
+            CHECK_EXECUTE(cameraHost->IsUsbCamera(cameraId),
+                statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_APPEAR));
             statusCallback->OnCameraStatus(cameraId, CAMERA_STATUS_AVAILABLE);
         }
     }

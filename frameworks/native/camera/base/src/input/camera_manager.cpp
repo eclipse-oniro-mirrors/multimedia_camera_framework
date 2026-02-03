@@ -208,6 +208,11 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
         cameraManager->ClearCameraDeviceAbilitySupportMap();
     }
     sptr<CameraDevice> cameraInfo = cameraManager->GetCameraDeviceFromId(cameraId);
+
+    // The condition of !cameraInfo is to prevent concurrent scenarios.
+    // If the status of camera A is CAMERA_STATUS_DISAPPEAR and the status of camera B is CAMERA_STATUS_APPEAR,
+    // when B enters this branch, all caches will be cleared, resulting in no cache data when A enters,
+    // and thus no callback can be provided to the application.
     if (status != static_cast<int32_t>(CameraStatus::CAMERA_STATUS_APPEAR) &&
         status != static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR) && cameraManager->ShouldClearCache() &&
         !cameraInfo) {
