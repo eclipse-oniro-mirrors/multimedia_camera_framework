@@ -1132,7 +1132,6 @@ void HCameraHostManager::ParseJsonFileToMap(const std::string& filePath,
                                             std::string& clientName, std::string& cameraId)
 {
     MEDIA_INFO_LOG("Parse JsonFile To Map Begin!");
-    CHECK_RETURN_ELOG(!CheckPathIllegal(filePath), "Illegal File Path!");
     std::lock_guard<std::mutex> lock(saveRestoreMutex_);
     bool isParseSucc = JsonCacheConverter::ParseJsonFileToMap(filePath,
                                                               persistentParamMap_,
@@ -1152,7 +1151,6 @@ void HCameraHostManager::SaveMapToJsonFile(const std::string& filePath,
                                            const std::string& clientName, const std::string& cameraId)
 {
     MEDIA_INFO_LOG("Save Map To JsonFile Begin!");
-    CHECK_RETURN_ELOG(!CheckPathIllegal(filePath), "Illegal File Path!");
     std::lock_guard<std::mutex> lock(saveRestoreMutex_);
     bool isSaveSucc = JsonCacheConverter::SaveMapToJsonFile(filePath,
                                                             persistentParamMap_,
@@ -1164,19 +1162,6 @@ void HCameraHostManager::SaveMapToJsonFile(const std::string& filePath,
                                 std::ofstream ofs(filePath, std::ios::out | std::ios::trunc));
                   return);
     MEDIA_INFO_LOG("Save Map To JsonFile Succ!");
-}
-
-bool HCameraHostManager::CheckPathIllegal(const std::string& filePath)
-{
-    char* canonicalPath = new (std::nothrow) char[PATH_MAX];
-    CHECK_RETURN_RET_ELOG(canonicalPath == nullptr, false, "Memory alloc failed for path");
-    CHECK_EXECUTE(realpath(filePath.c_str(), canonicalPath) == nullptr,
-                  delete[] canonicalPath;
-                  MEDIA_ERR_LOG("Path normalization failed");
-                  return false);
-    bool isSame = strcmp(filePath.c_str(), canonicalPath) == 0;
-    delete[] canonicalPath;
-    return isSame;
 }
 
 int32_t HCameraHostManager::PreSwitchCamera(const std::string& cameraId)
