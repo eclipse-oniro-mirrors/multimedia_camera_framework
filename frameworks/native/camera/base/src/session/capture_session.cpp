@@ -5698,11 +5698,11 @@ bool CaptureSession::SwitchDevice()
     auto captureInput = GetInputDevice();
     auto cameraInput = (sptr<CameraInput>&)captureInput;
     CHECK_RETURN_RET_ELOG(cameraInput == nullptr, false, "cameraInput is nullptr.");
-    auto deviceiInfo = cameraInput->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!deviceiInfo ||
-            (deviceiInfo->GetPosition() != CAMERA_POSITION_FRONT &&
-                deviceiInfo->GetPosition() != CAMERA_POSITION_FOLD_INNER),
-        false, "No need switch camera.");
+    auto deviceInfo = cameraInput->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(!deviceInfo ||
+                          (deviceInfo->GetPosition() != CAMERA_POSITION_FRONT &&
+                           deviceInfo->GetPosition() != CAMERA_POSITION_FOLD_INNER),
+                          false, "No need switch camera.");
     bool hasVideoOutput = StopVideoOutput();
     int32_t retCode = CameraErrorCode::SUCCESS;
     Stop();
@@ -5715,7 +5715,14 @@ bool CaptureSession::SwitchDevice()
     retCode = CameraManager::GetInstance()->CreateCameraDevice(cameraDeviceTemp->GetID(), &deviceObj);
     CHECK_RETURN_RET_ELOG(
         retCode != CameraErrorCode::SUCCESS, false, "SwitchDevice::CreateCameraDevice Create camera device failed.");
+    auto preCameraId = deviceInfo->GetID();
+    auto preCameraPosition = deviceInfo->GetPosition();
     cameraInput->SwitchCameraDevice(deviceObj, cameraDeviceTemp);
+    auto foldType = CameraManager::GetInstance()->GetFoldScreenType();
+    if (!foldType.empty() && foldType[0] == '4' && preCameraPosition == CAMERA_POSITION_FRONT &&
+        cameraDeviceTemp->GetPosition() == CAMERA_POSITION_FOLD_INNER) {
+        deviceObj->SetCameraIdTransform(preCameraId);
+    }
     retCode = cameraInput->Open();
     CHECK_PRINT_ELOG(retCode != CameraErrorCode::SUCCESS, "SwitchDevice::Open failed.");
     retCode = AddInput(captureInput);

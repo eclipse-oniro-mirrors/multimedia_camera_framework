@@ -107,6 +107,8 @@ public:
                                        std::string& cameraId);
     void SaveMapToJsonFile(const std::string& filePath, const std::string& clientName,
                                        const std::string& cameraId);
+    static bool CheckPathIllegal(const std::string& filePath);
+
     void SaveRestoreParam(sptr<HCameraRestoreParam> cameraRestoreParam);
 
     void UpdateRestoreParamCloseTime(const std::string& clientName, const std::string& cameraId);
