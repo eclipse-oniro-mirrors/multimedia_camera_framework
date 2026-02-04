@@ -70,6 +70,11 @@ public:
         sessionStatus_ = status;
     }
 
+    void OnMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) override
+    {
+        return;
+    }
+
     CaptureSessionInfo GetSessionInfo()
     {
         return captureSessionInfo_;

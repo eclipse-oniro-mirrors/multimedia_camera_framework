@@ -22,4 +22,5 @@ interface IMechSessionCallback{
     [ipccode 1, oneway] void OnCaptureSessionConfiged([in] CaptureSessionInfo captureSessionInfo);
     [ipccode 2, oneway] void OnZoomInfoChange([in] int sessionid, [in] ZoomInfo zoomInfo);
     [ipccode 3, oneway] void OnSessionStatusChange([in] int sessionid, [in] boolean status);
+    [ipccode 4, oneway] void OnMetadataInfo([in] sharedptr<CameraMetadata> results);
 }

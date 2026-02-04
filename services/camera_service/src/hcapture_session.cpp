@@ -2659,6 +2659,10 @@ void HCaptureSession::SetDeviceMechCallback()
         zoomInfo.equivalentFocus = ptr->GetEquivalentFocus();
         ptr->OnZoomInfoChange(zoomInfo);
     });
+    cameraDevice_->SetMechMetadataCallback([thisPtr](std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult) {
+        auto ptr = thisPtr.promote();
+        CHECK_EXECUTE(ptr, ptr->OnMechMetadata(cameraResult));
+    });
 }
 
 bool HCaptureSession::GetCaptureSessionInfo(CaptureSessionInfo& sessionInfo)
@@ -2705,6 +2709,13 @@ void HCaptureSession::OnZoomInfoChange(const ZoomInfo& zoomInfo)
     auto mechSession = sessionManager.GetMechSession(userId_);
     CHECK_RETURN(mechSession == nullptr);
     mechSession->OnZoomInfoChange(GetSessionId(), zoomInfo);
+}
+
+void HCaptureSession::OnMechMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
+{
+    auto &sessionManager = HCameraSessionManager::GetInstance();
+    auto mechSession = sessionManager.GetMechSession(userId_);
+    CHECK_EXECUTE(mechSession, mechSession->OnMetadataInfo(cameraResult));
 }
 
 void HCaptureSession::OnSessionStatusChange(bool status)
