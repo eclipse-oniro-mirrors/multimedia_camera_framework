@@ -65,7 +65,7 @@ void Release(FuzzedDataProvider& fdp)
 
 void SetCallback(FuzzedDataProvider& fdp)
 {
-    auto cb = sptr<MockStreamRepeatCallback>::MakeSptr();
+    sptr<MockStreamRepeatCallback> cb = new (std::nothrow) MockStreamRepeatCallback();
     g_hStreamRepeat->SetCallback(cb);
 }
 
@@ -78,7 +78,7 @@ void AddDeferredSurface(FuzzedDataProvider& fdp)
 
 void ForkSketchStreamRepeat(FuzzedDataProvider& fdp)
 {
-    sptr<IRemoteObject> remote = sptr<MockIRemoteObject>::MakeSptr();
+    sptr<IRemoteObject> remote = new (std::nothrow) MockIRemoteObject();
     g_hStreamRepeat->ForkSketchStreamRepeat(
         fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>(), remote, fdp.ConsumeFloatingPoint<float>());
 }
@@ -276,7 +276,8 @@ void Init()
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    g_hStreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
+    g_hStreamRepeat =
+        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, RepeatStreamType::PREVIEW);
 }
 
 void Test(FuzzedDataProvider& fdp)

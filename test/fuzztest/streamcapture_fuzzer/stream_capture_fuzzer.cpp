@@ -52,28 +52,30 @@ void StreamCaptureFuzzTest(uint8_t *rawData, size_t size)
     float focalLength = fdp.ConsumeFloatingPoint<float>();
     ability->addEntry(OHOS_ABILITY_FOCAL_LENGTH, &focalLength, 1);
 
-     int32_t sensorOrientation = fdp.ConsumeIntegral<int32_t>();
-     ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
+    int32_t sensorOrientation = fdp.ConsumeIntegral<int32_t>();
+    ability->addEntry(OHOS_SENSOR_ORIENTATION, &sensorOrientation, 1);
 
-     int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
-     ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
+    int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
+    ability->addEntry(OHOS_ABILITY_CAMERA_POSITION, &cameraPosition, 1);
 
-    const camera_rational_t aeCompensationStep[] = {{rawData[0], rawData[1]}};
+    const camera_rational_t aeCompensationStep[] = { { fdp.ConsumeIntegral<int32_t>(),
+        fdp.ConsumeIntegral<int32_t>() } };
     ability->addEntry(OHOS_CONTROL_AE_COMPENSATION_STEP, &aeCompensationStep,
         sizeof(aeCompensationStep) / sizeof(aeCompensationStep[0]));
 
-     MessageParcel data;
-     data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
-     CHECK_RETURN_ELOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
-         "StreamCaptureFuzzer: EncodeCameraMetadata Error");
-     data.RewindRead(0);
+    MessageParcel data;
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    CHECK_RETURN_ELOG(!(OHOS::Camera::MetadataUtils::EncodeCameraMetadata(ability, data)),
+        "StreamCaptureFuzzer: EncodeCameraMetadata Error");
+    data.RewindRead(0);
 
-     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-     CHECK_RETURN_ELOG(!photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
-     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-     sptr<HStreamCapture> streamcapture = new HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-     CHECK_RETURN(streamcapture == nullptr);
-     streamcapture->Release();
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_RETURN_ELOG(!photoSurface, "StreamCaptureFuzzer: Create photoSurface Error");
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    sptr<HStreamCapture> streamcapture =
+        new (std::nothrow) HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+    CHECK_RETURN(streamcapture == nullptr);
+    streamcapture->Release();
 }
 } // namespace CameraStandard
 } // namespace OHOS

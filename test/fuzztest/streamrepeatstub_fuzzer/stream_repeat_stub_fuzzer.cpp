@@ -46,8 +46,9 @@ void TestHandleAddDeferredSurface(uint8_t *rawData, size_t size)
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
-        PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    sptr<HStreamRepeat> hstreamRepeat =
+        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    CHECK_RETURN(hstreamRepeat == nullptr);
     data.WriteRemoteObject(producer->AsObject());
     data.WriteRawData(rawData, size);
     uint32_t code = static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_ADD_DEFERRED_SURFACE);
@@ -64,8 +65,9 @@ void TestHandleAttachMetaSurface(uint8_t *rawData, size_t size)
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
-        PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    sptr<HStreamRepeat> hstreamRepeat =
+        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    CHECK_RETURN(hstreamRepeat == nullptr);
     data.WriteRemoteObject(producer->AsObject());
     data.WriteRawData(rawData, size);
     uint32_t code = static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_ATTACH_META_SURFACE);
@@ -82,9 +84,9 @@ void TestHandleSetCallback(uint8_t *rawData, size_t size)
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN(photoSurface == nullptr);
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
-        PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
-
+    sptr<HStreamRepeat> hstreamRepeat =
+        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    CHECK_RETURN(hstreamRepeat == nullptr);
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN(!samgr);
@@ -119,8 +121,9 @@ void RunCase(MessageParcel &data, uint32_t code)
         return;
     }
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamRepeat> hstreamRepeat = new HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH,
-        PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    sptr<HStreamRepeat> hstreamRepeat =
+        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    CHECK_RETURN(hstreamRepeat == nullptr);
     hstreamRepeat->OnRemoteRequest(code, data, reply, option);
 }
 

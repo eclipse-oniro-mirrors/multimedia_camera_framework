@@ -41,7 +41,7 @@ const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 const int32_t ITEM_CAP = 10;
 const int32_t DATA_CAP = 100;
 
-std::shared_ptr<StreamCaptureStub> fuzz_{nullptr};
+sptr<StreamCaptureStub> fuzz_ { nullptr };
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
 {
@@ -81,7 +81,7 @@ void Test(uint8_t *rawData, size_t size)
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN_ELOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
     sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    fuzz_ = std::make_shared<HStreamCapture>(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+    fuzz_ = new (std::nothrow) HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
 
     Test_OnRemoteRequest(rawData, size);
