@@ -202,6 +202,89 @@ typedef enum Camera_Position {
 } Camera_Position;
 
 /**
+ * @brief Enum for automotive camera position.
+ *
+ * @since 25
+ * @version 1.0
+ */
+typedef enum Camera_AutomotivePosition {
+    /**
+     * Exterior unspecified position.
+     */
+    CAMERA_POSITION_EXTERIOR_UNSPECIFIED = 0,
+
+    /**
+     * Exterior front position.
+     */
+    CAMERA_POSITION_EXTERIOR_FRONT = 1,
+
+    /**
+     * Exterior rear position.
+     */
+    CAMERA_POSITION_EXTERIOR_REAR = 2,
+
+    /**
+     * Exterior left position.
+     */
+    CAMERA_POSITION_EXTERIOR_LEFT = 3,
+
+    /**
+     * Exterior right position.
+     */
+    CAMERA_POSITION_EXTERIOR_RIGHT = 4,
+
+    /**
+     * Interior unspecified position.
+     */
+    CAMERA_POSITION_INTERIOR_UNSPECIFIED = 5,
+
+    /**
+     * Interior row 1 left position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_1_LEFT = 6,
+
+    /**
+     * Interior row 1 center position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_1_CENTER = 7,
+
+    /**
+     * Interior row 1 right position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_1_RIGHT = 8,
+
+    /**
+     * Interior row 2 left position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_2_LEFT = 9,
+
+    /**
+     * Interior row 2 center position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_2_CENTER = 10,
+
+    /**
+     * Interior row 2 right position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_2_RIGHT = 11,
+
+    /**
+     * Interior row 3 left position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_3_LEFT = 12,
+
+    /**
+     * Interior row 3 center position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_3_CENTER = 13,
+
+    /**
+     * Interior row 3 right position.
+     */
+    CAMERA_POSITION_INTERIOR_ROW_3_RIGHT = 14
+} Camera_AutomotivePosition;
+
+/**
  * @brief Enum for camera type.
  *
  * @since 11

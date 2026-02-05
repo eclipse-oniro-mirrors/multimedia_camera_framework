@@ -39,6 +39,24 @@ enum CameraPosition {
     CAMERA_POSITION_FOLD_INNER
 };
 
+enum AutomotiveCameraPosition {
+    CAMERA_POSITION_EXTERIOR_UNSPECIFIED = 0,
+    CAMERA_POSITION_EXTERIOR_FRONT,
+    CAMERA_POSITION_EXTERIOR_REAR,
+    CAMERA_POSITION_EXTERIOR_LEFT,
+    CAMERA_POSITION_EXTERIOR_RIGHT,
+    CAMERA_POSITION_INTERIOR_UNSPECIFIED,
+    CAMERA_POSITION_INTERIOR_ROW_1_LEFT,
+    CAMERA_POSITION_INTERIOR_ROW_1_CENTER,
+    CAMERA_POSITION_INTERIOR_ROW_1_RIGHT,
+    CAMERA_POSITION_INTERIOR_ROW_2_LEFT,
+    CAMERA_POSITION_INTERIOR_ROW_2_CENTER,
+    CAMERA_POSITION_INTERIOR_ROW_2_RIGHT,
+    CAMERA_POSITION_INTERIOR_ROW_3_LEFT,
+    CAMERA_POSITION_INTERIOR_ROW_3_CENTER,
+    CAMERA_POSITION_INTERIOR_ROW_3_RIGHT
+};
+
 enum CameraType {
     CAMERA_TYPE_UNSUPPORTED = -1,
     CAMERA_TYPE_DEFAULT = 0,
@@ -173,6 +191,13 @@ public:
     * @return Returns the used as position of the camera.
     */
     CameraPosition GetUsedAsPosition();
+
+    /**
+    * @brief Get the automotive position of the camera.
+    *
+    * @return Returns the automotive position of the camera.
+    */
+    AutomotiveCameraPosition GetAutomotivePosition();
 
     /**
     * @brief Get the Camera type of the camera.
@@ -387,6 +412,7 @@ private:
     std::mutex usePhysicalCameraOrientationMutex_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedMetadata_;
     CameraPosition cameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
+    AutomotiveCameraPosition cameraAutomotivePosition_ = CAMERA_POSITION_EXTERIOR_UNSPECIFIED;
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
@@ -406,6 +432,8 @@ private:
     std::vector<float> exposureBiasRange_;
     static const std::unordered_map<camera_type_enum_t, CameraType> metaToFwCameraType_;
     static const std::unordered_map<camera_position_enum_t, CameraPosition> metaToFwCameraPosition_;
+    static const std::unordered_map<automotive_camera_position_enum_t, AutomotiveCameraPosition>
+        metaToFwAutomotiveCameraPosition_;
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
     static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
     void init(common_metadata_header_t* metadataHeader);

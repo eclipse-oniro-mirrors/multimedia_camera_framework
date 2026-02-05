@@ -66,6 +66,39 @@ const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
     {Camera_TorchMode::CAMERA_TORCH_MODE_ON, TorchMode::TORCH_MODE_ON},
     {Camera_TorchMode::CAMERA_TORCH_MODE_AUTO, TorchMode::TORCH_MODE_AUTO}
 };
+const std::unordered_map<AutomotiveCameraPosition, Camera_AutomotivePosition>
+    g_fwToNdkAutomotiveCameraPosition_ = {
+    {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_UNSPECIFIED,
+        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_UNSPECIFIED},
+    {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_FRONT,
+        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_FRONT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_REAR,
+        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_REAR},
+    {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_LEFT,
+        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_LEFT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_RIGHT,
+        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_RIGHT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_UNSPECIFIED,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_UNSPECIFIED},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_1_LEFT,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_1_LEFT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_1_CENTER,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_1_CENTER},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_1_RIGHT,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_1_RIGHT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_2_LEFT,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_2_LEFT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_2_CENTER,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_2_CENTER},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_2_RIGHT,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_2_RIGHT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_3_LEFT,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_3_LEFT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_3_CENTER,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_3_CENTER},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_3_RIGHT,
+        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_3_RIGHT},
+};
 
 namespace OHOS::CameraStandard {
 class InnerCameraManagerCameraStatusCallback : public CameraManagerCallback {
@@ -832,6 +865,28 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceType(Camera_Device* camera, Camera
             *hostDeviceType = Camera_HostDeviceType::HOST_DEVICE_TYPE_UNKNOWN_TYPE;
             break;
     }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetAutomotiveCameraPosition(Camera_Device* camera,
+    Camera_AutomotivePosition* position)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu", cameras.size());
+    for (auto& innerCamera : cameras) {
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    AutomotiveCameraPosition pos = device->GetAutomotivePosition();
+    auto itr = g_fwToNdkAutomotiveCameraPosition_.find(pos);
+    CHECK_RETURN_RET_ELOG(itr == g_fwToNdkAutomotiveCameraPosition_.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetAutomotiveCameraPosition fail, automotiveCameraPosition = %{public}d not supported!", pos);
+    *position = itr->second;
     return CAMERA_OK;
 }
 

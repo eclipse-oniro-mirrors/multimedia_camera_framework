@@ -1708,5 +1708,21 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameraconcurrentinfos_002, Tes
     }
     EXPECT_EQ(ret, CAMERA_OK);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test to get automotive camera position
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get automotive camera position normal flow
+ */
+HWTEST_F(CameraManagerUnitTest, camera_manager_getautomotivecameraposition_001, TestSize.Level0)
+{
+    Camera_AutomotivePosition position = Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_UNSPECIFIED;
+    CHECK_EXECUTE(cameraDeviceSize == 0, GTEST_SKIP());
+    Camera_ErrorCode ret = OH_CameraDevice_GetAutomotiveCameraPosition(cameraDevice, &position);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
 } // CameraStandard
 } // OHOS

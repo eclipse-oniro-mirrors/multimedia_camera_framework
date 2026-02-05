@@ -64,6 +64,19 @@ Camera_ErrorCode OH_CameraDevice_GetHostDeviceName(Camera_Device* camera, char**
 
 Camera_ErrorCode OH_CameraDevice_GetHostDeviceType(Camera_Device* camera, Camera_HostDeviceType* hostDeviceType);
 
+/**
+ * @brief Gets the automotive camera position attribute for a camera device.
+ *
+ * @param camera the {@link Camera_Device} which use to get attributes.
+ * @param position the automotive camera position attribute if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 25
+ */
+Camera_ErrorCode OH_CameraDevice_GetAutomotiveCameraPosition(Camera_Device* camera,
+    Camera_AutomotivePosition* position);
+
 #ifdef __cplusplus
 }
 #endif

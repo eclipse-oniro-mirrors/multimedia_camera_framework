@@ -49,6 +49,25 @@ const std::unordered_map<camera_position_enum_t, CameraPosition> CameraDevice::m
     {OHOS_CAMERA_POSITION_OTHER, CAMERA_POSITION_UNSPECIFIED}
 };
 
+const std::unordered_map<automotive_camera_position_enum_t, AutomotiveCameraPosition>
+    CameraDevice::metaToFwAutomotiveCameraPosition_ = {
+    {OHOS_CAMERA_POSITION_EXTERIOR_FRONT, CAMERA_POSITION_EXTERIOR_FRONT},
+    {OHOS_CAMERA_POSITION_EXTERIOR_REAR, CAMERA_POSITION_EXTERIOR_REAR},
+    {OHOS_CAMERA_POSITION_EXTERIOR_LEFT, CAMERA_POSITION_EXTERIOR_LEFT},
+    {OHOS_CAMERA_POSITION_EXTERIOR_RIGHT, CAMERA_POSITION_EXTERIOR_RIGHT},
+    {OHOS_CAMERA_POSITION_EXTERIOR_OTHER, CAMERA_POSITION_EXTERIOR_UNSPECIFIED},
+    {OHOS_CAMERA_POSITION_INTERIOR_OTHER, CAMERA_POSITION_INTERIOR_UNSPECIFIED},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_1_LEFT, CAMERA_POSITION_INTERIOR_ROW_1_LEFT},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_1_CENTER, CAMERA_POSITION_INTERIOR_ROW_1_CENTER},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_1_RIGHT, CAMERA_POSITION_INTERIOR_ROW_1_RIGHT},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_2_LEFT, CAMERA_POSITION_INTERIOR_ROW_2_LEFT},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_2_CENTER, CAMERA_POSITION_INTERIOR_ROW_2_CENTER},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_2_RIGHT, CAMERA_POSITION_INTERIOR_ROW_2_RIGHT},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_3_LEFT, CAMERA_POSITION_INTERIOR_ROW_3_LEFT},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_3_CENTER, CAMERA_POSITION_INTERIOR_ROW_3_CENTER},
+    {OHOS_CAMERA_POSITION_INTERIOR_ROW_3_RIGHT, CAMERA_POSITION_INTERIOR_ROW_3_RIGHT}
+};
+
 const std::unordered_map<camera_connection_type_t, ConnectionType> CameraDevice::metaToFwConnectionType_ = {
     {OHOS_CAMERA_CONNECTION_TYPE_REMOTE, CAMERA_CONNECTION_REMOTE},
     {OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN, CAMERA_CONNECTION_USB_PLUGIN},
@@ -121,6 +140,15 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         auto itr = metaToFwCameraPosition_.find(static_cast<camera_position_enum_t>(item.data.u8[0]));
         if (itr != metaToFwCameraPosition_.end()) {
             cameraPosition_ = itr->second;
+        }
+    }
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_AUTOMOTIVE_CAMERA_POSITION, &item);
+    if (ret == CAM_META_SUCCESS) {
+        auto itr = metaToFwAutomotiveCameraPosition_.find(
+            static_cast<automotive_camera_position_enum_t>(item.data.u8[0]));
+        if (itr != metaToFwAutomotiveCameraPosition_.end()) {
+            cameraAutomotivePosition_ = itr->second;
         }
     }
 
@@ -205,9 +233,10 @@ void CameraDevice::init(common_metadata_header_t* metadata)
 
     MEDIA_INFO_LOG("camera position: %{public}d, camera type: %{public}d, camera connection type: %{public}d, "
                    "camera foldScreen type: %{public}d, camera orientation: %{public}d, isretractable: %{public}d, "
-                   "moduleType: %{public}u, foldStatus: %{public}d, supportSpecSearch: %{public}d",
+                   "moduleType: %{public}u, foldStatus: %{public}d, supportSpecSearch: %{public}d, camera automotive "
+                   "position: %{public}d",
                    cameraPosition_, cameraType_, connectionType_, foldScreenType_, cameraOrientation_, isRetractable_,
-                   moduleType_, foldStatus_, supportSpecSearch_);
+                   moduleType_, foldStatus_, supportSpecSearch_, cameraAutomotivePosition_);
 }
 
 void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metadata)
@@ -312,12 +341,23 @@ CameraPosition CameraDevice::GetPosition()
         foldScreenType_ == CAMERA_FOLDSCREEN_INNER) {
         cameraPosition_ = CAMERA_POSITION_FOLD_INNER;
     }
+    MEDIA_DEBUG_LOG("CameraDevice::GetPosition automotive camera position: %{public}d", cameraAutomotivePosition_);
+    if (cameraAutomotivePosition_ == CAMERA_POSITION_INTERIOR_ROW_1_CENTER) {
+        cameraPosition_ = CAMERA_POSITION_FRONT;
+    } else if (cameraAutomotivePosition_ == CAMERA_POSITION_EXTERIOR_REAR) {
+        cameraPosition_ = CAMERA_POSITION_BACK;
+    }
     return cameraPosition_;
 }
 
 CameraPosition CameraDevice::GetUsedAsPosition()
 {
     return usedAsCameraPosition_;
+}
+
+AutomotiveCameraPosition CameraDevice::GetAutomotivePosition()
+{
+    return cameraAutomotivePosition_;
 }
 
 CameraType CameraDevice::GetCameraType()

@@ -2265,5 +2265,55 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_103, Test
     cameraManager_->cameraDeviceList_.clear();
     EXPECT_TRUE(cameraManager_->ShouldClearCache());
 }
+
+/*
+ * Feature: Framework
+ * Function: Test to get automotive camera position
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get automotive camera position when position is front
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_104, TestSize.Level0)
+{
+    size_t itemCapacity = 2;
+    size_t dataCapacity = 100;
+    std::string cameraID = "device";
+    auto metadata = std::make_shared<OHOS::Camera::CameraMetadata>(itemCapacity, dataCapacity);
+    CHECK_EXECUTE(metadata == nullptr, GTEST_SKIP());
+    int32_t value = static_cast<int32_t>(OHOS_CAMERA_POSITION_INTERIOR_ROW_1_CENTER);
+    metadata->addEntry(OHOS_ABILITY_AUTOMOTIVE_CAMERA_POSITION, &value, 1);
+    auto camera = std::make_shared<CameraDevice>(cameraID, metadata);
+    CHECK_EXECUTE(camera == nullptr, GTEST_SKIP());
+    AutomotiveCameraPosition position = camera->GetAutomotivePosition();
+    EXPECT_EQ(position, AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_1_CENTER);
+    CameraPosition pos = camera->GetPosition();
+    EXPECT_EQ(pos, CameraPosition::CAMERA_POSITION_FRONT);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test to get automotive camera position
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test to get automotive camera position when position is back
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_105, TestSize.Level0)
+{
+    size_t itemCapacity = 2;
+    size_t dataCapacity = 100;
+    std::string cameraID = "device0";
+    auto metadata = std::make_shared<OHOS::Camera::CameraMetadata>(itemCapacity, dataCapacity);
+    CHECK_EXECUTE(metadata == nullptr, GTEST_SKIP());
+    int32_t value = static_cast<int32_t>(OHOS_CAMERA_POSITION_EXTERIOR_REAR);
+    metadata->addEntry(OHOS_ABILITY_AUTOMOTIVE_CAMERA_POSITION, &value, 1);
+    auto camera = std::make_shared<CameraDevice>(cameraID, metadata);
+    CHECK_EXECUTE(camera == nullptr, GTEST_SKIP());
+    AutomotiveCameraPosition position = camera->GetAutomotivePosition();
+    EXPECT_EQ(position, AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_REAR);
+    CameraPosition pos = camera->GetPosition();
+    EXPECT_EQ(pos, CameraPosition::CAMERA_POSITION_BACK);
+}
 }
 }

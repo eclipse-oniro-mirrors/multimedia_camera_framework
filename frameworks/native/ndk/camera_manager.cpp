@@ -348,6 +348,13 @@ Camera_ErrorCode OH_CameraDevice_GetHostDeviceType(Camera_Device* camera, Camera
     return Camera_Manager::GetHostDeviceType(camera, hostDeviceType);
 }
 
+Camera_ErrorCode OH_CameraDevice_GetAutomotiveCameraPosition(Camera_Device* camera, Camera_AutomotivePosition* position)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(position == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, position is null!");
+    return Camera_Manager::GetAutomotiveCameraPosition(camera, position);
+}
+
 Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
     Camera_SceneMode** sceneModes, uint32_t* size)
 {
