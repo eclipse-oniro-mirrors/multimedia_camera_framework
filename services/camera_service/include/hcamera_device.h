@@ -209,6 +209,7 @@ public:
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void UpdateLiveStreamSceneMetadata(uint32_t mode);
 #endif
+    void HandleScanScene(std::string clientName);
 
 private:
     class FoldScreenListener;
@@ -330,6 +331,8 @@ private:
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     void SaveKeyFrameInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
 #endif
+    bool GetScanScene();
+    void UpdateScanSceneMetadata(uint32_t previewQuality);
     std::vector<int32_t> frameRateRange_ = {0, 0};
     std::mutex clientNameMutex_;
     std::mutex lastDisplayModeLock_;

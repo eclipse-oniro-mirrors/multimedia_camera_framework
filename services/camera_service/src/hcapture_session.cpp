@@ -1173,6 +1173,7 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
     auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr,
         "HCaptureSession::ExpandMovingPhotoRepeatStream No outputs present");
+    CHECK_RETURN(!hStreamOperatorSptr->IsCaptureStreamExist()); // ExpandMovingPhoto when photoOuput not null
     CHECK_RETURN(hStreamOperatorSptr->IsLivephotoStreamExist());
     MEDIA_INFO_LOG("Pipeline::Start enter.");
     hStreamOperatorSptr->ExpandMovingPhotoRepeatStream(ORIGIN_VIDEO);
@@ -1371,6 +1372,9 @@ int32_t HCaptureSession::CommitConfig()
             errorCode = CAMERA_INVALID_STATE;
             return;
         }
+        int uid = IPCSkeleton::GetCallingUid();
+        CHECK_EXECUTE(bundleName_ == "", bundleName_ = GetClientBundle(uid));
+        CHECK_EXECUTE(!hStreamOperatorSptr->IsCaptureStreamExist(), device->HandleScanScene(bundleName_));
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
         if (!CheckSystemApp() && HCameraDeviceManager::GetInstance()->IsLiveScene()) {
             device->UpdateLiveStreamSceneMetadata(OHOS_CAMERA_APP_HINT_LIVE_STREAM);
