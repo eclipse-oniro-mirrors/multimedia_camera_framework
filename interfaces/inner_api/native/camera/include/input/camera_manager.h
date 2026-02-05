@@ -34,9 +34,11 @@
 #include "deferred_proc_session/deferred_video_proc_session.h"
 #include "hcamera_listener_stub.h"
 #include "camera_service_callback_stub.h"
+#include "camera_shared_service_callback_stub.h"
 #include "camera_mute_service_callback_stub.h"
 #include "control_center_status_callback_stub.h"
 #include "fold_service_callback_stub.h"
+#include "icamera_shared_service_callback.h"
 #include "icontrol_center_status_callback.h"
 #include "torch_service_callback_stub.h"
 #include "camera_service_proxy.h"
@@ -142,11 +144,19 @@ public:
     virtual void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const = 0;
 };
 
+class CameraSharedStatusListener {
+public:
+    CameraSharedStatusListener() = default;
+    virtual ~CameraSharedStatusListener() = default;
+    virtual void OnCameraSharedStatusChanged(const CameraSharedStatus status) const = 0;
+};
+
 class TorchServiceListenerManager;
 class CameraStatusListenerManager;
 class CameraMuteListenerManager;
 class ControlCenterStatusListenerManager;
 class FoldStatusListenerManager;
+class CameraSharedStatusListenerManager;
 class CameraManager : public RefBase {
 public:
     virtual ~CameraManager();
@@ -801,6 +811,29 @@ public:
     sptr<CameraMuteListenerManager> GetCameraMuteListenerManager();
 
     /**
+     * @brief Register camera shared status listener
+     *
+     * @param listener The camera shared status listener object.
+     * @return.
+     */
+    void RegisterCameraSharedStatusListener(std::shared_ptr<CameraSharedStatusListener> listener);
+
+    /**
+     * @brief Unregister camera shared status listener
+     *
+     * @param listener The camera shared status object.
+     * @return.
+     */
+    void UnregisterCameraSharedStatusListener(std::shared_ptr<CameraSharedStatusListener> listener);
+
+    /**
+     * @brief Get the CameraSharedStatusListenerManager.
+     *
+     * @return CameraSharedStatusListenerManager.
+     */
+    sptr<CameraSharedStatusListenerManager> GetCameraSharedStatusListenerManager();
+
+    /**
      * @brief prelaunch the camera
      *
      * @return Server error code.
@@ -1064,6 +1097,9 @@ private:
     int32_t SetControlCenterStatusCallback(sptr<IControlCenterStatusCallback>& callback);
     int32_t UnSetControlCenterStatusCallback();
 
+    int32_t SetCameraSharedStatusCallback(sptr<ICameraSharedServiceCallback>& callback);
+    int32_t UnSetCameraSharedStatusCallback();
+
     int32_t CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetadataOutput,
         const std::vector<MetadataObjectType>& metadataObjectTypes = {});
 
@@ -1203,6 +1239,8 @@ private:
     sptr<TorchServiceListenerManager> torchServiceListenerManager_ = sptr<TorchServiceListenerManager>::MakeSptr();
     sptr<CameraStatusListenerManager> cameraStatusListenerManager_ = sptr<CameraStatusListenerManager>::MakeSptr();
     sptr<FoldStatusListenerManager> foldStatusListenerManager_ = sptr<FoldStatusListenerManager>::MakeSptr();
+    sptr<CameraSharedStatusListenerManager> cameraSharedStatusListenerManager_ =
+        sptr<CameraSharedStatusListenerManager>::MakeSptr();
 
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
 
@@ -1326,6 +1364,13 @@ class FoldStatusListenerManager : public CameraManagerGetter,
                                   public CameraListenerManager<FoldListener> {
 public:
     int32_t OnFoldStatusChanged(const FoldStatus status) override;
+};
+
+class CameraSharedStatusListenerManager : public CameraManagerGetter,
+                                       public CameraSharedServiceCallbackStub,
+                                       public CameraListenerManager<CameraSharedStatusListener> {
+public:
+    int32_t OnCameraSharedStatusChanged(const int32_t status) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

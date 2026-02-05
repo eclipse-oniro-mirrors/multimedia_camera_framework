@@ -94,6 +94,50 @@ void CameraManagerImpl::OffControlCenterStatusChange(optional_view<callback<void
     ListenerTemplate<CameraManagerImpl>::Off(this, callback, "controlCenterStatusChange");
 }
 
+CameraSharedStatusListenerAni::CameraSharedStatusListenerAni(ani_env *env) : ListenerBase(env)
+{
+    MEDIA_DEBUG_LOG("CameraSharedStatusListenerAni is called.");
+}
+
+
+CameraSharedStatusListenerAni::~CameraSharedStatusListenerAni()
+{
+    MEDIA_DEBUG_LOG("~CameraSharedStatusListenerAni is called.");
+}
+
+void CameraSharedStatusListenerAni::OnCameraSharedStatusCallback(
+    const OHOS::CameraStandard::CameraSharedStatus status) const
+{
+    auto sharePtr = shared_from_this();
+    CameraSharedStatus cameraSharedStatus = static_cast<CameraSharedStatus::key_t>(status);
+    auto task = [cameraSharedStatus, sharePtr]() {
+        CHECK_EXECUTE(sharePtr != nullptr,
+            sharePtr->ExecuteAsyncCallback("cameraSharedStatusChange", 0, "Callback is OK", cameraSharedStatus));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(
+        task, "OnCameraSharedStatusChanged", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+    MEDIA_DEBUG_LOG("OnCameraSharedStatusCallback is called, status: %{public}d", status);
+}
+
+void CameraSharedStatusListenerAni::OnCameraSharedStatusChanged(
+    const OHOS::CameraStandard::CameraSharedStatus status) const
+{
+    MEDIA_INFO_LOG("OnCameraSharedStatusChanged is called, status: %{public}d", status);
+    OnCameraSharedStatusCallback(status);
+}
+
+void CameraManagerImpl::OnCameraSharedStatusChange(callback_view<void(uintptr_t, CameraSharedStatus)> callback)
+{
+    ListenerTemplate<CameraManagerImpl>::On(this, callback, "cameraSharedStatusChange");
+}
+
+void CameraManagerImpl::OffCameraSharedStatusChange(
+    optional_view<callback<void(uintptr_t, CameraSharedStatus)>> callback)
+{
+    ListenerTemplate<CameraManagerImpl>::Off(this, callback, "cameraSharedStatusChange");
+}
+
 CameraMuteListenerAni::CameraMuteListenerAni(ani_env* env): ListenerBase(env)
 {
     MEDIA_DEBUG_LOG("CameraMuteListenerAni is called.");
@@ -673,6 +717,35 @@ void CameraManagerImpl::UnregisterControlCenterStatusCallbackListener(
     }
 }
 
+void CameraManagerImpl::RegisterCameraSharedStatusCallbackListener(
+    const std::string &eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CHECK_RETURN_ELOG(
+        cameraManager_ == nullptr, "failed to RegisterCameraSharedStatusCallbackListener, cameraManager is nullptr");
+    CHECK_RETURN_ELOG(
+        !OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), "SystemApi On CameraSharedStatus is called!");
+    ani_env *env = get_env();
+    auto listener = CameraAniEventListener<CameraSharedStatusListenerAni>::RegisterCallbackListener(
+        eventName, env, callback, isOnce);
+    CHECK_RETURN_ELOG(
+        listener == nullptr, "CameraManagerImpl::RegisterCameraSharedStatusCallbackListener listener is null");
+    cameraManager_->RegisterCameraSharedStatusListener(listener);
+}
+
+void CameraManagerImpl::UnregisterCameraSharedStatusCallbackListener(
+    const std::string &eventName, std::shared_ptr<uintptr_t> callback)
+{
+    CHECK_RETURN_ELOG(
+        !OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), "SystemApi On CameraSharedStatus is called!");
+    ani_env *env = get_env();
+    auto listener =
+        CameraAniEventListener<CameraSharedStatusListenerAni>::UnregisterCallbackListener(eventName, env, callback);
+    CHECK_RETURN(listener == nullptr);
+    if (listener->IsEmpty(eventName)) {
+        cameraManager_->UnregisterCameraSharedStatusListener(listener);
+    }
+}
+
 const CameraManagerImpl::EmitterFunctions& CameraManagerImpl::GetEmitterFunctions()
 {
     static const EmitterFunctions funMap = {
@@ -691,6 +764,9 @@ const CameraManagerImpl::EmitterFunctions& CameraManagerImpl::GetEmitterFunction
         {"controlCenterStatusChange", {
             &CameraManagerImpl::RegisterControlCenterStatusCallbackListener,
             &CameraManagerImpl::UnregisterControlCenterStatusCallbackListener} },
+        { "cameraSharedStatusChange", {
+            &CameraManagerImpl::RegisterCameraSharedStatusCallbackListener,
+            &CameraManagerImpl::UnregisterCameraSharedStatusCallbackListener} },
         };
     return funMap;
 }

@@ -848,7 +848,7 @@ interface PhotoConflictFunctions : ZoomQuery, MacroQuery {
 interface PhotoFunctions : FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery {
 }
 
-interface PhotoSessionForSys : PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, EffectSuggestion, DepthFusion, SceneDetection {
+interface PhotoSessionForSys : PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, EffectSuggestion, DepthFusion, SceneDetection, ImagingMode {
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
   @!sts_inject_into_interface("on(type: string, featureType: SceneFeatureType, callback: (err: BusinessError<void>, data: object)=> void): void;")
@@ -1749,6 +1749,8 @@ interface CameraManager {
               this.onFoldStatusChange(callback as (err: BusinessError<void>, data: FoldStatusInfo)=> void);
             } else if (type === "torchStatusChange") {
               this.onTorchStatusChange(callback as (err: BusinessError<void>, data: TorchStatusInfo)=> void);
+            } else if (type === "cameraSharedStatus") {
+              this.onCameraSharedStatusChange(callback as (err: BusinessError<void>, data: CameraSharedStatus)=> void);
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1765,6 +1767,8 @@ interface CameraManager {
               this.offFoldStatusChange(callback as (((err: BusinessError<void>, data: FoldStatusInfo)=> void) | undefined));
             } else if (type === "torchStatusChange") {
               this.offTorchStatusChange(callback as (((err: BusinessError<void>, data: TorchStatusInfo)=> void) | undefined));
+            } else if (type === "cameraSharedStatus") {
+              this.offCameraSharedStatusChange(callback as (err: BusinessError<void>, data: CameraSharedStatus)=> void);
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1781,6 +1785,8 @@ interface CameraManager {
   OffTorchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void>): void;
   OnControlCenterStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
   OffControlCenterStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
+  OnCameraSharedStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void): void;
+  OffCameraSharedStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void>): void;
   IsControlCenterActive(): bool;
   CreateControlCenterSession(): ControlCenterSession;
 }
@@ -2764,6 +2770,26 @@ interface QuickThumbnail {
   @get GetThumbnailImage(): PixelMap;
   @gen_promise("release")
   ReleaseSync(): void;
+}
+
+enum CameraSharedStatus : i32 {
+  CAMERA_SHARED_STATUS_SHARED = 0,
+  CAMERA_SHARED_STATUS_UNSHARED = 1
+}
+
+enum ImagingModeType : i32 {
+  AUTO = 0,
+  RGB = 1,
+  IR = 2
+}
+
+interface ImagingModeQuery {
+  IsImagingModeSupported(mode: ImagingModeType): bool;
+}
+
+interface ImagingMode : ImagingModeQuery {
+  GetActiveImagingMode(): ImagingModeType;
+  SetImagingMode(mode: ImagingModeType): void;
 }
 
 // transfer functions

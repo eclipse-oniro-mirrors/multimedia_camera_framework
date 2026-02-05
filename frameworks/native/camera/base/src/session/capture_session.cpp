@@ -6753,5 +6753,6 @@ void CaptureSession::SetDefaultColorSpace()
         SetColorSpace(ColorSpace::BT2020_HLG);
     }
 }
+
 } // namespace CameraStandard
 } // namespace OHOS

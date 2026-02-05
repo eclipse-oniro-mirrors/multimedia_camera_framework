@@ -201,6 +201,8 @@ public:
     int32_t Dump(int fd, const vector<u16string>& args) override;
     int DestroyStubObj() override;
     int SetListenerObject(const sptr<IRemoteObject>& object) override;
+    int32_t SetCameraSharedStatusCallback(const sptr<ICameraSharedServiceCallback>& callback) override;
+    int32_t UnSetCameraSharedStatusCallback() override;
 
     CameraServiceStatus GetServiceStatus();
     void SetServiceStatus(CameraServiceStatus);
@@ -223,6 +225,7 @@ public:
     void OnFoldStatusChanged(OHOS::Rosen::FoldStatus foldStatus) override;
     int32_t UnSetFoldStatusCallback(pid_t pid);
     int32_t UnSetControlCenterStatusCallback(pid_t pid);
+    int32_t UnSetCameraSharedStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
     void UnregisterFoldStatusListener();
     int32_t RequireMemorySize(int32_t memSize) override;
@@ -396,6 +399,7 @@ private:
     mutex controlCenterStatusMutex_;
     mutex videoSessionMutex_;
     mutex usePhysicalCameraOrientationMutex_;
+    mutex cameraSharedStatusMutex_;
     recursive_mutex torchCbMutex_;
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
@@ -408,6 +412,7 @@ private:
     map<uint32_t, sptr<ICameraMuteServiceCallback>> cameraMuteServiceCallbacks_;
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     map<uint32_t, sptr<IControlCenterStatusCallback>> controlcenterCallbacks_;
+    map<uint32_t, sptr<ICameraSharedServiceCallback>> cameraSharedServiceCallbacks_;
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 
     void CacheCameraStatus(const string& cameraId, std::shared_ptr<CameraStatusCallbacksInfo> info);

@@ -296,6 +296,11 @@ public:
 
     std::shared_ptr<ImageStabilizationGuideCallback> GetImageStabilizationGuideCallback();
 
+    int32_t IsImagingModeSupported(ImagingMode imagingMode, bool& isSupported);
+    int32_t GetActiveImagingMode(ImagingMode& imagingMode);
+    int32_t SetImagingMode(ImagingMode imagingMode);
+    int32_t GetSupportedImagingMode(std::vector<ImagingMode>& imagingMode);
+
 private:
     int32_t IsColorReservationTypeSupported(ColorReservationType colorReservationType, bool& isSupported);
     volatile bool isDepthFusionEnable_ = false;

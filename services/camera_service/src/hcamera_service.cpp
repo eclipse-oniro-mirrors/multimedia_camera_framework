@@ -1625,6 +1625,47 @@ int32_t HCameraService::CheckControlCenterPermission()
     return CAMERA_OK;
 }
 
+int32_t HCameraService::SetCameraSharedStatusCallback(const sptr<ICameraSharedServiceCallback>& callback)
+{
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    lock_guard<mutex> lock(cameraSharedStatusMutex_);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_INFO_LOG("HCameraService::SetCameraSharedStatusCallback pid = %{public}d", pid);
+    CHECK_RETURN_RET_ELOG(
+        callback == nullptr, CAMERA_INVALID_ARG, "HCameraService::SetCameraSharedStatusCallback callback is null");
+    cameraSharedServiceCallbacks_.insert(make_pair(pid, callback));
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UnSetCameraSharedStatusCallback()
+{
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "UnSetCameraSharedStatusCallback HCameraService::CheckSystemApp fail");
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    return UnSetCameraSharedStatusCallback(pid);
+}
+
+int32_t HCameraService::UnSetCameraSharedStatusCallback(pid_t pid)
+{
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "UnSetCameraSharedStatusCallback HCameraService::CheckSystemApp fail");
+    lock_guard<mutex> lock(cameraSharedStatusMutex_);
+    MEDIA_INFO_LOG("HCameraService::UnSetCameraSharedStatusCallback pid = %{public}d, size = %{public}zu",
+        pid, cameraSharedServiceCallbacks_.size());
+    if (!cameraSharedServiceCallbacks_.empty()) {
+        MEDIA_INFO_LOG("UnSetCameraSharedStatusCallback cameraSharedServiceCallbacks_ is not empty, reset it");
+        auto it = cameraSharedServiceCallbacks_.find(pid);
+        bool isErasePid = (it != cameraSharedServiceCallbacks_.end()) && (it->second);
+        if (isErasePid) {
+            it->second = nullptr;
+            cameraSharedServiceCallbacks_.erase(it);
+        }
+    }
+    MEDIA_INFO_LOG("HCameraService::UnSetCameraSharedStatusCallback after erase pid = %{public}d, size = %{public}zu",
+        pid, cameraSharedServiceCallbacks_.size());
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::SetTorchCallback(const sptr<ITorchServiceCallback>& callback)
 {
     lock_guard<recursive_mutex> lock(torchCbMutex_);

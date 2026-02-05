@@ -1404,5 +1404,41 @@ void AutoDeviceSwitchImpl::EnableAutoDeviceSwitch(bool enabled)
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
         "AutoDeviceSwitchImpl::EnableAutoDeviceSwitch fail %{public}d", retCode);
 }
+
+bool ImagingModeQueryImpl::IsImagingModeSupported(ImagingModeType mode)
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        false, "SystemApi IsImagingModeSupported is called!");
+    CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, false,
+        "IsImagingModeSupported captureSessionForSys_ is null");
+    bool isSupported = false;
+    int32_t retCode = captureSessionForSys_->IsImagingModeSupported(
+        static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()), isSupported);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), false);
+    return isSupported;
+}
+
+ImagingModeType ImagingModeImpl::GetActiveImagingMode()
+{
+    ImagingModeType errType = ImagingModeType(static_cast<ImagingModeType::key_t>(-1));
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), errType,
+        "SystemApi GetActiveImagingMode is called!");
+    CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, errType,
+        "GetActiveImagingMode captureSessionForSys_ is null");
+    OHOS::CameraStandard::ImagingMode mode;
+    int32_t retCode = captureSessionForSys_->GetActiveImagingMode(mode);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), errType);
+    return ImagingModeType(static_cast<ImagingModeType::key_t>(mode));
+}
+
+void ImagingModeImpl::SetImagingMode(ImagingModeType mode)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetImagingMode is called!");
+    CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "SetImagingMode captureSessionForSys_ is null!");
+    int retCode = captureSessionForSys_->SetImagingMode(
+        static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()));
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "SetImagingMode call Failed!");
+}
 } // namespace Ani
 } // namespace Camera

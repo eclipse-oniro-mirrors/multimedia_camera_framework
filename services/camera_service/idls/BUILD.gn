@@ -49,6 +49,7 @@ idl_gen_interface("camera_service_idl_interface") {
     "IMechSessionCallback.idl",
     "IMovieFileOutputCallback.idl",
     "ICameraSwitchSessionCallback.idl",
+    "ICameraSharedServiceCallback.idl",
   ]
 
   sources_common = [ "CameraTypes.idl" ]

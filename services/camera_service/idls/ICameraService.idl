@@ -17,6 +17,7 @@ package OHOS.CameraStandard;
 import CameraTypes;
 import ICameraDeviceService;
 import ICameraMuteServiceCallback;
+import ICameraSharedServiceCallback;
 import IControlCenterStatusCallback;
 import ICaptureSession;
 import IFoldServiceCallback;
@@ -109,6 +110,8 @@ interface ICameraService{
   [ipccode 77] void GetParameters([in] String key, [out] List<String> values);
   [ipccode 78] void GetSupportedKeys([out] List<String> keys);
   [ipccode 79] void GetActiveParameter([in] String key, [out] String value);
+  [ipccode 81] void SetCameraSharedStatusCallback([in] ICameraSharedServiceCallback callbackFunc);
+  [ipccode 82] void UnSetCameraSharedStatusCallback();
   [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);

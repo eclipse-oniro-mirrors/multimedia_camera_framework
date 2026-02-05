@@ -373,6 +373,21 @@ public:
     virtual ~AutoDeviceSwitchImpl() = default;
     void EnableAutoDeviceSwitch(bool enabled);
 };
+
+class ImagingModeQueryImpl : virtual public SessionBase {
+public:
+    explicit ImagingModeQueryImpl() {}
+    virtual ~ImagingModeQueryImpl() = default;
+    bool IsImagingModeSupported(ImagingModeType mode);
+};
+
+class ImagingModeImpl : public ImagingModeQueryImpl {
+public:
+    explicit ImagingModeImpl() {}
+    virtual ~ImagingModeImpl() = default;
+    ImagingModeType GetActiveImagingMode();
+    void SetImagingMode(ImagingModeType mode);
+};
 } // namespace Camera
 } // namespace Ani
 
