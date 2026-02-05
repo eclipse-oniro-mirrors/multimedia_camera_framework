@@ -2939,8 +2939,8 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
     camera_metadata_item_t item;
     ProfilesWrapper profilesWrapper = {};
     depthProfiles_.clear();
-    photoFormats_.clear();
-    photoFormats_ = GetSupportPhotoFormat(modeName, cameraAbility);
+    SetPhotoFormats({});
+    SetPhotoFormats(GetSupportPhotoFormat(modeName, cameraAbility));
 
     ParseCapability(profilesWrapper, camera, modeName, item, cameraAbility);
     SceneMode profileMode = static_cast<SceneMode>(modeName);
@@ -3652,7 +3652,8 @@ void CameraManager::FillSupportPreviewFormats(std::vector<Profile>& previewProfi
 void CameraManager::FillSupportPhotoFormats(std::vector<Profile>& photoProfiles)
 {
     // LCOV_EXCL_START
-    CHECK_RETURN(photoFormats_.size() == 0 || photoProfiles.size() == 0);
+    auto photoFormats = GetPhotoFormats();
+    CHECK_RETURN(photoFormats.size() == 0 || photoProfiles.size() == 0);
     std::vector<Profile> extendProfiles = {};
     // if photo stream support jpeg, it must support yuv.
     for (const auto& profile : photoProfiles) {
@@ -3660,7 +3661,7 @@ void CameraManager::FillSupportPhotoFormats(std::vector<Profile>& photoProfiles)
             extendProfiles.push_back(profile);
             continue;
         }
-        for (const auto& format : photoFormats_) {
+        for (const auto& format : photoFormats) {
             Profile extendPhotoProfile = profile;
             extendPhotoProfile.format_ = format;
             extendProfiles.push_back(extendPhotoProfile);
@@ -3675,7 +3676,8 @@ void CameraManager::FillExtendedSupportPhotoFormats(vector<Profile>& photoProfil
 {
     CHECK_RETURN(photoFormats_.size() == 0 || photoProfiles.size() == 0);
     std::vector<Profile> extendProfiles = {};
-    bool heifSupport = find(photoFormats_.begin(), photoFormats_.end(), CAMERA_FORMAT_HEIC) != photoFormats_.end();
+    auto photoFormats = GetPhotoFormats();
+    bool heifSupport = find(photoFormats.begin(), photoFormats.end(), CAMERA_FORMAT_HEIC) != photoFormats.end();
     for (const auto& profile : photoProfiles) {
         if (profile.format_ == CAMERA_FORMAT_YUV_420_SP) {
             extendProfiles.push_back(profile);
@@ -3853,5 +3855,18 @@ void CameraManager::SetOldMetatoInput(sptr<CameraDevice>& cameraObj,
 {
     SetProfile(cameraObj, metadata);
 }
+
+std::vector<CameraFormat> CameraManager::GetPhotoFormats()
+{
+    std::lock_guard<std::mutex> lock(photoFormatsMutex_);
+    return photoFormats_;
+}
+
+void CameraManager::SetPhotoFormats(const std::vector<CameraFormat>& photoFormats)
+{
+    std::lock_guard<std::mutex> lock(photoFormatsMutex_);
+    photoFormats_ = photoFormats;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS
