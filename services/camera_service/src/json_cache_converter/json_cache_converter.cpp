@@ -257,6 +257,8 @@ bool JsonCacheConverter::ParseJsonToExtendedInfo(const nlohmann::json& extendedI
                               "key format not in extendedInfoJson.");
         CHECK_RETURN_RET_ELOG(!extendedInfoJson.contains("dataspace"), false,
                               "key dataspace not in extendedInfoJson.");
+        CHECK_RETURN_RET_ELOG(!extendedInfoJson.contains("hasBufferQueue"), false,
+                              "key hasBufferQueue not in extendedInfoJson.");       
 
         CHECK_RETURN_RET_ELOG(!extendedInfoJson["type"].is_number_integer(), false,
                               "ParseJsonToExtendedInfo : type from json is not int.");
