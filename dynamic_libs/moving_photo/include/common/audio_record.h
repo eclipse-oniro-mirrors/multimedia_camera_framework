@@ -153,6 +153,16 @@ public:
         audioBuffer_ = audioBuffer;
     }
 
+    void SetFinishedProcessedStatus(bool isFinished)
+    {
+        isFinishedProcessed_ = isFinished;
+    }
+
+    bool GetFinishProcessedStatus()
+    {
+        return isFinishedProcessed_;
+    }
+
 private:
     static const int32_t STATUS_NONE = 0;
     static const int32_t STATUS_READY_CONVERT = 1;
@@ -164,6 +174,7 @@ private:
     std::mutex mutex_;
     std::condition_variable canReleased_;
     uint8_t* audioBuffer_ = nullptr;
+    std::atomic<bool> isFinishedProcessed_ = false;
 };
 } // CameraStandard
 } // OHOS

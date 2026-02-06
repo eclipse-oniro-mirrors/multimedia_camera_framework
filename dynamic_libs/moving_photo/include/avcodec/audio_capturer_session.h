@@ -29,6 +29,8 @@ namespace CameraStandard {
 using namespace AudioStandard;
 using namespace std::chrono;
 constexpr uint32_t DEFAULT_AUDIO_CACHE_NUMBER = 400;
+using ProcessCbFunc = function<void(sptr<AudioRecord>, bool)>;
+class AudioRecordArrivalCallback;
 class AudioCapturerSession : public RefBase, public std::enable_shared_from_this<AudioCapturerSession> {
 public:
     explicit AudioCapturerSession();
@@ -41,6 +43,25 @@ public:
     AudioChannel getMicNum();
     AudioStreamInfo deferredInputOptions_;
     AudioStreamInfo deferredOutputOptions_;
+    void ExecuteOnceRecord(int64_t startTime, int64_t endTime, ProcessCbFunc processCallback);
+    void SetAudioBufferCallback(ProcessCbFunc processAudioFunc);
+    void SetStopAudioRecord();
+
+    inline sptr<AudioRecord> GetBackAudioRecord()
+    {
+        return audioBufferQueue_.Back();
+    }
+
+    inline bool GetProcessedCbFunc()
+    {
+        std::lock_guard<std::mutex> lock(processCallbackMutex_);
+        return processCallback_ == nullptr;
+    }
+
+    inline void UpdateCaptureTimeRangeForEnd(int64_t endTime)
+    {
+        curCaptureTimeRange_.second = endTime;
+    }
 
 private:
     inline std::shared_ptr<AudioCapturer> GetAudioCapturer()
@@ -62,6 +83,9 @@ private:
     BlockingQueue<sptr<AudioRecord>> audioBufferQueue_;
     std::atomic<bool> startAudioCapture_ { false };
     std::unique_ptr<std::thread> audioThread_ = nullptr;
+    std::pair<int64_t, int64_t> curCaptureTimeRange_ = {0, 0};
+    ProcessCbFunc processCallback_ = nullptr;
+    std::mutex processCallbackMutex_;
 };
 } // CameraStandard
 } // OHOS

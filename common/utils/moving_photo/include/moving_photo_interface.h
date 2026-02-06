@@ -35,14 +35,15 @@ class AvcodecTaskManager;
 class PhotoAssetIntf;
 class MovingPhotoVideoCache;
 class AudioCapturerSessionIntf;
+class AudioTaskManagerIntf;
 using MetaElementType = std::pair<int64_t, sptr<OHOS::SurfaceBuffer>>;
 class AvcodecTaskManagerIntf : public RefBase {
 public:
     virtual ~AvcodecTaskManagerIntf() = default;
     virtual int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
         VideoCodecType type, int32_t colorSpace) = 0;
-    virtual int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, std::shared_ptr<Size> size,
-        sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) = 0;
+    virtual int32_t CreateAvcodecTaskManagerForAudio(wptr<Surface> movingSurface, std::shared_ptr<Size> size,
+        sptr<AudioTaskManagerIntf> audioTaskManagerIntf, VideoCodecType type, int32_t colorSpace) = 0;
     virtual void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) = 0;
     virtual void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) = 0;
     virtual uint32_t GetDeferredVideoEnhanceFlag(int32_t captureId) = 0;
@@ -52,7 +53,6 @@ public:
     virtual bool isEmptyVideoFdMap() = 0;
     virtual bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) = 0;
     virtual bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) = 0;
-    virtual void SetMutexMap(int64_t timestamp) = 0;
     virtual void RecordVideoType(int32_t captureId, VideoType type) = 0;
 };
 
@@ -84,6 +84,14 @@ public:
     virtual void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredFlag, std::string videoId,
         ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled) = 0;
     virtual void Release() = 0;
+};
+
+class AudioTaskManagerIntf : public RefBase {
+public:
+    virtual ~AudioTaskManagerIntf() = default;
+    virtual void CreateAudioTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf) = 0;
+    virtual void SubmitTask(std::function<void()> task) = 0;
+    virtual void ProcessAudioBuffer(int32_t captureId, int64_t timeStamp) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

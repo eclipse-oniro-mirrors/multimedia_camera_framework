@@ -26,6 +26,7 @@ class MovingPhotoResource {
 public:
     void SetXtStyleType(VideoType type);
     void StartOnceRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
+    void StartProcessAudioTask(int32_t captureId, int64_t startTimeStamp);
     void InsertStartTime(int32_t captureId, int64_t startTimeStamp);
     void InsertEndTime(int32_t captureId, int64_t endTimeStamp);
     void SetClearFlag();
@@ -37,6 +38,7 @@ public:
     sptr<MovingPhotoMetaListener> livephotoMetaListener_ = nullptr;
     sptr<MovingPhotoVideoCache> movingPhotoVideoCache_ = nullptr;
     sptr<AvcodecTaskManagerIntf> avcodecTaskManagerProxy_ = nullptr;
+    sptr<AudioTaskManagerIntf> audioTaskManagerProxy_ = nullptr;
  
     MovingPhotoResource() {}
 };
@@ -64,6 +66,8 @@ public:
     void Release();
 private:
     void StartOnceRecord(uint64_t timestamp, int32_t rotation, int32_t captureId, VideoType videoType);
+    void StartProcessAudioTask(int32_t captureId, int64_t startTimeStamp);
+    std::queue<int32_t> audioTaskQueue;
 
     inline MovingPhotoResource &GetMovingPhotoResource(VideoType videoType)
     {

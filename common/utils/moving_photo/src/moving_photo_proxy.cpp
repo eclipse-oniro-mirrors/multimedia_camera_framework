@@ -24,6 +24,7 @@ namespace CameraStandard {
 using CreateAvcodecTaskManagerIntf = AvcodecTaskManagerIntf*(*)();
 using CreateAudioCapturerSessionIntf = AudioCapturerSessionIntf*(*)();
 using CreateMovingPhotoManagerIntf = MovingPhotoManagerIntf*(*)();
+using CreateAudioTaskManagerIntf = AudioTaskManagerIntf*(*)();
 
 AvcodecTaskManagerProxy::AvcodecTaskManagerProxy(
     std::shared_ptr<Dynamiclib> avcodecTaskManagerLib, sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf)
@@ -70,18 +71,19 @@ int32_t AvcodecTaskManagerProxy::CreateAvcodecTaskManager(sptr<AudioCapturerSess
         audioCapturerSessionProxy->GetAudioCapturerSessionAdapter(), type, colorSpace);
 }
 
-int32_t AvcodecTaskManagerProxy::CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
-    sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace)
+
+int32_t AvcodecTaskManagerProxy::CreateAvcodecTaskManagerForAudio(wptr<Surface> movingSurface, shared_ptr<Size> size,
+    sptr<AudioTaskManagerIntf> audioTaskManagerIntf, VideoCodecType type, int32_t colorSpace)
 {
     MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
         static_cast<int32_t>(type), colorSpace);
-    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "audioCapturerSessionIntf is nullptr");
+    CHECK_RETURN_RET_ELOG(audioTaskManagerIntf == nullptr, -1, "audioTaskManagerIntf is nullptr");
     CHECK_RETURN_RET_ELOG(avcodecTaskManagerIntf_ == nullptr, -1, "avcodecTaskManagerIntf_ is nullptr");
-    sptr<AudioCapturerSessionProxy> audioCapturerSessionProxy =
-        static_cast<AudioCapturerSessionProxy*>(audioCapturerSessionIntf.GetRefPtr());
-    CHECK_RETURN_RET_ELOG(audioCapturerSessionProxy == nullptr, -1, "audioCapturerSessionProxy is nullptr");
-    return avcodecTaskManagerIntf_->CreateAvcodecTaskManager(movingSurface, size,
-        audioCapturerSessionProxy->GetAudioCapturerSessionAdapter(), type, colorSpace);
+    sptr<AudioTaskManagerProxy> audioTaskManagerProxy =
+        static_cast<AudioTaskManagerProxy*>(audioTaskManagerIntf.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(audioTaskManagerProxy == nullptr, -1, "audioTaskManagerProxy is nullptr");
+    return avcodecTaskManagerIntf_->CreateAvcodecTaskManagerForAudio(movingSurface, size,
+        audioTaskManagerProxy->GetAudioTaskManagerAdapter(), type, colorSpace);
 }
 
 void AvcodecTaskManagerProxy::SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount)
@@ -153,20 +155,12 @@ bool AvcodecTaskManagerProxy::TaskManagerInsertEndTime(int32_t captureId, int64_
     return avcodecTaskManagerIntf_->TaskManagerInsertEndTime(captureId, endTimeStamp);
 }
 
-void AvcodecTaskManagerProxy::SetMutexMap(int64_t timestamp)
-{
-    MEDIA_DEBUG_LOG("SetMutexMap start, timestamp: %{public} " PRId64, timestamp);
-    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
-    return avcodecTaskManagerIntf_->SetMutexMap(timestamp);
-}
-
 void AvcodecTaskManagerProxy::RecordVideoType(int32_t captureId, VideoType type)
 {
     MEDIA_DEBUG_LOG("RecordVideoType start, captureId: %{public}d %{public}d", captureId, static_cast<int32_t>(type));
     CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
     return avcodecTaskManagerIntf_->RecordVideoType(captureId, type);
 }
-
 
 sptr<AvcodecTaskManagerIntf> AvcodecTaskManagerProxy::GetTaskManagerAdapter() const
 {
@@ -354,5 +348,63 @@ void MovingPhotoManagerProxy::Release()
     CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
     movingPhotoManagerIntf_->Release();
 }
+
+
+AudioTaskManagerProxy::AudioTaskManagerProxy(
+    std::shared_ptr<Dynamiclib> audioTaskManagerLib, sptr<AudioTaskManagerIntf> audioTaskManagerIntf)
+    : audioTaskManagerLib_(audioTaskManagerLib), audioTaskManagerIntf_(audioTaskManagerIntf)
+{
+    MEDIA_DEBUG_LOG("AudioTaskManagerProxy is called");
+}
+
+sptr<AudioTaskManagerProxy> AudioTaskManagerProxy::CreateAudioTaskManagerProxy()
+{
+    MEDIA_DEBUG_LOG("CreateAudioTaskManagerProxy is called");
+    std::shared_ptr<Dynamiclib> dynamiclib = CameraDynamicLoader::GetDynamiclib(MOVING_PHOTO_SO);
+    CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "Failed to load moving photo library");
+    CreateAudioTaskManagerIntf createAudioTaskManagerIntf =
+            (CreateAudioTaskManagerIntf)dynamiclib->GetFunction("createAudioTaskManagerIntf");
+    CHECK_RETURN_RET_ELOG(createAudioTaskManagerIntf == nullptr, nullptr, "createAudioTaskManagerIntf is nullptr");
+    AudioTaskManagerIntf* audioTaskManagerIntf = createAudioTaskManagerIntf();
+    CHECK_RETURN_RET_ELOG(audioTaskManagerIntf== nullptr, nullptr, "audioTaskManagerIntf is nullptr");
+    sptr<AudioTaskManagerProxy> audioTaskManagerProxy = new AudioTaskManagerProxy(dynamiclib,
+        sptr<AudioTaskManagerIntf>(audioTaskManagerIntf));
+    return audioTaskManagerProxy;
+}
+
+void AudioTaskManagerProxy::CreateAudioTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf)
+{
+    MEDIA_DEBUG_LOG("CreateAudioTaskManager is called");
+    CHECK_RETURN_ELOG(audioTaskManagerIntf_ == nullptr, "current AudioTaskManagerIntf_ is nullptr");
+    sptr<AudioCapturerSessionProxy> audioCapturerSessionProxy =
+            static_cast<AudioCapturerSessionProxy*>(audioCapturerSessionIntf.GetRefPtr());
+    CHECK_RETURN_ELOG(audioCapturerSessionProxy == nullptr, "audioCapturerSessionProxy is nullptr");
+    audioTaskManagerIntf_->CreateAudioTaskManager(audioCapturerSessionProxy->GetAudioCapturerSessionAdapter());
+}
+
+AudioTaskManagerProxy::~AudioTaskManagerProxy()
+{
+    MEDIA_DEBUG_LOG("~AudioTaskManagerProxy is called");
+}
+
+sptr<AudioTaskManagerIntf> AudioTaskManagerProxy::GetAudioTaskManagerAdapter() const
+{
+    return audioTaskManagerIntf_;
+}
+
+void AudioTaskManagerProxy::SubmitTask(std::function<void()> task)
+{
+    MEDIA_DEBUG_LOG("AudioTaskManagerProxy::SubmitTask start");
+    CHECK_RETURN_ELOG(audioTaskManagerIntf_ == nullptr, "audioTaskManagerIntf_ is nullptr");
+    audioTaskManagerIntf_->SubmitTask(task);
+}
+
+void AudioTaskManagerProxy::ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp)
+{
+    MEDIA_DEBUG_LOG("AudioTaskManagerProxy::ProcessAudioBuffer start");
+    CHECK_RETURN_ELOG(audioTaskManagerIntf_ == nullptr, "audioTaskManagerIntf_ is nullptr");
+    return audioTaskManagerIntf_->ProcessAudioBuffer(captureId, startTimeStamp);
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

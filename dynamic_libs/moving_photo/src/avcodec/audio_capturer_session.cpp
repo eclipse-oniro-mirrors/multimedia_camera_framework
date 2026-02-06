@@ -142,7 +142,7 @@ void AudioCapturerSession::GetAudioRecords(int64_t startTime, int64_t endTime, v
     for (const auto& record : allRecords) {
         // LCOV_EXCL_START
         if (record->GetTimeStamp() >= startTime && record->GetTimeStamp() < endTime) {
-            audioRecords.push_back(record);
+            CHECK_EXECUTE(!record->GetFinishProcessedStatus(), audioRecords.push_back(record));
         }
         // LCOV_EXCL_STOP
     }
@@ -189,6 +189,15 @@ void AudioCapturerSession::ProcessAudioBuffer()
             audioRecord->GetFrameId().c_str(), audioRecord->GetTimeStamp());
         buffer.release();
         audioBufferQueue_.Push(audioRecord);
+        if (audioRecord->GetTimeStamp() >= curCaptureTimeRange_.first &&
+            audioRecord->GetTimeStamp() < curCaptureTimeRange_.second) {
+            bool isFinished = false;
+            if ((audioRecord->GetTimeStamp() + AudioDeferredProcess::MAX_MAX_DURATION_EACH_AUDIO_FRAME)
+                > curCaptureTimeRange_.second) {
+                isFinished = true;
+            }
+            CHECK_EXECUTE(processCallback_, processCallback_(audioRecord, isFinished));
+        }
     }
     // LCOV_EXCL_STOP
 }
@@ -221,7 +230,33 @@ void AudioCapturerSession::Release()
         // LCOV_EXCL_STOP
     }
     SetAudioCapturer(nullptr);
+    SetStopAudioRecord();
     MEDIA_INFO_LOG("Audio capture released");
+}
+
+void AudioCapturerSession::SetStopAudioRecord()
+{
+    // LCOV_EXCL_START
+    sptr<AudioRecord> audioRecord = new AudioRecord(-1);
+    CHECK_EXECUTE(processCallback_, processCallback_(audioRecord, true));
+    SetAudioBufferCallback(nullptr);
+    // LCOV_EXCL_STOP
+}
+
+void AudioCapturerSession::SetAudioBufferCallback(ProcessCbFunc processAudioFunc)
+{
+    std::lock_guard<std::mutex> lock(processCallbackMutex_);
+    processCallback_ = processAudioFunc;
+}
+
+void AudioCapturerSession::ExecuteOnceRecord(int64_t startTime, int64_t endTime,
+    ProcessCbFunc processAudioFunc)
+{
+    // LCOV_EXCL_START
+    curCaptureTimeRange_.first = startTime;
+    curCaptureTimeRange_.second = endTime;
+    SetAudioBufferCallback(processAudioFunc);
+    // LCOV_EXCL_STOP
 }
 
 } // namespace CameraStandard

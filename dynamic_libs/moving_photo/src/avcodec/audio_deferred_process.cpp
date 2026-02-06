@@ -175,27 +175,48 @@ int32_t AudioDeferredProcess::Process(vector<sptr<AudioRecord>>& audioRecords,
         int32_t ret = memcpy_s(rawArr.data() + count * oneUnprocessedSize_, oneUnprocessedSize_,
             audioRecords[i]->GetAudioBuffer(), oneUnprocessedSize_);
         CHECK_PRINT_ELOG(ret != 0, "AudioDeferredProcess::Process memcpy_s err:%{public}d", ret);
-        if (audioRecordsLen - 1 == i) {
-            MemsetAndCheck(rawArr.data(), MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE,
-                0, PROCESS_BATCH_SIZE * oneUnprocessedSize_);
-            EffectChainProcess(rawArr, processedArr);
-            MemsetAndCheck(processedArr.data(), MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
-                0, PROCESS_BATCH_SIZE * oneProcessedSize_);
-            ReturnToRecords(processedArr, processedRecords, i, count + 1);
-        } else if (count == PROCESS_BATCH_SIZE - 1 && audioRecordsLen >= PROCESS_BATCH_SIZE + 1 &&
-            i >= audioRecordsLen - PROCESS_BATCH_SIZE - 1) {
-            EffectChainProcess(rawArr, processedArr);
-            FadeOneBatch(processedArr);
-            MemsetAndCheck(processedArr.data() + oneProcessedSize_, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
-                0, (PROCESS_BATCH_SIZE - 1) * oneProcessedSize_);
-            ReturnToRecords(processedArr, processedRecords, i, PROCESS_BATCH_SIZE);
-        } else if (count == PROCESS_BATCH_SIZE - 1) {
+        if (count == PROCESS_BATCH_SIZE - 1) {
             EffectChainProcess(rawArr, processedArr);
             ReturnToRecords(processedArr, processedRecords, i, PROCESS_BATCH_SIZE);
         }
         count = (count + 1) % PROCESS_BATCH_SIZE;
     }
     return CAMERA_OK;
+    // LCOV_EXCL_STOP
+}
+
+void AudioDeferredProcess::SetMutedAudioRecordForVecs(vector<sptr<AudioRecord>>& audioRecords,
+    vector<sptr<AudioRecord>>& encodeAudioRecords)
+{
+    // LCOV_EXCL_START
+    CAMERA_SYNC_TRACE;
+    CHECK_RETURN_WLOG(offlineEffectChain_ == nullptr, -1,
+        "AudioDeferredProcess::SetMutedAudioRecordForVecs offlineEffectChain_ is nullptr.");
+    MEDIA_INFO_LOG("AudioDeferredProcess::SetMutedAudioRecordForVecs Enter");
+    uint32_t count = 0;
+    uint32_t audioRecordsLen = audioRecords.size();
+    CHECK_RETURN_ELOG(audioRecordsLen <= PROCESS_BATCH_SIZE, "audioRecords size is invalid");
+    std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE> processedArr{};
+    lock_guard<std::mutex> lock(mutex_);
+    for (uint32_t i = 0; i < audioRecordsLen; i ++) {
+        int32_t ret = memcpy_s(processedArr.data() + count * oneProcessedSize_, oneProcessedSize_,
+            audioRecords[i]->GetAudioBuffer(), oneProcessedSize_);
+        CHECK_PRINT_ELOG(ret != 0, "AudioDeferredProcess::Process memcpy_s err:%{public}d", ret);
+        if (audioRecordsLen - 1 == i) {
+            MemsetAndCheck(processedArr.data(), MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
+                0, PROCESS_BATCH_SIZE * oneProcessedSize_);
+            ReturnToRecords(processedArr, encodeAudioRecords, i, count + 1);
+        } else if (count == PROCESS_BATCH_SIZE - 1 && audioRecordsLen >= PROCESS_BATCH_SIZE + 1 &&
+            i >= audioRecordsLen - PROCESS_BATCH_SIZE - 1) {
+            FadeOneBatch(processedArr);
+            MemsetAndCheck(processedArr.data() + oneProcessedSize_, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE,
+                0, (PROCESS_BATCH_SIZE - 1) * oneProcessedSize_);
+            ReturnToRecords(processedArr, encodeAudioRecords, i, PROCESS_BATCH_SIZE);
+        } else if (count == PROCESS_BATCH_SIZE - 1) {
+            ReturnToRecords(processedArr, encodeAudioRecords, i, PROCESS_BATCH_SIZE);
+        }
+        count = (count + 1) % PROCESS_BATCH_SIZE;
+    }
     // LCOV_EXCL_STOP
 }
 

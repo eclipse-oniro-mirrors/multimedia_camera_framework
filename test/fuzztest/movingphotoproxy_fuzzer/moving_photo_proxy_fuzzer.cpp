@@ -155,7 +155,7 @@ void MovingPhotoProxyFuzzer::SetDeferredVideoEnhanceFlagFuzzTest(FuzzedDataProvi
     taskManagerfuzz_->CreateAvcodecTaskManager(capturerSessionfuzz_, videoCodecType, colorSpace);
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
     uint32_t deferredVideoEnhanceFlag = fdp.ConsumeIntegral<uint32_t>();
-    taskManagerfuzz_->SetDeferredVideoEnhanceFlag(captureId,deferredVideoEnhanceFlag);
+    taskManagerfuzz_->SetDeferredVideoEnhanceFlag(captureId,  deferredVideoEnhanceFlag);
     taskManagerfuzz_->GetDeferredVideoEnhanceFlag(captureId);
 }
 

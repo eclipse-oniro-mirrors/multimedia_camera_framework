@@ -28,8 +28,8 @@ public:
     static sptr<AvcodecTaskManagerProxy> CreateAvcodecTaskManagerProxy();
     int32_t CreateAvcodecTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf,
         VideoCodecType type, int32_t colorSpace) override;
-    int32_t CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
-        sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace) override;
+    int32_t CreateAvcodecTaskManagerForAudio(wptr<Surface> movingSurface, shared_ptr<Size> size,
+        sptr<AudioTaskManagerIntf> audioTaskManagerIntf, VideoCodecType type, int32_t colorSpace) override;
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount) override;
     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
     uint32_t GetDeferredVideoEnhanceFlag(int32_t captureId) override;
@@ -39,7 +39,6 @@ public:
     bool isEmptyVideoFdMap() override;
     bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) override;
     bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) override;
-    void SetMutexMap(int64_t timestamp) override;
     void RecordVideoType(int32_t captureId, VideoType type) override;
     sptr<AvcodecTaskManagerIntf> GetTaskManagerAdapter() const;
 private:
@@ -91,6 +90,22 @@ public:
 private:
     std::shared_ptr<Dynamiclib> movingPhotoManagerLib_ = {nullptr};
     sptr<MovingPhotoManagerIntf> movingPhotoManagerIntf_ = {nullptr};
+};
+
+class AudioTaskManagerProxy : public AudioTaskManagerIntf {
+public:
+    explicit AudioTaskManagerProxy(
+        std::shared_ptr<Dynamiclib> audioTaskManagerLib, sptr<AudioTaskManagerIntf> audioTaskManagerIntf);
+    static sptr<AudioTaskManagerProxy> CreateAudioTaskManagerProxy();
+    void CreateAudioTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf) override;
+    ~AudioTaskManagerProxy() override;
+    sptr<AudioTaskManagerIntf> GetAudioTaskManagerAdapter() const;
+    void SubmitTask(std::function<void()> task) override;
+    void ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp) override;
+
+private:
+    std::shared_ptr<Dynamiclib> audioTaskManagerLib_ = {nullptr};
+    sptr<AudioTaskManagerIntf> audioTaskManagerIntf_ = {nullptr};
 };
 } // namespace CameraStandard
 } // namespace OHOS

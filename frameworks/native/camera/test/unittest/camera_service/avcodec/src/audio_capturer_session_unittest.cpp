@@ -20,6 +20,8 @@
 #include "camera_log.h"
 #include "capture_scene_const.h"
 #include "ipc_skeleton.h"
+#include "avcodec_task_manager.h"
+#include "test_token.h"
 
 using namespace testing::ext;
 
@@ -29,6 +31,7 @@ namespace CameraStandard {
 void AudioCapturerSessionUnitTest::SetUpTestCase(void)
 {
     MEDIA_DEBUG_LOG("AudioCapturerSessionUnitTest::SetUpTestCase started!");
+    ASSERT_TRUE(TestToken().GetAllCameraPermission());
 }
 
 void AudioCapturerSessionUnitTest::TearDownTestCase(void)
@@ -76,10 +79,82 @@ HWTEST_F(AudioCapturerSessionUnitTest, audio_capturer_session_unittest_002, Test
 {
     sptr<AudioCapturerSession> session = new AudioCapturerSession();
     bool ret = session->CreateAudioCapturer();
-    ASSERT_NE(session->audioCapturer_, nullptr);
+    std::shared_ptr<AudioCapturer> audioCapturer = session->GetAudioCapturer();
+    ASSERT_NE(audioCapturer, nullptr);
     EXPECT_TRUE(ret);
     session->ProcessAudioBuffer();
     session->Stop();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetStopAudioRecord
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetStopAudioRecord normal branches.
+ */
+HWTEST_F(AudioCapturerSessionUnitTest, audio_capturer_session_unittest_003, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    int32_t bufferLen = 32;
+    sptr<AudioRecord> audioRecord = new AudioRecord(1000);
+    auto buffer = new uint8_t[bufferLen];
+    audioRecord->SetAudioBuffer(buffer, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord);
+    audioCaptureSession->SetStopAudioRecord();
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetStopAudioRecord
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetStopAudioRecord normal branches.
+ */
+HWTEST_F(AudioCapturerSessionUnitTest, audio_capturer_session_unittest_004, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> audioCaptureSession = new AudioCapturerSession();
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(audioCaptureSession);
+    int32_t bufferLen = 32;
+    sptr<AudioRecord> audioRecord = new AudioRecord(1000);
+    auto buffer = new uint8_t[bufferLen];
+    audioRecord->SetAudioBuffer(buffer, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord);
+    audioCaptureSession->SetStopAudioRecord();
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetStopAudioRecord
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetStopAudioRecord normal branches.
+ */
+HWTEST_F(AudioCapturerSessionUnitTest, audio_capturer_session_unittest_005, TestSize.Level1)
+{
+    sptr<AudioCapturerSession> session = new AudioCapturerSession();
+    bool ret = session->CreateAudioCapturer();
+    std::shared_ptr<AudioCapturer> audioCapturer = session->GetAudioCapturer();
+    ASSERT_NE(audioCapturer, nullptr);
+    EXPECT_TRUE(ret);
+    sptr<AudioTaskManager> audioTaskManager = new AudioTaskManager(session);
+    int32_t bufferLen = 32;
+    sptr<AudioRecord> audioRecord = new AudioRecord(1000);
+    auto buffer = new uint8_t[bufferLen];
+    audioRecord->SetAudioBuffer(buffer, bufferLen);
+    audioTaskManager->arrivalAudioBufferQueue_.Push(audioRecord);
+    audioTaskManager->RegisterAudioBuffeArrivalCallback(100);
+    EXPECT_FALSE(session->GetProcessedCbFunc());
+    session->Release();
+    EXPECT_EQ(session->audioCapturer_, nullptr);
+    EXPECT_EQ(audioTaskManager->arrivalAudioBufferQueue_.Size(), 0);
+    EXPECT_TRUE(session->GetProcessedCbFunc());
 }
 
 } // CameraStandard

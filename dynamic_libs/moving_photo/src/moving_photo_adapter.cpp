@@ -50,19 +50,19 @@ int32_t AvcodecTaskManagerAdapter::CreateAvcodecTaskManager(sptr<AudioCapturerSe
     return 0;
 }
 
-int32_t AvcodecTaskManagerAdapter::CreateAvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
-    sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf, VideoCodecType type, int32_t colorSpace)
+int32_t AvcodecTaskManagerAdapter::CreateAvcodecTaskManagerForAudio(wptr<Surface> movingSurface, shared_ptr<Size> size,
+    sptr<AudioTaskManagerIntf> audioTaskManagerIntf, VideoCodecType type, int32_t colorSpace)
 {
     MEDIA_DEBUG_LOG("CreateAvcodecTaskManager start, type: %{public}d, colorSpace: %{public}d",
         static_cast<int32_t>(type), colorSpace);
-    CHECK_RETURN_RET_ELOG(audioCapturerSessionIntf == nullptr, -1, "audioCapturerSessionIntf is nullptr");
-    sptr<AudioCapturerSessionAdapter> captureSessionAdapter =
-        static_cast<AudioCapturerSessionAdapter*>(audioCapturerSessionIntf.GetRefPtr());
-    CHECK_RETURN_RET_ELOG(captureSessionAdapter == nullptr, -1, "captureSessionAdapter is nullptr");
-    sptr<AudioCapturerSession> audioCaptureSession = captureSessionAdapter->GetCapturerSession();
-    CHECK_RETURN_RET_ELOG(audioCaptureSession == nullptr, -1, "audioCaptureSession is nullptr");
+    CHECK_RETURN_RET_ELOG(audioTaskManagerIntf == nullptr, -1, "audioTaskManagerIntf is nullptr");
+    sptr<AudioTaskManagerAdapter> audioTaskManagerAdapter =
+        static_cast<AudioTaskManagerAdapter*>(audioTaskManagerIntf.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(audioTaskManagerAdapter == nullptr, -1, "audioTaskManagerAdapter is nullptr");
+    sptr<AudioTaskManager> audioTaskManager = audioTaskManagerAdapter->GetAudioTaskManager();
+    CHECK_RETURN_RET_ELOG(audioTaskManager == nullptr, -1, "audioTaskManager is nullptr");
     avcodecTaskManager_ =
-        new AvcodecTaskManager(movingSurface, size, audioCaptureSession, type, static_cast<ColorSpace>(colorSpace));
+        new AvcodecTaskManager(movingSurface, size, audioTaskManager, type, static_cast<ColorSpace>(colorSpace));
     CHECK_RETURN_RET_ELOG(avcodecTaskManager_ == nullptr, -1, "CreateAvcodecTaskManager failed");
     avcodecTaskManager_->AsyncInitVideoCodec();
     return 0;
@@ -148,12 +148,6 @@ bool AvcodecTaskManagerAdapter::TaskManagerInsertEndTime(int32_t captureId, int6
         avcodecTaskManager_->mPEndTimeMap_.insert(make_pair(captureId, endTimeStamp));
     }
     return true;
-}
-
-void AvcodecTaskManagerAdapter::SetMutexMap(int64_t timestamp)
-{
-    auto curMutex = std::make_shared<std::mutex>();
-    AvcodecTaskManager::mutexMap_.EnsureInsert(timestamp, curMutex);
 }
 
 void AvcodecTaskManagerAdapter::RecordVideoType(int32_t captureId, VideoType type)
@@ -307,6 +301,46 @@ void MovingPhotoManagerAdapter::Release()
     movingPhotoManager_->Release();
 }
 
+AudioTaskManagerAdapter::AudioTaskManagerAdapter()
+{
+    MEDIA_DEBUG_LOG("AudioTaskManagerAdapter is called");
+}
+
+AudioTaskManagerAdapter::~AudioTaskManagerAdapter()
+{
+    MEDIA_INFO_LOG("~AudioTaskManagerAdapter is called");
+}
+
+void AudioTaskManagerAdapter::CreateAudioTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf)
+{
+    MEDIA_DEBUG_LOG("CreateAudioTaskManager is called");
+    CHECK_RETURN_ELOG(audioCapturerSessionIntf == nullptr, "audioCaptureSessionIntf is nullptr");
+    sptr<AudioCapturerSessionAdapter> audioCaptureSessionAdapter  =
+        static_cast<AudioCapturerSessionAdapter*>(audioCapturerSessionIntf.GetRefPtr());
+    CHECK_RETURN_ELOG(audioCaptureSessionAdapter == nullptr, "audioCaptureSessionAdapter is nullptr");
+    sptr<AudioCapturerSession> audioCaptureSession = audioCaptureSessionAdapter->GetCapturerSession();
+    CHECK_RETURN_ELOG(audioCaptureSession == nullptr, "audioCaptureSession is nullptr");
+    audioTaskManager_ = new AudioTaskManager(audioCaptureSession);
+}
+
+void AudioTaskManagerAdapter::ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp)
+{
+    CHECK_RETURN_ELOG(audioTaskManager_ == nullptr, "audioTaskManager_ is nullptr");
+    audioTaskManager_->ProcessAudioBuffer(captureId, startTimeStamp);
+}
+
+void AudioTaskManagerAdapter::SubmitTask(std::function<void()> task)
+{
+    MEDIA_DEBUG_LOG("SubmitTask start");
+    CHECK_RETURN_ELOG(audioTaskManager_ == nullptr, "AudioTaskManager not created");
+    audioTaskManager_->SubmitTask(task);
+}
+
+sptr<AudioTaskManager> AudioTaskManagerAdapter::GetAudioTaskManager() const
+{
+    return audioTaskManager_;
+}
+
 extern "C" AvcodecTaskManagerIntf *createAvcodecTaskManagerIntf()
 {
     return new AvcodecTaskManagerAdapter();
@@ -320,6 +354,11 @@ extern "C" AudioCapturerSessionIntf *createAudioCapturerSessionIntf()
 extern "C" MovingPhotoManagerIntf *createMovingPhotoManagerIntf()
 {
     return new MovingPhotoManagerAdapter();
+}
+
+extern "C" AudioTaskManagerIntf *createAudioTaskManagerIntf()
+{
+    return new AudioTaskManagerAdapter();
 }
 } // namespace CameraStandard
 } // namespace OHOS
