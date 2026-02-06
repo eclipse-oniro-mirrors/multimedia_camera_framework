@@ -64,12 +64,7 @@ using namespace OHOS::Camera;
 using namespace OHOS::CameraStandard;
 using namespace OHOS::CameraStandard::DeferredProcessing;
 sptr<HCameraHostManager> g_hCameraHostManager = nullptr;
-
-HCameraService& GetInstance()
-{
-    static sptr<HCameraService> hCameraService = new HCameraService(g_hCameraHostManager);
-    return *hCameraService;
-}
+sptr<HCameraService> g_hCameraService = nullptr;
 
 sptr<IBufferProducer> GetMockBufferProducer()
 {
@@ -94,39 +89,39 @@ void CreateCameraDevice(FuzzedDataProvider& provider)
 {
     std::string cameraId = provider.ConsumeRandomLengthString();
     sptr<ICameraDeviceService> device;
-    GetInstance().CreateCameraDevice(cameraId, device);
+    g_hCameraService->CreateCameraDevice(cameraId, device);
 }
 
 void SetCameraCallback(FuzzedDataProvider& provider)
 {
     auto cb = sptr<MockCameraServiceCallback>::MakeSptr();
-    GetInstance().SetCameraCallback(cb, true);
+    g_hCameraService->SetCameraCallback(cb, true);
 }
 
 void SetMuteCallback(FuzzedDataProvider& provider)
 {
     auto cb = sptr<MockCameraMuteServiceCallback>::MakeSptr();
-    GetInstance().SetMuteCallback(cb);
+    g_hCameraService->SetMuteCallback(cb);
 }
 
 void SetTorchCallback(FuzzedDataProvider& provider)
 {
     auto cb = sptr<MockTorchServiceCallback>::MakeSptr();
-    GetInstance().SetTorchCallback(cb);
+    g_hCameraService->SetTorchCallback(cb);
 }
 
 void GetCameras(FuzzedDataProvider& provider)
 {
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<CameraMetadata>> cameraAbilityList;
-    GetInstance().GetCameras(cameraIds, cameraAbilityList);
+    g_hCameraService->GetCameras(cameraIds, cameraAbilityList);
 }
 
 void CreateCaptureSession(FuzzedDataProvider& provider)
 {
     sptr<ICaptureSession> session;
     int32_t operationMode = provider.ConsumeIntegral<int32_t>();
-    GetInstance().CreateCaptureSession(session, operationMode);
+    g_hCameraService->CreateCaptureSession(session, operationMode);
 }
 
 void CreatePhotoOutput(FuzzedDataProvider& provider)
@@ -136,7 +131,7 @@ void CreatePhotoOutput(FuzzedDataProvider& provider)
     int32_t width = provider.ConsumeIntegral<int32_t>();
     int32_t height = provider.ConsumeIntegral<int32_t>();
     sptr<IStreamCapture> photoOutput;
-    GetInstance().CreatePhotoOutput(producer, format, width, height, photoOutput);
+    g_hCameraService->CreatePhotoOutput(producer, format, width, height, photoOutput);
 }
 
 void CreateDeferredPreviewOutput(FuzzedDataProvider& provider)
@@ -145,7 +140,7 @@ void CreateDeferredPreviewOutput(FuzzedDataProvider& provider)
     int32_t width = provider.ConsumeIntegral<int32_t>();
     int32_t height = provider.ConsumeIntegral<int32_t>();
     sptr<IStreamRepeat> previewOutput;
-    GetInstance().CreateDeferredPreviewOutput(format, width, height, previewOutput);
+    g_hCameraService->CreateDeferredPreviewOutput(format, width, height, previewOutput);
 }
 
 void CreateVideoOutput(FuzzedDataProvider& provider)
@@ -155,13 +150,13 @@ void CreateVideoOutput(FuzzedDataProvider& provider)
     int32_t width = provider.ConsumeIntegral<int32_t>();
     int32_t height = provider.ConsumeIntegral<int32_t>();
     sptr<IStreamRepeat> videoOutput;
-    GetInstance().CreateVideoOutput(producer, format, width, height, videoOutput);
+    g_hCameraService->CreateVideoOutput(producer, format, width, height, videoOutput);
 }
 
 void SetListenerObject(FuzzedDataProvider& provider)
 {
     auto remote = sptr<MockIRemoteObject>::MakeSptr();
-    GetInstance().SetListenerObject(remote);
+    g_hCameraService->SetListenerObject(remote);
 }
 
 void CreateMetadataOutput(FuzzedDataProvider& provider)
@@ -170,42 +165,42 @@ void CreateMetadataOutput(FuzzedDataProvider& provider)
     int32_t format = provider.ConsumeIntegral<int32_t>();
     std::vector<int32_t> metadataTypes = ConsumeIntList(provider);
     sptr<IStreamMetadata> metadataOutput;
-    GetInstance().CreateMetadataOutput(producer, format, metadataTypes, metadataOutput);
+    g_hCameraService->CreateMetadataOutput(producer, format, metadataTypes, metadataOutput);
 }
 
 void MuteCamera(FuzzedDataProvider& provider)
 {
     bool muteMode = provider.ConsumeBool();
-    GetInstance().MuteCamera(muteMode);
+    g_hCameraService->MuteCamera(muteMode);
 }
 
 void IsCameraMuted(FuzzedDataProvider& provider)
 {
     bool muteMode;
-    GetInstance().IsCameraMuted(muteMode);
+    g_hCameraService->IsCameraMuted(muteMode);
 }
 
 void IsTorchSupported(FuzzedDataProvider& provider)
 {
     bool isTorchSupported;
-    GetInstance().IsTorchSupported(isTorchSupported);
+    g_hCameraService->IsTorchSupported(isTorchSupported);
 }
 
 void IsCameraMuteSupported(FuzzedDataProvider& provider)
 {
     bool isCameraMuteSupported;
-    GetInstance().IsCameraMuteSupported(isCameraMuteSupported);
+    g_hCameraService->IsCameraMuteSupported(isCameraMuteSupported);
 }
 
 void PrelaunchCamera(FuzzedDataProvider& provider)
 {
     int32_t flag = provider.ConsumeIntegral<int32_t>();
-    GetInstance().PrelaunchCamera(flag);
+    g_hCameraService->PrelaunchCamera(flag);
 }
 
 void ResetRssPriority(FuzzedDataProvider& provider)
 {
-    GetInstance().ResetRssPriority();
+    g_hCameraService->ResetRssPriority();
 }
 
 void SetPrelaunchConfig(FuzzedDataProvider& provider)
@@ -224,20 +219,20 @@ void SetPrelaunchConfig(FuzzedDataProvider& provider)
     effectParam.faceMakeUp = provider.ConsumeIntegral<int32_t>();
     effectParam.headShrink = provider.ConsumeIntegral<int32_t>();
     effectParam.noseSlender = provider.ConsumeIntegral<int32_t>();
-    GetInstance().SetPrelaunchConfig(
+    g_hCameraService->SetPrelaunchConfig(
         cameraId, static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime, effectParam);
 }
 
 void SetTorchLevel(FuzzedDataProvider& provider)
 {
     float level = provider.ConsumeFloatingPoint<float>();
-    GetInstance().SetTorchLevel(level);
+    g_hCameraService->SetTorchLevel(level);
 }
 
 void PreSwitchCamera(FuzzedDataProvider& provider)
 {
     std::string cameraId = provider.ConsumeRandomLengthString();
-    GetInstance().PreSwitchCamera(cameraId);
+    g_hCameraService->PreSwitchCamera(cameraId);
 }
 
 void CreateDeferredPhotoProcessingSession(FuzzedDataProvider& provider)
@@ -245,32 +240,32 @@ void CreateDeferredPhotoProcessingSession(FuzzedDataProvider& provider)
     int32_t userId = provider.ConsumeIntegral<int32_t>();
     auto cb = sptr<MockDeferredPhotoProcessingSessionCallback>::MakeSptr();
     sptr<IDeferredPhotoProcessingSession> session;
-    GetInstance().CreateDeferredPhotoProcessingSession(userId, cb, session);
+    g_hCameraService->CreateDeferredPhotoProcessingSession(userId, cb, session);
 }
 
 void GetCameraIds(FuzzedDataProvider& provider)
 {
     std::vector<std::string> cameraIds;
-    GetInstance().GetCameraIds(cameraIds);
+    g_hCameraService->GetCameraIds(cameraIds);
 }
 
 void GetCameraAbility(FuzzedDataProvider& provider)
 {
     std::string cameraId = provider.ConsumeRandomLengthString();
     std::shared_ptr<CameraMetadata> cameraAbility;
-    GetInstance().GetCameraAbility(cameraId, cameraAbility);
+    g_hCameraService->GetCameraAbility(cameraId, cameraAbility);
 }
 
 void DestroyStubObj(FuzzedDataProvider& provider)
 {
-    GetInstance().DestroyStubObj();
+    g_hCameraService->DestroyStubObj();
 }
 
 void MuteCameraPersist(FuzzedDataProvider& provider)
 {
     int32_t policyType = provider.ConsumeIntegral<int32_t>();
     bool isMute = provider.ConsumeBool();
-    GetInstance().MuteCameraPersist(static_cast<OHOS::CameraStandard::PolicyType>(policyType), isMute);
+    g_hCameraService->MuteCameraPersist(static_cast<OHOS::CameraStandard::PolicyType>(policyType), isMute);
 }
 
 void ProxyForFreeze(FuzzedDataProvider& provider)
@@ -281,32 +276,32 @@ void ProxyForFreeze(FuzzedDataProvider& provider)
         pidList.insert(provider.ConsumeIntegral<int32_t>());
     }
     bool isProxy = provider.ConsumeBool();
-    GetInstance().ProxyForFreeze(pidList, isProxy);
+    g_hCameraService->ProxyForFreeze(pidList, isProxy);
 }
 
 void ResetAllFreezeStatus(FuzzedDataProvider& provider)
 {
-    GetInstance().ResetAllFreezeStatus();
+    g_hCameraService->ResetAllFreezeStatus();
 }
 
 void GetDmDeviceInfo(FuzzedDataProvider& provider)
 {
     std::vector<dmDeviceInfo> deviceInfos;
-    GetInstance().GetDmDeviceInfo(deviceInfos);
+    g_hCameraService->GetDmDeviceInfo(deviceInfos);
 }
 
 void SetFoldStatusCallback(FuzzedDataProvider& provider)
 {
     auto cb = sptr<MockFoldServiceCallback>::MakeSptr();
     bool isInnerCallback = provider.ConsumeBool();
-    GetInstance().SetFoldStatusCallback(cb, isInnerCallback);
+    g_hCameraService->SetFoldStatusCallback(cb, isInnerCallback);
 }
 
 void GetCameraOutputStatus(FuzzedDataProvider& provider)
 {
     int32_t pid = provider.ConsumeIntegral<int32_t>();
     int32_t status;
-    GetInstance().GetCameraOutputStatus(pid, status);
+    g_hCameraService->GetCameraOutputStatus(pid, status);
 }
 
 void CreateDepthDataOutput(FuzzedDataProvider& provider)
@@ -316,7 +311,7 @@ void CreateDepthDataOutput(FuzzedDataProvider& provider)
     int32_t width = provider.ConsumeIntegral<int32_t>();
     int32_t height = provider.ConsumeIntegral<int32_t>();
     sptr<IStreamDepthData> depthDataOutput;
-    GetInstance().CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
+    g_hCameraService->CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
 }
 
 void CreateDeferredVideoProcessingSession(FuzzedDataProvider& provider)
@@ -324,78 +319,78 @@ void CreateDeferredVideoProcessingSession(FuzzedDataProvider& provider)
     int32_t userId = provider.ConsumeIntegral<int32_t>();
     auto cb = sptr<MockDeferredVideoProcessingSessionCallback>::MakeSptr();
     sptr<IDeferredVideoProcessingSession> session;
-    GetInstance().CreateDeferredVideoProcessingSession(userId, cb, session);
+    g_hCameraService->CreateDeferredVideoProcessingSession(userId, cb, session);
 }
 
 void RequireMemorySize(FuzzedDataProvider& provider)
 {
     int32_t memSize = provider.ConsumeIntegral<int32_t>();
-    GetInstance().RequireMemorySize(memSize);
+    g_hCameraService->RequireMemorySize(memSize);
 }
 
 void GetIdforCameraConcurrentType(FuzzedDataProvider& provider)
 {
     int32_t cameraPosition = provider.ConsumeIntegral<int32_t>();
     std::string cameraId;
-    GetInstance().GetIdforCameraConcurrentType(cameraPosition, cameraId);
+    g_hCameraService->GetIdforCameraConcurrentType(cameraPosition, cameraId);
 }
 
 void GetConcurrentCameraAbility(FuzzedDataProvider& provider)
 {
     std::string cameraId = provider.ConsumeRandomLengthString();
     std::shared_ptr<CameraMetadata> cameraAbility;
-    GetInstance().GetConcurrentCameraAbility(cameraId, cameraAbility);
+    g_hCameraService->GetConcurrentCameraAbility(cameraId, cameraAbility);
 }
 
 void GetTorchStatus(FuzzedDataProvider& provider)
 {
     int32_t status;
-    GetInstance().GetTorchStatus(status);
+    g_hCameraService->GetTorchStatus(status);
 }
 
 void UnSetCameraCallback(FuzzedDataProvider& provider)
 {
-    GetInstance().UnSetCameraCallback();
+    g_hCameraService->UnSetCameraCallback();
 }
 
 void UnSetMuteCallback(FuzzedDataProvider& provider)
 {
-    GetInstance().UnSetMuteCallback();
+    g_hCameraService->UnSetMuteCallback();
 }
 
 void UnSetTorchCallback(FuzzedDataProvider& provider)
 {
-    GetInstance().UnSetTorchCallback();
+    g_hCameraService->UnSetTorchCallback();
 }
 
 void UnSetFoldStatusCallback(FuzzedDataProvider& provider)
 {
-    GetInstance().UnSetFoldStatusCallback();
+    g_hCameraService->UnSetFoldStatusCallback();
 }
 
 void CheckWhiteList(FuzzedDataProvider& provider)
 {
     bool isInWhiteList = provider.ConsumeBool();
-    GetInstance().CheckWhiteList(isInWhiteList);
+    g_hCameraService->CheckWhiteList(isInWhiteList);
 }
 
 void CreateMechSession(FuzzedDataProvider& provider)
 {
     int32_t userId = provider.ConsumeIntegral<int32_t>();
     sptr<IMechSession> session;
-    GetInstance().CreateMechSession(userId, session);
+    g_hCameraService->CreateMechSession(userId, session);
 }
 
 void IsMechSupported(FuzzedDataProvider& provider)
 {
     bool isMechSupported;
-    GetInstance().IsMechSupported(isMechSupported);
+    g_hCameraService->IsMechSupported(isMechSupported);
 }
 
 void GetCameraStorageSize(FuzzedDataProvider& provider)
 {
     long size;
-    GetInstance().GetCameraStorageSize(size);
+    g_hCameraService->GetCameraStorageSize(size);
 }
 
 void CreatePhotoOutputOverride(FuzzedDataProvider& provider)
@@ -404,55 +399,55 @@ void CreatePhotoOutputOverride(FuzzedDataProvider& provider)
     int32_t width = provider.ConsumeIntegral<int32_t>();
     int32_t height = provider.ConsumeIntegral<int32_t>();
     sptr<IStreamCapture> photoOutput;
-    GetInstance().CreatePhotoOutput(format, width, height, photoOutput);
+    g_hCameraService->CreatePhotoOutput(format, width, height, photoOutput);
 }
 
 void GetVideoSessionForControlCenter(FuzzedDataProvider& provider)
 {
     sptr<ICaptureSession> session;
-    GetInstance().GetVideoSessionForControlCenter(session);
+    g_hCameraService->GetVideoSessionForControlCenter(session);
 }
 
 void SetControlCenterCallback(FuzzedDataProvider& provider)
 {
     auto cb = sptr<MockControlCenterStatusCallbackStub>::MakeSptr();
 
-    GetInstance().SetControlCenterCallback(cb);
+    g_hCameraService->SetControlCenterCallback(cb);
 }
 
 void UnSetControlCenterStatusCallback(FuzzedDataProvider& provider)
 {
-    GetInstance().UnSetControlCenterStatusCallback();
+    g_hCameraService->UnSetControlCenterStatusCallback();
 }
 
 void EnableControlCenter(FuzzedDataProvider& provider)
 {
     bool status = provider.ConsumeBool();
     bool needPersistEnable = provider.ConsumeBool();
-    GetInstance().EnableControlCenter(status, needPersistEnable);
+    g_hCameraService->EnableControlCenter(status, needPersistEnable);
 }
 
 void SetControlCenterPrecondition(FuzzedDataProvider& provider)
 {
     bool condition = provider.ConsumeBool();
-    GetInstance().SetControlCenterPrecondition(condition);
+    g_hCameraService->SetControlCenterPrecondition(condition);
 }
 
 void SetDeviceControlCenterAbility(FuzzedDataProvider& provider)
 {
     bool ability = provider.ConsumeBool();
-    GetInstance().SetDeviceControlCenterAbility(ability);
+    g_hCameraService->SetDeviceControlCenterAbility(ability);
 }
 
 void GetControlCenterStatus(FuzzedDataProvider& provider)
 {
     bool status;
-    GetInstance().GetControlCenterStatus(status);
+    g_hCameraService->GetControlCenterStatus(status);
 }
 
 void CheckControlCenterPermission(FuzzedDataProvider& provider)
 {
-    GetInstance().CheckControlCenterPermission();
+    g_hCameraService->CheckControlCenterPermission();
 }
 
 void AllowOpenByOHSide(FuzzedDataProvider& provider)
@@ -460,25 +455,25 @@ void AllowOpenByOHSide(FuzzedDataProvider& provider)
     std::string cameraId = provider.ConsumeRandomLengthString();
     int32_t state = provider.ConsumeIntegral<int32_t>();
     bool canOpenCamera = provider.ConsumeBool();
-    GetInstance().AllowOpenByOHSide(cameraId, state, canOpenCamera);
+    g_hCameraService->AllowOpenByOHSide(cameraId, state, canOpenCamera);
 }
 
 void NotifyCameraState(FuzzedDataProvider& provider)
 {
     std::string cameraId = provider.ConsumeRandomLengthString();
     int32_t state = provider.ConsumeIntegral<int32_t>();
-    GetInstance().NotifyCameraState(cameraId, state);
+    g_hCameraService->NotifyCameraState(cameraId, state);
 }
 
 void SetPeerCallback(FuzzedDataProvider& provider)
 {
     auto cb = sptr<MockCameraBroker>::MakeSptr();
-    GetInstance().SetPeerCallback(cb);
+    g_hCameraService->SetPeerCallback(cb);
 }
 
 void UnsetPeerCallback(FuzzedDataProvider& provider)
 {
-    GetInstance().UnsetPeerCallback();
+    g_hCameraService->UnsetPeerCallback();
 }
 
 void PrelaunchScanCamera(FuzzedDataProvider& provider)
@@ -494,13 +489,19 @@ void PrelaunchScanCamera(FuzzedDataProvider& provider)
 void Init()
 {
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
-    g_hCameraHostManager = new HCameraHostManager(nullptr);
-    GetInstance().serviceStatus_ = CameraServiceStatus::SERVICE_NOT_READY;
+    g_hCameraHostManager = new (std::nothrow) HCameraHostManager(nullptr);
+    if (g_hCameraHostManager) {
+        sptr<HCameraService> g_hCameraService = new (std::nothrow) HCameraService(g_hCameraHostManager);
+        if (g_hCameraService) {
+            g_hCameraService->serviceStatus_ = CameraServiceStatus::SERVICE_NOT_READY;
+        }
+    }
 }
 
 void Test(FuzzedDataProvider& fdp)
 {
-    CHECK_RETURN_ELOG(!g_hCameraHostManager, "g_hCameraHostManager permission fail");
+    CHECK_RETURN_ELOG(!g_hCameraHostManager, "g_hCameraHostManager is nullptr");
+    CHECK_RETURN_ELOG(!g_hCameraService, "g_hCameraService is nullptr");
     auto func = fdp.PickValueInArray({
         CreateCaptureSession,
         CreatePhotoOutput,

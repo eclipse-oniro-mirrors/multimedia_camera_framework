@@ -573,7 +573,9 @@ void GetCompositionStream(FuzzedDataProvider& fdp, sptr<HCaptureSession>& sessio
 void Init()
 {
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
-    g_cameraService = new HCameraService(3008, true);
+    const int32_t CAMERA_SERVICE_ID = 3008;
+    g_cameraService = new (std::nothrow) HCameraService(CAMERA_SERVICE_ID, true);
+    CHECK_RETURN_ELOG(!g_cameraService, "g_cameraService is nullptr");
     g_cameraService->OnStart();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     for (int32_t mode = 0; mode <= 2; ++mode) {
