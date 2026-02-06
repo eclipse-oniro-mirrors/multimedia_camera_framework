@@ -1217,6 +1217,8 @@ private:
     void FindConcurrentLimtedEnd(double* originInfo, int32_t i, int32_t count, int32_t &countl);
 
     void CheckWhiteList();
+    std::vector<CameraFormat> GetPhotoFormats();
+    void SetPhotoFormats(const std::vector<CameraFormat>& photoFormats);
     std::vector<sptr<CameraDevice>> GetSupportedCamerasList();
     std::mutex cameraDeviceListMutex_;
     std::mutex innerCameraMutex_;
@@ -1248,6 +1250,7 @@ private:
     std::map<std::string, std::vector<Profile>> modePreviewProfiles_ = {};
     std::vector<DepthProfile> depthProfiles_ = {};
 
+    std::mutex photoFormatsMutex_;
     std::vector<CameraFormat> photoFormats_ = {};
     sptr<CameraInput> cameraInput_;
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
