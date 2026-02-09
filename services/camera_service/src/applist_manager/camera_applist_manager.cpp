@@ -269,6 +269,30 @@ bool CameraApplistManager::GetNaturalDirectionCorrectByBundleName(const std::str
     return true;
 }
 
+void CameraApplistManager::GetCustomLogicDirection(const std::string& bundleName,
+    int32_t& customLogicDirection)
+{
+    auto displayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
+    CHECK_RETURN_ELOG(bundleName.empty(), "CameraApplistManager::GetCustomLogicDirection bundleName is empty");
+    CHECK_EXECUTE(!initResult_ || !registerResult_, Init());
+    ApplistConfigure* appConfigure = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(applistConfigureMutex_);
+        auto item = applistConfigures_.find(bundleName);
+        CHECK_EXECUTE(item != applistConfigures_.end(), appConfigure = item->second);
+    }
+    CHECK_RETURN_DLOG(appConfigure == nullptr, "CameraApplistManager::GetCustomLogicDirection appConfigure is nullptr");
+    auto innerLogicDirection = appConfigure->customLogicDirection;
+    CHECK_RETURN_DLOG(innerLogicDirection.empty(),
+        "CameraApplistManager::GetCustomLogicDirection customLogicDirection is empty");
+    auto item = innerLogicDirection.find(displayMode);
+    CHECK_RETURN_DLOG(item == innerLogicDirection.end(),
+        "CameraApplistManager::GetCustomLogicDirection naturalDirection is Normal");
+    customLogicDirection = item->second;
+    MEDIA_DEBUG_LOG("CameraApplistManager::GetCustomLogicDirection BundleName: %{public}s, displayMode: %{public}d, "
+        "customLogicDirection: %{public}d", bundleName.c_str(), displayMode, customLogicDirection);
+}
+
 void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string& bundleName,
     int32_t& naturalDirection)
 {

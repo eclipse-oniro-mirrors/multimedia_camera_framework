@@ -2531,7 +2531,8 @@ void HStreamOperator::SetMechCallback(std::function<void(int32_t,
 
 int32_t HStreamOperator::GetSensorRotation()
 {
-    MEDIA_INFO_LOG("GetSensorRotation is called, current sensorRotation: %{public}d", sensorRotation);
+    int32_t innerRotation = sensorRotation;
+    MEDIA_INFO_LOG("GetSensorRotation is called, current sensorRotation: %{public}d", innerRotation);
     if (system::GetParameter("const.system.sensor_correction_enable", "0") == "1") {
         std::string clientName = "";
         CHECK_EXECUTE(cameraDevice_ != nullptr, clientName = cameraDevice_->GetClientName());
@@ -2540,14 +2541,17 @@ int32_t HStreamOperator::GetSensorRotation()
         if (isCorrect) {
             std::string foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
             CHECK_EXECUTE(!foldScreenType.empty() && foldScreenType[0] == '6',
-                sensorRotation = (sensorRotation + STREAM_ROTATE_90) % STREAM_ROTATE_360);
-            return sensorRotation;
+                innerRotation = (innerRotation + STREAM_ROTATE_90) % STREAM_ROTATE_360);
+            MEDIA_INFO_LOG("GetSensorRotation Correct, current sensorRotation: %{public}d", innerRotation);
+            return innerRotation;
         }
-        int32_t naturalDirection = 0;
-        CameraApplistManager::GetInstance()->GetAppNaturalDirectionByBundleName(clientName, naturalDirection);
-        sensorRotation = (sensorRotation - naturalDirection * STREAM_ROTATE_90 + STREAM_ROTATE_360) % STREAM_ROTATE_360;
+        int32_t customLogicDirection = 0;
+        CameraApplistManager::GetInstance()->GetCustomLogicDirection(clientName, customLogicDirection);
+        innerRotation =
+            (innerRotation - customLogicDirection * STREAM_ROTATE_90 + STREAM_ROTATE_360) % STREAM_ROTATE_360;
+        MEDIA_INFO_LOG("GetSensorRotation Correct, current sensorRotation: %{public}d", innerRotation);
     }
-    return sensorRotation;
+    return innerRotation;
 }
 } // namespace CameraStandard
 } // namespace OHOS
