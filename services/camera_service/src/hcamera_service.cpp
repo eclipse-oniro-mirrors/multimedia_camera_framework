@@ -3046,8 +3046,6 @@ int32_t HCameraService::GetDmDeviceInfo(std::vector<dmDeviceInfo> &deviceInfos)
         deviceInfo.deviceName = deviceInfoList[i].deviceName;
         deviceInfo.deviceTypeId = deviceInfoList[i].deviceTypeId;
         deviceInfo.networkId = deviceInfoList[i].networkId;
-        MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo deviceName=%{public}s, networkId=%{public}s",
-            deviceInfo.deviceName.c_str(), deviceInfo.networkId.c_str());
         deviceInfos.emplace_back(deviceInfo);
     }
 #endif
