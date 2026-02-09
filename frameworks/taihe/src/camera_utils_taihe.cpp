@@ -263,6 +263,8 @@ array<Profile> CameraUtilsTaihe::ToTaiheArrayProfiles(std::vector<OHOS::CameraSt
     std::vector<Profile> vec;
     for (auto &item : profiles) {
         CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(item.GetCameraFormat()));
+        CHECK_CONTINUE_ELOG(!cameraFormat.is_valid(),
+            "ToTaiheArrayProfiles failed, cameraFormat is error");
         Profile aniProfile {
             .size = {
                 .height = item.GetSize().height,
@@ -284,6 +286,8 @@ array<VideoProfile> CameraUtilsTaihe::ToTaiheArrayVideoProfiles(
         CHECK_CONTINUE_ELOG(frameRates.size() < FRAME_RATES_SIZE,
             "ToTaiheArrayVideoProfiles failed, frameRates is error");
         CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(item.GetCameraFormat()));
+        CHECK_CONTINUE_ELOG(!cameraFormat.is_valid(),
+            "ToTaiheArrayVideoProfiles failed, cameraFormat is error");
         VideoProfile aniProfile {
             .base = {
                 .size = {
@@ -308,6 +312,8 @@ array<DepthProfile> CameraUtilsTaihe::ToTaiheArrayDepthProfiles(
     std::vector<DepthProfile> vec;
     for (auto &item : profiles) {
         CameraFormat cameraFormat = CameraFormat::from_value(static_cast<int32_t>(item.GetCameraFormat()));
+        CHECK_CONTINUE_ELOG(!cameraFormat.is_valid(),
+            "ToTaiheArrayDepthProfiles failed, cameraFormat is error");
         DepthProfile aniProfile {
             .size = {
                 .height = item.GetSize().height,
@@ -353,7 +359,8 @@ array<MetadataObjectType> CameraUtilsTaihe::ToTaiheArrayMetadataTypes(
 {
     std::vector<MetadataObjectType> vec;
     for (auto item : types) {
-        if (item > OHOS::CameraStandard::MetadataObjectType::BAR_CODE_DETECTION) {
+        if (item < OHOS::CameraStandard::MetadataObjectType::FACE
+            || item > OHOS::CameraStandard::MetadataObjectType::BAR_CODE_DETECTION) {
             continue;
         }
         MetadataObjectType type = MapMetadataObjSupportedTypesEnum(item);
