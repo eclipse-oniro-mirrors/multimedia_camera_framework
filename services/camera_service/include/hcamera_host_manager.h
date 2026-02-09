@@ -115,7 +115,7 @@ public:
 
     sptr<HCameraRestoreParam> GetTransitentParam(const std::string& clientName, const std::string& cameraId);
 
-    void UpdateRestoreParam(sptr<HCameraRestoreParam> &cameraRestoreParam);
+    sptr<HCameraRestoreParam> UpdateRestoreParam(const std::string& clientName, const std::string& cameraId);
 
     void DeleteRestoreParam(const std::string& clientName, const std::string& cameraId);
 

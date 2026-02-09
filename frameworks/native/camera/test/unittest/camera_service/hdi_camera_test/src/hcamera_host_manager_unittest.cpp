@@ -339,7 +339,7 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_008, TestSize.Lev
     gettimeofday(&closeTime, nullptr);
     cameraRestoreParam2->mCloseCameraTime = closeTime;
     
-    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam1);
+    cameraHostManager_->UpdateRestoreParam(clientName1, cameraId1);
     cameraHostManager_->persistentParamMap_.emplace(clientName1,
         std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId1, cameraRestoreParam1}});
     cameraHostManager_->persistentParamMap_.emplace(clientName2,
@@ -347,13 +347,13 @@ HWTEST_F(HCameraHostManagerUnit, hcamera_host_manager_unittest_008, TestSize.Lev
     EXPECT_EQ(cameraHostManager_->persistentParamMap_.size(), 2);
 
     cameraHostManager_->DeleteRestoreParam(clientName3, cameraId3);
-    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam1);
-    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam2);
+    cameraHostManager_->UpdateRestoreParam(clientName1, cameraId1);
+    cameraHostManager_->UpdateRestoreParam(clientName2, cameraId2);
 
     cameraHostManager_->persistentParamMap_.erase(clientName2);
     cameraHostManager_->persistentParamMap_.emplace(clientName2,
         std::map<std::string, sptr<HCameraRestoreParam>>{{cameraId2, cameraRestoreParam2}});
-    cameraHostManager_->UpdateRestoreParam(cameraRestoreParam2);
+    cameraHostManager_->UpdateRestoreParam(clientName2, cameraId2);
 
     cameraRestoreParam1->mRestoreParamType = RestoreParamTypeOhos::PERSISTENT_DEFAULT_PARAM_OHOS;
     cameraHostManager_->SaveRestoreParam(cameraRestoreParam1);
