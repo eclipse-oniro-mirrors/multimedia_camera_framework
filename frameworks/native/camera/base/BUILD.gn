@@ -101,7 +101,7 @@ common_sources = [
 common_external_deps = [
   "access_token:libtokenid_sdk",
   "access_token:libaccesstoken_sdk",
-  "access-token:libprivacy_sdk",
+  "access_token:libprivacy_sdk",
   "access_token:libtokensetproc_shared",
   "audio_framework:audio_client",
   "audio_framework:audio_capturer",
