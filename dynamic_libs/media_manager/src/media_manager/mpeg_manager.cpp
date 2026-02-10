@@ -286,9 +286,13 @@ MediaManagerError MpegManager::ConfigVideoCodec(const CodecInfo& codecInfo, int3
     videoFormat.PutIntValue(Tag::VIDEO_HEIGHT, height);
     videoFormat.PutIntValue(Tag::VIDEO_ROTATION, codecInfo.rotation);
     videoFormat.PutLongValue(Tag::MEDIA_DURATION, codecInfo.duration);
-    videoFormat.PutIntValue(Media::Tag::VIDEO_ENCODER_ENABLE_B_FRAME, codecInfo.isBFrame);
+    videoFormat.PutIntValue(Tag::VIDEO_ENCODER_ENABLE_B_FRAME, codecInfo.isBFrame);
     DP_CHECK_EXECUTE(codecInfo.isBFrame,
-        videoFormat.PutIntValue(Media::Tag::VIDEO_ENCODE_B_FRAME_GOP_MODE, codecInfo.bFrameGopMode));
+        videoFormat.PutIntValue(Tag::VIDEO_ENCODE_B_FRAME_GOP_MODE, codecInfo.bFrameGopMode));
+    if (codecInfo.srqFactor > 0) {
+        videoFormat.PutIntValue(Tag::VIDEO_ENCODER_SQR_FACTOR, codecInfo.srqFactor);
+        videoFormat.PutIntValue(Tag::VIDEO_CODEC_SCENARIO, Media::Plugins::VideoCodecScenario::SCENARIO_MOVING_PHOTO);
+    }
 
     auto ret = encoder_->Configure(videoFormat);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != static_cast<int32_t>(OK), ERROR_FAIL,

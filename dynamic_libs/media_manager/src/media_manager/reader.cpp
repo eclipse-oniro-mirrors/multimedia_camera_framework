@@ -168,6 +168,9 @@ void Reader::GetUserMediaInfo(std::shared_ptr<MediaInfo>& mediaInfo) const
             DP_CHECK_EXECUTE(StrToI64(value, isBFrame), mediaInfo->codecInfo.isBFrame = static_cast<bool>(isBFrame));
         } else if (strcmp(tag.c_str(), Tag::VIDEO_ENCODE_B_FRAME_GOP_MODE) == 0) {
             mediaInfo->codecInfo.bFrameGopMode = MapVideoBFrameGopMode(value);
+        } else if (strcmp(tag.c_str(), Tag::VIDEO_ENCODER_SQR_FACTOR) == 0) {
+            uint32_t srqFactor;
+            DP_CHECK_EXECUTE(StrToU32(value, srqFactor), mediaInfo->codecInfo.srqFactor = srqFactor);
         }
     }
     userMeta->GetData(LIVE_PHOTO_COVERTIME, mediaInfo->livePhotoCovertime);

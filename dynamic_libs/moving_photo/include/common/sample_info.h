@@ -33,6 +33,7 @@ constexpr std::string_view MIME_VIDEO_AVC = "video/avc";
 constexpr std::string_view MIME_VIDEO_HEVC = "video/hevc";
 
 constexpr int32_t BITRATE_10M = 10 * 1000 * 1000; // 10Mbps
+constexpr int32_t BITRATE_15M = 15 * 1000 * 1000; // 15Mbps
 constexpr int32_t BITRATE_20M = 20 * 1000 * 1000; // 20Mbps
 constexpr int32_t BITRATE_22M = 22 * 1000 * 1000; // 22Mbps
 constexpr int32_t BITRATE_30M = 30 * 1000 * 1000; // 30Mbps
@@ -68,6 +69,8 @@ constexpr float HEVC_TO_AVC_FACTOR = 1.5;
 constexpr int64_t NANOSEC_RANGE = 1600000000LL;
 constexpr int32_t I32_TWO = 2;
 constexpr bool IS_HDR_VIVID = true;
+constexpr uint32_t SQR_FACTOR_27 = 27;
+constexpr uint32_t SQR_FACTOR_28 = 28;
 
 class CodecAVBufferInfo : public RefBase {
 public:

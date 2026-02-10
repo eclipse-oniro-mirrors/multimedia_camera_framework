@@ -73,6 +73,7 @@ struct CodecInfo {
     bool isHdrvivid {false};
     bool colorRange {false};
     bool isBFrame {false};
+    uint32_t srqFactor {0};
     Media::Plugins::VideoPixelFormat pixelFormat {Media::Plugins::VideoPixelFormat::NV12};
     Media::Plugins::ColorPrimary colorPrimary {Media::Plugins::ColorPrimary::BT2020};
     Media::Plugins::TransferCharacteristic colorTransferCharacter {Media::Plugins::TransferCharacteristic::BT709};

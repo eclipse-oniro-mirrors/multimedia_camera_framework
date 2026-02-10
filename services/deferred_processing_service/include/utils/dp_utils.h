@@ -137,18 +137,26 @@ inline bool StrToLL(const std::string& str, long long& value, int32_t base)
     return true;
 }
 
-inline bool StrToULL(const std::string& str, unsigned long long& value)
+inline bool StrToULL(const std::string& str, unsigned long long& value, int32_t base)
 {
     auto add = str.c_str();
     char *end = nullptr;
     errno = 0;
-    value = strtoull(add, &end, DEC_RADIX);
+    value = strtoull(add, &end, base);
     DP_CHECK_ERROR_RETURN_RET_LOG(
         (errno == ERANGE && value == ULLONG_MAX) || (errno != 0 && value == 0),
         false, "strtoull converse error,str=%{public}s", str.c_str());
     DP_CHECK_ERROR_RETURN_RET_LOG(end == add, false, "strtoull no digit find");
     DP_CHECK_ERROR_RETURN_RET_LOG(end[0] != '\0', false, "strtoull no all digit");
     return true;
+}
+
+inline bool StrToU32(const std::string& str, uint32_t& value)
+{
+    unsigned long long tmp = 0;
+    bool isOK = StrToULL(str, tmp, DEC_RADIX);
+    value = static_cast<uint32_t>(tmp);
+    return isOK && (tmp <= UINT32_MAX);
 }
 
 inline bool StrToI64(const std::string& str, int64_t& value)
