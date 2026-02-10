@@ -672,8 +672,7 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
     auto cameraPrivacy = GetCameraPrivacy();
     CHECK_RETURN_RET_ELOG(cameraPrivacy == nullptr, false, "cameraPrivacy is null");
     if (mdmCheck_) {
-        CHECK_RETURN_RET_ELOG(cameraPrivacy->GetDisablePolicy(), false, "policy disabled");
-        CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermDisablePolicyCallback(), false, "register Disable failed");
+        CHECK_RETURN_RET_ELOG(HCameraDeviceManager::GetInstance()->GetDisablePolicy(), false, "policy disabled");
     }
     CHECK_RETURN_RET_ELOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
     std::vector<sptr<HCameraDeviceHolder>> holders =
@@ -698,9 +697,6 @@ void HCameraDevice::HandlePrivacyWhenOpenDeviceFail()
         cameraPrivacy->StopUsingPermissionCallback();
     }
     cameraPrivacy->UnregisterPermissionCallback();
-    if (mdmCheck_) {
-        cameraPrivacy->UnRegisterPermDisablePolicyCallback();
-    }
 }
 
 void HCameraDevice::HandlePrivacyAfterCloseDevice()
@@ -716,9 +712,6 @@ void HCameraDevice::HandlePrivacyAfterCloseDevice()
             cameraPrivacy->StopUsingPermissionCallback();
         }
         cameraPrivacy->UnregisterPermissionCallback();
-        if (mdmCheck_) {
-            cameraPrivacy->UnRegisterPermDisablePolicyCallback();
-        }
     }
 }
 // LCOV_EXCL_START
@@ -2175,6 +2168,7 @@ void HCameraDevice::SaveKeyFrameInfo(std::shared_ptr<OHOS::Camera::CameraMetadat
 int32_t HCameraDevice::SetMdmCheck(bool mdmCheck)
 {
     mdmCheck_ = mdmCheck;
+    HCameraDeviceManager::GetInstance()->SetMdmCheck(mdmCheck);
     return CAMERA_OK;
 }
 

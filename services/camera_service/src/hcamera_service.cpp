@@ -165,6 +165,10 @@ void HCameraService::DeviceInitCallBack::OnRemoteDied()
 void HCameraService::OnStart()
 {
     MEDIA_INFO_LOG("HCameraService OnStart begin");
+    if (HCameraDeviceManager::GetInstance()->GetMdmCheck()) {
+        CHECK_PRINT_ELOG(!HCameraDeviceManager::GetInstance()->RegisterPermDisablePolicyCallback(),
+            "HCameraService OnStart register Disable failed");
+    }
     CHECK_PRINT_ELOG(
         cameraHostManager_->Init() != CAMERA_OK, "HCameraService OnStart failed to init camera host manager.");
     // initialize deferred processing service.
@@ -2243,6 +2247,11 @@ int32_t HCameraService::SetTorchLevel(float level)
 int32_t HCameraService::AllowOpenByOHSide(const std::string& cameraId, int32_t state, bool& canOpenCamera)
 {
     MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide start");
+    if (HCameraDeviceManager::GetInstance()->GetMdmCheck() && HCameraDeviceManager::GetInstance()->GetDisablePolicy()) {
+        canOpenCamera = false;
+        MEDIA_ERR_LOG("HCameraService::AllowOpenByOHSide policy disabled");
+        return CAMERA_OK;
+    }
     std::vector<pid_t> activePids = HCameraDeviceManager::GetInstance()->GetActiveClient();
     if (activePids.size() == 0) {
         MEDIA_INFO_LOG("AllowOpenByOHSide::Open allow open camera");
