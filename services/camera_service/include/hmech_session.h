@@ -38,6 +38,7 @@ public:
         const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
     int32_t OnCaptureSessionConfiged(const CaptureSessionInfo& captureSessionInfo);
     int32_t OnZoomInfoChange(int32_t sessionid, const ZoomInfo& zoomInfo);
+    int32_t OnMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraResult);
     int32_t OnSessionStatusChange(int32_t sessionid, bool status);
     sptr<IMechSessionCallback> GetCallback();
     bool IsEnableMech();

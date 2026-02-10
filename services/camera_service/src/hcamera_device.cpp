@@ -1871,6 +1871,7 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     }
 #endif
     ReportZoomInfos(cameraResult);
+    ReportMechMetadata(cameraResult);
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     if (isKeyFrameReportEnabled_.load()) {
         SaveKeyFrameInfo(cameraResult);
@@ -1900,11 +1901,23 @@ void HCameraDevice::ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata
     zoomRatio_ = zoomRatio;
 }
 
+void HCameraDevice::ReportMechMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult)
+{
+    std::unique_lock<std::shared_mutex> lock(mechMetadataCallbackLock_);
+    CHECK_EXECUTE(mechMetadataCallback_, mechMetadataCallback_(cameraResult));
+}
+
 void HCameraDevice::SetZoomInfoCallback(std::function<void(ZoomInfo)> callback)
 {
     MEDIA_DEBUG_LOG("HCameraDevice::SetZoomInfoCallback enter.");
     std::unique_lock<std::shared_mutex> lock(zoomInfoCallbackLock_);
     zoomInfoCallback_ = callback;
+}
+
+void HCameraDevice::SetMechMetadataCallback(std::function<void(std::shared_ptr<OHOS::Camera::CameraMetadata>)> callback)
+{
+    std::unique_lock<std::shared_mutex> lock(mechMetadataCallbackLock_);
+    mechMetadataCallback_ = callback;
 }
 
 int32_t HCameraDevice::GetCallerToken()

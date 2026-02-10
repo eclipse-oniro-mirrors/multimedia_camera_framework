@@ -91,6 +91,16 @@ int32_t MechSessionCallbackImpl::OnZoomInfoChange(int32_t sessionid, const ZoomI
     return CAMERA_OK;
 }
 
+int32_t MechSessionCallbackImpl::OnMetadataInfo(const std::shared_ptr<CameraMetadata>& results)
+{
+    int32_t ret = CAMERA_OK;
+    auto mechSession = mechSession_.promote();
+    CHECK_RETURN_RET(!mechSession, ret);
+    auto appCallback = mechSession->GetCallback();
+    CHECK_EXECUTE(appCallback, appCallback->OnMetadataInfo(results));
+    return CAMERA_OK;
+}
+
 int32_t MechSessionCallbackImpl::OnSessionStatusChange(int32_t sessionid, bool status)
 {
     MEDIA_INFO_LOG("%{public}s is called!", __FUNCTION__);

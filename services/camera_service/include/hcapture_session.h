@@ -373,6 +373,7 @@ private:
     void OnCaptureSessionConfiged();
     void OnCaptureSessionCameraSwitchConfiged(bool isStart);
     void OnZoomInfoChange(const ZoomInfo& zoomInfo);
+    void OnMechMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
     void OnSessionStatusChange(bool status);
 
     std::mutex cbMutex_;

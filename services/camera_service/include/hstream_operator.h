@@ -376,6 +376,7 @@ private:
     std::map<int32_t, bool> curMotionPhotoStatus_;
     std::mutex motionPhotoStatusLock_;
     std::map<int32_t, std::pair<int32_t, int32_t>> lifecycleMap_;
+    std::vector<uint8_t> mechExtraSettings_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

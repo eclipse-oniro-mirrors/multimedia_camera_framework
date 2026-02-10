@@ -34,6 +34,7 @@ public:
     virtual void OnCaptureSessionConfiged(CaptureSessionInfo captureSessionInfo);
     virtual void OnZoomInfoChange(int sessionid, ZoomInfo zoomInfo);
     virtual void OnSessionStatusChange(int sessionid, bool status);
+    virtual void OnMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result) = 0;
 };
 
 class MechSession : public RefBase {
@@ -96,6 +97,7 @@ public:
     ErrCode OnCaptureSessionConfiged(const CaptureSessionInfo& captureSessionInfo) override;
     ErrCode OnZoomInfoChange(int32_t sessionid, const ZoomInfo& zoomInfo) override;
     ErrCode OnSessionStatusChange(int32_t sessionid, bool status) override;
+    ErrCode OnMetadataInfo(const std::shared_ptr<CameraMetadata>& results) override;
 
 private:
     bool ProcessRectInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,

@@ -151,6 +151,8 @@ public:
 
     void SetZoomInfoCallback(std::function<void(ZoomInfo)> callback);
 
+    void SetMechMetadataCallback(std::function<void(std::shared_ptr<OHOS::Camera::CameraMetadata>)> callback);
+
     inline void SetCameraConcurrentType(int32_t cameraConcurrentTypenum)
     {
         cameraConcurrentType_ = cameraConcurrentTypenum;
@@ -328,6 +330,7 @@ private:
     void UnRegisterSensorCallback();
     static void DropDetectionDataCallbackImpl(const OHOS::Rosen::MotionSensorEvent &motionData);
     void ReportZoomInfos(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
+    void ReportMechMetadata(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     void SaveKeyFrameInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
 #endif
@@ -363,6 +366,8 @@ private:
     std::string bundleNameForLiveScene_;
     bool mdmCheck_ = true;
     std::string originCameraId_;
+    std::shared_mutex mechMetadataCallbackLock_;
+    std::function<void(std::shared_ptr<OHOS::Camera::CameraMetadata>)> mechMetadataCallback_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -98,6 +98,8 @@ constexpr int32_t ROTATION_360_DEGREES = 360;
 #endif
 static GravityData gravityData = {0.0, 0.0, 0.0};
 static int32_t sensorRotation = 0;
+constexpr int32_t DEFAULT_ITEM_CAPACITY = 1;
+constexpr int32_t DEFAULT_DATA_CAPACITY = 10;
 } // namespace
 
 constexpr int32_t IMAGE_SHOT_TYPE = 0;
@@ -1227,29 +1229,27 @@ int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
     sptr<OHOS::HDI::Camera::V1_3::IStreamOperator> streamOperatorV1_3 =
         OHOS::HDI::Camera::V1_3::IStreamOperator::CastFrom(streamOperator_);
     CHECK_RETURN_RET(!streamOperatorV1_3, CAMERA_UNKNOWN_ERROR);
-    const int32_t DEFAULT_ITEMS = 1;
-    const int32_t DEFAULT_DATA_LENGTH = 10;
     std::shared_ptr<OHOS::Camera::CameraMetadata> metadata4Types =
-        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+        std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEM_CAPACITY, DEFAULT_DATA_CAPACITY);
     bool needAddMetadataType = true;
     auto allStream = streamContainer_.GetAllStreams();
+    std::vector<uint8_t> typeTagToHal;
     for (auto& stream : allStream) {
-        if (stream->GetStreamType() != StreamType::METADATA) {
-            continue;
-        }
+        CHECK_CONTINUE(stream->GetStreamType() != StreamType::METADATA);
         auto streamMetadata = CastStream<HStreamMetadata>(stream);
         auto types = streamMetadata->GetMetadataObjectTypes();
-        if (std::find(types.begin(), types.end(), static_cast<int32_t>(MetadataObjectType::FACE)) != types.end()) {
+        CHECK_EXECUTE(std::find(types.begin(), types.end(),
+                                static_cast<int32_t>(MetadataObjectType::BASE_TRACKING_REGION)) == types.end(),
+                      typeTagToHal.emplace_back(static_cast<int32_t>(MetadataObjectType::BASE_TRACKING_REGION)));
+        if (std::find(types.begin(), types.end(), static_cast<int32_t>(MetadataObjectType::FACE)) != types.end() ||
+            std::find(types.begin(), types.end(),
+                static_cast<int32_t>(MetadataObjectType::BASE_FACE_DETECTION)) != types.end()) {
             needAddMetadataType = false;
             break;
         }
     }
     g_isNeedFilterMetadata = needAddMetadataType;
-    std::vector<uint8_t> typeTagToHal;
-    typeTagToHal.emplace_back(static_cast<int32_t>(MetadataObjectType::BASE_TRACKING_REGION));
-    if (needAddMetadataType) {
-        typeTagToHal.emplace_back(static_cast<int32_t>(MetadataObjectType::FACE));
-    }
+    CHECK_EXECUTE(needAddMetadataType, typeTagToHal.emplace_back(static_cast<int32_t>(MetadataObjectType::FACE)));
     uint32_t count = typeTagToHal.size();
     uint8_t* typesToEnable = typeTagToHal.data();
     bool status = metadata4Types->addEntry(OHOS_CONTROL_STATISTICS_DETECT_SETTING, typesToEnable, count);
@@ -1259,9 +1259,11 @@ int32_t HStreamOperator::UpdateSettingForFocusTrackingMech(bool isEnableMech)
     if (isEnableMech) {
         MEDIA_INFO_LOG("%{public}s EnableResult start!", __FUNCTION__);
         streamOperatorV1_3->EnableResult(-1, settings);
+        mechExtraSettings_ = settings;
     } else {
         MEDIA_INFO_LOG("%{public}s DisableResult start!", __FUNCTION__);
-        streamOperatorV1_3->DisableResult(-1, settings);
+        streamOperatorV1_3->DisableResult(-1, mechExtraSettings_);
+        mechExtraSettings_.clear();
     }
     return CAMERA_OK;
 }

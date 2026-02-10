@@ -119,6 +119,13 @@ int32_t HMechSession::OnZoomInfoChange(int32_t sessionid, const ZoomInfo& zoomIn
     return CAMERA_OK;
 }
 
+int32_t HMechSession::OnMetadataInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraResult)
+{
+    std::shared_lock<std::shared_mutex> lock(callbackLock_);
+    CHECK_EXECUTE(callback_, callback_->OnMetadataInfo(cameraResult));
+    return CAMERA_OK;
+}
+
 int32_t HMechSession::OnSessionStatusChange(int32_t sessionid, bool status)
 {
     std::shared_lock<std::shared_mutex> lock(callbackLock_);
