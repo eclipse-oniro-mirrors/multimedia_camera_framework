@@ -48,6 +48,7 @@ public:
     ApplistConfigure* GetConfigureByBundleName(const std::string& bundleName);
     bool GetNaturalDirectionCorrectByBundleName(const std::string& bundleName,
         bool& exemptNaturalDirectionCorrect);
+    void GetCustomLogicDirection(const std::string& bundleName, int32_t& customLogicDirection);
     void GetAppNaturalDirectionByBundleName(const std::string& bundleName, int32_t& naturalDirection);
     void OnChange() override;
 
