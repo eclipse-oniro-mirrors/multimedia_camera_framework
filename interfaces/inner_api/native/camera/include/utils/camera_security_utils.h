@@ -21,6 +21,8 @@ namespace OHOS {
 namespace CameraStandard {
 namespace CameraSecurity {
 bool CheckSystemApp();
+bool IsSystemAbility();
+bool CheckSystemSA();
 }
 } // namespace CameraStandard
 } // namespace OHOS
