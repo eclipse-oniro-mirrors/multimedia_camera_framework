@@ -781,9 +781,6 @@ int32_t HCameraService::GetCameraIds(vector<string>& cameraIds)
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     ret = GetCameras(cameraIds, cameraAbilityList);
     CHECK_PRINT_ELOG(ret != CAMERA_OK, "HCameraService::GetCameraIds failed");
-    for (auto id : cameraIds) {
-        MEDIA_INFO_LOG("HCameraService::GetCameraIds cameraId:%{public}s", id.c_str());
-    }
     return ret;
 }
 

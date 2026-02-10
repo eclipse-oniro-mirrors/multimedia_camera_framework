@@ -1611,7 +1611,7 @@ dmDeviceInfo CameraManager::GetDmDeviceInfo(
     for (auto& info : dmDeviceInfoList) {
         if (cameraId.find(info.networkId) != std::string::npos) {
             deviceInfo = info;
-            MEDIA_INFO_LOG("CameraManager::GetDmDeviceInfo %{public}s is remote camera", cameraId.c_str());
+            MEDIA_DEBUG_LOG("CameraManager::GetDmDeviceInfo %{public}s is remote camera", cameraId.c_str());
             break;
         }
     }
@@ -2294,14 +2294,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
         cameraDeviceList_ = cameraDeviceList;
         preFoldStatus = curFoldStatus;
     } else {
-        MEDIA_INFO_LOG("use cached camera device list");
         cameraDeviceList = GetCameraDeviceList();
-    }
-    for (const auto& deviceInfo : cameraDeviceList_) {
-        MEDIA_INFO_LOG("CameraManager::GetSupportedCameras cached camera connectionType: %{public}d, id: %{public}s",
-            deviceInfo->GetConnectionType(), deviceInfo->GetID().c_str());
-        MEDIA_INFO_LOG("CameraManager::GetSupportedCameras cached camera position: %{public}d, type: %{public}d",
-            deviceInfo->GetPosition(), deviceInfo->GetCameraType());
     }
     // LCOV_EXCL_STOP
     bool isFoldable = GetIsFoldable();
@@ -2317,8 +2310,6 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
         if (deviceInfo->GetConnectionType() == CAMERA_CONNECTION_USB_PLUGIN ||
             (deviceInfo->GetConnectionType() == CAMERA_CONNECTION_REMOTE &&
             deviceInfo->GetSupportedFoldStatus() == OHOS_CAMERA_FOLD_STATUS_NONFOLDABLE)) {
-            MEDIA_INFO_LOG("GetSupportedCameras add usb camera connectionType: %{public}d, id: %{public}s",
-                deviceInfo->GetConnectionType(), deviceInfo->GetID().c_str());
             supportedCameraDeviceList.emplace_back(deviceInfo);
             continue;
         }
@@ -2364,12 +2355,6 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
             supportedCameraDeviceList.emplace_back(deviceInfo);
         }
     }
-    for (const auto& deviceInfo : supportedCameraDeviceList) {
-        MEDIA_INFO_LOG("GetSupportedCameras supported camera connectionType: %{public}d, id: %{public}s",
-            deviceInfo->GetConnectionType(), deviceInfo->GetID().c_str());
-        MEDIA_INFO_LOG("GetSupportedCameras supported camera position: %{public}d, type: %{public}d",
-            deviceInfo->GetPosition(), deviceInfo->GetCameraType());
-    }
     // LCOV_EXCL_STOP
     return supportedCameraDeviceList;
 }
@@ -2378,7 +2363,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 {
     MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras enter");
     std::vector<sptr<CameraDevice>> cameraDeviceList = GetSupportedCamerasList();
-    MEDIA_INFO_LOG("CameraManager::GetSupportedCameras camerasList size: %{public}zu", cameraDeviceList.size());
+    MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras camerasList size: %{public}zu", cameraDeviceList.size());
     std::vector<sptr<CameraDevice>> supportedCameraDeviceList;
     for (const auto& deviceInfo : cameraDeviceList) {
         MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras connectionType: %{public}d",
@@ -2389,7 +2374,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
             supportedCameraDeviceList.emplace_back(deviceInfo);
         }
     }
-    MEDIA_INFO_LOG("CameraManager::GetSupportedCameras supportedCameras size: %{public}zu",
+    MEDIA_DEBUG_LOG("CameraManager::GetSupportedCameras supportedCameras size: %{public}zu",
         supportedCameraDeviceList.size());
     return supportedCameraDeviceList;
 }
@@ -2398,13 +2383,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDevices()
 {
     MEDIA_DEBUG_LOG("CameraManager::GetCameraDevices enter");
     std::vector<sptr<CameraDevice>> cameraDeviceList = GetSupportedCamerasList();
-    MEDIA_INFO_LOG("CameraManager::GetCameraDevices cameras size: %{public}zu", cameraDeviceList.size());
-    for (const auto& deviceInfo : cameraDeviceList) {
-        MEDIA_INFO_LOG("CameraManager::GetCameraDevices camera connectionType: %{public}d, id: %{public}s",
-            deviceInfo->GetConnectionType(), deviceInfo->GetID().c_str());
-        MEDIA_INFO_LOG("CameraManager::GetCameraDevices camera position: %{public}d, type: %{public}d",
-            deviceInfo->GetPosition(), deviceInfo->GetCameraType());
-    }
+    MEDIA_DEBUG_LOG("CameraManager::GetCameraDevices cameras size: %{public}zu", cameraDeviceList.size());
     return cameraDeviceList;
 }
 
