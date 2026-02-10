@@ -14,8 +14,6 @@
  */
 
 #include "camera_security_utils.h"
-#include "camera_log.h"
-#include "camera_util.h"
 #include "ipc_skeleton.h"
 #include "tokenid_kit.h"
 #include "access_token.h"
