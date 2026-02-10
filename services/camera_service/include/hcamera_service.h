@@ -428,6 +428,7 @@ private:
     bool muteModeStored_;
     bool isFoldable = false;
     bool isFoldableInit = false;
+    std::mutex isFoldableMutex;
     bool isControlCenterEnabled_ = false;
     std::atomic<bool> controlCenterPrecondition_ = true;
     bool usePhysicalCameraOrientation_ = false;

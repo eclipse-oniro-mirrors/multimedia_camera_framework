@@ -619,8 +619,10 @@ int32_t HCameraService::GetCameras(
     vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
 {
     CAMERA_SYNC_TRACE;
+    isFoldableMutex.lock();
     isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
     isFoldableInit = true;
+    isFoldableMutex.unlock();
     int32_t ret = cameraHostManager_->GetCameras(cameraIds);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "HCameraService::GetCameras failed");
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
@@ -647,11 +649,16 @@ shared_ptr<CameraMetaInfo> HCameraService::GetCameraMetaInfo(std::string &camera
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
     uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
     auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "")[0];
+    isFoldableMutex.unlock();
     bool isOtherFold = isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT &&
         foldType == OHOS_CAMERA_FOLDSCREEN_OTHER && (foldScreenType == '1' || foldScreenType == '7');
-    CHECK_RETURN_RET(isOtherFold, nullptr);
+    if (isOtherFold) {
+        isFoldableMutex.unlock();
+        return nullptr;
+    }
     bool isFoldInner =
         isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT && foldType == OHOS_CAMERA_FOLDSCREEN_INNER;
+    isFoldableMutex.unlock();
     if (isFoldInner) {
         cameraPosition = POSITION_FOLD_INNER;
     }
@@ -1688,8 +1695,10 @@ int32_t HCameraService::UnSetTorchCallback()
 int32_t HCameraService::SetFoldStatusCallback(const sptr<IFoldServiceCallback>& callback, bool isInnerCallback)
 {
     lock_guard<recursive_mutex> lock(foldCbMutex_);
+    isFoldableMutex.lock();
     isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
     CHECK_EXECUTE((isFoldable && !isFoldRegister), RegisterFoldStatusListener());
+    isFoldableMutex.unlock();
     if (isInnerCallback) {
         innerFoldCallback_ = callback;
     } else {
