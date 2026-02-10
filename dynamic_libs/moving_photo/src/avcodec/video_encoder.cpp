@@ -19,6 +19,7 @@
 #include "native_mfmagic.h"
 #include "media_description.h"
 #include "avcodec_list.h"
+#include "video_types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -458,20 +459,27 @@ int32_t VideoEncoder::SetCallback()
 int32_t VideoEncoder::Configure()
 {
     // LCOV_EXCL_START
-    MediaAVCodec::Format format = MediaAVCodec::Format();
+    BframeAbility_ = IsBframeSupported();
+    int32_t baseBit = BframeAbility_ ? BITRATE_15M : BITRATE_22M;
     int32_t bitrate = static_cast<int32_t>(pow(float(size_->width) * float(size_->height) / DEFAULT_SIZE,
-        VIDEO_BITRATE_CONSTANT) * BITRATE_22M);
+        VIDEO_BITRATE_CONSTANT) * baseBit);
     bitrate_ = videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_AVC
         ? static_cast<int32_t>(bitrate * HEVC_TO_AVC_FACTOR) : bitrate;
     MEDIA_INFO_LOG("Current resolution is : %{public}d*%{public}d, encode type : %{public}d, set bitrate : %{public}d",
         size_->width, size_->height, videoCodecType_, bitrate_);
-    BframeAbility_ = IsBframeSupported();
-    MEDIA_INFO_LOG("BframeAbility:%{public}d", BframeAbility_);
+    uint32_t sqrFactor = BframeAbility_ ? SQR_FACTOR_28 : SQR_FACTOR_27;
+    MEDIA_INFO_LOG("Current resolution is : %{public}d*%{public}d, type[%{public}d], "
+        "bitrate[%{public}d], sqrFactor[%{public}d]",
+        size_->width, size_->height, videoCodecType_, bitrate_, sqrFactor);
+    MediaAVCodec::Format format = MediaAVCodec::Format();
     format.PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, size_->width);
     format.PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, size_->height);
     format.PutIntValue(MediaDescriptionKey::MD_KEY_ROTATION_ANGLE, rotation_);
     format.PutDoubleValue(MediaDescriptionKey::MD_KEY_FRAME_RATE, VIDEO_FRAME_RATE);
-    format.PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_ENCODE_BITRATE_MODE, MediaAVCodec::SQR);
+    format.PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_ENCODE_BITRATE_MODE,
+        Media::Plugins::VideoEncodeBitrateMode::SQR);
+    format.PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_ENCODER_SQR_FACTOR, sqrFactor);
+    format.PutIntValue(Media::Tag::VIDEO_CODEC_SCENARIO, Media::Plugins::VideoCodecScenario::SCENARIO_MOVING_PHOTO);
     format.PutIntValue(Media::Tag::VIDEO_ENCODER_ENABLE_B_FRAME, BframeAbility_);
     if (BframeAbility_) {
         format.PutIntValue(Media::Tag::VIDEO_ENCODE_B_FRAME_GOP_MODE,

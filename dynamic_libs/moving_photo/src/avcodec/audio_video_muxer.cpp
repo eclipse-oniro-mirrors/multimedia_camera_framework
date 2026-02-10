@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <unistd.h>
 #include "audio_video_muxer.h"
+#include "sample_info.h"
 #include "utils/camera_log.h"
 #include "native_mfmagic.h"
 #include "camera_dynamic_loader.h"
@@ -141,7 +142,9 @@ int32_t AudioVideoMuxer::SetSqr(int32_t bitrate, bool isBframeEnable)
     std::string bitrateStr = STAGE_VIDEO_ENCODER_PARAM_VALUE + std::to_string(bitrate);
     std::string BframeStr = STAGE_VIDEO_ENCODER_BFRAME_VALUE + std::to_string(isBframeEnable);
     std::string BframeModeStr = STAGE_VIDEO_ENCODER_BFRAME_MODE_VALUE;
-    std::string InfoStr = bitrateStr + BframeStr + BframeModeStr;
+    uint32_t sqrFactor = isBframeEnable ? SQR_FACTOR_28 : SQR_FACTOR_27;
+    std::string sqrFactorStr = STAGE_VIDEO_ENCODER_SQR_FACTOR_VALUE + std::to_string(sqrFactor);
+    std::string InfoStr = bitrateStr + BframeStr + BframeModeStr + sqrFactorStr;
     MEDIA_DEBUG_LOG("InfoStr:%{public}s",InfoStr.c_str());
     std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
     userMeta->SetData(STAGE_ENCODER_PARAM_KEY, InfoStr);
