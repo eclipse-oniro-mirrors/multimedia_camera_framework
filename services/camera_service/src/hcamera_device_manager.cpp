@@ -554,6 +554,62 @@ bool HCameraDeviceManager::IsLiveScene()
 }
 #endif
 
+bool HCameraDeviceManager::PermDisableSA()
+{
+    MEDIA_INFO_LOG("HCameraDeviceManager::PermDisableSA close A camera");
+    std::string cameraId = GetACameraId();
+    CHECK_RETURN_RET_ELOG(
+        peerCallback_ == nullptr, false, "HCameraDeviceManager::PermDisableSA falied to close peer device");
+    peerCallback_->NotifyCloseCamera(cameraId);
+    return true;
+}
+
+bool HCameraDeviceManager::GetDisablePolicy()
+{
+    bool isDisable = false;
+    Security::AccessToken::PrivacyKit::GetDisablePolicy(OHOS_PERMISSION_CAMERA, isDisable);
+    return isDisable;
+}
+
+bool HCameraDeviceManager::RegisterPermDisablePolicyCallback()
+{
+    const std::vector<std::string>& permList{OHOS_PERMISSION_CAMERA};
+    int32_t res;
+    {
+        std::lock_guard<std::mutex> lock(policyMutex_);
+        policyCallbackPtr_ = std::make_shared<DisablePolicyChangeCb>(permList);
+        res = Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(policyCallbackPtr_);
+    }
+    MEDIA_INFO_LOG("HCameraDeviceManager::RegisterPermDisablePolicyCallback res:%{public}d", res);
+    CHECK_PRINT_ELOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
+    return res == CAMERA_OK;
+}
+
+void HCameraDeviceManager::UnRegisterPermDisablePolicyCallback()
+{
+    std::lock_guard<std::mutex> lock(policyMutex_);
+    CHECK_RETURN_ELOG(policyCallbackPtr_ == nullptr, "policyCallbackPtr_ is null.");
+    MEDIA_DEBUG_LOG("UnRegisterDisablePolicyCallback unregister");
+    int32_t res = Security::AccessToken::PrivacyKit::UnRegisterPermDisablePolicyCallback(policyCallbackPtr_);
+    MEDIA_INFO_LOG("HCameraDeviceManager::UnRegisterPermDisablePolicyCallback res:%{public}d", res);
+    CHECK_PRINT_ELOG(res != CAMERA_OK, "UnRegisterPermDisablePolicyCallback failed.");
+    policyCallbackPtr_ = nullptr;
+}
+
+int32_t HCameraDeviceManager::SetMdmCheck(bool mdmCheck)
+{
+    MEDIA_INFO_LOG("HCameraDeviceManager::SetMdmCheck: %{public}d", mdmCheck);
+    std::lock_guard<std::mutex> lock(mdmMutex_);
+    mdmCheck_ = mdmCheck;
+    return CAMERA_OK;
+}
+
+bool HCameraDeviceManager::GetMdmCheck()
+{
+    std::lock_guard<std::mutex> lock(mdmMutex_);
+    return mdmCheck_;
+}
+
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
 {
     CHECK_RETURN_ELOG(requestCameraHolder == nullptr, "requestCameraHolder is null");

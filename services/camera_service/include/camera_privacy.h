@@ -59,9 +59,6 @@ class CameraPrivacy : public RefBase {
 public:
     explicit CameraPrivacy(uint32_t callingTokenId, int32_t pid) : pid_(pid), callerToken_(callingTokenId) {}
     ~CameraPrivacy();
-    bool GetDisablePolicy();
-    bool RegisterPermDisablePolicyCallback();
-    void UnRegisterPermDisablePolicyCallback();
     bool RegisterPermissionCallback();
     void UnregisterPermissionCallback();
     bool StartUsingPermissionCallback();
@@ -96,11 +93,9 @@ private:
     std::string clientName_;
     std::condition_variable canClose_;
     std::mutex canCloseMutex_;
-    std::mutex policyMutex_;
     std::mutex permissionCbMutex_;
     std::mutex cameraUseCbMutex_;
     std::mutex clientNameMutex_;
-    std::shared_ptr<DisablePolicyChangeCb> policyCallbackPtr_;
     std::shared_ptr<PermissionStatusChangeCb> permissionCallbackPtr_;
     std::shared_ptr<CameraUseStateChangeCb> cameraUseCallbackPtr_;
 };

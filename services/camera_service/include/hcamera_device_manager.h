@@ -19,6 +19,7 @@
 #include <refbase.h>
 #include <set>
 #include "hcamera_device.h"
+#include "camera_privacy.h"
 #include "camera_util.h"
 #include "safe_map.h"
 
@@ -314,8 +315,18 @@ public:
                                sptr<HCameraDeviceHolder> &cameraRequestOpen);
 
     bool IsProcessHasConcurrentDevice(pid_t pid);
+    bool PermDisableSA();
 
-    std::mutex mapMutex_;
+    bool GetDisablePolicy();
+
+    bool RegisterPermDisablePolicyCallback();
+
+    void UnRegisterPermDisablePolicyCallback();
+
+    int32_t SetMdmCheck(bool mdmCheck);
+
+    bool GetMdmCheck();
+
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void SetLiveScene(bool isLiveScene);
     bool IsLiveScene();
@@ -332,6 +343,11 @@ private:
     sptr<ICameraBroker> peerCallback_;
     std::mutex peerCbMutex_;
     sptr<CameraConcurrentSelector> concurrentSelector_;
+    bool mdmCheck_ = true;
+    std::mutex mapMutex_;
+    std::mutex policyMutex_;
+    std::mutex mdmMutex_;
+    std::shared_ptr<DisablePolicyChangeCb> policyCallbackPtr_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
     int32_t GetCurrentCost() const;
