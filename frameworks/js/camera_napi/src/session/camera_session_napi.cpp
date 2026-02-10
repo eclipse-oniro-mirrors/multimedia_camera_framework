@@ -2569,8 +2569,10 @@ napi_value CameraSessionNapi::GetZoomRatio(napi_env env, napi_callback_info info
             std::string errMessage = std::to_string(retCode);
             napi_throw_error(env, errMessage.c_str(), "Camera device is closed.");
             return nullptr;
-        } else if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
+        } else {
+            if (!CameraNapiUtils::CheckError(env, retCode)) {
+                return nullptr;
+            }
         }
         napi_create_double(env, CameraNapiUtils::FloatToDouble(zoomRatio), &result);
     } else {
