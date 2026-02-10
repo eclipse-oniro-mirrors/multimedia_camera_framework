@@ -2951,6 +2951,10 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
     if (IsSystemApp()) {
         FillSupportPhotoFormats(profilesWrapper.photoProfiles);
     }
+    if (!CameraSecurity::CheckSystemSA()) {
+        MEDIA_INFO_LOG("Not sysSA, should eliminate format nv12, yuyv.");
+        FillVirtualSupportPreviewFormats(profilesWrapper.previewProfiles);
+    }
     // save full preview capabilities in camera device
     camera->SetFullPreviewProfiles(modeName, profilesWrapper.previewProfiles);
     // remove preview hdr capabilities for non-sys apps
@@ -3635,6 +3639,18 @@ void CameraManager::SetCameraManagerNull()
 {
     MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
     g_cameraManager = nullptr;
+}
+
+void CameraManager::FillVirtualSupportPreviewFormats(std::vector<Profile>& previewProfiles)
+{
+    CHECK_RETURN(previewProfiles.size() == 0);
+    std::vector<Profile> extendProfiles = {};
+    for (const auto& profile: previewProfiles) {
+        if (profile.format_ != CAMERA_FORMAT_NV12 && profile.format_ != CAMERA_FORMAT_YUV_422_YUYV) {
+            extendProfiles.push_back(profile);
+        }
+    }
+    previewProfiles = extendProfiles;
 }
 
 void CameraManager::FillSupportPreviewFormats(std::vector<Profile>& previewProfiles)

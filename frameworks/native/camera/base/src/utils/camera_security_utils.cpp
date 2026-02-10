@@ -16,14 +16,32 @@
 #include "camera_security_utils.h"
 #include "ipc_skeleton.h"
 #include "tokenid_kit.h"
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include <cstdint>
 
 namespace OHOS {
 namespace CameraStandard {
 namespace CameraSecurity {
+using namespace OHOS::Security::AccessToken;
 bool CheckSystemApp()
 {
     uint64_t tokenId = IPCSkeleton::GetSelfTokenID();
     return !Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(tokenId) ? false : true;
+}
+
+bool IsSystemAbility()
+{
+    uint32_t uid = IPCSkeleton::GetCallingUid();
+    constexpr uint32_t maxSaUid = 10000;
+    return uid < maxSaUid;
+}
+
+bool CheckSystemSA()
+{
+    AccessTokenID callerTokenId = IPCSkeleton::GetCallingTokenID();
+    bool isHapToken = AccessTokenKit::GetTokenTypeFlag(callerTokenId) == ATokenTypeEnum::TOKEN_HAP;
+    return isHapToken ? CheckSystemApp() : IsSystemAbility();
 }
 } // namespace CameraSecurity
 } // namespace CameraStandard

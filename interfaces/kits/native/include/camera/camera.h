@@ -383,6 +383,16 @@ typedef enum Camera_Format {
     CAMERA_FORMAT_YUV_420_SP = 1003,
 
     /**
+     * NV12 Format.
+     */
+    CAMERA_FORMAT_NV12 = 1004,
+
+    /**
+     * YUV 422 Format.
+     */
+    CAMERA_FORMAT_YUV_422_YUYV = 1005,
+    
+    /**
      * JPEG Format.
      */
     CAMERA_FORMAT_JPEG = 2000,
