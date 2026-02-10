@@ -18,6 +18,7 @@
 #include "basic_definitions.h"
 #include "camera_timer.h"
 #include "dp_log.h"
+#include "events_info.h"
 #include "events_monitor.h"
 
 namespace OHOS {
@@ -48,6 +49,7 @@ SchedulerInfo PhotoTrailingState::ReevaluateSchedulerInfo()
 
 void PhotoTrailingState::StartTrailing(uint32_t duration)
 {
+    DP_CHECK_RETURN(!EventsInfo::GetInstance().NeedTrailing());
     DP_CHECK_EXECUTE(isTrailing_, StopTrailing());
     remainingTrailingTime_ = std::max(duration, remainingTrailingTime_);
     DP_CHECK_RETURN(remainingTrailingTime_ == 0);

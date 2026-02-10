@@ -116,6 +116,10 @@ public:
     {
         return 0;
     }
+    int32_t SetFirstCallerTokenID(uint32_t tokenId) override
+    {
+        return 0;
+    }
 };
 class CameraDeviceServiceStubFuzzer {
 public:

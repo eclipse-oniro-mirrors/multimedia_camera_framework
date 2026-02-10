@@ -94,6 +94,7 @@ public:
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     int32_t SetMdmCheck(bool mdmCheck) override;
     int32_t SetCameraIdTransform(const std::string& originCameraId) override;
+    int32_t SetFirstCallerTokenID(uint32_t tokenId) override;
     std::string GetCameraIdTransform();
 
     int32_t ResetDeviceSettings();
@@ -366,6 +367,7 @@ private:
     std::string bundleNameForLiveScene_;
     bool mdmCheck_ = true;
     std::string originCameraId_;
+    uint32_t firstCallerTokenID_ {0};
     std::shared_mutex mechMetadataCallbackLock_;
     std::function<void(std::shared_ptr<OHOS::Camera::CameraMetadata>)> mechMetadataCallback_;
 };

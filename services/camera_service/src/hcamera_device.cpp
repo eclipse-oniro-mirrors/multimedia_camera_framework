@@ -41,6 +41,7 @@
 #include "ipc_types.h"
 #include "res_sched_client.h"
 #include "securec.h"
+#include "token_setproc.h"
 #ifdef MEMMGR_OVERRID
 #include "mem_mgr_client.h"
 #include "mem_mgr_constant.h"
@@ -289,8 +290,8 @@ std::string HCameraDevice::GetClientName()
 {
     std::lock_guard<std::mutex> lock(clientNameMutex_);
     if (clientName_ == "") {
-        int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
-        clientName_ = GetClientNameByToken(tokenId);
+        uint32_t token = firstCallerTokenID_ != 0 ? firstCallerTokenID_ : callerToken_;
+        clientName_ = GetClientNameByToken(token);
     }
     return clientName_;
 }
@@ -2183,6 +2184,13 @@ int32_t HCameraDevice::SetCameraIdTransform(const std::string& originCameraId)
 {
     std::lock_guard<std::mutex> lock(originCameraIdLock_);
     originCameraId_ = originCameraId;
+    return CAMERA_OK;
+}
+
+int32_t HCameraDevice::SetFirstCallerTokenID(uint32_t tokenId)
+{
+    std::lock_guard<std::mutex> lock(clientNameMutex_);
+    firstCallerTokenID_ = tokenId;
     return CAMERA_OK;
 }
 

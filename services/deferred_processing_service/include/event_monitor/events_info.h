@@ -42,6 +42,8 @@ public:
     void SetCurrentUser(const int32_t userId);
     int32_t GetCurrentUser();
     bool IsAllowedToSchedule(const int32_t userId);
+    void SetTrailing(bool isNeedTrailing = true);
+    bool NeedTrailing();
 
 private:
     std::mutex mutex_;
@@ -56,6 +58,8 @@ private:
     MediaLibraryStatus mediaState_ {MEDIA_LIBRARY_IDLE};
     std::mutex userMutex_;
     int32_t userId_ {DEFAULT_USER};
+    std::mutex trailingMutex_;
+    bool isNeedTrailing_ {false};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

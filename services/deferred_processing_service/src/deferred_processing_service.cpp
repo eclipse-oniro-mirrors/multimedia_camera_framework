@@ -47,6 +47,7 @@ void DeferredProcessingService::Initialize()
 void DeferredProcessingService::NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
     std::shared_ptr<PictureIntf> picture)
 {
+    EventsInfo::GetInstance().SetTrailing();
     DP_CHECK_RETURN(!initialized_.load());
 
     auto sessionManager = DPS_GetSessionManager();

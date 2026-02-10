@@ -153,6 +153,7 @@ public:
     VideoOutput CreateVideoOutputWithoutProfile(string_view surfaceId);
     CameraInput CreateCameraInputWithCameraDevice(CameraDevice const& camera);
     CameraInput CreateCameraInputWithPosition(CameraPosition position, CameraType type);
+    CameraInput CreateCameraInputWithTokenId(CameraDevice const &camera, int32_t tokenId);
     ControlCenterSession CreateControlCenterSession();
     DepthDataOutput CreateDepthDataOutput(DepthProfile const& profile);
     MetadataOutput CreateMetadataOutput(array_view<MetadataObjectType> metadataObjectTypes);

@@ -190,6 +190,7 @@ public:
     static napi_value IsControlCenterActive(napi_env env, napi_callback_info info);
     static napi_value CreateControlCenterSession(napi_env env, napi_callback_info info);
     static napi_value CreateCameraInputInstance(napi_env env, napi_callback_info info);
+    static napi_value CreateCameraInputWithTokenIdInstance(napi_env env, napi_callback_info info);
     static napi_value CreateCameraSessionInstance(napi_env env, napi_callback_info info);
     static napi_value CreateSessionInstance(napi_env env, napi_callback_info info);
     static napi_value CreatePreviewOutputInstance(napi_env env, napi_callback_info info);

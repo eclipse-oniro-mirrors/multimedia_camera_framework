@@ -742,6 +742,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isPrelaunchSupported", IsPrelaunchSupported),
         DECLARE_NAPI_FUNCTION("setPrelaunchConfig", SetPrelaunchConfig),
         DECLARE_NAPI_FUNCTION("createCameraInput", CreateCameraInputInstance),
+        DECLARE_NAPI_FUNCTION("createCameraInputWithTokenId", CreateCameraInputWithTokenIdInstance),
         DECLARE_NAPI_FUNCTION("createCaptureSession", CreateCameraSessionInstance),
         DECLARE_NAPI_FUNCTION("createSession", CreateSessionInstance),
         DECLARE_NAPI_FUNCTION("createPreviewOutput", CreatePreviewOutputInstance),
@@ -1877,6 +1878,50 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     }
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
+    }
+    return CameraInputNapi::CreateCameraInput(env, cameraInput);
+}
+
+napi_value CameraManagerNapi::CreateCameraInputWithTokenIdInstance(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CreateCameraInputInsWithTokenId is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi CreateCameraInputWithTokenIdInstance is called!");
+        return nullptr;
+    }
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
+    sptr<CameraDevice> cameraInfo = nullptr;
+    uint32_t firstTokenID = 0;
+    if (argSize == ARGS_TWO) {
+        std::string cameraId {};
+        CameraNapiObject cameraInfoObj { { { "cameraId", &cameraId } } };
+        CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, cameraInfoObj, firstTokenID);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Create cameraInput with 2 invalid arguments!")) {
+            MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInsWithTokenId 2 invalid arguments");
+            return nullptr;
+        }
+        cameraInfo = cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraId);
+    } else {
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "invalid argument.");
+        return nullptr;
+    }
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("cameraInfo is null");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "cameraInfo is null.");
+        return nullptr;
+    }
+    sptr<CameraInput> cameraInput = nullptr;
+    int retCode = cameraManagerNapi->cameraManager_->CreateCameraInput(cameraInfo, &cameraInput);
+    if (retCode == CAMERA_NO_PERMISSION) {
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "not allowed, because have no permission.");
+        return nullptr;
+    }
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return nullptr;
+    }
+    if (auto device = cameraInput->GetCameraDevice()) {
+        device->SetFirstCallerTokenID(firstTokenID);
     }
     return CameraInputNapi::CreateCameraInput(env, cameraInput);
 }
