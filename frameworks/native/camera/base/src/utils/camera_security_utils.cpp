@@ -33,7 +33,7 @@ bool CheckSystemApp()
 bool IsSystemAbility()
 {
     uint32_t uid = IPCSkeleton::GetCallingUid();
-    constexper uint32_t maxSaUid = 10000;
+    constexpr uint32_t maxSaUid = 10000;
     return uid < maxSaUid;
 }
 
