@@ -132,6 +132,9 @@ void ControlCenterSessionNapi::Init(napi_env env)
             ControlCenterSessionNapi::GetSupportedPortraitThemeTypes),
         DECLARE_NAPI_FUNCTION("isPortraitThemeSupported", ControlCenterSessionNapi::IsPortraitThemeSupported),
         DECLARE_NAPI_FUNCTION("setPortraitThemeType", ControlCenterSessionNapi::SetPortraitThemeType),
+        DECLARE_NAPI_FUNCTION("getAutoFramingStatus", ControlCenterSessionNapi::GetAutoFramingStatus),
+        DECLARE_NAPI_FUNCTION("enableAutoFraming", ControlCenterSessionNapi::EnableAutoFraming),
+        DECLARE_NAPI_FUNCTION("isAutoFramingSupported", ControlCenterSessionNapi::IsAutoFramingSupported),
         DECLARE_NAPI_FUNCTION("release", Release)
     };
 
@@ -606,6 +609,95 @@ napi_value ControlCenterSessionNapi::SetPortraitThemeType(napi_env env, napi_cal
         MEDIA_ERR_LOG("CameraSessionNapi::SetPortraitThemeType get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return nullptr;
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value ControlCenterSessionNapi::GetAutoFramingStatus(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi GetAutoFramingStatus is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("GetAutoFramingStatus is called");
+    ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("controlCenterSessionNapi::GetAutoFramingStatus parse parameter occur error");
+        return nullptr;
+    }
+    if (controlCenterSessionNapi->controlCenterSession_ != nullptr) {
+        bool status = false;
+        int32_t retCode = controlCenterSessionNapi->controlCenterSession_->GetAutoFramingStatus(status);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        auto result = CameraNapiUtils::GetUndefinedValue(env);
+        napi_status napiRet = napi_get_boolean(env, status, &result);
+        if (napiRet != napi_ok) {
+            MEDIA_ERR_LOG("napi_create_array call Failed!");
+            return nullptr;
+        }
+        return result;
+    } else {
+        MEDIA_ERR_LOG("GetAutoFramingStatus call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value ControlCenterSessionNapi::EnableAutoFraming(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableAutoFraming is called!");
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("EnableAutoFraming is called");
+    bool enabled = false;
+    ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi, enabled);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("controlCenterSessionNapi::EnableAutoFraming parse parameter occur error");
+        return nullptr;
+    }
+    if (controlCenterSessionNapi->controlCenterSession_ != nullptr) {
+        int32_t retCode =
+            controlCenterSessionNapi->controlCenterSession_->EnableAutoFraming(enabled);
+        MEDIA_INFO_LOG("EnableAutoFraming set Auto Framing %{public}d!", enabled);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    } else {
+        MEDIA_ERR_LOG("EnableAutoFraming call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value ControlCenterSessionNapi::IsAutoFramingSupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsAutoFramingSupported is called!");
+        return nullptr;
+    }
+    MEDIA_DEBUG_LOG("IsAutoFramingSupported is called");
+    ControlCenterSessionNapi* controlCenterSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, controlCenterSessionNapi);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("controlCenterSessionNapi::IsAutoFramingSupported parse parameter occur error");
+        return nullptr;
+    }
+    if (controlCenterSessionNapi->controlCenterSession_ != nullptr) {
+        bool support;
+        int32_t retCode = controlCenterSessionNapi->controlCenterSession_->IsAutoFramingSupported(support);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        auto result = CameraNapiUtils::GetUndefinedValue(env);
+        napi_status napiRet = napi_get_boolean(env, support, &result);
+        if (napiRet != napi_ok) {
+            MEDIA_ERR_LOG("napi_get_boolean call Failed!");
+            return nullptr;
+        }
+        return result;
+    } else {
+        MEDIA_ERR_LOG("IsAutoFramingSupported call Failed!");
     }
     return CameraNapiUtils::GetUndefinedValue(env);
 }

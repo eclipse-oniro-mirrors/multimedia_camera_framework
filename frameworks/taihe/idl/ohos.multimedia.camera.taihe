@@ -424,6 +424,7 @@ enum AuxiliaryStatus : i32 {
 enum ControlCenterEffectType : i32 {
     BEAUTY = 0,
     PORTRAIT = 1,
+    AUTO_FRAMING = 2,
 }
 
 interface CameraOutput {
@@ -1665,6 +1666,9 @@ interface TimeLapsePhotoSession : Session, Focus, ManualFocus, AutoExposure, Man
 }
 
 interface ControlCenterSession : Beauty, Aperture {
+  GetAutoFramingStatus(): bool;
+  EnableAutoFraming(enabled: bool): void;
+  IsAutoFramingSupported(): bool;
   @gen_promise("release")
   ReleaseSync(): void;
 }

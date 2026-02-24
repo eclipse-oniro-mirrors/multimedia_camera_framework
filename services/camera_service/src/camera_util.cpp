@@ -598,7 +598,8 @@ std::string ControlCenterMapToString(const std::map<std::string, std::array<floa
         oss << key << ':'
             << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_STATUS_INDEX] << ','
             << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_BEAUTY_INDEX] << ','
-            << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_APERTURE_INDEX];
+            << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_APERTURE_INDEX] << ','
+            << std::setprecision(CONTROL_CENTER_DATA_PRECISION) << arr[CONTROL_CENTER_AUTO_FRAMING_INDEX];
     }
     return oss.str();
 }

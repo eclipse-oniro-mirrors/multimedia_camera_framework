@@ -51,6 +51,9 @@ public:
     array<PortraitThemeType> GetSupportedPortraitThemeTypes();
     bool IsPortraitThemeSupported();
     void SetPortraitThemeType(PortraitThemeType type);
+    bool GetAutoFramingStatus();
+    void EnableAutoFraming(bool enable);
+    bool IsAutoFramingSupported();
     void ReleaseSync();
 
     static uint32_t controlCenterSessionTaskId_;

@@ -496,9 +496,12 @@ int32_t HCameraService::UpdateDataShareAndTag(bool status, bool needPersistEnabl
                 BeautyType::AUTO_TYPE, controlCenterMap[bundleName][CONTROL_CENTER_BEAUTY_INDEX], false);
             sessionForControlCenter->SetVirtualApertureValue(
                 controlCenterMap[bundleName][CONTROL_CENTER_APERTURE_INDEX], false);
+            sessionForControlCenter->EnableAutoFraming(
+                controlCenterMap[bundleName][CONTROL_CENTER_AUTO_FRAMING_INDEX], false);
         } else if (needPersistEnable) {
             sessionForControlCenter->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
             sessionForControlCenter->SetVirtualApertureValue(0, false);
+            sessionForControlCenter->EnableAutoFraming(0, false);
         }
     } else if (needPersistEnable) {
         MEDIA_INFO_LOG("UpdateDataShareAndTag no bundle, create info for new bundle.");
@@ -518,7 +521,7 @@ int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
     float biggestAperture = 0;
     CHECK_EXECUTE(virtualMetadata.size() > 0, biggestAperture = virtualMetadata.back());
 
-    controlCenterMap[bundleName] = {status, 0, biggestAperture};
+    controlCenterMap[bundleName] = {status, 0, biggestAperture, 0};
     std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
     auto ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CreateControlCenterDataShare failed.");
@@ -529,6 +532,7 @@ int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
     } else {
         sessionForControlCenter->SetVirtualApertureValue(0, false);
     }
+    sessionForControlCenter->EnableAutoFraming(0, false);
     return ret;
 }
 

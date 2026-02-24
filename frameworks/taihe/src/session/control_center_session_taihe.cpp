@@ -210,6 +210,55 @@ void ControlCenterSessionImpl::SetPortraitThemeType(PortraitThemeType type)
     }
 }
 
+bool ControlCenterSessionImpl::GetAutoFramingStatus()
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        false,
+        "SystemApi GetAutoFramingStatus is called!");
+    MEDIA_DEBUG_LOG("ControlCenterSessionImpl::GetAutoFramingStatus is called");
+    CHECK_RETURN_RET_ELOG(controlCenterSession_ == nullptr,
+        false,
+        "GetAutoFramingStatus controlCenterSession is null!");
+    bool status = false;
+    int32_t ret = controlCenterSession_->GetAutoFramingStatus(status);
+    if (ret == 0) {
+        return status;
+    } else {
+        MEDIA_DEBUG_LOG("ControlCenterSessionImpl::GetAutoFramingStatus failed");
+        return false;
+    }
+}
+
+void ControlCenterSessionImpl::EnableAutoFraming(bool enable)
+{
+    CHECK_RETURN_ELOG(
+        !OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), "SystemApi EnableAutoFraming is called!");
+    MEDIA_DEBUG_LOG("ControlCenterSessionImpl::EnableAutoFraming is called");
+    CHECK_RETURN_ELOG(controlCenterSession_ == nullptr, "EnableAutoFraming controlCenterSession is null");
+    int32_t ret = controlCenterSession_->EnableAutoFraming(enable);
+    if (ret != 0) {
+        MEDIA_DEBUG_LOG("ControlCenterSessionImpl::EnableAutoFraming set failed");
+    }
+}
+
+bool ControlCenterSessionImpl::IsAutoFramingSupported()
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        false,
+        "SystemApi IsAutoFramingSupported is called!");
+    MEDIA_DEBUG_LOG("ControlCenterSessionImpl::IsAutoFramingSupported is called");
+    CHECK_RETURN_RET_ELOG(controlCenterSession_ == nullptr,
+        false,
+        "IsAutoFramingSupported controlCenterSession is null!");
+    bool support = false;
+    int32_t ret = controlCenterSession_->IsAutoFramingSupported(support);
+    if (ret != 0) {
+        MEDIA_DEBUG_LOG("ControlCenterSessionImpl::IsAutoFramingSupported get failed");
+        return false;
+    }
+    return support;
+}
+
 void ControlCenterSessionImpl::ReleaseSync()
 {
     MEDIA_DEBUG_LOG("ReleaseSync is called");

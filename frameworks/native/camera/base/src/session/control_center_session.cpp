@@ -171,6 +171,51 @@ int32_t ControlCenterSession::SetPortraitThemeType(PortraitThemeType type)
     return CameraErrorCode::INVALID_ARGUMENT;
 }
 
+int32_t ControlCenterSession::GetAutoFramingStatus(bool& status)
+{
+    MEDIA_INFO_LOG("ControlCenterSession::GetAutoFramingStatus");
+    status = false;
+    CHECK_RETURN_RET_ELOG(
+        !CheckIsSupportControlCenter(), CAMERA_INVALID_STATE, "Current status does not support control center.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, CAMERA_INVALID_ARG, "GetAutoFramingStatus failed, session is nullptr.");
+    auto ret = session->GetAutoFramingStatus(status);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "ControlCenterSession::GetAutoFramingStatus failed, get auto framing failed.");
+    return CAMERA_OK;
+}
+
+int32_t ControlCenterSession::EnableAutoFraming(const bool enable)
+{
+    MEDIA_INFO_LOG("ControlCenterSession::EnableAutoFraming");
+    CHECK_RETURN_RET_ELOG(
+        !CheckIsSupportControlCenter(), CAMERA_INVALID_STATE, "Current status does not support control center.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, CAMERA_INVALID_ARG, "ControlCenterSession::EnableAutoFraming failed, session is nullptr.");
+    auto ret = session->EnableAutoFraming(enable, true);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "ControlCenterSession::EnableAutoFraming failed, set auto framing failed.");
+    MEDIA_INFO_LOG("EnableAutoFraming success, value: %{public}d", enable);
+    return CAMERA_OK;
+}
+
+int32_t ControlCenterSession::IsAutoFramingSupported(bool& support)
+{
+    MEDIA_INFO_LOG("ControlCenterSession::IsAutoFramingSupported");
+    support = false;
+    CHECK_RETURN_RET_ELOG(
+        !CheckIsSupportControlCenter(), CAMERA_INVALID_STATE, "Current status does not support control center.");
+    sptr<ICaptureSession> session = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, CAMERA_INVALID_ARG, "IsAutoFramingSupported failed, session is nullptr.");
+    auto ret = session->IsAutoFramingSupported(support);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "IsAutoFramingSupported failed, get support failed.");
+    return CAMERA_OK;
+}
+
 bool ControlCenterSession::CheckIsSupportControlCenter()
 {
     return CameraManager::GetInstance()->GetIsControlCenterSupported();

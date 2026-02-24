@@ -132,7 +132,8 @@ enum PressureStatus {
 
 enum ControlCenterEffectType {
     BEAUTY = 0,
-    PORTRAIT
+    PORTRAIT,
+    AUTO_FRAMING
 };
 
 struct ControlCenterStatusInfo {

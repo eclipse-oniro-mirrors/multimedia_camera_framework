@@ -3752,16 +3752,30 @@ function getCameraManager(context: Context): CameraManager;
      * Beauty type.
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 20
+     * @atomicservice
+     * @since 20 dynamic
+     * @since 23 static
      */
     BEAUTY = 0,
+
     /**
      * Portrait type.
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 20
+     * @atomicservice
+     * @since 20 dynamic
+     * @since 23 static
      */
-    PORTRAIT = 1
+    PORTRAIT = 1,
+
+    /**
+     * Auto-framing type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 24 dynamic&static
+     */
+    AUTO_FRAMING = 2
   }
 
   /**
@@ -5893,7 +5907,52 @@ function getCameraManager(context: Context): CameraManager;
   }
 
   interface ControlCenterSession extends Beauty, Aperture {
-    release(): void;
+    /**
+     * Release control center session object.
+     *
+     * @returns { Promise<void> } Promise used to return the result.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 20 dynamic
+     * @since 23 static
+     */
+    release(): Promise<void>;
+
+    /**
+     * Checks whether auto-framing is supported.
+     *
+     * @returns { boolean } Is auto-framing supported.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 24 dynamic&static
+     */
+    isAutoFramingSupported(): boolean;
+
+    /**
+     * Gets the status of auto-framing effect.
+     *
+     * @returns { boolean } Is auto-framing active.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 24 dynamic&static
+     */
+    getAutoFramingStatus(): boolean;
+
+    /**
+     * Enable auto-framing effect.
+     *
+     * @param { boolean } enabled enable auto-framing effect if TRUE.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400104 - Session not running.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @since 24 dynamic&static
+     */
+    enableAutoFraming(enabled: boolean): void;
   }
 
   /**
