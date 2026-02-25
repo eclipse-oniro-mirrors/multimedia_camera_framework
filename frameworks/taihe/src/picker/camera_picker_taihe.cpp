@@ -25,11 +25,11 @@ using namespace OHOS;
 
 namespace Ani {
 namespace Camera {
-constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.huawei.hmos.camera";
-constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME[] = "PickerAbility";
+constexpr char CAMERA_PICKER_BUNDLE_HAP_NAME[] = "com.ohos.camera";
+constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME[] = "com.ohos.camera.MainAbility";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_PHOTO[] = "ohos.want.action.imageCapture";
 constexpr char CAMERA_PICKER_ABILITY_ACTION_VIDEO[] = "ohos.want.action.videoCapture";
-constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME_FOR_UIEXTENSION[] = "com.huawei.hmos.camera.ExtensionPickerAbility";
+constexpr char CAMERA_PICKER_BUNDLE_ABILITY_NAME_FOR_UIEXTENSION[] = "com.ohos.camera.ExtensionPickerAbility";
 const size_t MAX_MEDIA_TYPES_SIZE = 100;
 
 enum PickerAbilityType { UIABILITY, UIEXTENSION };
