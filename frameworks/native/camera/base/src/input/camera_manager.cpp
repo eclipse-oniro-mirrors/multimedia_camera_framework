@@ -3308,12 +3308,18 @@ bool CameraManager::IsControlCenterActive()
     // LCOV_EXCL_START
     bool status = false;
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(
-        serviceProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CameraManager::IsControlCenterActive serviceProxy is null");
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false,
+        "CameraManager::IsControlCenterActive serviceProxy is null");
     if (!GetIsControlCenterSupported()) {
+        if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
+            int32_t retCode = serviceProxy->EnableControlCenter(true, true);
+            CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "CameraManager::IsControlCenterActive failed");
+            return true;
+        }
         MEDIA_INFO_LOG("CameraManager::IsControlCenterActive control center not supported");
         return false;
     }
+
     int32_t retCode = serviceProxy->GetControlCenterStatus(status);
     CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "CameraManager::IsControlCenterActive failed");
     MEDIA_INFO_LOG("CameraManager::IsControlCenterActive status: %{public}d", status);
@@ -3366,19 +3372,9 @@ void CameraManager::UpdateControlCenterPrecondition()
         controlCenterResolutionCondition_,controlCenterPositionCondition_);
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_ELOG(serviceProxy == nullptr, "UpdateControlCenterPrecondition serviceProxy is null");
-    if (controlCenterPrecondition_
-        && (!controlCenterFrameCondition_ || !controlCenterResolutionCondition_ || !controlCenterPositionCondition_)) {
-        controlCenterPrecondition_ = false;
-        serviceProxy->SetControlCenterPrecondition(false);
-        return;
-    }
-    // LCOV_EXCL_START
-    if (!controlCenterPrecondition_
-        && (controlCenterFrameCondition_ && controlCenterResolutionCondition_ && controlCenterPositionCondition_)) {
-        controlCenterPrecondition_ = true;
-        serviceProxy->SetControlCenterPrecondition(controlCenterPrecondition_);
-    }
-    // LCOV_EXCL_STOP
+    controlCenterPrecondition_ = controlCenterFrameCondition_ &&
+        controlCenterResolutionCondition_ && controlCenterPositionCondition_;
+    serviceProxy->SetControlCenterPrecondition(controlCenterPrecondition_);
     return;
 }
 

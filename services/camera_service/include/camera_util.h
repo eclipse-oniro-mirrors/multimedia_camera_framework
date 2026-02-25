@@ -80,10 +80,11 @@ static const std::string COMMON_EVENT_SCREEN_LOCKED = "usual.event.SCREEN_LOCKED
 static const std::string COMMON_EVENT_SCREEN_UNLOCKED = "usual.event.SCREEN_UNLOCKED";
 static const std::string COMMON_EVENT_RSS_MULTI_WINDOW_TYPE = "common.event.ressched.window.state";
 // camera control center
-static const int32_t CONTROL_CENTER_DATA_SIZE = 3;
+static const int32_t CONTROL_CENTER_DATA_SIZE = 4;
 static const int32_t CONTROL_CENTER_STATUS_INDEX = 0;
 static const int32_t CONTROL_CENTER_BEAUTY_INDEX = 1;
 static const int32_t CONTROL_CENTER_APERTURE_INDEX = 2;
+static const int32_t CONTROL_CENTER_AUTO_FRAMING_INDEX = 3;
 static const int32_t CONTROL_CENTER_DATA_PRECISION = 9;
 static constexpr int32_t UID_CAMERA = 1047;
 

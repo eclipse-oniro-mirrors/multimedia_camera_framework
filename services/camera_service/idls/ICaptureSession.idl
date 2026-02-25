@@ -68,4 +68,7 @@ interface ICaptureSession{
   [ipccode 39] void UnSetCameraSwitchRequestCallback();
   [ipccode 40] void GetCompositionStream([out] IRemoteObject compositionStreamRemote);
   [ipccode 41] void GetSensorRotationOnce([out] int sensorRotation);
+  [ipccode 42] void IsAutoFramingSupported([out] boolean value);
+  [ipccode 43] void GetAutoFramingStatus([out] boolean value);
+  [ipccode 44] void EnableAutoFraming([in] boolean value, [in] boolean needPersist);
 }

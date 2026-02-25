@@ -120,6 +120,8 @@ constexpr int32_t ZOOM_OUT_PERF = 1;
 constexpr int32_t ZOOM_BEZIER_VALUE_COUNT = 5;
 constexpr int32_t SPECIAL_BUNDLE_FPS = 15;
 constexpr int32_t SPECIAL_BUNDLE_ROTATE = 0;
+constexpr float DATA_HELPER_BOOL_TRUE = 1;
+constexpr float DATA_HELPER_BOOL_FALSE = 0;
 static const int32_t SESSIONID_BEGIN = 1;
 static const int32_t SESSIONID_MAX = INT32_MAX - 1000;
 static std::atomic<int32_t> g_currentSessionId = SESSIONID_BEGIN;
@@ -1080,6 +1082,151 @@ int32_t HCaptureSession::GetBeautyFromDataShareHelper(int32_t &value)
     } else {
         MEDIA_ERR_LOG("GetBeautyFromDataShareHelper failed, no bundle.");
         return CAMERA_INVALID_STATE;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::SetAutoFramingToDataShareHelper(bool value)
+{
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "SetAutoFramingToDataShareHelper HCaptureSession::CheckSystemApp fail");
+    MEDIA_INFO_LOG("HCaptureSession::SetAutoFramingToDataShareHelper value: %{public}d", value);
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_RETURN_RET_ELOG(
+        cameraDataShareHelper_ == nullptr, CAMERA_ALLOC_ERROR, "SetAutoFramingToDataShareHelper NULL");
+
+    std::string dataString = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, dataString);
+    MEDIA_INFO_LOG("SetAutoFramingToDataShareHelper Query ret = %{public}d, value = %{public}s",
+        ret, dataString.c_str());
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "SetAutoFramingToDataShareHelper failed.");
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
+        = StringToControlCenterMap(dataString);
+    std::string bundleName = GetBundleForControlCenter();
+    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
+        float helperVal = value ? DATA_HELPER_BOOL_TRUE : DATA_HELPER_BOOL_FALSE;
+        controlCenterMap[bundleName][CONTROL_CENTER_AUTO_FRAMING_INDEX] = helperVal;
+        std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
+        ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
+        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "SetAutoFramingToDataShareHelper failed.");
+    } else {
+        MEDIA_ERR_LOG("SetAutoFramingToDataShareHelper failed, no bundle.");
+        return CAMERA_INVALID_STATE;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::GetAutoFramingFromDataShareHelper(bool &value)
+{
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetAutoFramingFromDataShareHelper HCaptureSession::CheckSystemApp fail");
+    MEDIA_INFO_LOG("HCaptureSession::GetAutoFramingFromDataShareHelper");
+    lock_guard<mutex> lock(g_dataShareHelperMutex);
+    CHECK_RETURN_RET_ELOG(
+        cameraDataShareHelper_ == nullptr, CAMERA_INVALID_ARG, "GetAutoFramingFromDataShareHelper NULL");
+
+    std::string dataString = "";
+    auto ret = cameraDataShareHelper_->QueryOnce(CONTROL_CENTER_DATA, dataString);
+    MEDIA_INFO_LOG("GetAutoFramingFromDataShareHelper Query ret = %{public}d, value = %{public}s",
+        ret, dataString.c_str());
+    if (ret != CAMERA_OK) {
+        value = 0;
+        return ret;
+    }
+    std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
+        = StringToControlCenterMap(dataString);
+    std::string bundleName = GetBundleForControlCenter();
+    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
+        float helperVal = controlCenterMap[bundleName][CONTROL_CENTER_AUTO_FRAMING_INDEX];
+        value = isEqual(helperVal, DATA_HELPER_BOOL_TRUE);
+        MEDIA_INFO_LOG("GetAutoFramingFromDataShareHelper success, value:  %{public}d", value);
+    } else {
+        MEDIA_ERR_LOG("GetAutoFramingFromDataShareHelper failed, no bundle.");
+        return CAMERA_INVALID_STATE;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::IsAutoFramingSupported(bool& support)
+{
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "IsAutoFramingSupported HCaptureSession::CheckSystemApp fail");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "check permission failed.");
+    auto device = GetCameraDevice();
+    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
+    auto settings = device->GetDeviceAbility();
+    CHECK_RETURN_RET_ELOG(settings == nullptr, CAMERA_INVALID_STATE, "metadata is null");
+    camera_metadata_item_t item;
+    errCode = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_CONTROL_CENTER_EFFECT_TYPE, &item);
+    CHECK_RETURN_RET_ELOG(errCode != CAM_META_SUCCESS || item.count <= 0, errCode,
+        "CaptureSession::IsAutoFramingSupported Failed with return code %{public}d", errCode);
+    support = false;
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (ControlCenterEffectType::AUTO_FRAMING == static_cast<ControlCenterEffectType>(item.data.u8[i])) {
+            support = true;
+            break;
+        }
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::GetAutoFramingStatus(bool& status)
+{
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "GetAutoFramingValue HCaptureSession::CheckSystemApp fail");
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::GetAutoFramingValue controlCenterPrecondition false");
+    MEDIA_INFO_LOG("HCaptureSession::GetAutoFramingValue");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(
+        errCode != CAMERA_OK, errCode, "HCaptureSession::GetAutoFramingValue check permission failed.");
+    return GetAutoFramingFromDataShareHelper(status);
+}
+
+int32_t HCaptureSession::EnableAutoFraming(bool enable, bool needPersist)
+{
+    CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
+        "HCaptureSession::EnableAutoFraming controlCenterPrecondition false");
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
+    CHECK_RETURN_RET_ELOG(
+        errCode != CAMERA_OK, errCode, "check permission failed.");
+    bool support = false;
+    errCode = IsAutoFramingSupported(support);
+    CHECK_RETURN_RET_ELOG(
+        errCode != CAMERA_OK, errCode, "IsAutoFramingSupported failed.");
+    if (!support) {
+        MEDIA_ERR_LOG("Auto Framing is not supported");
+        return CAMERA_UNSUPPORTED;
+    }
+
+    auto device = GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(
+        device == nullptr, CAMERA_INVALID_ARG, "EnableAutoFraming failed, device is null.");
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    uint8_t metaVal = static_cast<uint8_t>(enable);
+    AddOrUpdateMetadata(changedMetadata,
+        OHOS_CONTROL_AUTO_FRAMING_ENABLE, &metaVal, 1);
+    errCode = device->UpdateSetting(changedMetadata);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "UpdateAutoFraming Failed");
+    if (needPersist) {
+        SetAutoFramingToDataShareHelper(enable); // continue execution below logic even if it fails
+    }
+    if (isAutoFramingActive == false && enable == true) {
+        ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::AUTO_FRAMING, true};
+        SetControlCenterEffectCallbackStatus(statusInfo);
+        isAutoFramingActive = true;
+    }
+    if (isAutoFramingActive == true && enable == false) {
+        ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::AUTO_FRAMING, false};
+        SetControlCenterEffectCallbackStatus(statusInfo);
+        isAutoFramingActive = false;
     }
     return CAMERA_OK;
 }

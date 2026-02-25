@@ -52,6 +52,10 @@ public:
     static napi_value GetSupportedPortraitThemeTypes(napi_env env, napi_callback_info info);
     static napi_value IsPortraitThemeSupported(napi_env env, napi_callback_info info);
     static napi_value SetPortraitThemeType(napi_env env, napi_callback_info info);
+    
+    static napi_value GetAutoFramingStatus(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoFraming(napi_env env, napi_callback_info info);
+    static napi_value IsAutoFramingSupported(napi_env env, napi_callback_info info);
 private:
     napi_env env_;
     sptr<ControlCenterSession> controlCenterSession_;

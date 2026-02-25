@@ -123,6 +123,27 @@ public:
      * @return Returns errCode.
      */
     int32_t SetPortraitThemeType(PortraitThemeType type);
+
+     /**
+     * @brief Get the auto framing.
+     * @param status returns the current auto framing status.
+     * @return Error code.
+     */
+    int32_t GetAutoFramingStatus(bool& status);
+
+    /**
+     * @brief Set the auto framing.
+     * @param enable set auto framing enable.
+     * @return Error code.
+     */
+    int32_t EnableAutoFraming(const bool enable);
+
+    /**
+     * @brief get is support auto framing.
+     * @param support returns whether support auto framing.
+     * @return Error code.
+     */
+    int32_t IsAutoFramingSupported(bool& support);
 private:
     bool CheckIsSupportControlCenter();
     sptr<ICaptureSession> GetSessionForControlCenter();
