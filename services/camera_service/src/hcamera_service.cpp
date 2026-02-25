@@ -101,7 +101,6 @@ const std::string PRE_CAMERA_DEFAULT_ID = "device/0";
 const std::string KEY_SEPARATOR= "_";
 const std::string NO_NEED_RESTORE_NAME = "no_save_restore";
 const std::string PRE_SCAN_REASON = "SCAN_PRELAUNCH";
-const std::string PRE_SCAN_NAME = "camera_service";
 constexpr int32_t ACTIVE_TIME_DEFAULT = 0;
 // <tagName, std::tuple<tagId, tagType, std::map<k, v>>>
 static std::map<std::string, std::tuple<uint32_t, uint8_t, std::map<std::string, std::string>>> SUPPORTED_PARAMETERS;
@@ -3232,7 +3231,7 @@ int32_t HCameraService::PrelaunchScanCamera(const std::string& bundleName, const
     #ifdef MEMMGR_OVERRID
     int32_t requiredMemSizeKB = 0;
     Memory::MemMgrClient::GetInstance()
-        .RequireBigMem(getpid(), PRE_SCAN_REASON, requiredMemSizeKB, PRE_SCAN_NAME);
+        .RequireBigMem(getpid(), PRE_SCAN_REASON, requiredMemSizeKB, bundleName);
     #endif
     // notify deferredprocess stop
     DeferredProcessing::DeferredProcessingService::GetInstance().NotifyInterrupt();
