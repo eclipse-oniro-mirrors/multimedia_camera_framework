@@ -622,10 +622,34 @@ void HCameraService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::s
     MEDIA_DEBUG_LOG("HCameraService::OnRemoveSystemAbility done");
 }
 
+#ifdef CAMERA_SERVICE_PRIORITY
+void HCameraService::ElevateThreadPriority()
+{
+    MEDIA_INFO_LOG("ElevateThreadPriority set qos enter");
+    int32_t qosLevel = 7; // 设置qos 7 优先级41； -1 取消qos； 其他无效
+    std::string strBundleName = "camera_service";
+    std::string strPid = std::to_string(getpid()); // 提升优先级的进程id
+    std::string strTid = std::to_string(gettid()); // 提升优先级的线程id
+    std::string strQos = std::to_string(qosLevel);
+    std::unordered_map<std::string, std::string> mapPayload;
+    mapPayload["pid"] = strPid;
+    mapPayload[strTid] = strQos; // 支持多个tid，{{tid0,qos0},{tid1,qos1}}
+    mapPayload["bundleName"] = strBundleName;
+    uint32_t type = OHOS::ResourceSchedule::ResType::RES_TYPE_THREAD_QOS_CHANGE;
+    // 异步IPC，优先级提升到41
+    OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(type, 0, mapPayload);
+}
+#endif
+
 int32_t HCameraService::GetCameras(
     vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
 {
     CAMERA_SYNC_TRACE;
+
+#ifdef CAMERA_SERVICE_PRIORITY
+    ElevateThreadPriority();
+#endif
+
     isFoldableMutex.lock();
     isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
     isFoldableInit = true;

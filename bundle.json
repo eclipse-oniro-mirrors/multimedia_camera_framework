@@ -23,7 +23,8 @@
           "camera_framework_feature_media_stream",
           "camera_framework_feature_deferred",
           "camera_framework_feature_xcomponent_toast",
-          "camera_framework_feature_capture_yuv"
+          "camera_framework_feature_capture_yuv",
+          "camera_framework_feature_camera_service_priority"
         ],
         "adapted_system_type": [ "standard" ],
         "rom": "",
