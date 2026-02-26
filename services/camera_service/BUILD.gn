@@ -282,6 +282,10 @@ ohos_shared_library("camera_service") {
     defines += [ "CAMERA_CAPTURE_YUV" ]
   }
 
+  if (camera_framework_feature_camera_service_priority) {
+    defines += [ "CAMERA_SERVICE_PRIORITY" ]
+  }
+  
   cflags_cc = cflags
 
   part_name = "camera_framework"

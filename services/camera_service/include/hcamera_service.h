@@ -302,6 +302,10 @@ private:
     void PrelaunchRequireMemory(int32_t flag);
 #endif
 
+#ifdef CAMERA_SERVICE_PRIORITY
+    void ElevateThreadPriority();
+#endif
+
 #ifdef DEVICE_MANAGER
     class DeviceInitCallBack;
 #endif
