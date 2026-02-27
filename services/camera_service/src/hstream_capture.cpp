@@ -1328,15 +1328,25 @@ void HStreamCapture::InitCaptureThread()
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("HStreamCapture::InitCaptureThread E");
+    wptr<HStreamCapture> thisPtr(this);
     auto photoTask = photoTask_.Get();
     if (photoTask == nullptr) {
         photoTask_.Set(std::make_shared<DeferredProcessing::TaskManager>("photoTask", TASKMANAGER_ONE, false));
+        photoTask = photoTask_.Get();
+        photoTask->SubmitTask([thisPtr]() {
+            auto hStreamCapture = thisPtr.promote();
+            CHECK_EXECUTE(hStreamCapture, hStreamCapture->ElevateThreadPriority());
+        });
     }
     if (isYuvCapture_ && photoSubTask_ == nullptr) {
         photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", TASKMANAGER_FOUR, false);
     }
     if (thumbnailSurface_.Get() && thumbnailTask_ == nullptr) {
         thumbnailTask_ = std::make_shared<DeferredProcessing::TaskManager>("thumbnailTask", TASKMANAGER_ONE, false);
+        thumbnailTask_->SubmitTask([thisPtr]() {
+            auto hStreamCapture = thisPtr.promote();
+            CHECK_EXECUTE(hStreamCapture, hStreamCapture->ElevateThreadPriority());
+        });
     }
     // LCOV_EXCL_STOP
 }
