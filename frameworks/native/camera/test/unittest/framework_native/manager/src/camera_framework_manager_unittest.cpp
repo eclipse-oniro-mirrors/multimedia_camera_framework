@@ -2315,5 +2315,18 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_105, Test
     CameraPosition pos = camera->GetPosition();
     EXPECT_EQ(pos, CameraPosition::CAMERA_POSITION_BACK);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test IsNaturalDirectionCorrect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsNaturalDirectionCorrect
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_108, TestSize.Level0)
+{
+    EXPECT_EQ(cameraManager_->IsNaturalDirectionCorrect(), false);
+}
 }
 }

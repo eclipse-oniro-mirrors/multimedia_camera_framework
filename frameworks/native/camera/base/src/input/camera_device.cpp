@@ -257,14 +257,14 @@ void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metad
 
 void CameraDevice::InitVariableOrientation(common_metadata_header_t* metadata)
 {
-    CHECK_RETURN_ILOG(system::GetParameter("const.system.sensor_correction_enable", "0") != "1",
-        "CameraDevice::InitVariableOrientation variable orientation is closed");
+    isLogicCamera_ = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
+    foldScreenConfig_ = system::GetParameter("const.window.foldscreen.type", "");
+    CHECK_RETURN_ILOG(!isLogicCamera_, "CameraDevice::InitVariableOrientation variable orientation is closed");
 
-    bool isVariable = false;
     camera_metadata_item item;
     int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
-    CHECK_EXECUTE(ret == CAM_META_SUCCESS, isVariable = item.count > 0 && item.data.u8[0]);
-    CHECK_RETURN_ELOG(!isVariable, "CameraDevice::InitVariableOrientation isVariable : %{public}d", isVariable);
+    CHECK_EXECUTE(ret == CAM_META_SUCCESS, isVariable_ = item.count > 0 && item.data.u8[0]);
+    CHECK_RETURN_ELOG(!isVariable_, "CameraDevice::InitVariableOrientation isVariable is false");
 
     ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_FOLD_STATE_SENSOR_ORIENTATION_MAP, &item);
     CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "CameraDevice::InitVariableOrientation FindCameraMetadataItem Error");
@@ -407,20 +407,15 @@ std::string CameraDevice::GetNetWorkId()
 
 uint32_t CameraDevice::GetCameraOrientation()
 {
-    uint32_t cameraOrientation = cameraOrientation_;
+    uint32_t cameraOrientation = GetStaticCameraOrientation();
     if (GetUsePhysicalCameraOrientation()) {
         uint32_t displayMode =
             static_cast<uint32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
         uint32_t curFoldStatus = CameraManager::GetInstance()->DisplayModeToFoldStatus(displayMode);
-        uint32_t tempOrientation;
-        int32_t retCode = LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection(curFoldStatus, tempOrientation,
+        int32_t retCode = LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection(curFoldStatus, cameraOrientation,
             foldWithDirectionOrientationMap_);
-        if (retCode == CAMERA_OK) {
-            cameraOrientation = tempOrientation;
-            MEDIA_DEBUG_LOG("CameraDevice::GetCameraOrientation foldStatus: %{public}d, orientation: %{public}d",
-                curFoldStatus, cameraOrientation);
-            return cameraOrientation;
-        }
+        CHECK_RETURN_RET_DLOG(retCode == CAMERA_OK, cameraOrientation, "CameraDevice::GetCameraOrientation foldStatus: "
+            "%{public}d, orientation: %{public}d", curFoldStatus, cameraOrientation);
         auto itr = foldStateSensorOrientationMap_.find(curFoldStatus);
         if (itr != foldStateSensorOrientationMap_.end()) {
             cameraOrientation = itr->second;
@@ -435,7 +430,26 @@ uint32_t CameraDevice::GetCameraOrientation()
 
 uint32_t CameraDevice::GetStaticCameraOrientation()
 {
-    return cameraOrientation_;
+    uint32_t cameraOrientation = cameraOrientation_;
+    CHECK_RETURN_RET(!isLogicCamera_ || !isVariable_, cameraOrientation);
+
+    if (!foldScreenConfig_.empty() && foldScreenConfig_[0] == '7') {
+        sptr<ICameraDeviceService> deviceObj = nullptr;
+        int32_t retCode = CameraManager::GetInstance()->CreateCameraDevice(GetID(), &deviceObj);
+        CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS || deviceObj == nullptr, cameraOrientation,
+            "CameraDevice::GetStaticCameraOrientation CreateCameraDevice Failed");
+        bool isNaturalDirectionCorrect = false;
+        deviceObj->GetNaturalDirectionCorrect(isNaturalDirectionCorrect);
+        CHECK_RETURN_RET(!isNaturalDirectionCorrect, cameraOrientation);
+
+        uint32_t displayMode =
+            static_cast<uint32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
+        uint32_t curFoldStatus = CameraManager::GetInstance()->DisplayModeToFoldStatus(displayMode);
+        LogicCameraUtils::GetPhysicalOrientationByFoldAndDirection(curFoldStatus, cameraOrientation,
+            foldWithDirectionOrientationMap_);
+        MEDIA_INFO_LOG("CameraDevice::GetStaticCameraOrientation Correct Orientation: %{public}d", cameraOrientation);
+    }
+    return cameraOrientation;
 }
 
 bool CameraDevice::GetisRetractable()

@@ -742,7 +742,10 @@ int CameraInput::GetPhysicalCameraOrientation(uint32_t* orientation)
 {
     CHECK_RETURN_RET_ELOG(orientation == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
         "CameraInput::GetPhysicalCameraOrientation orientation is nullptr");
-    *orientation = staticOrientation_;
+    auto cameraObj = GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG),
+        "SetUsePhysicalCameraOrientation cameraObj is nullptr");
+    *orientation = cameraObj->GetStaticCameraOrientation();
     if (isVariable_) {
         uint32_t displayMode =
             static_cast<uint32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());

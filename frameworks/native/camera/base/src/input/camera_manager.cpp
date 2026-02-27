@@ -1680,6 +1680,16 @@ FoldStatus CameraManager::GetFoldStatus()
     return curFoldStatus;
 }
 
+bool CameraManager::IsNaturalDirectionCorrect()
+{
+    bool isCorrect = false;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(
+        serviceProxy == nullptr, isCorrect, "CameraManager::IsNaturalDirectionCorrect serviceProxy is null");
+    serviceProxy->GetNaturalDirectionCorrect(isCorrect);
+    return isCorrect;
+}
+
 uint32_t CameraManager::DisplayModeToFoldStatus(uint32_t displayMode)
 {
     uint32_t foldStatus = static_cast<uint32_t>(OHOS::Rosen::FoldStatus::UNKNOWN);

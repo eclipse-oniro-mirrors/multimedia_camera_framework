@@ -40,6 +40,8 @@ namespace CameraStandard {
 using namespace OHOS::HDI::Display::Composer::V1_1;
 using namespace OHOS::Security::AccessToken;
 static bool g_tablet = true;
+static bool g_isLogicCamera = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
+static std::string g_foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
 std::unordered_map<int32_t, int32_t> g_cameraToPixelFormat = {
     {OHOS_CAMERA_FORMAT_RGBA_8888, GRAPHIC_PIXEL_FMT_RGBA_8888},
     {OHOS_CAMERA_FORMAT_YCBCR_420_888, GRAPHIC_PIXEL_FMT_YCBCR_420_SP},
@@ -745,6 +747,12 @@ int32_t GetCorrectedCameraOrientation(bool usePhysicalCameraOrientation,  int32_
 {
     int32_t ret = CAM_META_FAILURE;
     CHECK_RETURN_RET(cameraAbility == nullptr, ret);
+    
+    if (g_isLogicCamera && !usePhysicalCameraOrientation && !g_foldScreenType.empty() && g_foldScreenType[0] =='7') {
+        bool isCorrect = false;
+        CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName, isCorrect);
+        CHECK_EXECUTE(isCorrect, usePhysicalCameraOrientation = true);
+    }
     CHECK_EXECUTE(usePhysicalCameraOrientation, ret =
         GetPhysicalCameraOrientation(cameraAbility, sensorOrientation, clientName, displayMode));
     CHECK_RETURN_RET(ret == CAM_META_SUCCESS, CAM_META_SUCCESS);

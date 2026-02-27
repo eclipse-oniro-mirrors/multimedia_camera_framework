@@ -1046,6 +1046,7 @@ public:
     bool GetIsInWhiteList();
     void RegisterTimeforDevice(const std::string& cameraId, const uint32_t& timestmp);
     void UnregisterTimeforDevice(const std::string& cameraId);
+    bool IsNaturalDirectionCorrect();
     uint32_t DisplayModeToFoldStatus(uint32_t displayMode);
     void SaveOldCameraId(std::string realCameraId, std::string oldCameraId);
     std::string GetOldCameraIdfromReal(std::string realCameraId);

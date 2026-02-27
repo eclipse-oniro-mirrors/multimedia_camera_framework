@@ -112,6 +112,7 @@ interface ICameraService{
   [ipccode 79] void GetActiveParameter([in] String key, [out] String value);
   [ipccode 81] void SetCameraSharedStatusCallback([in] ICameraSharedServiceCallback callbackFunc);
   [ipccode 82] void UnSetCameraSharedStatusCallback();
+  [ipccode 83] void GetNaturalDirectionCorrect([out] boolean isCorrect);
   [ipccode 101] void AllowOpenByOHSide([in] String cameraId, [in] int state, [inout] boolean canOpenCamera);
   [ipccode 102, oneway] void NotifyCameraState([in] String cameraId, [in] int state);
   [ipccode 104] void SetPeerCallback([in] ICameraBroker callbackFunc);
