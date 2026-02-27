@@ -211,7 +211,7 @@ public:
     static napi_value GetCameraConcurrentInfos(napi_env env, napi_callback_info info);
     static napi_value GetCameraStorageSize(napi_env env, napi_callback_info info);
 
-    CameraManagerNapi();
+    CameraManagerNapi(napi_env env);
     ~CameraManagerNapi() override;
 
     virtual const EmitterFunctions& GetEmitterFunctions() override;

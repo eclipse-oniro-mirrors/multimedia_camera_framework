@@ -652,15 +652,24 @@ std::unordered_map<int32_t, std::function<napi_value(napi_env)>> g_sessionFactor
         return SecureCameraSessionNapi::CreateCameraSession(env); }},
 };
 
-CameraManagerNapi::CameraManagerNapi() : env_(nullptr)
+CameraManagerNapi::CameraManagerNapi(napi_env env) : env_(env)
 {
     CAMERA_SYNC_TRACE;
     // Pre-load napiexlib for System APP, before call CreateDeprecatedSessionForSys.
-    CHECK_EXECUTE(CameraSecurity::CheckSystemApp() && !CameraNapiExManager::IsLoadedNapiEx(), {
+    if (CameraSecurity::CheckSystemApp() && !CameraNapiExManager::IsLoadedNapiEx()) {
         MEDIA_INFO_LOG("PreLoad CameraNapiExProxy");
-        thread loadThread = thread([]() {CameraNapiExManager::GetCameraNapiExProxy();});
-        loadThread.detach();
-    });
+        napi_value resourceName;
+        napi_create_string_utf8(env_, "CameraNapiExPreload", NAPI_AUTO_LENGTH, &resourceName);
+        napi_async_work asyncWork;
+        napi_create_async_work(env_, nullptr, resourceName,
+            [](napi_env env, void* data) {
+                CameraNapiExManager::GetCameraNapiExProxy();
+            },
+            [](napi_env env, napi_status status, void* data) {
+                MEDIA_INFO_LOG("CameraNapiExProxy preload completed, status: %{public}d", status);
+            }, nullptr, &asyncWork);
+        napi_queue_async_work_with_qos(env_, asyncWork, napi_qos_user_initiated);
+    }
 }
 
 CameraManagerNapi::~CameraManagerNapi()
@@ -681,8 +690,7 @@ napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_ca
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<CameraManagerNapi> obj = std::make_unique<CameraManagerNapi>();
-        obj->env_ = env;
+        std::unique_ptr<CameraManagerNapi> obj = std::make_unique<CameraManagerNapi>(env);
         obj->cameraManager_ = CameraManager::GetInstance();
         if (obj->cameraManager_ == nullptr) {
             MEDIA_ERR_LOG("Failure wrapping js to native napi, obj->cameraManager_ null");
