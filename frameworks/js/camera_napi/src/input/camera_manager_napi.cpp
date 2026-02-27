@@ -151,6 +151,25 @@ napi_value GetCachedSupportedCameras(napi_env env, const std::vector<sptr<Camera
     }
     return result;
 }
+
+napi_value UpdateSupportedCameras(napi_env env, napi_value cameraArray,
+    const std::vector<sptr<CameraDevice>>& cameraObjList)
+{
+    uint32_t jsLength = 0;
+    napi_get_array_length(env, cameraArray, &jsLength);
+
+    for (uint32_t i = 0; i < jsLength && i < cameraObjList.size(); i++) {
+        CHECK_CONTINUE(cameraObjList[i] == nullptr);
+        napi_value cameraObj = nullptr;
+        CHECK_CONTINUE(napi_get_element(env, cameraArray, i, &cameraObj) != napi_ok);
+        int32_t orientation = cameraObjList[i]->GetStaticCameraOrientation();
+
+        napi_value orientationValue = nullptr;
+        CHECK_CONTINUE(napi_create_int32(env, orientation, &orientationValue) != napi_ok);
+        napi_set_named_property(env, cameraObj, "cameraOrientation", orientationValue);
+    }
+    return cameraArray;
+}
 } // namespace
 
 namespace {
@@ -1239,6 +1258,10 @@ napi_value CameraManagerNapi::GetSupportedCameras(napi_env env, napi_callback_in
     if (result == nullptr) {
         result = CreateCameraJSArray(env, cameraObjList);
         CacheSupportedCameras(env, cameraObjList, result);
+    }
+    auto foldType = cameraManagerNapi->cameraManager_->GetFoldScreenType();
+    if (!foldType.empty() && foldType[0] == '7' && cameraManagerNapi->cameraManager_->IsNaturalDirectionCorrect()) {
+        result = UpdateSupportedCameras(env, result, cameraObjList);
     }
     MEDIA_DEBUG_LOG("CameraManagerNapi::GetSupportedCameras size=[%{public}zu]", cameraObjList.size());
     return result;

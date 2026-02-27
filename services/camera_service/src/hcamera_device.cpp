@@ -1226,7 +1226,7 @@ int32_t HCameraDevice::GetCameraOrientation()
 {
     int32_t truthCameraOrientation = -1;
     GetCorrectedCameraOrientation(
-        usePhysicalCameraOrientation_, truthCameraOrientation, deviceAbility_, GetClientName());
+        GetUsePhysicalCameraOrientation(), truthCameraOrientation, GetDeviceAbility(), GetClientName());
     return truthCameraOrientation;
 }
 
@@ -1234,9 +1234,10 @@ int32_t HCameraDevice::GetOriginalCameraOrientation()
 {
     int32_t ret = CAM_META_FAILURE;
     int32_t sensorOrientation = -1;
-    CHECK_RETURN_RET(deviceAbility_ == nullptr, sensorOrientation);
+    auto ability = GetDeviceAbility();
+    CHECK_RETURN_RET(ability == nullptr, sensorOrientation);
     camera_metadata_item item;
-    ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_SENSOR_ORIENTATION, &item);
+    ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_SENSOR_ORIENTATION, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, sensorOrientation,
         "GetOriginalCameraOrientation get sensor orientation failed");
     sensorOrientation = item.data.i32[0];
@@ -1267,9 +1268,9 @@ bool HCameraDevice::IsPhysicalCameraOrientationVariable()
 {
     bool isVariable = false;
     camera_metadata_item_t item;
-    CHECK_RETURN_RET(deviceAbility_ == nullptr, false);
-    int ret = OHOS::Camera::FindCameraMetadataItem(deviceAbility_->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE,
-        &item);
+    auto ability = GetDeviceAbility();
+    CHECK_RETURN_RET(ability == nullptr, false);
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
     isVariable =  item.count > 0 && item.data.u8[0];
     bool isNaturalDirectionCorrect = false;
@@ -1322,16 +1323,16 @@ void HCameraDevice::UpdateCameraRotateAngle()
             curDisplayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::COORDINATION));
         int32_t retCode = UpdateRotateAngleForSpecialBundle(isResetDegree);
         CHECK_RETURN_DLOG(retCode == CAMERA_OK, "HCameraDevice::UpdateCameraRotateAngle Use HAL Rotate WhiteList");
-        CHECK_RETURN_DLOG(!isLogicCamera_ || !IsPhysicalCameraOrientationVariable() || usePhysicalCameraOrientation_,
-            "HCameraDevice::UpdateCameraRotateAngle not use Logic Camera");
+        CHECK_RETURN_DLOG(!isLogicCamera_ || !IsPhysicalCameraOrientationVariable() ||
+            GetUsePhysicalCameraOrientation(), "HCameraDevice::UpdateCameraRotateAngle not use Logic Camera");
     } else {
         return;
     }
     int cameraOrientation = GetOriginalCameraOrientation();
     CHECK_RETURN(cameraOrientation == -1);
     int32_t truthCameraOrientation = -1;
-    int32_t ret = GetCorrectedCameraOrientation(!usePhysicalCameraOrientation_, truthCameraOrientation, deviceAbility_,
-        GetClientName(), curDisplayMode);
+    int32_t ret = GetCorrectedCameraOrientation(!GetUsePhysicalCameraOrientation(), truthCameraOrientation,
+        GetDeviceAbility(), GetClientName(), curDisplayMode);
     CHECK_RETURN(ret != CAM_META_SUCCESS || truthCameraOrientation == -1);
     int32_t rotateDegree = (truthCameraOrientation - cameraOrientation + BASE_DEGREE) % BASE_DEGREE;
     CHECK_EXECUTE(!GetUseLogicCamera(curDisplayMode), rotateDegree = 0);

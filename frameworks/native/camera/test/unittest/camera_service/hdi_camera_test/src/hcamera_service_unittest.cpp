@@ -3147,5 +3147,25 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_078, TestSize.Level0)
     EXPECT_EQ(useLogicCamera.empty(), true);
     EXPECT_EQ(customLogicDirection.empty(), true);
 }
+
+/*
+ * Feature: CameraService
+ * Function: Test GetNaturalDirectionCorrect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetNaturalDirectionCorrect
+ */
+HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_079, TestSize.Level0)
+{
+    bool isCorrect = false;
+    int32_t ret = cameraService_->GetNaturalDirectionCorrect(isCorrect);
+    if (cameraService_->isLogicCamera_) {
+        EXPECT_EQ(ret, CAMERA_OK);
+    } else {
+        EXPECT_EQ(ret, CAMERA_INVALID_STATE);
+    }
+    EXPECT_EQ(isCorrect, false);
+}
 }
 }

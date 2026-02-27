@@ -296,6 +296,7 @@ void CameraApplistManager::GetCustomLogicDirection(const std::string& bundleName
 void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string& bundleName,
     int32_t& naturalDirection)
 {
+    naturalDirection = 0;
     auto displayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
     if (!displayModeToNaturalDirectionMap_.empty()) {
         auto item = displayModeToNaturalDirectionMap_.find(displayMode);
@@ -314,6 +315,12 @@ void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string&
     }
     CHECK_RETURN_DLOG(appConfigure == nullptr,
         "CameraApplistManager::GetAppNaturalDirectionByBundleName appConfigure is nullptr");
+
+    std::map<int32_t, int32_t> useLogicCamera = appConfigure->useLogicCamera;
+    bool isCorrect = appConfigure->exemptNaturalDirectionCorrect || (!useLogicCamera.empty() &&
+        (std::all_of(useLogicCamera.begin(), useLogicCamera.end(), [](const auto& pair) { return pair.second == 0; })));
+    CHECK_RETURN(isCorrect);
+
     auto customLogicDirection = appConfigure->customLogicDirection;
     CHECK_RETURN_DLOG(customLogicDirection.empty(),
         "CameraApplistManager::GetAppNaturalDirectionByBundleName customLogicDirection is empty");
