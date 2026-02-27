@@ -91,7 +91,7 @@ public:
     virtual ~AudioTaskManagerIntf() = default;
     virtual void CreateAudioTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf) = 0;
     virtual void SubmitTask(std::function<void()> task) = 0;
-    virtual void ProcessAudioBuffer(int32_t captureId, int64_t timeStamp) = 0;
+    virtual void ProcessAudioBuffer(int32_t captureId, int64_t middleTimeStamp) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

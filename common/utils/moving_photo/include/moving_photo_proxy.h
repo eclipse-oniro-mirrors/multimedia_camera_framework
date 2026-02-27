@@ -101,7 +101,7 @@ public:
     ~AudioTaskManagerProxy() override;
     sptr<AudioTaskManagerIntf> GetAudioTaskManagerAdapter() const;
     void SubmitTask(std::function<void()> task) override;
-    void ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp) override;
+    void ProcessAudioBuffer(int32_t captureId, int64_t middleTimeStamp) override;
 
 private:
     std::shared_ptr<Dynamiclib> audioTaskManagerLib_ = {nullptr};

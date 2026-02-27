@@ -26,7 +26,7 @@ class MovingPhotoResource {
 public:
     void SetXtStyleType(VideoType type);
     void StartOnceRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
-    void StartProcessAudioTask(int32_t captureId, int64_t startTimeStamp);
+    void StartProcessAudioTask(int32_t captureId, int64_t middleTimeStamp);
     void InsertStartTime(int32_t captureId, int64_t startTimeStamp);
     void InsertEndTime(int32_t captureId, int64_t endTimeStamp);
     void SetClearFlag();
