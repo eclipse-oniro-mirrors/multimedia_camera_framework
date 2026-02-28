@@ -76,6 +76,7 @@ static const int32_t DEFAULT_SETTING_ITEM_LENGTH = 100;
 static const float SMOOTH_ZOOM_DIVISOR = 100.0f;
 static const std::vector<camera_device_metadata_tag> DEVICE_OPEN_LIFECYCLE_TAGS = { OHOS_CONTROL_MUTE_MODE };
 constexpr int32_t DEFAULT_USER_ID = -1;
+constexpr int32_t DEFAULE_CAMERA_COST = 10;
 static const uint32_t DEVICE_EJECT_LIMIT = 5;
 static const uint32_t DEVICE_EJECT_INTERVAL = 1000;
 static const uint32_t SYSDIALOG_ZORDER_UPPER = 2;
@@ -1959,6 +1960,11 @@ bool HCameraDevice::GetCameraResourceCost(int32_t &cost, std::set<std::string> &
 {
     OHOS::HDI::Camera::V1_3::CameraDeviceResourceCost resourceCost;
     int32_t errorCode = cameraHostManager_->GetCameraResourceCost(cameraID_, resourceCost);
+    if (errorCode != CAMERA_OK && GetCameraConnectType() == OHOS_CAMERA_CONNECTION_TYPE_USB_PLUGIN) {
+        cost = DEFAULE_CAMERA_COST;
+        MEDIA_INFO_LOG("usb camera GetCameraResourceCost failed, return default cost = %{public}d", cost);
+        return true;
+    }
     CHECK_RETURN_RET_ELOG(errorCode != CAMERA_OK, false, "GetCameraResourceCost failed");
     cost = static_cast<int32_t>(resourceCost.resourceCost_);
     for (size_t i = 0; i < resourceCost.conflictingDevices_.size(); i++) {
