@@ -286,9 +286,10 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
     uint32_t supCnt = FrameAlign(drainImageCallback, frameList);
     MEDIA_INFO_LOG("listenerType:%{public}d FrameAlign supCnt:%{public}u",
         static_cast<int32_t>(listenerXtStyleType_), supCnt);
+    size_t totalFrameCount = frameList.size() + static_cast<size_t>(postCacheFrameCount_) + static_cast<size_t>(supCnt);
     sptr<DrainImageManager> drainImageManager =
-        new DrainImageManager(drainImageCallback, frameList.size() + postCacheFrameCount_ + supCnt);
-    MEDIA_INFO_LOG("DrainOutImage enter %{public}llu", frameList.size() + postCacheFrameCount_ + supCnt);
+        new DrainImageManager(drainImageCallback, totalFrameCount);
+    MEDIA_INFO_LOG("DrainOutImage enter %{public}zu", totalFrameCount);
     callbackMap_.Insert(drainImageCallback, drainImageManager);
     CHECK_EXECUTE(!frameList.empty(), frameList.back()->SetCoverFrame());
     std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
