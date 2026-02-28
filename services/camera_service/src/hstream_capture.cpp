@@ -212,9 +212,21 @@ HStreamCapture::~HStreamCapture()
         photoTask->CancelAllTasks();
         photoTask_.Set(nullptr);
     }
-    if (photoSubTask_ != nullptr) {
-        photoSubTask_->CancelAllTasks();
-        photoSubTask_ = nullptr;
+    if (photoSubExifTask_ != nullptr) {
+        photoSubExifTask_->CancelAllTasks();
+        photoSubExifTask_ = nullptr;
+    }
+    if (photoSubGainMapTask_ != nullptr) {
+        photoSubGainMapTask_->CancelAllTasks();
+        photoSubGainMapTask_ = nullptr;
+    }
+    if (photoSubDebugTask_ != nullptr) {
+        photoSubDebugTask_->CancelAllTasks();
+        photoSubDebugTask_ = nullptr;
+    }
+    if (photoSubDeepTask_ != nullptr) {
+        photoSubDeepTask_->CancelAllTasks();
+        photoSubDeepTask_ = nullptr;
     }
     if (thumbnailTask_ != nullptr) {
         thumbnailTask_->CancelAllTasks();
@@ -1334,16 +1346,51 @@ void HStreamCapture::InitCaptureThread()
         photoTask_.Set(std::make_shared<DeferredProcessing::TaskManager>("photoTask", TASKMANAGER_ONE, false));
         photoTask = photoTask_.Get();
         photoTask->SubmitTask([thisPtr]() {
+            MEDIA_INFO_LOG("initCaptureThread elevate asset thread priority");
             auto hStreamCapture = thisPtr.promote();
             CHECK_EXECUTE(hStreamCapture, hStreamCapture->ElevateThreadPriority());
         });
     }
-    if (isYuvCapture_ && photoSubTask_ == nullptr) {
-        photoSubTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubTask", TASKMANAGER_FOUR, false);
+    if (isYuvCapture_ && photoSubExifTask_ == nullptr) {
+        photoSubExifTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubExifTask_",
+                TASKMANAGER_FOUR, false);
+        photoSubExifTask_->SubmitTask([thisPtr]() {
+            MEDIA_INFO_LOG("initCaptureThread elevate asset thread priority");
+            auto hStreamCapture = thisPtr.promote();
+            CHECK_EXECUTE(hStreamCapture, hStreamCapture->ElevateThreadPriority());
+        });
+    }
+    if (isYuvCapture_ && photoSubGainMapTask_ == nullptr) {
+        photoSubGainMapTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubGainMapTask_",
+                TASKMANAGER_FOUR, false);
+        photoSubGainMapTask_->SubmitTask([thisPtr]() {
+            MEDIA_INFO_LOG("initCaptureThread elevate gainMap thread priority");
+            auto hStreamCapture = thisPtr.promote();
+            CHECK_EXECUTE(hStreamCapture, hStreamCapture->ElevateThreadPriority());
+        });
+    }
+    if (isYuvCapture_ && photoSubDebugTask_ == nullptr) {
+        photoSubDebugTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubDebugTask_",
+                TASKMANAGER_FOUR, false);
+        photoSubDebugTask_->SubmitTask([thisPtr]() {
+            MEDIA_INFO_LOG("initCaptureThread elevate debug thread priority");
+            auto hStreamCapture = thisPtr.promote();
+            CHECK_EXECUTE(hStreamCapture, hStreamCapture->ElevateThreadPriority());
+        });
+    }
+    if (isYuvCapture_ && photoSubDeepTask_ == nullptr) {
+        photoSubDeepTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubDeepTask_",
+                TASKMANAGER_FOUR, false);
+        photoSubDeepTask_->SubmitTask([thisPtr]() {
+            MEDIA_INFO_LOG("initCaptureThread elevate deep thread priority");
+            auto hStreamCapture = thisPtr.promote();
+            CHECK_EXECUTE(hStreamCapture, hStreamCapture->ElevateThreadPriority());
+        });
     }
     if (thumbnailSurface_.Get() && thumbnailTask_ == nullptr) {
         thumbnailTask_ = std::make_shared<DeferredProcessing::TaskManager>("thumbnailTask", TASKMANAGER_ONE, false);
         thumbnailTask_->SubmitTask([thisPtr]() {
+            MEDIA_INFO_LOG("initCaptureThread elevate thumbnail thread priority");
             auto hStreamCapture = thisPtr.promote();
             CHECK_EXECUTE(hStreamCapture, hStreamCapture->ElevateThreadPriority());
         });
