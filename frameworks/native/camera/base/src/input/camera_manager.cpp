@@ -1983,12 +1983,13 @@ void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability>
     }
     if (!CameraSecurity::CheckSystemApp()) {
         MEDIA_DEBUG_LOG("public calling for GetSupportedOutputCapability");
-        if (std::any_of(objectTypes.begin(), objectTypes.end(),
-                        [](MetadataObjectType type) { return type == MetadataObjectType::FACE; })) {
-            cameraOutputCapability->SetSupportedMetadataObjectType({MetadataObjectType::FACE});
-        } else {
-            cameraOutputCapability->SetSupportedMetadataObjectType({});
-        }
+        std::vector<MetadataObjectType> tempObjectTypes;
+        for (auto object : objectTypes) {
+            if (object == MetadataObjectType::FACE || object == MetadataObjectType::HUMAN_BODY) {
+                tempObjectTypes.push_back(object);
+            }
+         }
+        cameraOutputCapability->SetSupportedMetadataObjectType(tempObjectTypes);
     } else {
         cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
     }
@@ -2881,12 +2882,13 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 
     if (!CameraSecurity::CheckSystemApp()) {
         MEDIA_DEBUG_LOG("public calling for GetsupportedOutputCapability");
-        if (std::any_of(objectTypes.begin(), objectTypes.end(),
-                        [](MetadataObjectType type) { return type == MetadataObjectType::FACE; })) {
-            cameraOutputCapability->SetSupportedMetadataObjectType({MetadataObjectType::FACE});
-        } else {
-            cameraOutputCapability->SetSupportedMetadataObjectType({});
-        }
+        std::vector<MetadataObjectType> tempObjectTypes;
+        for (auto object : objectTypes) {
+            if (object == MetadataObjectType::FACE || object == MetadataObjectType::HUMAN_BODY) {
+                tempObjectTypes.push_back(object);
+            }
+         }
+        cameraOutputCapability->SetSupportedMetadataObjectType(tempObjectTypes);
     } else {
         cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
     }
@@ -3715,13 +3717,15 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
     const std::vector<MetadataObjectType>& metadataObjectTypes)
 {
     CAMERA_SYNC_TRACE;
-    const size_t maxSize4NonSystemApp = 1;
+    const size_t maxSize4NonSystemApp = 2;
     if (!CameraSecurity::CheckSystemApp()) {
         MEDIA_DEBUG_LOG("public calling for metadataOutput");
         // LCOV_EXCL_START
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE; })) {
+                [](MetadataObjectType type) { return type != MetadataObjectType::FACE && 
+                                                     type != MetadataObjectType::HUMAN_BODY; })) {
+            MEDIA_INFO_LOG("MetadataObjectType not face or human_body,invalid");
             return CameraErrorCode::INVALID_ARGUMENT;
         }
         // LCOV_EXCL_STOP

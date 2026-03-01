@@ -10143,6 +10143,13 @@ function getCameraManager(context: Context): CameraManager;
      * @systemapi
      * @since 13
      */
+    /**
+     * Human body detection type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
     HUMAN_BODY = 1,
 
     /**
@@ -10437,13 +10444,13 @@ function getCameraManager(context: Context): CameraManager;
     /**
      * Emotion confidence.
      *
-     * @type { number }
+     * @type { double }
      * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 13
      */
-    readonly emotionConfidence: number;
+    readonly emotionConfidence: double;
 
     /**
      * Pitch angle for face.
@@ -10714,6 +10721,17 @@ function getCameraManager(context: Context): CameraManager;
      * @systemapi
      * @since 13
      */
+    /**
+     * Add metadata object types.
+     *
+     * @param { Array<MetadataObjectType> } types - Object types to be added.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
+     */
     addMetadataObjectTypes(types: Array<MetadataObjectType>): void;
 
     /**
@@ -10727,6 +10745,17 @@ function getCameraManager(context: Context): CameraManager;
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
      * @since 13
+     */
+    /**
+     * Remove metadata object types.
+     *
+     * @param { Array<MetadataObjectType> } types - Object types to be removed.
+     * @throws { BusinessError } 7400101 - Parameter missing or parameter type incorrect.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 23 dynamic&static
      */
     removeMetadataObjectTypes(types: Array<MetadataObjectType>): void;
 
