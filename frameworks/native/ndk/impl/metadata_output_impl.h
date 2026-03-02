@@ -37,7 +37,12 @@ public:
 
     OHOS::sptr<OHOS::CameraStandard::MetadataOutput> GetInnerMetadataOutput();
 
+    Camera_ErrorCode AddMetadataObjectTypes(Camera_MetadataObjectType* types, uint32_t size);
+    
+    Camera_ErrorCode RemoveMetadataObjectTypes(Camera_MetadataObjectType* types, uint32_t size);
+
 private:
+    OHOS::CameraStandard::MetadataObjectType convert(Camera_MetadataObjectType type);
     OHOS::sptr<OHOS::CameraStandard::MetadataOutput> innerMetadataOutput_;
 };
 #endif // OHOS_METADATA_OUTPUT_IMPL_H

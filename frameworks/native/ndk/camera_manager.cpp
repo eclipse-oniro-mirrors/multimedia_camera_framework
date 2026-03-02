@@ -319,10 +319,24 @@ Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraMan
     CHECK_RETURN_RET_ELOG(
         cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
     CHECK_RETURN_RET_ELOG(type == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, type is null!");
+    MEDIA_DEBUG_LOG("type:%d", *type);
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    uint32_t size = 1;
+    return cameraManager->CreateMetadataOutput(type, metadataOutput, size);
+}
 
-    return cameraManager->CreateMetadataOutput(type, metadataOutput);
+Camera_ErrorCode OH_CameraManager_CreateMetadataOutputWithObjectTypes(Camera_Manager* cameraManager,
+    const Camera_MetadataObjectType* metadataObjectTypes, uint32_t size, Camera_MetadataOutput** metadataOutput)
+{
+    CHECK_RETURN_RET_ELOG(
+        cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
+    CHECK_RETURN_RET_ELOG(metadataObjectTypes == nullptr, CAMERA_INVALID_ARGUMENT, 
+        "Invalid argument, metadataObjectTypes is null!");
+    CHECK_RETURN_RET_ELOG(size == 0, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is 0!");
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    return cameraManager->CreateMetadataOutput(metadataObjectTypes, metadataOutput, size);
 }
 
 Camera_ErrorCode OH_CameraDevice_GetCameraOrientation(Camera_Device* camera, uint32_t* orientation)

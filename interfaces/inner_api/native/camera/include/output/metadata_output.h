@@ -24,7 +24,7 @@
 #include "camera_metadata_info.h"
 #include "camera_metadata_operator.h"
 #include "capture_output.h"
-#include "session/capture_session.h"
+#include "camera_output_capability.h"
 #include "stream_metadata_callback_stub.h"
 #include "iconsumer_surface.h"
 #include "istream_metadata.h"
@@ -82,6 +82,14 @@ public:
     {
         return type_;
     };
+    inline void SetSize(Size previeSize)
+    {
+        size_ = previeSize;
+    };
+    inline Size GetSize()
+    {
+        return size_;
+    };
     inline int64_t GetTimestamp()
     {
         return timestamp_;
@@ -100,6 +108,7 @@ public:
     };
 
 private:
+    Size size_;
     MetadataObjectType type_;
     int64_t timestamp_;
     Rect box_;
