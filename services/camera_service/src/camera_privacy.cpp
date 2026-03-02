@@ -45,7 +45,7 @@ void DisablePolicyChangeCb::PermDisablePolicyCallback(const Security::AccessToke
                    info.permissionName.c_str(), info.isDisable ? "true" : "false");
     if (info.isDisable) {
         sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
- 	    CHECK_PRINT_ELOG(!deviceManager->PermDisableSA(), "register Disable failed");
+        CHECK_PRINT_ELOG(!deviceManager->PermDisableSA(), "register Disable failed");
  	    std::vector<sptr<HCameraDeviceHolder>> holders = deviceManager->GetActiveCameraHolders();
         for (auto holder : holders) {
             auto device = holder->GetDevice();
