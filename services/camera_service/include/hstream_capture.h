@@ -195,7 +195,10 @@ public:
     sptr<PictureAssembler> pictureAssembler_;
     std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
     SpHolder<std::shared_ptr<DeferredProcessing::TaskManager>> photoTask_;
-    std::shared_ptr<DeferredProcessing::TaskManager> photoSubTask_ = nullptr;
+    std::shared_ptr<DeferredProcessing::TaskManager> photoSubExifTask_ = nullptr;
+    std::shared_ptr<DeferredProcessing::TaskManager> photoSubGainMapTask_ = nullptr;
+    std::shared_ptr<DeferredProcessing::TaskManager> photoSubDebugTask_ = nullptr;
+    std::shared_ptr<DeferredProcessing::TaskManager> photoSubDeepTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> thumbnailTask_ = nullptr;
 
     std::mutex g_photoImageMutex;
