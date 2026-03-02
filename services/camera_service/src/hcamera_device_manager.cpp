@@ -566,7 +566,7 @@ bool HCameraDeviceManager::PermDisableSA()
  	 
 bool HCameraDeviceManager::GetDisablePolicy()
 {
- 	bool isDisable = false;
+    bool isDisable = false;
     Security::AccessToken::PrivacyKit::GetDisablePolicy(OHOS_PERMISSION_CAMERA, isDisable);
     return isDisable;
 }
