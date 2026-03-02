@@ -556,11 +556,11 @@ bool HCameraDeviceManager::IsLiveScene()
 
 bool HCameraDeviceManager::PermDisableSA()
 {
- 	MEDIA_INFO_LOG("HCameraDeviceManager::PermDisableSA close A camera");
+    MEDIA_INFO_LOG("HCameraDeviceManager::PermDisableSA close A camera");
  	std::string cameraId = GetACameraId();
  	CHECK_RETURN_RET_ELOG(peerCallback_ == nullptr, false,
         "HCameraDeviceManager::PermDisableSA falied to close peer device");
- 	peerCallback_->NotifyCloseCamera(cameraId);
+    peerCallback_->NotifyCloseCamera(cameraId);
     return true;
 }
  	 
@@ -575,7 +575,7 @@ bool HCameraDeviceManager::RegisterPermDisablePolicyCallback()
 {
  	const std::vector<std::string>& permList{OHOS_PERMISSION_CAMERA};
     int32_t res;
- 	{
+    {
         std::lock_guard<std::mutex> lock(policyMutex_);
  	    policyCallbackPtr_ = std::make_shared<DisablePolicyChangeCb>(permList);
         res = Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(policyCallbackPtr_);
@@ -588,12 +588,12 @@ bool HCameraDeviceManager::RegisterPermDisablePolicyCallback()
 void HCameraDeviceManager::UnRegisterPermDisablePolicyCallback()
 {
  	std::lock_guard<std::mutex> lock(policyMutex_);
- 	CHECK_RETURN_ELOG(policyCallbackPtr_ == nullptr, "policyCallbackPtr_ is null.");
- 	MEDIA_DEBUG_LOG("UnRegisterDisablePolicyCallback unregister");
+    CHECK_RETURN_ELOG(policyCallbackPtr_ == nullptr, "policyCallbackPtr_ is null.");
+    MEDIA_DEBUG_LOG("UnRegisterDisablePolicyCallback unregister");
  	int32_t res = Security::AccessToken::PrivacyKit::UnRegisterPermDisablePolicyCallback(policyCallbackPtr_);
     MEDIA_INFO_LOG("HCameraDeviceManager::UnRegisterPermDisablePolicyCallback res:%{public}d", res);
  	CHECK_PRINT_ELOG(res != CAMERA_OK, "UnRegisterPermDisablePolicyCallback failed.");
- 	policyCallbackPtr_ = nullptr;
+    policyCallbackPtr_ = nullptr;
 }
  	 
 int32_t HCameraDeviceManager::SetMdmCheck(bool mdmCheck)
