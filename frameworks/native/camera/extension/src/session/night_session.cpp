@@ -200,7 +200,6 @@ int32_t NightSession::SetLocation(Location &location)
         "NightSession::SetLocation Need to call LockForControl() before setting camera properties");
     std::vector<double> gpsInfo = {location.latitude, location.longitude, location.altitude};
     std::string gpsInfoStr = Container2String(gpsInfo.begin(), gpsInfo.end());
-    MEDIA_DEBUG_LOG("NightSession::SetLocation gpsInfoStr: %{public}s", gpsInfoStr.c_str());
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_GPS_COORDINATES, gpsInfo.data(), gpsInfo.size());
     CHECK_PRINT_ELOG(!status, "NightSession::SetLocation Failed to set location");
     return CameraErrorCode::SUCCESS;
