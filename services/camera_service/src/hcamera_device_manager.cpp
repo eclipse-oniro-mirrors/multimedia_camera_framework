@@ -601,7 +601,7 @@ int32_t HCameraDeviceManager::SetMdmCheck(bool mdmCheck)
     MEDIA_INFO_LOG("HCameraDeviceManager::SetMdmCheck: %{public}d", mdmCheck);
     std::lock_guard<std::mutex> lock(mdmMutex_);
     mdmCheck_ = mdmCheck;
- 	return CAMERA_OK;
+    return CAMERA_OK;
 }
  	 
 bool HCameraDeviceManager::GetMdmCheck()
