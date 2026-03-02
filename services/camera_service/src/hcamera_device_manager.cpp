@@ -567,22 +567,22 @@ bool HCameraDeviceManager::PermDisableSA()
 bool HCameraDeviceManager::GetDisablePolicy()
 {
  	bool isDisable = false;
- 	Security::AccessToken::PrivacyKit::GetDisablePolicy(OHOS_PERMISSION_CAMERA, isDisable);
- 	return isDisable;
+    Security::AccessToken::PrivacyKit::GetDisablePolicy(OHOS_PERMISSION_CAMERA, isDisable);
+    return isDisable;
 }
  	 
 bool HCameraDeviceManager::RegisterPermDisablePolicyCallback()
 {
  	const std::vector<std::string>& permList{OHOS_PERMISSION_CAMERA};
- 	int32_t res;
+    int32_t res;
  	{
- 	std::lock_guard<std::mutex> lock(policyMutex_);
- 	policyCallbackPtr_ = std::make_shared<DisablePolicyChangeCb>(permList);
-    res = Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(policyCallbackPtr_);
+        std::lock_guard<std::mutex> lock(policyMutex_);
+ 	    policyCallbackPtr_ = std::make_shared<DisablePolicyChangeCb>(permList);
+        res = Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(policyCallbackPtr_);
  	}
-	MEDIA_INFO_LOG("HCameraDeviceManager::RegisterPermDisablePolicyCallback res:%{public}d", res);
+    MEDIA_INFO_LOG("HCameraDeviceManager::RegisterPermDisablePolicyCallback res:%{public}d", res);
  	CHECK_PRINT_ELOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
- 	return res == CAMERA_OK;
+    return res == CAMERA_OK;
 }
  	 
 void HCameraDeviceManager::UnRegisterPermDisablePolicyCallback()
