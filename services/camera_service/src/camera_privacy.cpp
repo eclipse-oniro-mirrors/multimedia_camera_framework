@@ -44,7 +44,9 @@ void DisablePolicyChangeCb::PermDisablePolicyCallback(const Security::AccessToke
     MEDIA_INFO_LOG("Enter PermDisablePolicyCallback, permissionName:%{public}s, isDisable:%{public}s",
                    info.permissionName.c_str(), info.isDisable ? "true" : "false");
     if (info.isDisable) {
-        std::vector<sptr<HCameraDeviceHolder>> holders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
+        sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
+        CHECK_PRINT_ELOG(!deviceManager->PermDisableSA(), "register Disable failed");
+        std::vector<sptr<HCameraDeviceHolder>> holders = deviceManager->GetActiveCameraHolders();
         for (auto holder : holders) {
             auto device = holder->GetDevice();
             if (device == nullptr) {
@@ -135,38 +137,6 @@ void CameraPrivacy::SetClientName(const std::string& clientName)
 {
     std::lock_guard<std::mutex> lock(clientNameMutex_);
     clientName_ = clientName;
-}
-
-bool CameraPrivacy::GetDisablePolicy()
-{
-    bool isDisable = false;
-    Security::AccessToken::PrivacyKit::GetDisablePolicy(OHOS_PERMISSION_CAMERA, isDisable);
-    return isDisable;
-}
-
-bool CameraPrivacy::RegisterPermDisablePolicyCallback()
-{
-    const std::vector<std::string>& permList{OHOS_PERMISSION_CAMERA};
-    int32_t res;
-    {
-        std::lock_guard<std::mutex> lock(policyMutex_);
-        policyCallbackPtr_ = std::make_shared<DisablePolicyChangeCb>(permList);
-        res = Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(policyCallbackPtr_);
-    }
-    MEDIA_INFO_LOG("CameraPrivacy::RegisterPermDisablePolicyCallback res:%{public}d", res);
-    CHECK_PRINT_ELOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
-    return res == CAMERA_OK;
-}
-
-void CameraPrivacy::UnRegisterPermDisablePolicyCallback()
-{
-    std::lock_guard<std::mutex> lock(policyMutex_);
-    CHECK_RETURN_ELOG(policyCallbackPtr_ == nullptr, "policyCallbackPtr_ is null.");
-    MEDIA_DEBUG_LOG("UnRegisterDisablePolicyCallback unregister");
-    int32_t res = Security::AccessToken::PrivacyKit::UnRegisterPermDisablePolicyCallback(policyCallbackPtr_);
-    MEDIA_INFO_LOG("CameraPrivacy::UnRegisterPermDisablePolicyCallback res:%{public}d", res);
-    CHECK_PRINT_ELOG(res != CAMERA_OK, "UnRegisterPermDisablePolicyCallback failed.");
-    permissionCallbackPtr_ = nullptr;
 }
 
 bool CameraPrivacy::RegisterPermissionCallback()
