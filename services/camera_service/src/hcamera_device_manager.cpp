@@ -558,7 +558,7 @@ bool HCameraDeviceManager::PermDisableSA()
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::PermDisableSA close A camera");
  	std::string cameraId = GetACameraId();
- 	CHECK_RETURN_RET_ELOG(peerCallback_ == nullptr, false,
+    CHECK_RETURN_RET_ELOG(peerCallback_ == nullptr, false,
         "HCameraDeviceManager::PermDisableSA falied to close peer device");
     peerCallback_->NotifyCloseCamera(cameraId);
     return true;
@@ -581,7 +581,7 @@ bool HCameraDeviceManager::RegisterPermDisablePolicyCallback()
         res = Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(policyCallbackPtr_);
  	}
     MEDIA_INFO_LOG("HCameraDeviceManager::RegisterPermDisablePolicyCallback res:%{public}d", res);
- 	CHECK_PRINT_ELOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
+    CHECK_PRINT_ELOG(res != CAMERA_OK, "RegisterPermissionCallback failed.");
     return res == CAMERA_OK;
 }
  	 
