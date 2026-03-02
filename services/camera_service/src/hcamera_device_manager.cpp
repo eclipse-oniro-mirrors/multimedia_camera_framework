@@ -607,7 +607,7 @@ int32_t HCameraDeviceManager::SetMdmCheck(bool mdmCheck)
 bool HCameraDeviceManager::GetMdmCheck()
 {
     std::lock_guard<std::mutex> lock(mdmMutex_);
- 	return mdmCheck_;
+    return mdmCheck_;
 }
 
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
