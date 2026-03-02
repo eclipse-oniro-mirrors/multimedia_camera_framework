@@ -558,8 +558,8 @@ bool HCameraDeviceManager::PermDisableSA()
 {
  	MEDIA_INFO_LOG("HCameraDeviceManager::PermDisableSA close A camera");
  	std::string cameraId = GetACameraId();
- 	CHECK_RETURN_RET_ELOG(
- 	peerCallback_ == nullptr, false, "HCameraDeviceManager::PermDisableSA falied to close peer device");
+ 	CHECK_RETURN_RET_ELOG(peerCallback_ == nullptr, false,
+        "HCameraDeviceManager::PermDisableSA falied to close peer device");
  	peerCallback_->NotifyCloseCamera(cameraId);
  	return true;
 }
