@@ -709,5 +709,53 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_011, TestSize.Level1
         videoSessionForSys->EnableExternalCameraLensBoost(0);
     }
 }
+
+/*
+ * Feature: Framework
+ * Function: Test ControlCenterSession Autoframing
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ControlCenterSession Autoframing
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_012, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+ 
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+    }
+ 
+    sptr<HCameraHostManager> cameraHostManager = new(std::nothrow) HCameraHostManager(nullptr);
+    sptr<HCameraService> cameraService =  new(std::nothrow) HCameraService(cameraHostManager);
+    ASSERT_NE(cameraService, nullptr);
+ 
+    sptr<ControlCenterSession> mControlCenterSession = nullptr;
+    cameraManager_->CreateControlCenterSession(mControlCenterSession);
+    EXPECT_NE(mControlCenterSession, nullptr);
+
+    bool support = false;
+    int32_t intResult = mControlCenterSession->IsAutoFramingSupported(support);
+    bool expectResult = (intResult == CAMERA_INVALID_STATE && !support) || (intResult == CAMERA_OK);
+    EXPECT_EQ(expectResult, true);
+
+    bool status = false;
+    intResult = mControlCenterSession->GetAutoFramingStatus(status);
+    expectResult = (intResult == CAMERA_INVALID_STATE && !status) || (intResult == CAMERA_OK);
+    EXPECT_EQ(expectResult, true);
+ 
+    bool enable = false;
+    intResult = mControlCenterSession->EnableAutoFraming(enable);
+    expectResult = intResult == CAMERA_INVALID_STATE || intResult == CAMERA_OK;
+    EXPECT_EQ(expectResult, true);
+ 
+    input->Close();
+}
 }
 }
