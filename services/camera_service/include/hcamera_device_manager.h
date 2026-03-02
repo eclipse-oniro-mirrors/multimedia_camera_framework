@@ -325,7 +325,7 @@ public:
  	 
     int32_t SetMdmCheck(bool mdmCheck);
  	 
- 	bool GetMdmCheck();
+    bool GetMdmCheck();
 
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void SetLiveScene(bool isLiveScene);
