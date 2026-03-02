@@ -1968,6 +1968,8 @@ public:
 
     int32_t SetPreviewRotation(std::string &deviceClass);
 
+    Size GetPreviewSize();
+    
     inline sptr<ICaptureSession> GetCaptureSession()
     {
         std::lock_guard<std::mutex> lock(captureSessionMutex_);
