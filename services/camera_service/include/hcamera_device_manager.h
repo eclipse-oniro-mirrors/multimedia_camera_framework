@@ -346,7 +346,7 @@ private:
     bool mdmCheck_ = true;
     std::mutex mapMutex_;
  	std::mutex policyMutex_;
- 	std::mutex mdmMutex_;
+    std::mutex mdmMutex_;
     std::shared_ptr<DisablePolicyChangeCb> policyCallbackPtr_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
