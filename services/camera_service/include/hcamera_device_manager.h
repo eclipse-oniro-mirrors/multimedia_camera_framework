@@ -347,7 +347,7 @@ private:
  	std::mutex mapMutex_;
  	std::mutex policyMutex_;
  	std::mutex mdmMutex_;
- 	std::shared_ptr<DisablePolicyChangeCb> policyCallbackPtr_;
+    std::shared_ptr<DisablePolicyChangeCb> policyCallbackPtr_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
     int32_t GetCurrentCost() const;
