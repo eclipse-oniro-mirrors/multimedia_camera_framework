@@ -6676,8 +6676,6 @@ int32_t CaptureSession::SetParameters(std::vector<std::pair<std::string, std::st
 int32_t CaptureSession::SetParameters(const std::unordered_map<std::string, std::string>& kvPairs)
 {
     MEDIA_INFO_LOG("CaptureSession::SetParameters is called");
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::SetParameters Session is not Commited");
     auto serviceProxy = CameraManager::GetInstance()->GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "SetParameters serviceProxy is null");
