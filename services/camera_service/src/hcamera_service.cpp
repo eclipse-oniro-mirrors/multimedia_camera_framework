@@ -167,7 +167,7 @@ void HCameraService::OnStart()
     MEDIA_INFO_LOG("HCameraService OnStart begin");
     if (HCameraDeviceManager::GetInstance()->GetMdmCheck()) {
         CHECK_PRINT_ELOG(!HCameraDeviceManager::GetInstance()->RegisterPermDisablePolicyCallback(),
- 	        "HCameraService OnStart register Disable failed");
+            "HCameraService OnStart register Disable failed");
     }
     CHECK_PRINT_ELOG(
         cameraHostManager_->Init() != CAMERA_OK, "HCameraService OnStart failed to init camera host manager.");
