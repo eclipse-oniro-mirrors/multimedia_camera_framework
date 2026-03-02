@@ -64,7 +64,6 @@ static const int8_t PHOTO_ASSET_TIMEOUT = 10;
 static const std::string BURST_UUID_BEGIN = "";
 static std::string g_currentBurstUuid = BURST_UUID_BEGIN;
 static const uint32_t TASKMANAGER_ONE = 1;
-static const uint32_t TASKMANAGER_FOUR = 4;
 #ifdef CAMERA_CAPTURE_YUV
 static const uint32_t PHOTO_SAVE_MAX_NUM = 3;
 static const uint32_t PHOTO_STATE_TIMEOUT = 20; // 20s
@@ -1353,7 +1352,7 @@ void HStreamCapture::InitCaptureThread()
     }
     if (isYuvCapture_ && photoSubExifTask_ == nullptr) {
         photoSubExifTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubExifTask_",
-                TASKMANAGER_FOUR, false);
+                TASKMANAGER_ONE, false);
         photoSubExifTask_->SubmitTask([thisPtr]() {
             MEDIA_INFO_LOG("initCaptureThread elevate asset thread priority");
             auto hStreamCapture = thisPtr.promote();
@@ -1362,7 +1361,7 @@ void HStreamCapture::InitCaptureThread()
     }
     if (isYuvCapture_ && photoSubGainMapTask_ == nullptr) {
         photoSubGainMapTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubGainMapTask_",
-                TASKMANAGER_FOUR, false);
+                TASKMANAGER_ONE, false);
         photoSubGainMapTask_->SubmitTask([thisPtr]() {
             MEDIA_INFO_LOG("initCaptureThread elevate gainMap thread priority");
             auto hStreamCapture = thisPtr.promote();
@@ -1371,7 +1370,7 @@ void HStreamCapture::InitCaptureThread()
     }
     if (isYuvCapture_ && photoSubDebugTask_ == nullptr) {
         photoSubDebugTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubDebugTask_",
-                TASKMANAGER_FOUR, false);
+                TASKMANAGER_ONE, false);
         photoSubDebugTask_->SubmitTask([thisPtr]() {
             MEDIA_INFO_LOG("initCaptureThread elevate debug thread priority");
             auto hStreamCapture = thisPtr.promote();
@@ -1380,7 +1379,7 @@ void HStreamCapture::InitCaptureThread()
     }
     if (isYuvCapture_ && photoSubDeepTask_ == nullptr) {
         photoSubDeepTask_ = std::make_shared<DeferredProcessing::TaskManager>("photoSubDeepTask_",
-                TASKMANAGER_FOUR, false);
+                TASKMANAGER_ONE, false);
         photoSubDeepTask_->SubmitTask([thisPtr]() {
             MEDIA_INFO_LOG("initCaptureThread elevate deep thread priority");
             auto hStreamCapture = thisPtr.promote();
