@@ -2177,9 +2177,9 @@ int32_t HCameraService::AllowOpenByOHSide(const std::string& cameraId, int32_t s
 {
     MEDIA_INFO_LOG("HCameraService::AllowOpenByOHSide start");
     if (HCameraDeviceManager::GetInstance()->GetMdmCheck() && HCameraDeviceManager::GetInstance()->GetDisablePolicy()) {
- 	    canOpenCamera = false;
- 	    MEDIA_ERR_LOG("HCameraService::AllowOpenByOHSide policy disabled");
- 	    return CAMERA_OK;
+        canOpenCamera = false;
+        MEDIA_ERR_LOG("HCameraService::AllowOpenByOHSide policy disabled");
+        return CAMERA_OK;
  	}
     std::vector<pid_t> activePids = HCameraDeviceManager::GetInstance()->GetActiveClient();
     if (activePids.size() == 0) {
