@@ -577,7 +577,7 @@ bool HCameraDeviceManager::RegisterPermDisablePolicyCallback()
     int32_t res;
     {
         std::lock_guard<std::mutex> lock(policyMutex_);
- 	    policyCallbackPtr_ = std::make_shared<DisablePolicyChangeCb>(permList);
+        policyCallbackPtr_ = std::make_shared<DisablePolicyChangeCb>(permList);
         res = Security::AccessToken::PrivacyKit::RegisterPermDisablePolicyCallback(policyCallbackPtr_);
  	}
     MEDIA_INFO_LOG("HCameraDeviceManager::RegisterPermDisablePolicyCallback res:%{public}d", res);
