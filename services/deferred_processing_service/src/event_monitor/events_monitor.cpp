@@ -127,7 +127,7 @@ void EventsMonitor::NotifyUserSwitched(int32_t userId)
 
 void EventsMonitor::NotifyObserversUnlocked(EventType event, int32_t value)
 {
-    int32_t ret = DPS_SendUrgentCommand<EventStatusChangeCommand>(event, value);
+    int32_t ret = DPS_SendCommand<EventStatusChangeCommand>(event, value);
     DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK, "send command fail, ret: %{public}d", ret);
 }
 
