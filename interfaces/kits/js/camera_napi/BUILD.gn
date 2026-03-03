@@ -139,6 +139,13 @@ if (gen_camera_picker) {
 
     # configuration.h <-- context.h <-- ability_context.h
     # pixel_map.h <-- iability_callback.h <-- ability_context.h
+
+    defines = []
+
+    if (camera_framework_feature_picker_pre_require_mem) {
+      defines += [ "PICKER_PRE_REQUIRE_MEM" ]
+    }
+
     external_deps = [
       "ability_base:base",
       "ability_base:configuration",  # configuration.h

@@ -34,6 +34,7 @@ declare_args() {
   camera_framework_feature_rotate_param_update = true
   camera_framework_feature_capture_yuv = true
   camera_framework_feature_camera_service_priority = false
+  camera_framework_feature_picker_pre_require_mem = false
 }
 use_sensor = false
 if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {

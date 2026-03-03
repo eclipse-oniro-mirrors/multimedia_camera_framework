@@ -32,6 +32,7 @@
 #include "napi_base_context.h"
 #include "parameters.h"
 #include "string_wrapper.h"
+#include "input/camera_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -429,24 +430,22 @@ napi_value CameraPickerNapi::Pick(napi_env env, napi_callback_info cbInfo)
     InitPickerAbilityType(asyncCtx);
 
     std::vector<PickerMediaType> mediaTypes;
-    if (!GetMediaTypes(env, argv[ARGS_ONE], mediaTypes)) {
-        MEDIA_ERR_LOG("GetMediaTypes failed");
-        return result;
-    }
-
-    if (!GetPickerProfile(env, argv[ARGS_TWO], asyncCtx->pickerProfile)) {
-        MEDIA_ERR_LOG("GetPhotoProfiles failed");
-        return result;
-    }
+    CHECK_RETURN_RET_ELOG(!GetMediaTypes(env, argv[ARGS_ONE], mediaTypes), result, "GetMediaTypes failed");
+    CHECK_RETURN_RET_ELOG(!GetPickerProfile(env, argv[ARGS_TWO], asyncCtx->pickerProfile),
+        result, "GetPhotoProfiles failed");
     SetPickerWantParams(asyncCtx->want, asyncCtx->contextProxy, mediaTypes, asyncCtx->pickerProfile);
+#ifdef PICKER_PRE_REQUIRE_MEM
+    if (g_pickerAbilityType == UIABILITY) {
+        std::string reason = "CAMERA_TOUCH_DOWN";
+        CameraManager::GetInstance()->RequireMemorySizeWithReason(reason, 0);
+        MEDIA_INFO_LOG("CameraPickerNapi::RequireMemorySizeWithReason");
+    }
+#endif
     asyncCtx->uiExtCallback = g_pickerAbilityType == UIABILITY
                                   ? StartCameraAbility(env, asyncCtx->contextProxy, asyncCtx->want)
                                   : StartCameraAbilityForUIExtension(env, asyncCtx->contextProxy, asyncCtx->want);
 
-    if (asyncCtx->uiExtCallback == nullptr) {
-        MEDIA_ERR_LOG("StartCameraAbility failed");
-        return result;
-    }
+    CHECK_RETURN_RET_ELOG(asyncCtx->uiExtCallback == nullptr, result, "StartCameraAbility failed");
     CAMERA_NAPI_CREATE_PROMISE(env, asyncCtx->callbackRef, asyncCtx->deferred, result);
     if (StartAsyncWork(env, asyncCtx.get()) != napi_ok) {
         MEDIA_ERR_LOG("Failed to create napi_create_async_work for Pick");
