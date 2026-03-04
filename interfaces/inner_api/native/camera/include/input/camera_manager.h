@@ -971,6 +971,7 @@ public:
     int32_t GetCameraStorageSize(int64_t& storage);
 
     int32_t RequireMemorySize(int32_t memSize);
+    int32_t RequireMemorySizeWithReason(std::string &reason, int32_t requiredMemSizeKB);
 
     int32_t CreatePreviewOutputStream(
         sptr<IStreamRepeat>& streamPtr, Profile& profile, const sptr<OHOS::IBufferProducer>& producer);

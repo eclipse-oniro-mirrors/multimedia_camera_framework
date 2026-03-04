@@ -3763,6 +3763,17 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
     return CameraErrorCode::SUCCESS;
 }
 
+int32_t CameraManager::RequireMemorySizeWithReason(std::string &reason, int32_t requiredMemSizeKB)
+{
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, SERVICE_FATL_ERROR,
+        "RequireMemorySizeWithReason serviceProxy is null");
+    int32_t retCode = serviceProxy->RequireMemorySizeWithReason(reason, requiredMemSizeKB);
+    CHECK_PRINT_ELOG(retCode != CAMERA_OK,
+        "RequireMemorySizeWithReason call failed, retCode: %{public}d", retCode);
+    return retCode;
+}
+
 int32_t CameraManager::RequireMemorySize(int32_t memSize)
 {
     // LCOV_EXCL_START
