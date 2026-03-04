@@ -90,7 +90,7 @@ public:
     void CreateAudioTaskManager(sptr<AudioCapturerSessionIntf> audioCapturerSessionIntf) override;
     sptr<AudioTaskManager> GetAudioTaskManager() const;
     void SubmitTask(std::function<void()> task) override;
-    void ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp) override;
+    void ProcessAudioBuffer(int32_t captureId, int64_t middleTimeStamp) override;
 
 private:
     sptr<AudioTaskManager> audioTaskManager_ = {nullptr};

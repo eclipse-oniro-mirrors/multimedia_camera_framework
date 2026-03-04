@@ -41,10 +41,10 @@ void MovingPhotoResource::StartOnceRecord(uint64_t timestamp, int32_t rotation, 
     livephotoListener_->DrainOutImage(imageCallback);
 }
 
-void MovingPhotoResource::StartProcessAudioTask(int32_t captureId, int64_t startTimeStamp)
+void MovingPhotoResource::StartProcessAudioTask(int32_t captureId, int64_t middleTimeStamp)
 {
-    CHECK_EXECUTE(audioTaskManagerProxy_ && startTimeStamp != 0,
-        audioTaskManagerProxy_->ProcessAudioBuffer(captureId, startTimeStamp));
+    CHECK_EXECUTE(audioTaskManagerProxy_ && middleTimeStamp != 0,
+        audioTaskManagerProxy_->ProcessAudioBuffer(captureId, middleTimeStamp));
 }
 
 void MovingPhotoResource::InsertStartTime(int32_t captureId, int64_t startTimeStamp)
@@ -150,11 +150,11 @@ void MovingPhotoManager::StartRecord(uint64_t timestamp, int32_t rotation, int32
     auto weakThisForAudioTask = wptr<MovingPhotoManager>(this);
     CHECK_RETURN_ELOG(!movingPhotoResource_.livephotoListener_,
         "MovingPhotoResource livephotoListener is nullptr");
-    int64_t startTimeStamp = movingPhotoResource_.livephotoListener_->GetTopTimeStamp();
-    movingPhotoResource_.audioTaskManagerProxy_->SubmitTask([weakThisForAudioTask, captureId, startTimeStamp]() {
+    int64_t middleTimeStamp = movingPhotoResource_.livephotoListener_->GetBackTimeStamp();
+    movingPhotoResource_.audioTaskManagerProxy_->SubmitTask([weakThisForAudioTask, captureId, middleTimeStamp]() {
         auto manager = weakThisForAudioTask.promote();
         CHECK_RETURN(!manager);
-        manager->StartProcessAudioTask(captureId, startTimeStamp);
+        manager->StartProcessAudioTask(captureId, middleTimeStamp);
     });
     CHECK_RETURN(colorStylePhotoType != ORIGIN_AND_EFFECT || !isXtStyleEnabled ||
         !xtStyleMovingPhotoResource_.avcodecTaskManagerProxy_);
@@ -175,10 +175,10 @@ void MovingPhotoManager::StartOnceRecord(uint64_t timestamp, int32_t rotation, i
     MEDIA_INFO_LOG("StartOnceRecord END");
 }
 
-void MovingPhotoManager::StartProcessAudioTask(int32_t captureId, int64_t startTimeStamp)
+void MovingPhotoManager::StartProcessAudioTask(int32_t captureId, int64_t middleTimeStamp)
 {
     MEDIA_DEBUG_LOG("MovingPhotoManager::StartProcessAudioTask is callled");
-    movingPhotoResource_.StartProcessAudioTask(captureId, startTimeStamp);
+    movingPhotoResource_.StartProcessAudioTask(captureId, middleTimeStamp);
 }
 
 void MovingPhotoManager::InsertStartTime(int32_t captureId, int64_t startTimeStamp)
