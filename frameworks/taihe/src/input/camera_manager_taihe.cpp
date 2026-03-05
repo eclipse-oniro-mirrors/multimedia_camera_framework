@@ -1109,6 +1109,29 @@ CameraInput CameraManagerImpl::CreateCameraInputWithPosition(CameraPosition posi
     return make_holder<CameraInputImpl, CameraInput>(cameraInput);
 }
 
+CameraInput CameraManagerImpl::CreateCameraInputWithTokenId(CameraDevice const &camera, int32_t tokenId)
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        (make_holder<CameraInputImpl, CameraInput>(nullptr)), "SystemApi CreateCameraInputWithTokenId is called!");
+    CHECK_RETURN_RET_ELOG(
+        cameraManager_ == nullptr, (make_holder<CameraInputImpl, CameraInput>(nullptr)), "cameraManager_ is nullptr");
+    std::string cameraId = std::string(camera.cameraId);
+    OHOS::sptr<OHOS::CameraStandard::CameraDevice> cameraInfo = cameraManager_->GetCameraDeviceFromId(cameraId);
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("cameraInfo is null");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::INVALID_ARGUMENT, "cameraInfo is null");
+        return make_holder<CameraInputImpl, CameraInput>(nullptr);
+    }
+    OHOS::sptr<OHOS::CameraStandard::CameraInput> cameraInput = nullptr;
+    int retCode = cameraManager_->CreateCameraInput(cameraInfo, &cameraInput);
+    CHECK_EXECUTE_RETURN_RET(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
+        CameraUtilsTaihe::ThrowError(retCode, "CreateCameraInput failed."),
+        (make_holder<CameraInputImpl, CameraInput>(nullptr)));
+    if (auto device = cameraInput->GetCameraDevice()) {
+        device->SetFirstCallerTokenID(static_cast<uint32_t>(tokenId));
+    }
+    return make_holder<CameraInputImpl, CameraInput>(cameraInput);
+}
 
 DepthDataOutput CameraManagerImpl::CreateDepthDataOutput(DepthProfile const& profile)
 {

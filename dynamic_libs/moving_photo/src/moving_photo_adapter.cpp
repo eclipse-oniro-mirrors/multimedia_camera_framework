@@ -323,10 +323,10 @@ void AudioTaskManagerAdapter::CreateAudioTaskManager(sptr<AudioCapturerSessionIn
     audioTaskManager_ = new AudioTaskManager(audioCaptureSession);
 }
 
-void AudioTaskManagerAdapter::ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp)
+void AudioTaskManagerAdapter::ProcessAudioBuffer(int32_t captureId, int64_t middleTimeStamp)
 {
     CHECK_RETURN_ELOG(audioTaskManager_ == nullptr, "audioTaskManager_ is nullptr");
-    audioTaskManager_->ProcessAudioBuffer(captureId, startTimeStamp);
+    audioTaskManager_->ProcessAudioBuffer(captureId, middleTimeStamp);
 }
 
 void AudioTaskManagerAdapter::SubmitTask(std::function<void()> task)

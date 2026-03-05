@@ -57,7 +57,7 @@ constexpr int64_t MAX_NANOSEC_RANGE = 3200000000LL;
 constexpr int32_t WAIT_AUDIO_PROCESS = 8;
 constexpr uint32_t WAIT_AUDIO_PROCESSED_EXPIREATION_TIME = 200;
 constexpr uint32_t AUDIO_RECORD_DURATION = 32;
-constexpr uint32_t WAIT_AUDIO_PROCESSED_DURATION_TIME = 100;
+constexpr uint32_t WAIT_AUDIO_PROCESSED_DURATION_TIME = 200;
 constexpr uint32_t DEFAULT_AUDIO_TASK_THREAD_NUMBER = 3;
 constexpr uint32_t DEFAULT_PROCESSED_THREAD_NUMBER = 1;
 constexpr uint32_t AUDIO_RECORD_CACHE_SIZE = 200;
@@ -174,9 +174,9 @@ public:
     void ClearTaskResource();
     shared_ptr<TaskManager>& GetAudioTaskManager();
     shared_ptr<TaskManager>& GetAudioProcessManager();
-    void ProcessAudioBuffer(int32_t captureId, int64_t StartTimeStamp);
-    void PrepareAudioBuffer(int64_t startTime);
-    void RegisterAudioBuffeArrivalCallback(int64_t startTimeStamp);
+    void ProcessAudioBuffer(int32_t captureId, int64_t middleTimeStamp);
+    void PrepareAudioBuffer(int64_t middleTimeStamp);
+    void RegisterAudioBuffeArrivalCallback(int64_t middleTimeStamp);
     void OnAudioBufferArrival(sptr<AudioRecord>& audioRecord, bool isFinished);
     void ProcessAudioBufferToMuted(vector<sptr<AudioRecord>>& audioRecords,
         vector<sptr<AudioRecord>>& encodeAudioRecords);

@@ -38,4 +38,5 @@ interface ICameraDeviceService {
    [ipccode 16] void GetNaturalDirectionCorrect([out] boolean isNaturalDirectionCorrect);
    [ipccode 17] void SetMdmCheck([in] boolean mdmCheck);
    [ipccode 18] void SetCameraIdTransform([in] String originCameraId);
+   [ipccode 19] void SetFirstCallerTokenID([in] unsigned int tokenId);
 }

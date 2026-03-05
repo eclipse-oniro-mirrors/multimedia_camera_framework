@@ -652,15 +652,24 @@ std::unordered_map<int32_t, std::function<napi_value(napi_env)>> g_sessionFactor
         return SecureCameraSessionNapi::CreateCameraSession(env); }},
 };
 
-CameraManagerNapi::CameraManagerNapi() : env_(nullptr)
+CameraManagerNapi::CameraManagerNapi(napi_env env) : env_(env)
 {
     CAMERA_SYNC_TRACE;
     // Pre-load napiexlib for System APP, before call CreateDeprecatedSessionForSys.
-    CHECK_EXECUTE(CameraSecurity::CheckSystemApp() && !CameraNapiExManager::IsLoadedNapiEx(), {
+    if (CameraSecurity::CheckSystemApp() && !CameraNapiExManager::IsLoadedNapiEx()) {
         MEDIA_INFO_LOG("PreLoad CameraNapiExProxy");
-        thread loadThread = thread([]() {CameraNapiExManager::GetCameraNapiExProxy();});
-        loadThread.detach();
-    });
+        napi_value resourceName;
+        napi_create_string_utf8(env_, "CameraNapiExPreload", NAPI_AUTO_LENGTH, &resourceName);
+        napi_async_work asyncWork;
+        napi_create_async_work(env_, nullptr, resourceName,
+            [](napi_env env, void* data) {
+                CameraNapiExManager::GetCameraNapiExProxy();
+            },
+            [](napi_env env, napi_status status, void* data) {
+                MEDIA_INFO_LOG("CameraNapiExProxy preload completed, status: %{public}d", status);
+            }, nullptr, &asyncWork);
+        napi_queue_async_work_with_qos(env_, asyncWork, napi_qos_user_initiated);
+    }
 }
 
 CameraManagerNapi::~CameraManagerNapi()
@@ -681,8 +690,7 @@ napi_value CameraManagerNapi::CameraManagerNapiConstructor(napi_env env, napi_ca
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
-        std::unique_ptr<CameraManagerNapi> obj = std::make_unique<CameraManagerNapi>();
-        obj->env_ = env;
+        std::unique_ptr<CameraManagerNapi> obj = std::make_unique<CameraManagerNapi>(env);
         obj->cameraManager_ = CameraManager::GetInstance();
         if (obj->cameraManager_ == nullptr) {
             MEDIA_ERR_LOG("Failure wrapping js to native napi, obj->cameraManager_ null");
@@ -734,6 +742,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isPrelaunchSupported", IsPrelaunchSupported),
         DECLARE_NAPI_FUNCTION("setPrelaunchConfig", SetPrelaunchConfig),
         DECLARE_NAPI_FUNCTION("createCameraInput", CreateCameraInputInstance),
+        DECLARE_NAPI_FUNCTION("createCameraInputWithTokenId", CreateCameraInputWithTokenIdInstance),
         DECLARE_NAPI_FUNCTION("createCaptureSession", CreateCameraSessionInstance),
         DECLARE_NAPI_FUNCTION("createSession", CreateSessionInstance),
         DECLARE_NAPI_FUNCTION("createPreviewOutput", CreatePreviewOutputInstance),
@@ -1869,6 +1878,50 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
     }
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         return nullptr;
+    }
+    return CameraInputNapi::CreateCameraInput(env, cameraInput);
+}
+
+napi_value CameraManagerNapi::CreateCameraInputWithTokenIdInstance(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CreateCameraInputInsWithTokenId is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi CreateCameraInputWithTokenIdInstance is called!");
+        return nullptr;
+    }
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    size_t argSize = CameraNapiUtils::GetNapiArgs(env, info);
+    sptr<CameraDevice> cameraInfo = nullptr;
+    uint32_t firstTokenID = 0;
+    if (argSize == ARGS_TWO) {
+        std::string cameraId {};
+        CameraNapiObject cameraInfoObj { { { "cameraId", &cameraId } } };
+        CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, cameraInfoObj, firstTokenID);
+        if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Create cameraInput with 2 invalid arguments!")) {
+            MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInsWithTokenId 2 invalid arguments");
+            return nullptr;
+        }
+        cameraInfo = cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraId);
+    } else {
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "invalid argument.");
+        return nullptr;
+    }
+    if (cameraInfo == nullptr) {
+        MEDIA_ERR_LOG("cameraInfo is null");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "cameraInfo is null.");
+        return nullptr;
+    }
+    sptr<CameraInput> cameraInput = nullptr;
+    int retCode = cameraManagerNapi->cameraManager_->CreateCameraInput(cameraInfo, &cameraInput);
+    if (retCode == CAMERA_NO_PERMISSION) {
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "not allowed, because have no permission.");
+        return nullptr;
+    }
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        return nullptr;
+    }
+    if (auto device = cameraInput->GetCameraDevice()) {
+        device->SetFirstCallerTokenID(firstTokenID);
     }
     return CameraInputNapi::CreateCameraInput(env, cameraInput);
 }

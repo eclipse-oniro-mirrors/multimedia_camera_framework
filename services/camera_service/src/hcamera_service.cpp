@@ -3136,6 +3136,19 @@ int32_t HCameraService::RequireMemorySize(int32_t requiredMemSizeKB)
     return CAMERA_UNKNOWN_ERROR;
 }
 
+int32_t HCameraService::RequireMemorySizeWithReason(const std::string &reason, int32_t requiredMemSizeKB)
+{
+    CAMERA_SYNC_TRACE;
+#ifdef MEMMGR_OVERRID
+    int32_t pid = getpid();
+    int32_t ret = Memory::MemMgrClient::GetInstance().RequireBigMem(pid, reason, requiredMemSizeKB, SYSTEM_CAMERA);
+    MEDIA_INFO_LOG("HCameraService::RequireBigMem reason:%{public}s, ret:%{public}d",
+        reason.c_str(), ret);
+    CHECK_RETURN_RET(ret == 0, CAMERA_OK);
+#endif
+    return CAMERA_UNKNOWN_ERROR;
+}
+
 #ifdef MEMMGR_OVERRID
 void HCameraService::PrelaunchRequireMemory(int32_t flag)
 {

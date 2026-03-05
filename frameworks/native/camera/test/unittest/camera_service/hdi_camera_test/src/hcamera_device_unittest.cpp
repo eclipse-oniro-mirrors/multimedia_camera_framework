@@ -1141,5 +1141,22 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_043, TestSize.Level0)
     std::vector<int32_t> fpsRanges;
     camDevice->UpdateCameraRotateAngle();
 }
+
+/*
+ * Function: Test SetFirstCallerTokenID
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetFirstCallerTokenID
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_044, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+    camDevice->SetFirstCallerTokenID(callerToken);
+}
 }
 }

@@ -123,6 +123,7 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
 {
     strategyCenter_->HandleEventChanged(EventType::PHOTO_HDI_STATUS_EVENT, HDI_READY);
     strategyCenter_->HandleEventChanged(EventType::MEDIA_LIBRARY_STATUS_EVENT, MEDIA_LIBRARY_AVAILABLE);
+    EventsInfo::GetInstance().SetTrailing();
     strategyCenter_->HandleEventChanged(EventType::CAMERA_SESSION_STATUS_EVENT, SYSTEM_CAMERA_CLOSED);
     EventsInfo::GetInstance().SetCameraState(CameraSessionStatus::SYSTEM_CAMERA_CLOSED);
     strategyCenter_->HandleEventChanged(EventType::THERMAL_LEVEL_STATUS_EVENT, LEVEL_0);
@@ -156,8 +157,8 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
 
 HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_009, TestSize.Level1)
 {
-    strategyCenter_->HandleEventChanged(EventType::THERMAL_LEVEL_STATUS_EVENT, LEVEL_7);
     strategyCenter_->HandleEventChanged(EventType::PHOTO_HDI_STATUS_EVENT, HDI_READY);
+    EventsInfo::GetInstance().SetTrailing();
     strategyCenter_->HandleEventChanged(EventType::CAMERA_SESSION_STATUS_EVENT, SYSTEM_CAMERA_CLOSED);
     strategyCenter_->HandleEventChanged(EventType::MEDIA_LIBRARY_STATUS_EVENT, MEDIA_LIBRARY_AVAILABLE);
     strategyCenter_->HandleEventChanged(EventType::THERMAL_LEVEL_STATUS_EVENT, LEVEL_0);
@@ -180,8 +181,8 @@ HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_strate
 
 HWTEST_F(DeferredPhotoProcessorStratetyUnittest, deferred_photo_processor_stratety_unittest_010, TestSize.Level1)
 {
-    strategyCenter_->HandleEventChanged(EventType::THERMAL_LEVEL_STATUS_EVENT, LEVEL_7);
     strategyCenter_->HandleEventChanged(EventType::PHOTO_HDI_STATUS_EVENT, HDI_READY);
+    EventsInfo::GetInstance().SetTrailing();
     strategyCenter_->HandleEventChanged(EventType::CAMERA_SESSION_STATUS_EVENT, SYSTEM_CAMERA_CLOSED);
     strategyCenter_->HandleEventChanged(EventType::MEDIA_LIBRARY_STATUS_EVENT, MEDIA_LIBRARY_AVAILABLE);
     strategyCenter_->HandleEventChanged(EventType::THERMAL_LEVEL_STATUS_EVENT, LEVEL_0);

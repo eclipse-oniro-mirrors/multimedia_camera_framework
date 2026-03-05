@@ -548,7 +548,6 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
     vector<sptr<AudioRecord>> &audioRecordVec = audioTaskManager_->GetProcessedAudioRecordCache();
     CHECK_RETURN_ELOG(audioRecordVec.empty(),
         "AvcodecTaskManager::CollectAudioBuffer audioRecordVec is empty");
-    MEDIA_INFO_LOG("CollectAudioBuffer start with size %{public}zu", audioRecordVec.size());
     int64_t videoStartTime = NanosecToMillisec(choosedBuffer.front()->GetTimeStamp());
     int64_t videoEndTime = NanosecToMillisec(choosedBuffer.back()->GetTimeStamp());
     vector<sptr<AudioRecord>> processedAudioRecords;
@@ -559,6 +558,7 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
             encodeAudioRecords.emplace_back(new AudioRecord(audioRecord->GetTimeStamp()));
         }
     }
+    MEDIA_INFO_LOG("CollectAudioBuffer start with size %{public}zu", processedAudioRecords.size());
     CHECK_EXECUTE(audioTaskManager_ && !processedAudioRecords.empty() && !encodeAudioRecords.empty(),
         audioTaskManager_->ProcessAudioBufferToMuted(processedAudioRecords, encodeAudioRecords));
     bool isEncodeSuccess = false;
@@ -869,11 +869,11 @@ shared_ptr<TaskManager>& AudioTaskManager::GetAudioProcessManager()
     return audioRecordProcessManager_;
 }
 
-void AudioTaskManager::RegisterAudioBuffeArrivalCallback(int64_t startTimeStamp)
+void AudioTaskManager::RegisterAudioBuffeArrivalCallback(int64_t middleTimeStamp)
 {
-    MEDIA_DEBUG_LOG("AudioTaskManager::RegisterAudioBuffeArrivalCallback time :%{public}" PRIu64, startTimeStamp);
-    int64_t endTime = NanosecToMillisec(startTimeStamp + MAX_NANOSEC_RANGE);
-    int64_t startTime = NanosecToMillisec(startTimeStamp);
+    MEDIA_DEBUG_LOG("AudioTaskManager::RegisterAudioBuffeArrivalCallback time : %{public}" PRIu64, middleTimeStamp);
+    int64_t endTime = NanosecToMillisec(middleTimeStamp + NANOSEC_RANGE);
+    int64_t startTime = NanosecToMillisec(middleTimeStamp - NANOSEC_RANGE);
     if (audioCapturerSession_) {
         auto weakThis = wptr<AudioTaskManager>(this);
         CHECK_RETURN_ELOG(weakThis == nullptr, "RegisterAudioBuffeArrivalCallback audioTaskManager is nullptr");
@@ -897,8 +897,8 @@ void AudioTaskManager::OnAudioBufferArrival(sptr<AudioRecord>& audioRecord, bool
     }
     CHECK_RETURN(!audioRecord);
     arrivalAudioBufferQueue_.Push(audioRecord);
-    MEDIA_DEBUG_LOG("AudioTaskManager::OnAudioBufferArrival current size: %{public}zu",
-                    arrivalAudioBufferQueue_.Size());
+    MEDIA_INFO_LOG("AudioTaskManager::OnAudioBufferArrival current size: %{public}zu",
+        arrivalAudioBufferQueue_.Size());
     CHECK_RETURN(!isFinished && arrivalAudioBufferQueue_.Size() % AUDIO_PROCESS_MATCH_SIZE != 0);
     if (isFinished && arrivalAudioBufferQueue_.Size() % AUDIO_PROCESS_MATCH_SIZE != 0) {
         size_t number = arrivalAudioBufferQueue_.Size() % AUDIO_PROCESS_MATCH_SIZE;
@@ -909,6 +909,7 @@ void AudioTaskManager::OnAudioBufferArrival(sptr<AudioRecord>& audioRecord, bool
             number--;
         }
     }
+    CHECK_RETURN(arrivalAudioBufferQueue_.Empty());
     MEDIA_DEBUG_LOG("AudioTaskManager::OnAudioBufferArrival enter process size: %{public}zu",
                     arrivalAudioBufferQueue_.Size());
     if (isFinished && !isBufferArrivalFinished_) {
@@ -931,7 +932,7 @@ void AudioTaskManager::OnAudioBufferArrival(sptr<AudioRecord>& audioRecord, bool
 void AudioTaskManager::ProcessAudioFromAudioBufferQueue()
 {
     // LCOV_EXCL_START
-    MEDIA_DEBUG_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue enter");
+    MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue enter");
     auto processTaskManager = GetAudioProcessManager();
     auto weakThis = wptr<AudioTaskManager>(this);
     CHECK_RETURN_ELOG(weakThis == nullptr || processTaskManager == nullptr,
@@ -941,7 +942,10 @@ void AudioTaskManager::ProcessAudioFromAudioBufferQueue()
         auto sharedThis = weakThis.promote();
         CHECK_RETURN_ELOG(sharedThis == nullptr, "ProcessAudioFromAudioBufferQueue current sharedThis is nullptr");
         vector<sptr<AudioRecord>> audioRecords = sharedThis->GetArrivalAudioBufferQueue().GetAllElements();
-        CHECK_RETURN_ELOG(audioRecords.size() == 0, "ProcessAudioFromAudioBufferQueue currenter audioRecords is empty");
+        if (audioRecords.size() == 0) {
+            sharedThis->SetIsBufferArrivalFinished(true);
+            return;
+        }
         auto &arrivalAudiBufferQueue = sharedThis->GetArrivalAudioBufferQueue();
         for (size_t index = 0; index < audioRecords.size(); index++) {
             CHECK_EXECUTE(arrivalAudiBufferQueue.Front()->GetTimeStamp() <= audioRecords.back()->GetTimeStamp(),
@@ -954,8 +958,11 @@ void AudioTaskManager::ProcessAudioFromAudioBufferQueue()
             audioRecordVec.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
         }
         AudioDeferredProcessSingle &audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
-        CHECK_RETURN_ELOG(!sharedThis || !sharedThis->audioCapturerSession_,
-                          "ProcessAudioFromAudioBufferQueue current sharedThis is nullptr");
+        if (!sharedThis || !sharedThis->audioCapturerSession_) {
+            sharedThis->SetIsBufferArrivalFinished(true);
+            MEDIA_ERR_LOG("ProcessAudioFromAudioBufferQueue current sharedThis is nullptr");
+            return;
+        }
         audioDeferredProcessSingle.ConfigAndProcess(
             sharedThis->audioCapturerSession_, audioRecords, audioRecordVec);
         sharedThis->SetTimerForAudioDeferredProcess();
@@ -973,48 +980,46 @@ void AudioTaskManager::ProcessAudioFromAudioBufferQueue()
                 });
         }
         sharedThis->SetIsBufferArrivalFinished(true);
-        MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue isFinished %{public}d",
-                       sharedThis->isBufferArrivalFinished_.load());
+        MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue end");
     });
-    MEDIA_DEBUG_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue end");
     // LCOV_EXCL_STOP
 }
 
-void AudioTaskManager::ProcessAudioBuffer(int32_t captureId, int64_t startTimeStamp)
+void AudioTaskManager::ProcessAudioBuffer(int32_t captureId, int64_t middleTimeStamp)
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioBuffer enter captureId: %{public}d,"
-                   "startTimeStamp: %{public}" PRIu64 ", curCaptureIdToTimeMap_: %{public}zu", captureId,
-                   startTimeStamp, curCaptureIdToTimeMap_.size());
+                   "middleTimeStamp: %{public}" PRIu64 ", curCaptureIdToTimeMap_: %{public}zu", captureId,
+                   middleTimeStamp, curCaptureIdToTimeMap_.size());
     auto audioCapturerSession = GetAudioCaptureSession();
     CHECK_RETURN_ELOG(!audioCapturerSession, "current audioCapturerSession is nullptr");
     {
         std::lock_guard<std::mutex> lock(captureIdToTimMutex_);
         if (!curCaptureIdToTimeMap_.empty() && !audioCapturerSession->GetProcessedCbFunc()) {
             auto last_itr = curCaptureIdToTimeMap_.rbegin();
-            if (NanosecToMillisec(startTimeStamp) <= (last_itr->second + MAX_AUDIO_NANOSEC_RANGE)
+            if (NanosecToMillisec(middleTimeStamp) <= (last_itr->second + MAX_AUDIO_NANOSEC_RANGE)
                 && !audioCapturerSession->GetProcessedCbFunc()) {
                 audioCapturerSession->UpdateCaptureTimeRangeForEnd(
-                    NanosecToMillisec(startTimeStamp + MAX_NANOSEC_RANGE));
-                curCaptureIdToTimeMap_[captureId] = NanosecToMillisec(startTimeStamp);
+                    NanosecToMillisec(middleTimeStamp + NANOSEC_RANGE));
+                curCaptureIdToTimeMap_[captureId] = NanosecToMillisec(middleTimeStamp - NANOSEC_RANGE);
                 return;
             }
         }
         CHECK_EXECUTE(audioCapturerSession && !audioCapturerSession->GetProcessedCbFunc(),
                       audioCapturerSession->SetAudioBufferCallback(nullptr));
-        curCaptureIdToTimeMap_[captureId] = NanosecToMillisec(startTimeStamp);
+        curCaptureIdToTimeMap_[captureId] = NanosecToMillisec(middleTimeStamp - NANOSEC_RANGE);
     }
-    RegisterAudioBuffeArrivalCallback(startTimeStamp);
-    PrepareAudioBuffer(startTimeStamp);
+    RegisterAudioBuffeArrivalCallback(middleTimeStamp);
+    PrepareAudioBuffer(middleTimeStamp);
     // LCOV_EXCL_STOP
 }
 
-void AudioTaskManager::PrepareAudioBuffer(int64_t startTime)
+void AudioTaskManager::PrepareAudioBuffer(int64_t middleTimeStamp)
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
-    int64_t startTimeStamp = NanosecToMillisec(startTime);
-    int64_t endTimeStamp = NanosecToMillisec(startTime + MAX_NANOSEC_RANGE);
+    int64_t startTimeStamp = NanosecToMillisec(middleTimeStamp - NANOSEC_RANGE);
+    int64_t endTimeStamp = NanosecToMillisec(middleTimeStamp + NANOSEC_RANGE);
     if (audioCapturerSession_) {
         std::vector<sptr<AudioRecord>> audioRecords;
         audioCapturerSession_->GetAudioRecords(startTimeStamp, endTimeStamp, audioRecords);
@@ -1022,6 +1027,8 @@ void AudioTaskManager::PrepareAudioBuffer(int64_t startTime)
             arrivalAudioBufferQueue_.Push(audioRecord);
         }
     }
+    MEDIA_INFO_LOG("AudioTaskManager::PrepareAudioBuffer current queue size is %{public}zu",
+        arrivalAudioBufferQueue_.Size());
     // LCOV_EXCL_STOP
 }
 

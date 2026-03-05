@@ -363,7 +363,6 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, Profile& profile
             surface = Media::ImageReceiver::getSurfaceById(surfaceId);
         }
         if (surface == nullptr) {
-            napi_throw_error(env, std::to_string(SERVICE_FATL_ERROR).c_str(), "Failed to get previewOutput surface.");
             MEDIA_ERR_LOG("failed to get surface");
             return result;
         }
@@ -410,7 +409,6 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, std::string surf
             surface = Media::ImageReceiver::getSurfaceById(surfaceId);
         }
         if (surface == nullptr) {
-            napi_throw_error(env, std::to_string(SERVICE_FATL_ERROR).c_str(), "Failed to get previewOutput surface.");
             MEDIA_ERR_LOG("failed to get surface");
             return result;
         }

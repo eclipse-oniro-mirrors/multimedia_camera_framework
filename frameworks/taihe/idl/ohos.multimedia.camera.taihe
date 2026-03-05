@@ -1718,6 +1718,7 @@ interface CameraManager {
   CreateCameraInputWithCameraDevice(camera: CameraDevice): CameraInput;
   @overload("createCameraInput")
   CreateCameraInputWithPosition(position: CameraPosition, type: CameraType): CameraInput;
+  CreateCameraInputWithTokenId(camera: CameraDevice, tokenId: i32): CameraInput;
   @overload("createPreviewOutput")
   CreatePreviewOutput(profile: Profile, surfaceId: String): PreviewOutput;
   @overload("createPreviewOutput")

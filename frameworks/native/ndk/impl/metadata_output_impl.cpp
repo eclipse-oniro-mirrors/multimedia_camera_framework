@@ -48,6 +48,7 @@ public:
 
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override
     {
+        MEDIA_DEBUG_LOG("InnerMetadataObjectCallback::OnMetadataObjectsAvailable");
         CHECK_RETURN_ELOG(metaObjects.empty(), "OnMetadataObjectsAvailable: metaObjects is empty");
         size_t size = metaObjects.size();
         CHECK_RETURN(metadataOutput_ == nullptr || callback_.onMetadataObjectAvailable == nullptr);
@@ -56,11 +57,14 @@ public:
         for (size_t index = 0; index < size; index++) {
             CHECK_EXECUTE(MetadataObjectType::FACE == metaObjects[index]->GetType(),
                 object[index].type = Camera_MetadataObjectType::FACE_DETECTION;);
+            CHECK_EXECUTE(MetadataObjectType::HUMAN_BODY == metaObjects[index]->GetType(),
+                object[index].type = Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY;);
+            auto metaObject = metaObjects[index];
             object[index].timestamp = metaObjects[index]->GetTimestamp();
-            boundingBox.topLeftX = metaObjects[index]->GetBoundingBox().topLeftX;
-            boundingBox.topLeftY = metaObjects[index]->GetBoundingBox().topLeftY;
-            boundingBox.width = metaObjects[index]->GetBoundingBox().width;
-            boundingBox.height = metaObjects[index]->GetBoundingBox().height;
+            boundingBox.topLeftX = metaObjects[index]->GetBoundingBox().topLeftX * metaObject->GetSize().width;
+            boundingBox.topLeftY = metaObjects[index]->GetBoundingBox().topLeftY * metaObject->GetSize().height;
+            boundingBox.width = metaObjects[index]->GetBoundingBox().width * metaObject->GetSize().width;
+            boundingBox.height = metaObjects[index]->GetBoundingBox().height * metaObject->GetSize().height;
             object[index].boundingBox = &boundingBox;
         }
         callback_.onMetadataObjectAvailable(metadataOutput_, object, size);
@@ -126,4 +130,46 @@ Camera_ErrorCode Camera_MetadataOutput::Release()
 sptr<MetadataOutput> Camera_MetadataOutput::GetInnerMetadataOutput()
 {
     return innerMetadataOutput_;
+}
+
+Camera_ErrorCode Camera_MetadataOutput::AddMetadataObjectTypes(Camera_MetadataObjectType* types, uint32_t size)
+{
+    std::vector<MetadataObjectType> temp;
+    for (int i = 0 ; i < size ; i++) {
+        auto type = convert(types[i]);
+        if (type == MetadataObjectType::INVALID) {
+            return CAMERA_INVALID_ARGUMENT;
+        }
+        temp.push_back(type);
+    }
+    MEDIA_DEBUG_LOG("Camera_MetadataOutput::AddMetadataObjectTypes");
+    int32_t ret = innerMetadataOutput_->AddMetadataObjectTypes(temp);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_MetadataOutput::RemoveMetadataObjectTypes(Camera_MetadataObjectType* types, uint32_t size)
+{
+    std::vector<MetadataObjectType> temp;
+    for (int i = 0 ; i < size ; i++) {
+        auto type = convert(types[i]);
+        if (type == MetadataObjectType::INVALID) {
+            return CAMERA_INVALID_ARGUMENT;
+        }
+        temp.push_back(type);
+    }
+    MEDIA_DEBUG_LOG("Camera_MetadataOutput::RemoveMetadataObjectTypes");
+    int32_t ret = innerMetadataOutput_->RemoveMetadataObjectTypes(temp);
+    return FrameworkToNdkCameraError(ret);
+}
+
+MetadataObjectType Camera_MetadataOutput::convert(Camera_MetadataObjectType type)
+{
+    unordered_map<Camera_MetadataObjectType, MetadataObjectType> convertMap = {
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION, MetadataObjectType::FACE},
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY, MetadataObjectType::HUMAN_BODY},
+        {Camera_MetadataObjectType::FACE_DETECTION, MetadataObjectType::FACE}};
+    if (convertMap.find(type) == convertMap.end()) {
+        return MetadataObjectType::INVALID;
+    }
+    return convertMap[type];
 }

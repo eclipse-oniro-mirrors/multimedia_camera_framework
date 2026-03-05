@@ -191,6 +191,20 @@ bool EventsInfo::IsAllowedToSchedule(const int32_t userId)
     std::lock_guard lock(userMutex_);
     return userId == userId_;
 }
+
+void EventsInfo::SetTrailing(bool isNeedTrailing)
+{
+    std::lock_guard lock(trailingMutex_);
+    isNeedTrailing_ = isNeedTrailing;
+}
+
+bool EventsInfo::NeedTrailing()
+{
+    std::lock_guard<std::mutex> lock(trailingMutex_);
+    bool pre = isNeedTrailing_;
+    isNeedTrailing_ = false;
+    return pre;
+}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

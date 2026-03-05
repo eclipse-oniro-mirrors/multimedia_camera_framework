@@ -228,6 +228,7 @@ public:
     int32_t UnSetCameraSharedStatusCallback(pid_t pid);
     void RegisterFoldStatusListener();
     void UnregisterFoldStatusListener();
+    int32_t RequireMemorySizeWithReason(const std::string &reason, int32_t requiredMemSizeKB) override;
     int32_t RequireMemorySize(int32_t memSize) override;
     int32_t GetIdforCameraConcurrentType(int32_t cameraPosition, std::string &cameraId) override;
     int32_t GetConcurrentCameraAbility(const std::string& cameraId,

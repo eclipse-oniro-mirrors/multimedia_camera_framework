@@ -74,11 +74,11 @@ public:
         return listenerXtStyleType_;
     }
     
-    inline int64_t GetTopTimeStamp()
+    inline int64_t GetBackTimeStamp()
     {
         CHECK_RETURN_RET_ELOG(recorderBufferQueue_.Empty(), 0, "recorderBufferQueue_ is empty");
-        if (recorderBufferQueue_.Front() != nullptr) {
-            return recorderBufferQueue_.Front()->GetTimeStamp();
+        if (recorderBufferQueue_.Back() != nullptr) {
+            return recorderBufferQueue_.Back()->GetTimeStamp();
         }
         return 0;
     }

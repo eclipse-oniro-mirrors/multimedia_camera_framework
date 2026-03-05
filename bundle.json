@@ -24,7 +24,8 @@
           "camera_framework_feature_deferred",
           "camera_framework_feature_xcomponent_toast",
           "camera_framework_feature_capture_yuv",
-          "camera_framework_feature_camera_service_priority"
+          "camera_framework_feature_camera_service_priority",
+          "camera_framework_feature_picker_pre_require_mem"
         ],
         "adapted_system_type": [ "standard" ],
         "rom": "",
