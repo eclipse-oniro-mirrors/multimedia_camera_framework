@@ -115,25 +115,28 @@ int32_t HCameraSwitchSession::SwitchCamera(const std::string &oriCameraId, const
     retCode = notRegisterCaptureSession_->Stop();
     MEDIA_INFO_LOG("SwitchCamera::Stop failed!, %{public}d", retCode);
     retCode = notRegisterCaptureSession_->BeginConfig();
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "SwitchCamera::BeginConfig failed!, %{public}d", retCode);
+    CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SwitchCamera::BeginConfig failed!, %{public}d", retCode);
     retCode = notRegisterCaptureSession_->RemoveInput(cameraDevice_);
     retCode = cameraDevice_->Close();
     MEDIA_INFO_LOG("SwitchCamera::Close failed!, %{public}d", retCode);
     cameraDevice_->UpdateCameraSwitchCameraId(destCameraId);
     retCode = cameraDevice_->Open();
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "SwitchCamera::Open failed!, %{public}d", retCode);
+    CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SwitchCamera::Open failed!, %{public}d", retCode);
     retCode = notRegisterCaptureSession_->AddInput(cameraDevice_);
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "SwitchCamera::Open failed!, %{public}d", retCode);
+    CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SwitchCamera::AddInput failed!, %{public}d", retCode);
     retCode = SwitchCameraUpdateSetting(cameraDevice_, sensorOrientation);
-    CHECK_RETURN_RET_ELOG(
-        retCode != CAMERA_OK, retCode, "SwitchCamera::SwitchCameraUpdateSetting failed!, %{public}d", retCode);
+    CHECK_PRINT_ELOG(
+        retCode != CAMERA_OK, "SwitchCamera::SwitchCameraUpdateSetting failed!, %{public}d", retCode);
     MEDIA_INFO_LOG("HCameraSwitchSession::SwitchCamera enter, CommitConfig(),sessionId=%{public}d",
         notRegisterCaptureSession_->GetSessionId());
     retCode = notRegisterCaptureSession_->CommitConfig();
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "SwitchCamera::CommitConfig failed!, %{public}d", retCode);
+    CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SwitchCamera::CommitConfig failed!, %{public}d", retCode);
+    int32_t sessionID = notRegisterCaptureSession_->GetSessionId();
+    notRegisterCaptureSession_->SetNotRegsiterCameraSwitchSessionId(sessionID);
     retCode = notRegisterCaptureSession_->Start();
-    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "SwitchCamera::Start failed!, %{public}d", retCode);
-    OnCameraSwitch(oriCameraId, destCameraId, true);
+    CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SwitchCamera::Start failed!, %{public}d", retCode);
+    bool result = (retCode == CAMERA_OK) ? true : false;
+    OnCameraSwitch(oriCameraId, destCameraId, result);
     return CAMERA_OK;
 }
 

@@ -264,6 +264,11 @@ public:
         return appNotRegisterCameraSwitchSessionId;
     }
 
+    void SetNotRegisterCameraSwitchSessionId(int32_t sessionID)
+    {
+        appNotRegisterCameraSwitchSessionId = sessionID;
+    }
+
     void registerSessionStartCallback(CallbackFunction callback)
     {
         callback_ = callback;
@@ -353,6 +358,7 @@ private:
     std::mutex innerControlCenterEffectCallbackLock_;
     std::mutex updateControlCenterCallbackLock_;
     std::mutex icameraSwitchSessionCallbackLock_;
+    bool isCameraSwitchTriggered_ = false;
     bool isBeautyActive = false;
     bool isApertureActive = false;
     bool isAutoFramingActive = false;

@@ -2134,6 +2134,7 @@ int32_t HCaptureSession::Start()
         OnCaptureSessionConfiged();
         int sessionId = GetSessionId();
         appNotRegisterCameraSwitchSessionId = sessionId;
+        isCameraSwitchTriggered_ = false;
         MEDIA_INFO_LOG("HCaptureSession::Start GetSessionId, sessionId: %{public}d", sessionId);
         OnCaptureSessionCameraSwitchConfiged(true);
         isCameraSessionStart = true;
@@ -2213,9 +2214,10 @@ int32_t HCaptureSession::Stop()
             return;
         }
         auto hStreamOperatorSptr = GetStreamOperator();
-        if (isCameraSessionStart) {
+        if (isCameraSessionStart && !isCameraSwitchTriggered_) {
             OnCaptureSessionCameraSwitchConfiged(false);
             isCameraSessionStart = false;
+            isCameraSwitchTriggered_ = true;
         }
         if (hStreamOperatorSptr == nullptr) {
             MEDIA_ERR_LOG("hStreamOperatorSptr is null");
@@ -2297,6 +2299,7 @@ int32_t HCaptureSession::Release()
     MEDIA_INFO_LOG("HCaptureSession::Release(), sessionID: %{public}d", GetSessionId());
     CameraReportUtils::GetInstance().SetModeChangePerfStartInfo(opMode_, CameraReportUtils::GetCallerInfo());
     Stop();
+    isCameraSwitchTriggered_ = false;
     return Release(CaptureSessionReleaseType::RELEASE_TYPE_CLIENT);
 }
 
