@@ -508,13 +508,16 @@ void CameraDevice::SetProfile(sptr<CameraOutputCapability> capability)
 {
     CHECK_RETURN(capability == nullptr);
     modePreviewProfiles_[NORMAL] = capability->GetPreviewProfiles();
+    modeFullPreviewProfiles_[NORMAL] = capability->GetPreviewProfiles();
     modePhotoProfiles_[NORMAL] = capability->GetPhotoProfiles();
     modeVideoProfiles_[NORMAL] = capability->GetVideoProfiles();
     modeDepthProfiles_[NORMAL] = capability->GetDepthProfiles();
     modePreviewProfiles_[CAPTURE] = capability->GetPreviewProfiles();
+    modeFullPreviewProfiles_[CAPTURE] = capability->GetPreviewProfiles();
     modePhotoProfiles_[CAPTURE] = capability->GetPhotoProfiles();
     modeDepthProfiles_[CAPTURE] = capability->GetDepthProfiles();
     modePreviewProfiles_[VIDEO] = capability->GetPreviewProfiles();
+    modeFullPreviewProfiles_[VIDEO] = capability->GetPreviewProfiles();
     modePhotoProfiles_[VIDEO] = capability->GetPhotoProfiles();
     modeVideoProfiles_[VIDEO] = capability->GetVideoProfiles();
     modeDepthProfiles_[VIDEO] = capability->GetDepthProfiles();
