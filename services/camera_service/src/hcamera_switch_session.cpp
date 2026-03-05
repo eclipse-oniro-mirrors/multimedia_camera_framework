@@ -132,7 +132,7 @@ int32_t HCameraSwitchSession::SwitchCamera(const std::string &oriCameraId, const
     retCode = notRegisterCaptureSession_->CommitConfig();
     CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SwitchCamera::CommitConfig failed!, %{public}d", retCode);
     int32_t sessionID = notRegisterCaptureSession_->GetSessionId();
-    notRegisterCaptureSession_->SetNotRegsiterCameraSwitchSessionId(sessionID);
+    notRegisterCaptureSession_->SetNotRegisterCameraSwitchSessionId(sessionID);
     retCode = notRegisterCaptureSession_->Start();
     CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SwitchCamera::Start failed!, %{public}d", retCode);
     bool result = (retCode == CAMERA_OK) ? true : false;
