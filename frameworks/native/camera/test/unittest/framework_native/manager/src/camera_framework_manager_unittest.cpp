@@ -2265,5 +2265,18 @@ HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_103, Test
     cameraManager_->cameraDeviceList_.clear();
     EXPECT_TRUE(cameraManager_->ShouldClearCache());
 }
+
+/*
+ * Feature: Framework
+ * Function: Test IsNaturalDirectionCorrect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsNaturalDirectionCorrect
+ */
+HWTEST_F(CameraFrameWorkManagerUnit, camera_framework_manager_unittest_109, TestSize.Level0)
+{
+    EXPECT_EQ(cameraManager_->IsNaturalDirectionCorrect(), false);
+}
 }
 }

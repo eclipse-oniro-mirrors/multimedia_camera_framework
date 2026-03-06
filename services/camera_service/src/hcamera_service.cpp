@@ -271,6 +271,19 @@ bool HCameraService::GetUsePhysicalCameraOrientation()
     return usePhysicalCameraOrientation_;
 }
 
+int32_t HCameraService::GetNaturalDirectionCorrect(bool& isCorrect)
+{
+    isCorrect = false;
+    CHECK_RETURN_RET(!isLogicCamera_, CAMERA_INVALID_STATE);
+    int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+    std::string clientName = GetClientNameByToken(tokenId);
+    if (!CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName, isCorrect)) {
+        MEDIA_ERR_LOG("HCameraService::GetNaturalDirectionCorrect failed");
+        return CAMERA_INVALID_ARG;
+    }
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::GetAppNaturalDirection(int32_t& naturalDirection)
 {
     naturalDirection = 0;
