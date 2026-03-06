@@ -136,7 +136,7 @@ public:
      * @param enable set auto framing enable.
      * @return Error code.
      */
-    int32_t EnableAutoFraming(const bool enable);
+    int32_t EnableAutoFraming(bool enable);
 
     /**
      * @brief get is support auto framing.

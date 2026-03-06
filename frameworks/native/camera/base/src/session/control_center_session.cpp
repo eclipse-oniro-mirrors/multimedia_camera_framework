@@ -186,7 +186,7 @@ int32_t ControlCenterSession::GetAutoFramingStatus(bool& status)
     return CAMERA_OK;
 }
 
-int32_t ControlCenterSession::EnableAutoFraming(const bool enable)
+int32_t ControlCenterSession::EnableAutoFraming(bool enable)
 {
     MEDIA_INFO_LOG("ControlCenterSession::EnableAutoFraming");
     CHECK_RETURN_RET_ELOG(
