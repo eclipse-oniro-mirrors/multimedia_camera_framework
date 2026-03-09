@@ -1031,6 +1031,11 @@ public:
             cameraDeviceList_.end());
     }
 
+    inline float GetTorchLevel() const 
+    {
+        return level_.load();
+    }
+
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
     int CreateCameraDevice(std::string cameraId, sptr<ICameraDeviceService> *pICameraDeviceService);
     void SetCameraIdTransform(sptr<ICameraDeviceService> deviceObj, std::string originCameraId);
@@ -1094,6 +1099,7 @@ private:
         CAMERA_ABILITY_SUPPORT_TORCH,
         CAMERA_ABILITY_SUPPORT_MUTE,
         CAMERA_ABILITY_SUPPORT_MECH,
+        CAMERA_ABILITY_CONTROL_SUPPORT_TORCH,
     };
 
     explicit CameraManager();
@@ -1158,6 +1164,7 @@ private:
     int32_t ValidCreateOutputStream(Profile& profile, const sptr<OHOS::IBufferProducer>& producer);
     int32_t SubscribeSystemAbility();
     int32_t UnSubscribeSystemAbility();
+    atomic<float> level_ = 0.0;
     void ReportEvent(const string& cameraId);
     int32_t RefreshServiceProxy();
     std::vector<sptr<CameraDevice>> GetCameraDeviceListFromServer();
