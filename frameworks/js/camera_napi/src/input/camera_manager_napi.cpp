@@ -2436,6 +2436,53 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
     return result;
 }
 
+napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("SetTorchModeOnWithLevel is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE];
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+ 
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        int32_t mode;
+        double level;
+        status = napi_get_value_double(env, argv[PARAM0], &level);
+        if (status != napi_ok) {
+            MEDIA_ERR_LOG("SetTorchModeOnWithLevel: failed to get level value from JS");
+            CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+                "CameraManagerNapi::SetTorchModeOnWithLevel can not get thisVar");
+            return result;
+        }
+        if (level < 0 || level > 1) {
+            MEDIA_ERR_LOG("SetTorchModeOnWithLevel: level value is out of range");
+            CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+                "CameraManagerNapi::SetTorchModeOnWithLevel level value is out of range ");
+            return result;
+        }
+        MEDIA_INFO_LOG("CameraManagerNapi::SetTorchModeOnWithLevel is %{public}f", level);
+        if (level == 0.0) {
+            mode = TORCH_MODE_OFF;
+        } else {
+            mode = TORCH_MODE_ON;
+        }
+        TorchMode torchMode = (TorchMode)mode;
+        int32_t retCode = CameraManager::GetInstance()->SetTorchModeOnWithLevel(torchMode, level);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_DEBUG_LOG("SetTorchModeOnWithLevel fail throw error");
+        }
+    } else {
+        MEDIA_ERR_LOG("GetTorchModeWithLevel call Failed!");
+    }
+    return result;
+}
+
 napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<CameraManagerNapi>::On(env, info);
