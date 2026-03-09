@@ -3105,7 +3105,7 @@ int32_t TorchServiceListenerManager::OnTorchStatusChange(const TorchStatus statu
         // LCOV_EXCL_START
         torchStatusInfo.isTorchAvailable = true;
         torchStatusInfo.isTorchActive = true;
-        torchStatusInfo.torchLevel = level;
+        torchStatusInfo.torchLevel = cameraManager->GetTorchLevel();
         cameraManager->UpdateTorchMode(TORCH_MODE_ON);
         // LCOV_EXCL_STOP
     } else if (status == TorchStatus::TORCH_STATUS_OFF) {
@@ -3613,6 +3613,11 @@ int32_t CameraManager::SetTorchLevel(float level)
     MEDIA_INFO_LOG("CameraManager::SetTorchLevel is %{public}f", level);
     int32_t retCode = serviceProxy->SetTorchLevel(level);
     CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SetTorchLevel call failed, retCode: %{public}d", retCode);
+    if (retCode == CAMERA_OK) {
+        level_.store(level);
+    }
+    float value = level_.load();
+    MEDIA_INFO_LOG("CameraManager::SetTorchLevelback is %{public}f", value);
     return retCode;
 }
 
