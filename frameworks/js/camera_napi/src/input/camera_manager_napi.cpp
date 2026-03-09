@@ -753,9 +753,11 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("createDepthDataOutput", CreateDepthDataOutputInstance),
         DECLARE_NAPI_FUNCTION("createMovieFileOutput", CreateMovieFileOutputInstance),
         DECLARE_NAPI_FUNCTION("isTorchSupported", IsTorchSupported),
+        DECLARE_NAPI_FUNCTION("isTorchLevelControlSupported", IsTorchLevelControlSupported),
         DECLARE_NAPI_FUNCTION("isTorchModeSupported", IsTorchModeSupported),
         DECLARE_NAPI_FUNCTION("getTorchMode", GetTorchMode),
         DECLARE_NAPI_FUNCTION("setTorchMode", SetTorchMode),
+        DECLARE_NAPI_FUNCTION("setTorchModeOnWithLevel", SetTorchModeOnWithLevel),
         DECLARE_NAPI_FUNCTION("getCameraDevice", GetCameraDevice),
         DECLARE_NAPI_FUNCTION("getCameraDevices", GetCameraDevices),
         DECLARE_NAPI_FUNCTION("getCameraConcurrentInfos", GetCameraConcurrentInfos),
@@ -2351,6 +2353,30 @@ napi_value CameraManagerNapi::IsTorchSupported(napi_env env, napi_callback_info 
         napi_get_boolean(env, isTorchSupported, &result);
     } else {
         MEDIA_ERR_LOG("IsTorchSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraManagerNapi::IsTorchLevelControlSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("isTorchLevelControlSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+ 
+    napi_get_undefined(env, &result);
+    CameraManagerNapi* cameraManagerNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
+    if (status == napi_ok && cameraManagerNapi != nullptr) {
+        bool isTorchLevelControlSupported = CameraManager::GetInstance()->IsTorchLevelControlSupported();
+        MEDIA_DEBUG_LOG("IsTorchLevelControlSupported : %{public}d", isTorchLevelControlSupported);
+        napi_get_boolean(env, isTorchLevelControlSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsTorchLevelControlSupported call Failed!");
     }
     return result;
 }
