@@ -414,6 +414,9 @@ private:
     bool isFindModuleTypeTag(uint32_t &tagId);
     bool isConcurrentDevice_ = false;
     bool usePhysicalCameraOrientation_ = false;
+    bool isLogicCamera_ = false;
+    bool isVariable_ = false;
+    std::string foldScreenConfig_ = "";
     
     std::mutex modeVideoDeferredTypeMtx_;
     std::mutex modeFullPreviewProfilesMutex_;
