@@ -2414,6 +2414,34 @@ int32_t HCameraService::IsTorchSupported(bool &isTorchSupported)
     return retCode;
 }
 
+int32_t HCameraService::IsTorchLevelControlSupported(bool &isTorchLevelControlSupported)
+{
+    MEDIA_INFO_LOG("HCameraService::IsTorchLevelControlSupported");
+    isTorchLevelControlSupported = false;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "HCameraService::IsTorchLevelControlSupported Sysfail");
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "HCameraService::IsTorchLevelControlSupported failed");
+    for (auto& cameraAbility : cameraAbilityList) {
+        camera_metadata_item_t item;
+        int ret = OHOS::Camera::FindCameraMetadataItem(cameraAbility->get(),
+            OHOS_ABILITY_FLASHLIGHT_ADJUST_SUPPORTED, &item);
+        bool isSupportedTorch = ret == CAM_META_SUCCESS && item.count > 0;
+        if (isSupportedTorch) {
+            MEDIA_INFO_LOG("OHOS_ABILITY_FLASH_ADJUST_AVAILABLE is %{public}d", item.data.u8[0]);
+            if (item.data.u8[0] == 1) {
+                isTorchLevelControlSupported = true;
+                break;
+            }
+        }
+    }
+    MEDIA_INFO_LOG("HCameraService::isTorchLevelControlSupported. isTorchSupported: %{public}d",
+        isTorchLevelControlSupported);
+    return retCode;
+}
+
 int32_t HCameraService::IsCameraMuteSupported(bool &isCameraMuteSupported)
 {
     CHECK_RETURN_RET_ELOG(
