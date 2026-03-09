@@ -3542,6 +3542,22 @@ bool CameraManager::IsTorchSupported()
     return isCameraTorchSupported;
 }
 
+bool CameraManager::IsTorchLevelControlSupported()
+{
+    MEDIA_INFO_LOG("CameraManager::IsTorchLevelControlSupported");
+    bool isCameraTorchLevelControlSupported = false;
+    bool cacheResult = GetCameraDeviceAbilitySupportValue(
+        CAMERA_ABILITY_CONTROL_SUPPORT_TORCH, isCameraTorchLevelControlSupported);
+    CHECK_RETURN_RET(cacheResult, isCameraTorchLevelControlSupported);
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false, "IsTorchLevelControlSupported serviceProxy is null");
+    int32_t retCode = serviceProxy->IsTorchLevelControlSupported(isCameraTorchLevelControlSupported);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false,
+        "IsTorchLevelControlSupported call failed, retCode: %{public}d", retCode);
+    CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_CONTROL_SUPPORT_TORCH, isCameraTorchLevelControlSupported);
+    return isCameraTorchLevelControlSupported;
+}
+
 bool CameraManager::IsTorchModeSupported(TorchMode mode)
 {
     return mode == TorchMode::TORCH_MODE_OFF || mode == TorchMode::TORCH_MODE_ON;
@@ -3598,6 +3614,32 @@ int32_t CameraManager::SetTorchLevel(float level)
     int32_t retCode = serviceProxy->SetTorchLevel(level);
     CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SetTorchLevel call failed, retCode: %{public}d", retCode);
     return retCode;
+}
+
+int32_t CameraManager::SetTorchModeOnWithLevel(TorchMode mode, float level)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
+        "CameraManager::SetTorchModeOnWithLevelSystemApi called!");
+    MEDIA_INFO_LOG("CameraManager::SetTorchModeOnWithLevel is %{public}f", level);
+    int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
+    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    POWERMGR_SYSEVENT_TORCH_STATE(pid, uid, mode);
+    switch (mode) {
+        case TorchMode::TORCH_MODE_OFF:
+            retCode = SetTorchLevel(0);
+            break;
+        case TorchMode::TORCH_MODE_ON:
+            retCode = SetTorchLevel(level);
+            break;
+        default:
+            MEDIA_ERR_LOG("Invalid or unsupported torchMode value received from application");
+    }
+    if (retCode == CAMERA_OK) {
+        UpdateTorchMode(mode);
+    }
+    return ServiceToCameraError(retCode);
 }
 
 int32_t CameraManager::SetPrelaunchConfig(
