@@ -2418,8 +2418,6 @@ int32_t HCameraService::IsTorchLevelControlSupported(bool &isTorchLevelControlSu
 {
     MEDIA_INFO_LOG("HCameraService::IsTorchLevelControlSupported");
     isTorchLevelControlSupported = false;
-    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
-        "HCameraService::IsTorchLevelControlSupported Sysfail");
     std::vector<std::string> cameraIds;
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
