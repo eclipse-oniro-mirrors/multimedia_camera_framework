@@ -938,6 +938,13 @@ public:
     bool IsTorchModeSupported(TorchMode mode);
 
     /**
+     * @brief check device if torch level control
+     *
+     * @return Returns true is supported, false is not supported.
+     */
+    
+    bool IsTorchLevelControlSupported();
+    /**
      * @brief get current torchmode
      *
      * @return Returns current torchmode
@@ -950,6 +957,13 @@ public:
      * @return.
      */
     int32_t SetTorchMode(TorchMode mode);
+
+    /**
+     * @brief set torch mode with level
+     *
+     * @return.
+     */
+    int32_t SetTorchModeOnWithLevel(TorchMode mode,float level);
 
     /**
      * @brief update torch mode
