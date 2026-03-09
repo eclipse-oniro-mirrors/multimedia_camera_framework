@@ -187,6 +187,7 @@ public:
     int32_t SetPrelaunchConfig(const string& cameraId, RestoreParamTypeOhos restoreParamType, int activeTime,
         const EffectParam& effectParam) override;
     int32_t IsTorchSupported(bool &isTorchSupported) override;
+    int32_t IsTorchLevelControlSupported(bool &isTorchLevelControlSupported) override;
     int32_t IsCameraMuteSupported(bool& isCameraMuteSupported) override;
     int32_t IsCameraMuted(bool& muteMode) override;
     int32_t GetTorchStatus(int32_t &status) override;
