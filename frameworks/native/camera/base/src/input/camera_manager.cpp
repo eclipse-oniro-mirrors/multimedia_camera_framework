@@ -3618,9 +3618,6 @@ int32_t CameraManager::SetTorchLevel(float level)
 
 int32_t CameraManager::SetTorchModeOnWithLevel(TorchMode mode, float level)
 {
-    CHECK_RETURN_RET_ELOG(
-        !CameraSecurity::CheckSystemApp(), CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
-        "CameraManager::SetTorchModeOnWithLevelSystemApi called!");
     MEDIA_INFO_LOG("CameraManager::SetTorchModeOnWithLevel is %{public}f", level);
     int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
     int32_t pid = IPCSkeleton::GetCallingPid();
