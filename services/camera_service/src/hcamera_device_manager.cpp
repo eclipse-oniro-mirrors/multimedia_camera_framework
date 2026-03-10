@@ -610,6 +610,19 @@ bool HCameraDeviceManager::GetMdmCheck()
     return mdmCheck_;
 }
 
+void HCameraDeviceManager::SetScanSceneBundle(const std::string& bundleName)
+{
+    MEDIA_INFO_LOG("HCameraDeviceManager::SetScanSceneBundle E");
+    scanSceneBundleName_ = bundleName;
+}
+
+std::string HCameraDeviceManager::GetScanSceneBundle()
+{
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetScanSceneBundle E");
+    return scanSceneBundleName_;
+}
+
+
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
 {
     CHECK_RETURN_ELOG(requestCameraHolder == nullptr, "requestCameraHolder is null");

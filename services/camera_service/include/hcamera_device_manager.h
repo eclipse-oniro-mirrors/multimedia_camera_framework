@@ -331,6 +331,11 @@ public:
     void SetLiveScene(bool isLiveScene);
     bool IsLiveScene();
 #endif
+
+    void SetScanSceneBundle(const std::string& bundleName);
+    std::string GetScanSceneBundle();
+    bool IsScanScene();
+
 private:
     HCameraDeviceManager();
     static sptr<HCameraDeviceManager> cameraDeviceManager_;
@@ -361,6 +366,7 @@ private:
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     std::atomic<bool> isLiveScene_ = false;
 #endif
+    std::string scanSceneBundleName_ = "";
 };
 } // namespace CameraStandard
 } // namespace OHOS

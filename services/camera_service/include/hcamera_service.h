@@ -59,9 +59,7 @@
 #include "ideferred_photo_processing_session.h"
 #include "input/i_standard_camera_listener.h"
 #include "suspend_state_observer.h"
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
 #include "res_sched_event_listener.h"
-#endif
 
 namespace OHOS {
 namespace CameraStandard {
@@ -103,15 +101,20 @@ enum TemperPressure {
     TEMPER_PRESSURE_ESCAPE
 };
 
+enum ScanStatus : int32_t {
+    START_SCAN = 0,
+    STOP_SCAN = 1,
+    START_SCAN_JUMP_PAGE = 2,
+    STOP_SCAN_JUMP_PAGE = 3,
+};
+
 class CameraInfoDumper;
 
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
 class ResSchedToCameraEventListener : public OHOS::ResourceSchedule::ResSchedEventListener {
 public:
     void OnReceiveEvent(uint32_t eventType, uint32_t eventValue,
         std::unordered_map<std::string, std::string> extInfo) override;
 };
-#endif
 
 class EXPORT_API HCameraService
     : public SystemAbility, public CameraServiceStub, public HCameraHostManager::StatusCallback,
@@ -269,11 +272,8 @@ private:
     void UnregisterSuspendObserver();
     void ClearFreezedPidList();
     string GetPreScanBundleNameKey();
-
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void RegisterEventListenerToRss();
     void UnRegisterEventListenerToRss();
-#endif
 
     int32_t GetMuteModeFromDataShareHelper(bool &muteMode);
     bool SetMuteModeFromDataShareHelper();
@@ -464,9 +464,7 @@ private:
 
     std::mutex observerMutex_;
     sptr<SuspendStateObserver> suspendStateObserver_ {nullptr};
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
     sptr<ResSchedToCameraEventListener> eventListener_ = nullptr;
-#endif
     std::once_flag initParameterFlag_;
     std::mutex parameterMutex_;
     std::mutex camerasMutex_;

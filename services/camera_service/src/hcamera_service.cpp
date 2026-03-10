@@ -548,14 +548,17 @@ int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
     return ret;
 }
 
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
 void HCameraService::RegisterEventListenerToRss()
 {
     eventListener_ = new (std::nothrow) ResSchedToCameraEventListener;
     if (eventListener_ != nullptr) {
         MEDIA_DEBUG_LOG("HCameraService::RegisterEventListenerToRss RegisterEventListener");
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
         OHOS::ResourceSchedule::ResSchedClient::GetInstance().RegisterEventListener(eventListener_,
             OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED);
+#endif
+        OHOS::ResourceSchedule::ResSchedClient::GetInstance().RegisterEventListener(eventListener_,
+            OHOS::ResourceSchedule::ResType::EventType::EVENT_SMART_SCAN_EVENT);
     }
 }
 
@@ -563,12 +566,15 @@ void HCameraService::UnRegisterEventListenerToRss()
 {
     if (eventListener_ != nullptr) {
         MEDIA_DEBUG_LOG("HCameraService::UnRegisterEventListenerToRss UnRegisterEventListener");
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
         OHOS::ResourceSchedule::ResSchedClient::GetInstance().UnRegisterEventListener(eventListener_,
             OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED);
+#endif
+        OHOS::ResourceSchedule::ResSchedClient::GetInstance().UnRegisterEventListener(eventListener_,
+            OHOS::ResourceSchedule::ResType::EventType::EVENT_SMART_SCAN_EVENT);
     }
     eventListener_ = nullptr;
 }
-#endif
 
 void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
@@ -3435,25 +3441,35 @@ int32_t HCameraService::GetSupportedAbilities(const uint32_t& tagId, const uint8
     return retCode;
 }
 
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
-void ResSchedToCameraEventListener::OnReceiveEvent(uint32_t eventType, uint32_t eventValue,
-    std::unordered_map<std::string, std::string> extInfo)
+void ResSchedToCameraEventListener::OnReceiveEvent(
+    uint32_t eventType, uint32_t eventValue, std::unordered_map<std::string, std::string> extInfo)
 {
     MEDIA_DEBUG_LOG("ResSchedToCameraEventListener::OnReceiveEvent eventType is %{public}d, eventValue is %{public}d",
-        eventType, eventValue);
-    if (eventType != OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED) {
-        MEDIA_ERR_LOG("current scene is not live scene");
-        return;
+        eventType,
+        eventValue);
+    if (eventType == OHOS::ResourceSchedule::ResType::EventType::EVENT_SMART_SCAN_EVENT
+        && eventValue == ScanStatus::START_SCAN) {
+        MEDIA_DEBUG_LOG("ResSchedToCameraEventListener::OnReceiveEvent EVENT_SMART_SCAN_EVENT");
+        auto it = extInfo.find("bundleName");
+        CHECK_RETURN_ELOG(
+            it == extInfo.end(), "ResSchedToCameraEventListener::OnReceiveEvent EVENT_SMART_SCAN_EVENT err");
+        std::string bundleName = it->second;
+        HCameraDeviceManager::GetInstance()->SetScanSceneBundle(bundleName);
+        MEDIA_DEBUG_LOG("ResSchedToCameraEventListener::OnReceiveEvent bundleName:%{private}s", bundleName.c_str());
     }
-    if (eventValue == OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_BEGIN) {
-        HCameraDeviceManager::GetInstance()->SetLiveScene(true);
-    } else if (eventValue == OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_END) {
-        HCameraDeviceManager::GetInstance()->SetLiveScene(false);
-    } else {
-        MEDIA_ERR_LOG("current eventValue: %{public}d is not supported", eventValue);
+#ifdef CAMERA_LIVE_SCENE_RECOGNITION
+    if (eventType == OHOS::ResourceSchedule::ResType::EventType::EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED) {
+        MEDIA_DEBUG_LOG("ResSchedToCameraEventListener::OnReceiveEvent EVENT_REPORT_HFLS_LIVE_SCENE_CHANGED");
+        if (eventValue == OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_BEGIN) {
+            HCameraDeviceManager::GetInstance()->SetLiveScene(true);
+        } else if (eventValue == OHOS::ResourceSchedule::ResType::EventValue::EVENT_VALUE_HFLS_END) {
+            HCameraDeviceManager::GetInstance()->SetLiveScene(false);
+        } else {
+            MEDIA_ERR_LOG("current eventValue: %{public}d is not supported", eventValue);
+        }
     }
+#endif
     return;
 }
-#endif
 } // namespace CameraStandard
 } // namespace OHOS
