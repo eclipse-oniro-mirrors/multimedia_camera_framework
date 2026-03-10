@@ -24,7 +24,7 @@ namespace CameraStandard {
 using namespace std;
 thread_local napi_ref CameraNapi::sConstructor_ = nullptr;
 thread_local napi_ref g_ignoreRef_ = nullptr;
-//qxu
+
 CameraNapi::CameraNapi() : env_(nullptr)
 {
     MEDIA_INFO_LOG("CameraNapi::CameraNapi constructor");
