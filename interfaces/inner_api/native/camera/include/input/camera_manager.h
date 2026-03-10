@@ -1031,7 +1031,7 @@ public:
             cameraDeviceList_.end());
     }
 
-    inline float GetTorchLevel() const 
+    inline float GetTorchLevel() const
     {
         return level_.load();
     }
