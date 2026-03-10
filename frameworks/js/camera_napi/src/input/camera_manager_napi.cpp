@@ -15,6 +15,7 @@
 
 #include "input/camera_manager_napi.h"
 
+#include "qos.h"
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
@@ -2229,6 +2230,7 @@ napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_i
 napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("PrelaunchCamera is called");
+    QOS::SetThreadQos(QOS::QosLevel::QOS_USER_INTERACTIVE);
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi PrelaunchCamera is called!");
         return nullptr;
@@ -2256,6 +2258,7 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
     }
     MEDIA_INFO_LOG("PrelaunchCamera");
     napi_get_undefined(env, &result);
+    QOS::ResetThreadQos();
     return result;
 }
 
