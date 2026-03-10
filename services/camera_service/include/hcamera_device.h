@@ -312,6 +312,7 @@ private:
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t UpdateDeviceSetting();
     void ReleaseSessionBeforeCloseDevice();
+    void RemoveHdiCamera();
 #ifdef MEMMGR_OVERRID
     int32_t RequireMemory(const std::string& reason);
 #endif
