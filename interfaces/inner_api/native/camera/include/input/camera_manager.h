@@ -963,7 +963,7 @@ public:
      *
      * @return.
      */
-    int32_t SetTorchModeOnWithLevel(TorchMode mode,float level);
+    int32_t SetTorchModeOnWithLevel(TorchMode mode, float level);
 
     /**
      * @brief update torch mode
