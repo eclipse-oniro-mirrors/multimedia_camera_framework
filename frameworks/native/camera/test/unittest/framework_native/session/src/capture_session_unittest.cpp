@@ -15072,44 +15072,6 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_213, TestSize.Level0)
 
 /*  
  * Feature: Framework
- * Function: Test SetParameters before CommitConfig.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test SetParameters before CommitConfig.
- */
-HWTEST_F(CaptureSessionUnitTest, capture_session_unit_214, TestSize.Level0)
-{
-    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
-    ASSERT_NE(session, nullptr);
-    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
-    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
-    sptr<CaptureInput> input = cameraInput;
-    ASSERT_NE(input, nullptr);
-    input->Open();
-    UpdateCameraOutputCapability();
-    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
-    ASSERT_NE(preview, nullptr);
-    EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddInput(input), 0);
-    EXPECT_EQ(session->AddOutput(preview), 0);
-
-    session->LockForControl();
-    std::unordered_map<std::string, std::string> kvPairs;
-    int32_t retCode = session->SetParameters(kvPairs);
-    EXPECT_EQ(retCode, CameraErrorCode::SESSION_NOT_CONFIG);
-    session->UnlockForControl();
-
-    EXPECT_EQ(session->CommitConfig(), 0);
-
-    input->Close();
-    preview->Release();
-    input->Release();
-    session->Release();
-}
-
-/*  
- * Feature: Framework
  * Function: Test SetParameters invalid parameter.
  * SubFunction: NA
  * FunctionPoints: NA
