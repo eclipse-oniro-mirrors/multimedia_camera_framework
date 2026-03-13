@@ -2924,9 +2924,9 @@ int32_t HCameraService::SaveCurrentParamForRestore(sptr<HCameraRestoreParam> cam
     CHECK_RETURN_RET(activeDevices.empty(), CAMERA_OK);
     std::vector<StreamInfo_V1_5> allStreamInfos;
     if (activeDevices.size() == 1) { // LCOV_EXCL_LINE
-        std::shared_ptr<OHOS::Camera::CameraMetadata> defaultSettings
-            = CreateDefaultSettingForRestore(activeDevices[0]);
+        auto defaultSettings = CreateDefaultSettingForRestore(activeDevices[0]);
         UpdateBeautySetting(defaultSettings, effectParam);
+        CHECK_EXECUTE(cameraRestoreParam->IsScan(), UpdateScanSetting(defaultSettings));
         cameraRestoreParam->SetSetting(defaultSettings);
     }
     rc = captureSession->GetCurrentStreamInfos(allStreamInfos);
@@ -3068,6 +3068,17 @@ int32_t HCameraService::UpdateParameterSetting(const uint32_t& tagId, const uint
         MEDIA_INFO_LOG("start UpdateParameterSetting");
     }
     return ret;
+}
+
+void HCameraService::UpdateScanSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& changedMetadata)
+{
+    CHECK_RETURN(changedMetadata == nullptr);
+    int32_t count = 1;
+    int32_t scan = OHOS_CAMERA_APP_HINT_SCAN_CODE;
+    auto item = GetMetadataItem(changedMetadata->get(), OHOS_CONTROL_APP_HINT);
+    CHECK_EXECUTE(item != nullptr, scan |= item->data.i32[0]);
+    bool status = AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_APP_HINT, &scan, count);
+    MEDIA_INFO_LOG("UpdateScanSetting status: %{public}d", status);
 }
 
 std::string g_toString(std::set<int32_t>& pidList)
@@ -3343,9 +3354,9 @@ void HCameraService::SetPrelaunchScanCameraConfig(const std::string& bundleName)
         pid_t pid = IPCSkeleton::GetCallingPid();
         auto &sessionManager = HCameraSessionManager::GetInstance();
         captureSession_ = sessionManager.GetGroupDefaultSession(pid);
-        sptr<HCameraRestoreParam> cameraRestoreParam = new HCameraRestoreParam(GetPreScanBundleNameKey(), preCameraId);
-        SaveCurrentParamForRestore(cameraRestoreParam, static_cast<RestoreParamTypeOhos>(restoreParamType), activeTime,
-            effectParam, captureSession_);
+        auto cameraRestoreParam = sptr<HCameraRestoreParam>::MakeSptr(GetPreScanBundleNameKey(), preCameraId);
+        cameraRestoreParam->SetScanStatus(true);
+        SaveCurrentParamForRestore(cameraRestoreParam, restoreParamType, activeTime, effectParam, captureSession_);
     } else {
         MEDIA_ERR_LOG("HCameraService::SetPrelaunchScanCameraConfig not find cameraId");
     }
