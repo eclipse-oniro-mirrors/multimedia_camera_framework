@@ -54,6 +54,12 @@ public:
     void SetCameraOpMode(int32_t opMode);
     int GetFlodStatus();
     void SetFoldStatus(int foldStaus);
+    void SetScanStatus(bool isScan);
+
+    inline bool IsScan() const
+    {
+        return mIsScan;
+    }
 
 private:
     std::mutex restoreParamMutex_;
@@ -66,6 +72,7 @@ private:
     int mStartActiveTime = 0;
     int32_t mOpMode = 0;
     int mFoldStatus = 0;
+    bool mIsScan = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS
