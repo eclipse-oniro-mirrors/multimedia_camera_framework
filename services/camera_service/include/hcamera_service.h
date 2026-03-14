@@ -468,8 +468,6 @@ private:
     sptr<ResSchedToCameraEventListener> eventListener_ = nullptr;
     std::once_flag initParameterFlag_;
     std::mutex parameterMutex_;
-    std::mutex camerasMutex_;
-    std::vector<wptr<HCameraDevice>> cameras_;
 };
 } // namespace CameraStandard
 } // namespace OHOS
