@@ -209,7 +209,6 @@ public:
     void SetIsHasFitedRotation(bool isHasFitedRotation);
     bool GetIsHasFitedRotation();
     std::vector<int32_t> GetFrameRateRange();
-    int32_t GetPid();
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     void UpdateLiveStreamSceneMetadata(uint32_t mode);
 #endif

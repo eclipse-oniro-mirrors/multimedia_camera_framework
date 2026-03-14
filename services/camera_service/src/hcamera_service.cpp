@@ -856,10 +856,6 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     sptr<HCameraDevice> cameraDevice = new (nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, CAMERA_ALLOC_ERROR,
         "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
-    {
-        std::lock_guard<std::mutex> lock(camerasMutex_);
-        cameras_.emplace_back(cameraDevice);
-    }
     CHECK_RETURN_RET_ELOG(GetServiceStatus() != CameraServiceStatus::SERVICE_READY, CAMERA_INVALID_STATE,
         "HCameraService::CreateCameraDevice CameraService not ready!");
     {
@@ -1475,16 +1471,6 @@ int32_t HCameraService::CloseCameraForDestory(pid_t pid)
     for (auto streamoperator : streamOperatorToRelease) {
         streamoperator->UnlinkOfflineInputAndOutputs();
         streamoperator->Release();
-    }
-    {
-        std::lock_guard<std::mutex> lock(camerasMutex_);
-        cameras_.erase(std::remove_if(cameras_.begin(), cameras_.end(),
-            [pid](const wptr<HCameraDevice> &cameraDevice) {
-                auto cameraDeviceSptr = cameraDevice.promote();
-                CHECK_EXECUTE(cameraDeviceSptr != nullptr && cameraDeviceSptr->GetPid() == pid,
-                    cameraDeviceSptr->Close());
-                return cameraDeviceSptr == nullptr || cameraDeviceSptr->GetPid() == pid;
-            }), cameras_.end());
     }
     return CAMERA_OK;
 }
