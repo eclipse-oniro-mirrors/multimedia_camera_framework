@@ -600,9 +600,7 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
         "repeatStreamType:%{public}d",
         GetFwkStreamId(), GetHdiStreamId(), preparedCaptureId, repeatStreamType_);
     if (repeatStreamType_ == RepeatStreamType::VIDEO) {
-        auto callingTokenId = IPCSkeleton::GetCallingTokenID();
-        const std::string permissionName = "ohos.permission.CAMERA";
-        AddCameraPermissionUsedRecord(callingTokenId, permissionName);
+        AddCameraPermissionUsedRecord();
     }
     int32_t ret = 0;
     {

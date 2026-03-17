@@ -31,7 +31,7 @@ namespace CameraStandard {
 static const int32_t WAIT_RELEASE_STREAM_MS = 500; // 500ms
 static const int32_t WAIT_RELEASE_STREAM_MS_FOR_SYSTEM_CAMERA = 1500; // 1500ms
 class HCameraDevice;
-
+using OHOS::Security::AccessToken::RemoteCallerInfo;
 class DisablePolicyChangeCb : public Security::AccessToken::DisablePolicyChangeCallback {
 public:
     explicit DisablePolicyChangeCb(const std::vector<std::string> &permList)
@@ -87,9 +87,22 @@ public:
         canClose_.notify_one();
     }
 
+    inline bool IsRemote()
+    {
+        std::lock_guard<std::mutex> lock(callerInfoMutex_);
+        return remoteCallerInfo_.has_value();
+    }
+
+    inline void SetRemoteCallerInfo(const RemoteCallerInfo& callerInfo)
+    {
+        std::lock_guard<std::mutex> lock(callerInfoMutex_);
+        remoteCallerInfo_ = callerInfo;
+    }
 private:
     int32_t pid_;
     uint32_t callerToken_;
+    std::mutex callerInfoMutex_;
+    std::optional<RemoteCallerInfo> remoteCallerInfo_;
     std::string clientName_;
     std::condition_variable canClose_;
     std::mutex canCloseMutex_;

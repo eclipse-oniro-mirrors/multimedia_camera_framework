@@ -409,14 +409,6 @@ int32_t CheckPermission(const std::string permissionName, uint32_t callerToken)
     return CAMERA_OK;
 }
 
-void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName)
-{
-    int32_t successCout = 1;
-    int32_t failCount = 0;
-    int32_t ret = PrivacyKit::AddPermissionUsedRecord(callingTokenId, permissionName, successCout, failCount);
-    MEDIA_INFO_LOG("AddPermissionUsedRecord");
-    CHECK_PRINT_ELOG(ret != CAMERA_OK, "AddPermissionUsedRecord failed.");
-}
 bool IsVerticalDevice()
 {
     bool isVerticalDevice = true;

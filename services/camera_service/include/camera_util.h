@@ -205,8 +205,6 @@ EXPORT_API bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, 
 
 EXPORT_API int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
 
-void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
-
 int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& displayRotation,
     std::string& deviceClass);
 

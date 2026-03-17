@@ -676,7 +676,7 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
     if (mdmCheck_) {
         CHECK_RETURN_RET_ELOG(HCameraDeviceManager::GetInstance()->GetDisablePolicy(), false, "policy disabled");
     }
-    CHECK_RETURN_RET_ELOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
+    CHECK_RETURN_RET_ELOG(!cameraPrivacy->IsRemote() && !IsHapTokenId(callerToken_), true, "local sa not need privacy");
     std::vector<sptr<HCameraDeviceHolder>> holders =
         HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(cameraPid_);
     CHECK_RETURN_RET_ELOG(!holders.empty(), true, "current pid has active clients, no action is required");
@@ -902,6 +902,12 @@ void HCameraDevice::HandleScanScene(std::string clientName)
         bool isScanSceneSupport = GetScanScene();
         CHECK_EXECUTE(isScanSceneSupport, UpdateScanSceneMetadata(previewQuality));
     }
+}
+
+void HCameraDevice::AddCameraPermissionUsedRecord()
+{
+    auto cameraPrivacy = GetCameraPrivacy();
+    CHECK_EXECUTE(cameraPrivacy, cameraPrivacy->AddCameraPermissionUsedRecord());
 }
 
 void HCameraDevice::ReleaseSessionBeforeCloseDevice()
@@ -2074,6 +2080,19 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
     EventFwk::CommonEventManager::PublishCommonEvent(CommonEventData, publishInfo);
     MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus end");
 }
+
+int32_t HCameraDevice::Open(const CallerDeviceInfo& callerInfo)
+{
+    constexpr int32_t MAX_SA_UID = 10000;
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    CHECK_RETURN_RET_ELOG(uid >= MAX_SA_UID, CAMERA_OPERATION_NOT_ALLOWED, "uid %{public}d not sa", uid);
+    using OHOS::Security::AccessToken::RemoteCallerInfo;
+    RemoteCallerInfo info{ .remoteDeviceId = callerInfo.deviceId, .remoteDeviceName = callerInfo.deviceName };
+    auto cameraPrivacy = GetCameraPrivacy();
+    CHECK_EXECUTE(cameraPrivacy, cameraPrivacy->SetRemoteCallerInfo(info));
+    return Open();
+}
+
 // LCOV_EXCL_START
 int32_t HCameraDevice::Open(int32_t concurrentType)
 {

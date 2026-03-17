@@ -80,6 +80,11 @@ public:
     int Open(int32_t cameraConcurrentType) override;
 
     /**
+    * @brief open camera remote.
+    */
+    int Open(const CallerDeviceInfo& callerinfo) override;
+
+    /**
     * @brief close camera.
     */
     int Close() override;
