@@ -2344,8 +2344,7 @@ void HCaptureSession::DestroyStubObjectForPid(pid_t pid)
         CaptureSessionInfo sessionInfo;
         CHECK_RETURN_ILOG(!session->GetCaptureSessionInfo(sessionInfo),
             "HCaptureSession::DestroyStubObjectForPid GetCaptureSessionInfo failed");
-        CHECK_CONTINUE(!cameraSwitchSession);
-        cameraSwitchSession->OnCameraUnactive(sessionInfo.cameraId);
+        CHECK_EXECUTE(cameraSwitchSession, cameraSwitchSession->OnCameraUnactive(sessionInfo.cameraId));
         session->Release(CaptureSessionReleaseType::RELEASE_TYPE_CLIENT_DIED);
     }
     sessionManager.RemoveGroup(pid);

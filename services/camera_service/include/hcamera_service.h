@@ -163,7 +163,7 @@ public:
     int32_t CreateMovieFileOutput(
         const IpcVideoProfile& videoProfile, sptr<IMovieFileOutput>& movieFileOutput) override;
     int32_t UnSetAllCallback(pid_t pid);
-    int32_t CloseCameraForDestory(pid_t pid);
+    int32_t CloseCameraForDestroy(pid_t pid);
     int32_t SetCameraCallback(const sptr<ICameraServiceCallback>& callback, bool executeCallbackNow) override;
     int32_t UnSetCameraCallback() override;
     int32_t SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback) override;
@@ -468,6 +468,8 @@ private:
     sptr<ResSchedToCameraEventListener> eventListener_ = nullptr;
     std::once_flag initParameterFlag_;
     std::mutex parameterMutex_;
+    std::mutex camerasMutex_;
+    std::vector<wptr<HCameraDevice>> cameras_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

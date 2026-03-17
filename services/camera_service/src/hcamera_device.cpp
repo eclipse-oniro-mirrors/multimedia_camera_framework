@@ -2260,5 +2260,10 @@ void HCameraDevice::UpdateScanSceneMetadata(uint32_t previewQuality)
     CHECK_RETURN_ELOG(ret != CAMERA_OK, "UpdateSetting camera scan scene Failed");
     return;
 }
+
+int32_t HCameraDevice::GetPid()
+{
+    return cameraPid_;
+}
 } // namespace CameraStandard
 } // namespace OHOS
