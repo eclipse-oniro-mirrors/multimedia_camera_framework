@@ -359,6 +359,24 @@ int CameraInput::Open(bool isEnableSecureCamera, uint64_t* secureSeqId)
     return ServiceToCameraError(retCode);
 }
 
+int CameraInput::Open(const CallerDeviceInfo& callerDeviceinfo)
+{
+    std::lock_guard<std::mutex> lock(interfaceMutex_);
+    RecoveryOldDevice();
+    CameraManager::GetInstance()->UnregisterTimeforDevice(GetCameraId());
+    SetClosedelayedState(false);
+    MEDIA_INFO_LOG("Enter Into CameraInput::Open with CallerDeviceInfo");
+    int32_t retCode = CAMERA_UNKNOWN_ERROR;
+    auto deviceObj = GetCameraDevice();
+    if (deviceObj) {
+        retCode = deviceObj->Open(callerDeviceinfo);
+        CHECK_PRINT_ELOG(retCode != CAMERA_OK, "Failed to open Camera Input, retCode: %{public}d", retCode);
+    } else {
+        MEDIA_ERR_LOG("CameraInput::Open() deviceObj is nullptr");
+    }
+    return ServiceToCameraError(retCode);
+}
+
 int CameraInput::Close()
 {
     std::lock_guard<std::mutex> lock(interfaceMutex_);

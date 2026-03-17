@@ -215,3 +215,8 @@ struct dmDeviceInfo {
     int deviceTypeId;
     String networkId;
 };
+
+struct CallerDeviceInfo {
+    String deviceId;
+    String deviceName;
+};

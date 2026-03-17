@@ -377,5 +377,19 @@ void HStreamCommon::SetBasicInfo(std::map<int32_t, std::string> basicParam)
     std::lock_guard<std::mutex> lock(basicInfoLock_);
     param = basicParam;
 }
+
+void HStreamCommon::SetCameraPermissionUsedRecordFunction(RecordFunction recordFunction)
+{
+    recordFunction_ = recordFunction;
+}
+
+void HStreamCommon::AddCameraPermissionUsedRecord()
+{
+    if (recordFunction_) {
+        recordFunction_();
+    } else {
+        MEDIA_ERR_LOG("HStreamCommon::AddCameraPermissionUsedRecord failed, recordFunction is null");
+    }
+}
 } // namespace CameraStandard
 } // namespace OHOS

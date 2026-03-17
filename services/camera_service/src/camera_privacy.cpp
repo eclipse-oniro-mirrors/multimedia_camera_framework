@@ -30,6 +30,7 @@ namespace OHOS {
 namespace CameraStandard {
 using OHOS::Security::AccessToken::PrivacyKit;
 using OHOS::Security::AccessToken::AccessTokenKit;
+constexpr int32_t ACCESS_TOKEN_KIT_RET_SUCCESS = 0;
 
 sptr<HStreamOperator> CastToSession(wptr<IStreamOperatorCallback> streamOpCb)
 {
@@ -141,6 +142,7 @@ void CameraPrivacy::SetClientName(const std::string& clientName)
 
 bool CameraPrivacy::RegisterPermissionCallback()
 {
+    CHECK_RETURN_RET_ILOG(IsRemote(), true, "Skip RegisterPermissionCallback");
     Security::AccessToken::PermStateChangeScope scopeInfo;
     scopeInfo.permList = {OHOS_PERMISSION_CAMERA};
     scopeInfo.tokenIDs = {callerToken_};
@@ -157,6 +159,7 @@ bool CameraPrivacy::RegisterPermissionCallback()
 
 void CameraPrivacy::UnregisterPermissionCallback()
 {
+    CHECK_RETURN_ILOG(IsRemote(), "Skip UnregisterPermissionCallback");
     std::lock_guard<std::mutex> lock(permissionCbMutex_);
     CHECK_RETURN_ELOG(permissionCallbackPtr_ == nullptr, "permissionCallbackPtr_ is null.");
     MEDIA_DEBUG_LOG("UnregisterPermissionCallback unregister");
@@ -169,10 +172,12 @@ void CameraPrivacy::UnregisterPermissionCallback()
 bool CameraPrivacy::AddCameraPermissionUsedRecord()
 {
     CAMERA_SYNC_TRACE;
-
-    int32_t successCout = 1;
-    int32_t failCount = 0;
-    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, successCout, failCount);
+    if (IsRemote()) {
+        int32_t res = PrivacyKit::AddRemotePermissionUsedRecord(*remoteCallerInfo_, OHOS_PERMISSION_CAMERA, 1, 0);
+        MEDIA_INFO_LOG("AddRemotePermissionUsedRecord is called, res: %{public}d", res);
+        return res == ACCESS_TOKEN_KIT_RET_SUCCESS;
+    }
+    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, 1, 0);
     MEDIA_INFO_LOG("CameraPrivacy::AddCameraPermissionUsedRecord res:%{public}d", res);
     CHECK_PRINT_ELOG(res != CAMERA_OK, "AddCameraPermissionUsedRecord failed.");
     return res == CAMERA_OK;
@@ -182,8 +187,12 @@ bool CameraPrivacy::StartUsingPermissionCallback()
 {
     MEDIA_INFO_LOG("CameraPrivacy::StartUsingPermissionCallback is called, pid_: %{public}d", pid_);
     CAMERA_SYNC_TRACE;
-
     int32_t res;
+    if (IsRemote()) {
+        res = PrivacyKit::StartRemoteUsingPermission(*remoteCallerInfo_, OHOS_PERMISSION_CAMERA);
+        MEDIA_INFO_LOG("StartRemoteUsingPermission is called, res: %{public}d", res);
+        return res == ACCESS_TOKEN_KIT_RET_SUCCESS;
+    }
     {
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
         CHECK_RETURN_RET_ELOG(cameraUseCallbackPtr_, true, "has StartUsingPermissionCallback!");
@@ -200,6 +209,11 @@ bool CameraPrivacy::StartUsingPermissionCallback()
 void CameraPrivacy::StopUsingPermissionCallback()
 {
     MEDIA_INFO_LOG("CameraPrivacy::StopUsingPermissionCallback is called, pid_: %{public}d", pid_);
+    if (IsRemote()) {
+        int32_t res = PrivacyKit::StopRemoteUsingPermission(*remoteCallerInfo_, OHOS_PERMISSION_CAMERA);
+        MEDIA_INFO_LOG("StopRemoteUsingPermission is called, res: %{public}d", res);
+        return;
+    }
     {
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
         int32_t res = PrivacyKit::StopUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, pid_);

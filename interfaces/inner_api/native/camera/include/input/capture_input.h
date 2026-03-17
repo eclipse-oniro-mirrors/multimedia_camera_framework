@@ -53,6 +53,11 @@ public:
     virtual int Open(int32_t cameraConcurrentType) = 0;
 
     /**
+    * @brief open camera remote.
+    */
+    virtual int Open(const CallerDeviceInfo& callerinfo) = 0;
+
+    /**
      * @brief close camera.
      */
     virtual int Close() = 0;

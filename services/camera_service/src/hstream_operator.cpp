@@ -761,8 +761,13 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
             CHECK_EXECUTE(opMode == static_cast<SceneMode>(opMode), repeatStream->SetCurrentMode(opMode));
         }
         stream->SetStreamInfo(curStreamInfo);
-        CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA,
-            allStreamInfos.push_back(curStreamInfo));
+        CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA, allStreamInfos.push_back(curStreamInfo));
+        auto weakDevice = wptr<HCameraDevice>(cameraDevice_);
+        stream->SetCameraPermissionUsedRecordFunction([weakDevice]() {
+            if (auto device = weakDevice.promote()) {
+                device->AddCameraPermissionUsedRecord();
+            }
+        });
     }
 
     rc = CreateAndCommitStreams(allStreamInfos, settings, opMode);
