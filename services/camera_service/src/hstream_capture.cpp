@@ -859,7 +859,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
 #ifdef CAMERA_CAPTURE_YUV
     bool isSystemApp = CheckSystemApp();
     PhotoLevelManager::GetInstance().SetPhotoLevelInfo(preparedCaptureId, isSystemApp);
-    MEDIA_DEBUG_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
+    MEDIA_INFO_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
         preparedCaptureId, isSystemApp);
 #endif
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, isBursting_));
