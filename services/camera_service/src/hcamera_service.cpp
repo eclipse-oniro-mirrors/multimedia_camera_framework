@@ -3312,6 +3312,8 @@ int32_t HCameraService::PrelaunchScanCamera(const std::string& bundleName, const
     CHECK_RETURN_RET_ELOG(IPCSkeleton::GetCallingUid() != RSS_UID, UID_NO_PERMISSION,
         "HCameraService::PrelaunchScanCamera no permission");
     CameraXCollie cameraXCollie = CameraXCollie("HCameraService::PrelaunchScanCamera");
+    CHECK_RETURN_RET_ELOG(torchStatus_ == TorchStatus::TORCH_STATUS_ON, CAMERA_DEVICE_CONFLICT,
+        "HCameraService::PrelaunchScanCamera torch is running, abort!");
     MEDIA_INFO_LOG("HCameraService::PrelaunchScanCamera");
     #ifdef MEMMGR_OVERRID
     int32_t requiredMemSizeKB = 0;
