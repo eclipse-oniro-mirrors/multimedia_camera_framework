@@ -120,6 +120,10 @@ public:
     {
         return 0;
     }
+    int32_t Open(const CallerDeviceInfo& callerInfo) override
+    {
+        return 0;
+    }
 };
 class CameraDeviceServiceStubFuzzer {
 public:
