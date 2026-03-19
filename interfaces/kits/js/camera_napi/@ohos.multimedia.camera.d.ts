@@ -1198,6 +1198,52 @@ function getCameraManager(context: Context): CameraManager;
     setTorchMode(mode: TorchMode): void;
 
     /**
+     * Checks whether torch level control is supported.
+     *
+     * @returns { boolean } Is torch level control supported.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @stagemodelonly
+     * @since 23 dynamic&static
+     */
+    /**
+     * Checks whether torch level control is supported.
+     *
+     * @returns { boolean } Is torch level control supported.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.0 dynamic&static
+     */
+    isTorchLevelControlSupported(): boolean;
+
+    /**
+     * Sets the torch mode to {@link TorchMode.ON} with the specified torch level.
+     *
+     * @param { double } torchLevel - the specified torch level.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @stagemodelonly
+     * @since 23 dynamic&static
+     */
+    /**
+     * Sets the torch mode to {@link TorchMode.ON} with the specified torch level.
+     *
+     * @param { double } torchLevel - the specified torch level.
+     * @throws { BusinessError } 7400102 - Operation not allowed.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.0 dynamic&static
+     */
+    setTorchModeOnWithLevel(torchLevel: double): void;
+
+    /**
      * Subscribes torch status change event callback.
      *
      * @param { 'torchStatusChange' } type - Event type
