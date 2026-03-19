@@ -276,13 +276,6 @@ public:
     int32_t SetColorEffect(ColorEffect colorEffect);
 
 // SensorExposureTime Callback
-    /**
-     * @brief Set the SensorExposureTime callback.
-     * which will be called when there is SensorExposureTime change.
-     *
-     * @param The ExposureInfoCallback pointer.
-     */
-    void SetExposureInfoCallback(std::shared_ptr<ExposureInfoCallback> callback);
 // Focus Callback
     /**
      * @brief Set the ISO callback.

@@ -90,6 +90,10 @@ protected:
     void RegisterIsoInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
         bool isOnce) override;
     void UnregisterIsoInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
+    void RegisterExposureInfoCallbackListener(const std::string &eventName, std::shared_ptr<uintptr_t> callback,
+        bool isOnce) override;
+    void UnregisterExposureInfoCallbackListener(const std::string &eventName,
+        std::shared_ptr<uintptr_t> callback) override;
     void RegisterApertureInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
         bool isOnce) override;
     void UnregisterApertureInfoCallbackListener(const std::string& eventName,
