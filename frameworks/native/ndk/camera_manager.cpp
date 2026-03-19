@@ -406,6 +406,33 @@ Camera_ErrorCode OH_CameraManager_IsTorchSupported(Camera_Manager* cameraManager
 }
 
 /**
+ * @since 26
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CameraManager_IsTorchLevelControlSupported(const Camera_Manager* cameraManager,
+    bool* isTorchLevelControlSupported)
+{
+    CHECK_RETURN_RET_ELOG(
+        cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
+    CHECK_RETURN_RET_ELOG(
+        isTorchLevelControlSupported == nullptr, CAMERA_INVALID_ARGUMENT, 
+            "Invalid argument, isTorchLevelControlSupported is null!");
+    return cameraManager->IsTorchLevelControlSupported(isTorchLevelControlSupported);
+ 
+}
+
+/**
+ * @since 26
+ * @version 1.0
+ */
+Camera_ErrorCode OH_CameraManager_SetTorchModeOnWithLevel(const Camera_Manager* cameraManager, double torchLevel) {
+
+    CHECK_RETURN_RET_ELOG(
+        cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
+    return cameraManager->SetTorchModeOnWithLevel(torchLevel);
+}
+
+/**
  * @since 12
  * @version 1.0
  */
