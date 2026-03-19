@@ -237,6 +237,9 @@ public:
     explicit ManualExposureQueryImpl() {}
     virtual ~ManualExposureQueryImpl() = default;
     virtual array<int32_t> GetSupportedExposureRange();
+    virtual int32_t GetExposureDuration();
+    virtual array<int32_t> GetSupportedExposureDurationRange();
+    virtual double GetExposureBiasStep();
 };
 
 class ManualExposureImpl : public ManualExposureQueryImpl {
@@ -245,6 +248,7 @@ public:
     virtual ~ManualExposureImpl() = default;
     virtual int32_t GetExposure();
     virtual void SetExposure(int32_t exposure);
+    virtual void SetExposureDuration(int32_t exposure);
 };
 
 class ColorEffectQueryImpl : virtual public SessionBase, virtual public FunctionBase {
@@ -268,6 +272,7 @@ public:
     virtual ~ManualIsoQueryImpl() = default;
     virtual array<int32_t> GetIsoRange();
     virtual bool IsManualIsoSupported();
+    virtual array<int32_t> GetSupportedISORange();
 };
 
 class ManualIsoImpl : public ManualIsoQueryImpl {
@@ -325,8 +330,9 @@ class ManualFocusImpl : virtual public SessionBase {
 public:
     explicit ManualFocusImpl() {}
     virtual ~ManualFocusImpl() = default;
-    double GetFocusDistance();
-    void SetFocusDistance(double distance);
+    virtual double GetFocusDistance();
+    virtual void SetFocusDistance(double distance);
+    virtual bool IsManualFocusSupported();
 };
 
 class PortraitQueryImpl : virtual public SessionBase, virtual public FunctionBase {

@@ -357,6 +357,7 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_5 &streamInfo)
     } else if (format_ == OHOS_CAMERA_FORMAT_DNG_XDRAW) {
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_4::ENCODE_TYPE_DNG_XDRAW);
+    } else if (format_ == OHOS_CAMERA_FORMAT_DNG) {
     } else {
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
     }

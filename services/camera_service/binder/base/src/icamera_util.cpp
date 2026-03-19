@@ -95,6 +95,9 @@ int32_t ServiceToCameraError(int32_t ret)
         case CAMERA_DEVICE_LENS_RETRACTED:
             err = CameraErrorCode::CAMERA_LENS_RETRACTED;
             break;
+        case CAMERA_UNSUPPORTED_COMBINATION:
+            err = CameraErrorCode::UNSUPPORTED_MULTI_CAMERA_COMBINATION;
+            break;
         default:
             MEDIA_ERR_LOG("ServiceToCameraError() error code from service: %{public}d", ret);
             break;

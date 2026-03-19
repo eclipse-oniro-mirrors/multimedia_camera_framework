@@ -334,7 +334,7 @@ void TimeLapsePhotoSessionImpl::SetIso(int32_t iso)
 
 int32_t TimeLapsePhotoSessionImpl::GetIso()
 {
-    int32_t iso = -1;
+    int32_t iso = 0;
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), iso,
         "SystemApi GetIso is called!");
     CHECK_RETURN_RET_ELOG(timeLapsePhotoSession_ == nullptr, iso,

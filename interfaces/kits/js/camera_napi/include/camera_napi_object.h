@@ -34,7 +34,7 @@ namespace CameraStandard {
 struct CameraNapiObject {
 public:
     typedef std::variant<bool*, int32_t*, uint32_t*, int64_t*, float*, double*, std::string*, CameraNapiObject*,
-        napi_value, std::vector<int32_t>*, std::list<CameraNapiObject>*>
+        napi_value, std::vector<int32_t>*, std::vector<double>*, std::list<CameraNapiObject>*>
         NapiVariantBindAddr;
 
     typedef std::unordered_map<std::string, NapiVariantBindAddr> CameraNapiObjFieldMap;
@@ -197,6 +197,23 @@ private:
             for (size_t i = 0; i < nativeArray.size(); i++) {
                 napi_value item = nullptr;
                 napi_create_int32(env_, nativeArray[i], &item);
+                if (napi_set_element(env_, result, i, item) != napi_ok) {
+                    return nullptr;
+                }
+            }
+            return result;
+        }
+        napi_value operator()(std::vector<double>*& variantAddr)
+        {
+            napi_value result = nullptr;
+            napi_status status = napi_create_array(env_, &result);
+            if (status != napi_ok) {
+                return nullptr;
+            }
+            auto& nativeArray = *variantAddr;
+            for (size_t i = 0; i < nativeArray.size(); i++) {
+                napi_value item = nullptr;
+                napi_create_double(env_, nativeArray[i], &item);
                 if (napi_set_element(env_, result, i, item) != napi_ok) {
                     return nullptr;
                 }

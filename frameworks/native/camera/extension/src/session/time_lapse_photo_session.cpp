@@ -418,7 +418,7 @@ int32_t TimeLapsePhotoSession::SetExposure(uint32_t exposure)
     CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "TimeLapsePhotoSession::SetExposure camera device is null");
     std::vector<uint32_t> sensorExposureTimeRange;
-    CHECK_RETURN_RET_ELOG((GetSensorExposureTimeRange(sensorExposureTimeRange) != CameraErrorCode::SUCCESS) &&
+    CHECK_RETURN_RET_ELOG((GetSensorExposureTimeRange(sensorExposureTimeRange) != CameraErrorCode::SUCCESS) ||
             sensorExposureTimeRange.empty(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "range is empty");
     const uint32_t autoLongExposure = 0;

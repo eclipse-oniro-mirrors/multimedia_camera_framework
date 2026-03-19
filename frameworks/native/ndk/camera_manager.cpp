@@ -369,6 +369,99 @@ Camera_ErrorCode OH_CameraDevice_GetAutomotiveCameraPosition(Camera_Device* came
     return Camera_Manager::GetAutomotiveCameraPosition(camera, position);
 }
 
+Camera_ErrorCode OH_CameraDevice_GetLensEquivalentFocalLengths(
+    const Camera_Device* camera, uint32_t** equivalentFocalLengths, uint32_t* size)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(equivalentFocalLengths == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, equivalentFocalLengths is null!");
+    return Camera_Manager::GetLensEquivalentFocalLengths(camera, equivalentFocalLengths, size);
+}
+
+Camera_ErrorCode OH_CameraDevice_IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(
+        isLogicalCamera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isLogicalCamera is null!");
+    return Camera_Manager::IsLogicalCamera(camera, isLogicalCamera);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size)
+{
+    CHECK_RETURN_RET_ELOG(
+        logicalCamera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, logicalCamera is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
+    return Camera_Manager::GetConstituentCamerasSize(logicalCamera, size);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(
+    const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size)
+{
+    CHECK_RETURN_RET_ELOG(
+        logicalCamera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, logicalCamera is null!");
+    CHECK_RETURN_RET_ELOG(
+        constituentCameras == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, constituentCameras is null!");
+    return Camera_Manager::GetLogicalCameraConstituentCameraDevices(logicalCamera, constituentCameras, size);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(
+        lensFocalLength == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, lensFocalLength is null!");
+    return Camera_Manager::GetLensFocalLength(camera, lensFocalLength);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetMinimumFocusDistance(const Camera_Device* camera, float* minimumFocusDistance)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(
+        minimumFocusDistance == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, minimumFocusDistance is null!");
+    return Camera_Manager::GetMinimumFocusDistance(camera, minimumFocusDistance);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(lens == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, lens is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
+    return Camera_Manager::GetLensDistortion(camera, lens, size);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetIntrinsicCalibration(
+    const Camera_Device* camera, float** intrinsicCalibration, uint32_t* size)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(
+        intrinsicCalibration == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, intrinsicCalibration is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
+    return Camera_Manager::GetIntrinsicCalibration(camera, intrinsicCalibration, size);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetSensorPhysicalSize(const Camera_Device* camera, float* width, float* height)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(width == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, width is null!");
+    CHECK_RETURN_RET_ELOG(height == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, height is null!");
+    return Camera_Manager::GetSensorPhysicalSize(camera, width, height);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetSensorPixelArraySize(const Camera_Device* camera, uint32_t* width, uint32_t* height)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(width == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, width is null!");
+    CHECK_RETURN_RET_ELOG(height == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, height is null!");
+    return Camera_Manager::GetSensorPixelArraySize(camera, width, height);
+}
+
+Camera_ErrorCode OH_CameraDevice_GetSensorColorFilterArrangement(
+    const Camera_Device* camera, OH_Camera_SensorColorFilterArrangement* sensorCFA)
+{
+    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(sensorCFA == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, sensorCFA is null!");
+    return Camera_Manager::GetSensorColorFilterArrangement(camera, sensorCFA);
+}
+
 Camera_ErrorCode OH_CameraManager_GetSupportedSceneModes(Camera_Device* camera,
     Camera_SceneMode** sceneModes, uint32_t* size)
 {

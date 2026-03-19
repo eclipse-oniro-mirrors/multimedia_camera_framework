@@ -119,4 +119,5 @@ interface ICameraService{
   [ipccode 105] void UnsetPeerCallback();
   [ipccode 106] void PrelaunchScanCamera([in] String bundleName, [in] String pageName, [in] PrelaunchScanModeOhos prelaunchScanMode);
   [ipccode 107] void RequireMemorySizeWithReason([in] String reason, [in] int requiredMemSizeKB);
+  [ipccode 108] void GetPhysicalCameraIds([out] List<String> cameraIds);
 }

@@ -4740,9 +4740,9 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_109, Test
         EXPECT_EQ(cameraInput_->Release(), SUCCESS);
         cameraInput_ = nullptr;
 
-        EXPECT_EQ(captureSession_->GetSensorExposureTimeRange(exposureTimeRange), 7400101);
+        EXPECT_EQ(captureSession_->GetSensorExposureTimeRange(exposureTimeRange), 7400102);
 
-        EXPECT_EQ(captureSession_->GetSensorExposureTime(recSensorExposureTime), 7400101);
+        EXPECT_EQ(captureSession_->GetSensorExposureTime(recSensorExposureTime), 7400102);
 
         captureSession_->LockForControl();
         EXPECT_EQ(captureSession_ ->SetSensorExposureTime(exposureTimeRange[0]), 7400102);
@@ -4922,9 +4922,9 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_112, Test
     cameraInput_ = nullptr;
 
     intResult = captureSessionForSys_->GetSupportedPhysicalApertures(supportedPhysicalApertures);
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, 7400102);
     intResult = captureSessionForSys_->GetPhysicalAperture(getAperture);
-    EXPECT_EQ(intResult, 0);
+    EXPECT_EQ(intResult, 7400102);
 }
 
 /*

@@ -408,7 +408,21 @@ void SessionImpl::RegisterExposureInfoCallbackListener(
         "this type callback can not be registered in current session!");
 }
 
+void SessionImpl::RegisterFlashStateCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
 void SessionImpl::UnregisterExposureInfoCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void SessionImpl::UnregisterFlashStateCallbackListener(
     const std::string& eventName, std::shared_ptr<uintptr_t> callback)
 {
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
@@ -1042,6 +1056,69 @@ void ControlCenterEffectStatusCallbackListener::OnControlCenterEffectStatusChang
     OnControlCenterEffectStatusCallback(controlCenterStatusInfo);
 }
 
+void SessionImpl::OnExposureInfoChange(callback_view<void(ExposureInfo const&)> callback)
+{
+    ListenerTemplate<SessionImpl>::On(this, callback, "exposureInfoChange");
+}
+
+void SessionImpl::OffExposureInfoChange(optional_view<callback<void(ExposureInfo const&)>> callback)
+{
+    ListenerTemplate<SessionImpl>::Off(this, callback, "exposureInfoChange");
+}
+
+void SessionImpl::OnFlashStateChange(callback_view<void(FlashState)> callback)
+{
+    ListenerTemplate<SessionImpl>::On(this, callback, "flashStateChange");
+}
+
+void SessionImpl::OffFlashStateChange(optional_view<callback<void(FlashState)>> callback)
+{
+    ListenerTemplate<SessionImpl>::Off(this, callback, "flashStateChange");
+}
+
+void FlashStateCallbackListener::OnFlashStateChangedSync(OHOS::CameraStandard::FlashState info)
+{
+    MEDIA_DEBUG_LOG("OnFlashStateChangedSync is called, info: %{public}d", info);
+    OnFlashStateChangedCallback(info);
+}
+
+void FlashStateCallbackListener::OnFlashStateChangedCallback(OHOS::CameraStandard::FlashState info) const
+{
+    MEDIA_DEBUG_LOG("OnFlashStateChangedCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [info, sharePtr]() {
+        FlashState flashInfo = FlashState::from_value(static_cast<int32_t>(info));
+        CHECK_RETURN_ELOG(sharePtr == nullptr, "listener not exist");
+            sharePtr->ExecuteCallback<FlashState>("flashStateChange", flashInfo);
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnFlashStateChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
+void ExposureInfoCallbackListener::OnExposureInfoChanged(OHOS::CameraStandard::ExposureInfo info)
+{
+    MEDIA_DEBUG_LOG("OnExposureInfoChanged is called, info: %{public}d", info.exposureDurationValue);
+    OnExposureInfoChangedCallback(info);
+}
+
+void ExposureInfoCallbackListener::OnExposureInfoChangedCallback(OHOS::CameraStandard::ExposureInfo info) const
+{
+    MEDIA_DEBUG_LOG("OnExposureInfoChangedCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [info, sharePtr]() {
+        ExposureInfo exposureInfo{optional<int32_t>::make(info.exposureDurationValue)};
+        CHECK_RETURN_ELOG(sharePtr == nullptr, "listener not exist");
+        if (sharePtr->IsAsyncCall()) {
+            sharePtr->ExecuteAsyncCallback<ExposureInfo const &>(
+                "exposureInfoChange", 0, "Callback is OK", exposureInfo);
+        } else {
+            sharePtr->ExecuteCallback<ExposureInfo const &>("exposureInfoChange", exposureInfo);
+        }
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnExposureInfoChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
 const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     { "focusStateChange", {
         &SessionImpl::RegisterFocusCallbackListener,
@@ -1100,6 +1177,9 @@ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     { "controlCenterEffectStatusChange", {
         &SessionImpl::RegisterControlCenterEffectStatusCallbackListener,
         &SessionImpl::UnregisterControlCenterEffectStatusCallbackListener } },
+    {"flashStateChange", {
+        &SessionImpl::RegisterFlashStateCallbackListener,
+        &SessionImpl::UnregisterFlashStateCallbackListener}},
 };
 const SessionImpl::EmitterFunctions& SessionImpl::GetEmitterFunctions()
 {

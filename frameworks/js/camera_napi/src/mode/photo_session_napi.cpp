@@ -46,7 +46,9 @@ napi_value PhotoSessionNapi::Init(napi_env env, napi_value exports)
     napi_value ctorObj;
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, camera_process_sys_props,
         flash_props, flash_sys_props, auto_exposure_props, focus_props, focus_sys_props, zoom_props, zoom_sys_props,
-        filter_props, preconfig_props, color_management_props, auto_switch_props, macro_props, white_balance_props };
+        filter_props, preconfig_props, color_management_props, auto_switch_props, macro_props, white_balance_props,
+        iso_props, manual_iso_props, manual_exposure_props, manual_focus_props, exposure_cb_props, flash_cb_props,
+        raw_props, physical_aperture_props};
     std::vector<napi_property_descriptor> photo_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PHOTO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PhotoSessionNapiConstructor, nullptr,
@@ -176,6 +178,40 @@ void PhotoSessionNapi::UnregisterPressureStatusCallbackListener(
         cameraSession_->UnSetPressureCallback();
         pressureCallback_ = nullptr;
     }
+}
+
+void PhotoSessionNapi::RegisterExposureInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (exposureInfoCallback_ == nullptr) {
+        exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListener>(env);
+        cameraSession_->SetExposureInfoCallback(exposureInfoCallback_);
+    }
+    exposureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void PhotoSessionNapi::UnregisterExposureInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CHECK_RETURN_ELOG(exposureInfoCallback_ == nullptr, "%{public}s exposureInfoCallback is null", __func__);
+    exposureInfoCallback_->RemoveCallbackRef(eventName, callback);
+}
+
+void PhotoSessionNapi::RegisterFlashStateChangeCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (flashStateCallback_ == nullptr) {
+        flashStateCallback_ = std::make_shared<FlashStateCallbackListener>(env);
+        cameraSession_->SetFlashStateCallback(flashStateCallback_);
+    }
+    flashStateCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void PhotoSessionNapi::UnregisterFlashStateChangeCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CHECK_RETURN_ELOG(flashStateCallback_ == nullptr, "%{public}s abilityCallback is null", __func__);
+    flashStateCallback_->RemoveCallbackRef(eventName, callback);
 }
 
 void PhotoSessionNapi::RegisterCameraSwitchRequestCallbackListener(

@@ -29,6 +29,7 @@
 #include "ability/camera_ability.h"
 #include "ability/camera_ability_parse_util.h"
 #include "color_space_info_parse.h"
+#include "safe_map.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -55,6 +56,14 @@ enum AutomotiveCameraPosition {
     CAMERA_POSITION_INTERIOR_ROW_3_LEFT,
     CAMERA_POSITION_INTERIOR_ROW_3_CENTER,
     CAMERA_POSITION_INTERIOR_ROW_3_RIGHT
+};
+
+enum SensorColorFilterArrangement {
+    BGGR = 0,
+    GBRG = 1,
+    GRBG = 2,
+    RGGB = 3,
+    RYYB = 4
 };
 
 enum CameraType {
@@ -289,6 +298,11 @@ public:
     * @return Returns the camera lensEquivalentFocalLength.
     */
     std::vector<int32_t> GetLensEquivalentFocalLength();
+
+    inline bool IsLogicalCamera()
+    {
+        return isLogicalCamera_;
+    }
     
     // or can we move definition completely in session only?
     /**
@@ -397,6 +411,98 @@ public:
         return it->second;
     }
 
+    inline void SetConstituentCameraDevices(std::vector<string> constituentCameraDevices)
+    {
+        constituentCameraDevices_ = constituentCameraDevices;
+    }
+
+    inline std::vector<string> GetConstituentCameraDevices()
+    {
+        return constituentCameraDevices_;
+    }
+
+    inline bool CheckMatchedConstituentCameraDevices(string cameraId)
+    {
+        auto itr = find_if(constituentCameraDevices_.begin(), constituentCameraDevices_.end(),
+            [cameraId](string camera) { return "device/" + camera == cameraId; });
+        return itr != constituentCameraDevices_.end();
+    }
+
+    inline void SetLensFocalLength(double lensFocalLength)
+    {
+        lensFocalLength_ = lensFocalLength;
+    }
+
+    inline double GetLensFocalLength()
+    {
+        return lensFocalLength_;
+    }
+
+    inline void SetMinimumFocusDistance(double minimumFocusDistance)
+    {
+        minimumFocusDistance_ = minimumFocusDistance;
+    }
+
+    inline double GetMinimumFocusDistance()
+    {
+        return minimumFocusDistance_;
+    }
+
+    inline void SetLensDistortion(std::vector<double> lensDistortion)
+    {
+        lensDistortion_ = lensDistortion;
+    }
+
+
+    inline std::vector<double> GetLensDistortion()
+    {
+        return lensDistortion_;
+    }
+
+    inline std::vector<int32_t> GetLensEquivalentFocalLengths()
+    {
+        return lensEquivalentFocalLength_;
+    }
+
+    inline void SetLensIntrinsicCalibration(std::vector<double> lensIntrinsicCalibration)
+    {
+        lensIntrinsicCalibration_ = lensIntrinsicCalibration;
+    }
+
+    inline std::vector<double> GetLensIntrinsicCalibration()
+    {
+        return lensIntrinsicCalibration_;
+    }
+
+    inline void SetSensorPhysicalSize(std::vector<double> sensorPhysicalSize)
+    {
+        sensorPhysicalSize_ = sensorPhysicalSize;
+    }
+
+    inline std::vector<double> GetSensorPhysicalSize()
+    {
+        return sensorPhysicalSize_;
+    }
+
+    inline void SetSensorPixelArraySize(std::vector<int> sensorPixelArraySize)
+    {
+        sensorPixelArraySize_ = sensorPixelArraySize;
+    }
+
+    inline std::vector<int> GetSensorPixelArraySize()
+    {
+        return sensorPixelArraySize_;
+    }
+
+    inline void SetSensorColorFilterArrangement(SensorColorFilterArrangement sensorColorFilterArrangement)
+    {
+        sensorColorFilterArrangement_ = sensorColorFilterArrangement;
+    }
+
+    inline SensorColorFilterArrangement GetSensorColorFilterArrangement()
+    {
+        return sensorColorFilterArrangement_;
+    }
     std::unordered_map<int32_t, std::vector<Profile>> modePreviewProfiles_ = {};
     std::unordered_map<int32_t, std::vector<Profile>> modePhotoProfiles_ = {};
     std::unordered_map<int32_t, std::vector<VideoProfile>> modeVideoProfiles_ = {};
@@ -419,6 +525,15 @@ private:
     uint32_t cameraOrientation_ = 0;
     bool isRetractable_ = false;
     std::vector<int32_t> lensEquivalentFocalLength_ = {};
+    bool isLogicalCamera_ = false;
+    std::vector<string> constituentCameraDevices_ = {};
+    double lensFocalLength_ = 0.0;
+    double minimumFocusDistance_ = 0.0;
+    std::vector<double> lensDistortion_ = {};
+    std::vector<double> lensIntrinsicCalibration_ = {};
+    std::vector<double> sensorPhysicalSize_ = {};
+    std::vector<int> sensorPixelArraySize_ = {};
+    SensorColorFilterArrangement sensorColorFilterArrangement_;
     std::unordered_map<uint32_t, uint32_t> foldStateSensorOrientationMap_ = {};
     std::unordered_map<uint32_t, std::vector<uint32_t>> foldWithDirectionOrientationMap_ = {};
     uint32_t moduleType_ = 0;
@@ -436,8 +551,14 @@ private:
         metaToFwAutomotiveCameraPosition_;
     static const std::unordered_map<camera_connection_type_t, ConnectionType> metaToFwConnectionType_;
     static const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> metaToFwCameraFoldScreenType_;
+    static const std::unordered_map<Camera_SensorColorFilterArrangement, SensorColorFilterArrangement>
+        metaToFwCameraColorFilterArrangement_;
     void init(common_metadata_header_t* metadataHeader);
     void InitLensEquivalentFocalLength(common_metadata_header_t* metadata);
+    void InitLensDistortion(common_metadata_header_t* metadata);
+    void InitLensIntrinsicCalibration(common_metadata_header_t* metadata);
+    void InitSensorPhysicalSize(common_metadata_header_t* metadata);
+    void InitSensorPixelArraySize(common_metadata_header_t* metadata);
     void InitVariableOrientation(common_metadata_header_t* metadata);
     bool isFindModuleTypeTag(uint32_t &tagId);
     bool isConcurrentDevice_ = false;

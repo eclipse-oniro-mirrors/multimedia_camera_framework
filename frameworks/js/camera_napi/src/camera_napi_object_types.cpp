@@ -89,6 +89,14 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
     auto cameraOrientation = Hold<int32_t>(cameraDevice_.GetStaticCameraOrientation());
     auto isRetractable = Hold<bool>(cameraDevice_.GetisRetractable());
     auto lensEquivalentFocalLength = Hold<std::vector<int32_t>>(cameraDevice_.GetLensEquivalentFocalLength());
+    auto isLogicalCamera = Hold<bool>(cameraDevice_.IsLogicalCamera());
+    auto lensFocalLength = Hold<double>(cameraDevice_.GetLensFocalLength());
+    auto minimumFocusDistance = Hold<double>(cameraDevice_.GetMinimumFocusDistance());
+    auto lensDistortion = Hold<std::vector<double>>(cameraDevice_.GetLensDistortion());
+    auto lensIntrinsicCalibration = Hold<std::vector<double>>(cameraDevice_.GetLensIntrinsicCalibration());
+    auto sensorPhysicalSize = Hold<std::vector<double>>(cameraDevice_.GetSensorPhysicalSize());
+    auto sensorPixelArraySize = Hold<std::vector<int32_t>>(cameraDevice_.GetSensorPixelArraySize());
+    auto sensorColorFilterArrangement = Hold<int32_t>(cameraDevice_.GetSensorColorFilterArrangement());
     auto automotiveCameraPosition = Hold<int32_t>(cameraDevice_.GetAutomotivePosition());
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
         { "cameraId", cameraId },
@@ -100,7 +108,15 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
         { "cameraOrientation", cameraOrientation },
         { "isRetractable", isRetractable },
         { "lensEquivalentFocalLength", lensEquivalentFocalLength },
-        { "automotiveCameraPosition", automotiveCameraPosition } });
+        { "automotiveCameraPosition", automotiveCameraPosition },
+        { "isLogicalCamera", isLogicalCamera },
+        { "lensFocalLength", lensFocalLength },
+        { "minimumFocusDistance", minimumFocusDistance },
+        { "lensDistortion", lensDistortion },
+        { "lensIntrinsicCalibration", lensIntrinsicCalibration },
+        { "sensorPhysicalSize", sensorPhysicalSize },
+        { "sensorPixelArraySize", sensorPixelArraySize },
+        { "sensorColorFilterArrangement", sensorColorFilterArrangement }});
 }
 
 CameraNapiObject& CameraNapiBoundingBox::GetCameraNapiObject()

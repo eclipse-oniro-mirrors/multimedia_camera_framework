@@ -26,7 +26,8 @@ using namespace ohos::multimedia::camera;
 
 class PhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public AutoExposureImpl,
                          public ColorManagementImpl, public AutoDeviceSwitchImpl, public FocusImpl,
-                         public WhiteBalanceImpl, public MacroImpl {
+                         public WhiteBalanceImpl, public MacroImpl, public ManualIsoImpl, public ManualFocusImpl,
+                         public ManualExposureImpl {
 public:
     explicit PhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
@@ -47,6 +48,19 @@ public:
     {
         return photoSession_;
     }
+    void SetIso(int32_t iso) override;
+    int32_t GetIso() override;
+    array<int32_t> GetSupportedISORange() override;
+    double GetFocusDistance() override;
+    void SetFocusDistance(double distance) override;
+    bool IsManualFocusSupported() override;
+    int32_t GetExposureDuration() override;
+    array<int32_t> GetSupportedExposureDurationRange() override;
+    double GetExposureBiasStep() override;
+    void SetExposureDuration(int32_t exposure) override;
+    ExposureMeteringMode GetExposureMeteringMode() override;
+    void SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode) override;
+    bool IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode) override;
 protected:
     sptr<OHOS::CameraStandard::CaptureSession> photoSession_ = nullptr;
     std::shared_ptr<PressureCallbackListener> pressureCallback_ = nullptr;
@@ -54,6 +68,18 @@ protected:
         std::shared_ptr<uintptr_t> callback, bool isOnce) override;
     void UnregisterPressureStatusCallbackListener(
         const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
+    void RegisterExposureInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
+        bool isOnce) override;
+    void UnregisterExposureInfoCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback) override;
+    void RegisterFlashStateCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
+        bool isOnce) override;
+    void UnregisterFlashStateCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback) override;
+        
+private:
+    std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;
+    std::shared_ptr<FlashStateCallbackListener> flashStateCallback_ = nullptr;
 };
 } // namespace Camera
 } // namespace Ani

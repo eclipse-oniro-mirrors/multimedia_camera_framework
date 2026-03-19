@@ -673,10 +673,27 @@ int32_t HCameraService::GetCameras(
     isFoldable = isFoldableInit ? isFoldable : g_isFoldScreen;
     isFoldableInit = true;
     isFoldableMutex.unlock();
+    vector<shared_ptr<CameraMetaInfo>> cameraInfos;
+    int32_t ret = ParseCamerasInfos(cameraIds, cameraInfos);
+    FillCameras(cameraInfos, cameraIds, cameraAbilityList);
+    return ret;
+}
+
+int32_t HCameraService::GetPhysicalCameras(
+    vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
+{
+    CAMERA_SYNC_TRACE;
+    vector<shared_ptr<CameraMetaInfo>> cameraInfos;
+    int32_t ret = ParseCamerasInfos(cameraIds, cameraInfos);
+    FillPhysicalCameras(cameraInfos, cameraIds, cameraAbilityList);
+    return ret;
+}
+
+int32_t HCameraService::ParseCamerasInfos(vector<string>& cameraIds, vector<shared_ptr<CameraMetaInfo>>& cameraInfos)
+{
     int32_t ret = cameraHostManager_->GetCameras(cameraIds);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "HCameraService::GetCameras failed");
     shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
-    vector<shared_ptr<CameraMetaInfo>> cameraInfos;
     for (auto id : cameraIds) {
         ret = cameraHostManager_->GetCameraAbility(id, cameraAbility);
         CHECK_RETURN_RET_ELOG(
@@ -685,7 +702,6 @@ int32_t HCameraService::GetCameras(
         CHECK_CONTINUE(cameraMetaInfo == nullptr);
         cameraInfos.emplace_back(cameraMetaInfo);
     }
-    FillCameras(cameraInfos, cameraIds, cameraAbilityList);
     return ret;
 }
 
@@ -732,6 +748,19 @@ shared_ptr<CameraMetaInfo> HCameraService::GetCameraMetaInfo(std::string &camera
         cameraId.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported, foldStatus));
     return make_shared<CameraMetaInfo>(cameraId, cameraType, cameraPosition, connectionType,
         foldStatus, supportModes, cameraAbility);
+}
+
+void HCameraService::FillPhysicalCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
+    vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList)
+{
+    vector<shared_ptr<CameraMetaInfo>> choosedCameras = ChooseDeFaultCameras(cameraInfos);
+    cameraIds.clear();
+    cameraAbilityList.clear();
+    vector<shared_ptr<CameraMetaInfo>> physicalCameras = ChoosePhysicalCameras(cameraInfos, choosedCameras);
+    for (const auto& camera : physicalCameras) {
+        cameraIds.emplace_back(camera->cameraId);
+        cameraAbilityList.emplace_back(camera->cameraAbility);
+    }
 }
 
 void HCameraService::FillCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
@@ -827,6 +856,17 @@ int32_t HCameraService::GetCameraIds(vector<string>& cameraIds)
     std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
     ret = GetCameras(cameraIds, cameraAbilityList);
     CHECK_PRINT_ELOG(ret != CAMERA_OK, "HCameraService::GetCameraIds failed");
+    return ret;
+}
+
+int32_t HCameraService::GetPhysicalCameraIds(vector<string>& cameraIds)
+{
+    CAMERA_SYNC_TRACE;
+    int32_t ret = CAMERA_OK;
+    MEDIA_DEBUG_LOG("HCameraService::GetPhysicalCameraIds");
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    ret = GetPhysicalCameras(cameraIds, cameraAbilityList);
+    CHECK_PRINT_ELOG(ret != CAMERA_OK, "HCameraService::GetPhysicalCameraIds failed");
     return ret;
 }
 

@@ -960,6 +960,28 @@ array<int32_t> ManualExposureQueryImpl::GetSupportedExposureRange()
     }
 }
 
+int32_t ManualExposureQueryImpl::GetExposureDuration()
+{
+    CameraUtilsTaihe::ThrowError(
+        OHOS::CameraStandard::OPERATION_NOT_ALLOWED, "can not GetExposureDuration in current session!");
+    return -1;
+}
+
+array<int32_t> ManualExposureQueryImpl::GetSupportedExposureDurationRange()
+{
+    CameraUtilsTaihe::ThrowError(
+        OHOS::CameraStandard::OPERATION_NOT_ALLOWED, "can not GetSupportedExposureDurationRange in current session!");
+    return array<int32_t>(0);
+}
+
+double ManualExposureQueryImpl::GetExposureBiasStep()
+{
+    CameraUtilsTaihe::ThrowError(
+        OHOS::CameraStandard::OPERATION_NOT_ALLOWED, "can not GetExposureBiasStep in current session!");
+    float exposureBiasStep = 0.0f;
+    return static_cast<double>(exposureBiasStep);
+}
+
 int32_t ManualExposureImpl::GetExposure()
 {
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), -1,
@@ -975,6 +997,13 @@ void ManualExposureImpl::SetExposure(int32_t exposure)
         "SystemApi SetExposure is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not SetExposure in current session!");
+    return;
+}
+
+void ManualExposureImpl::SetExposureDuration(int32_t exposure)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not SetExposureDuration in current session!");
     return;
 }
 
@@ -1036,6 +1065,13 @@ bool ManualIsoQueryImpl::IsManualIsoSupported()
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not IsManualIsoSupported in current session!");
     return false;
+}
+
+array<int32_t> ManualIsoQueryImpl::GetSupportedISORange()
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not GetIsoRange in current session!");
+    return array<int32_t>(nullptr, 0);
 }
 
 void ManualIsoImpl::SetIso(int32_t iso)
@@ -1252,7 +1288,7 @@ void MacroImpl::EnableMacro(bool enabled)
 
 double ManualFocusImpl::GetFocusDistance()
 {
-    float distance = -1.0;
+    float distance = 0.0f;
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), static_cast<double>(distance),
         "SystemApi GetFocusDistance is called!");
     CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, distance, "GetFocusDistance captureSessionForSys_ is null");
@@ -1269,6 +1305,15 @@ void ManualFocusImpl::SetFocusDistance(double distance)
     captureSessionForSys_->LockForControl();
     captureSessionForSys_->SetFocusDistance(static_cast<float>(distance));
     captureSessionForSys_->UnlockForControl();
+}
+
+bool ManualFocusImpl::IsManualFocusSupported()
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsManualFocusSupported is called!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not IsManualFocusSupported in current session!");
+    return false;
 }
 
 array<PortraitEffect> PortraitQueryImpl::GetSupportedPortraitEffects()

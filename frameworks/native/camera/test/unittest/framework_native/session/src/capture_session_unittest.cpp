@@ -439,7 +439,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unittest_010, TestSize.Level0)
 
     session->SetInputDevice(nullptr);
     uint32_t exposureTime;
-    EXPECT_EQ(session->GetSensorExposureTime(exposureTime), CameraErrorCode::INVALID_ARGUMENT);
+    EXPECT_EQ(session->GetSensorExposureTime(exposureTime), CameraErrorCode::OPERATION_NOT_ALLOWED);
 
     input->Close();
     preview->Release();

@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
+#include "camera_security_utils.h"
 #include "camera_stream_info_parse.h"
 #include "camera_timer.h"
 #include "color_space_info_parse.h"
@@ -1062,7 +1062,17 @@ public:
         }
         return cameraDeviceList_;
     }
+    inline std::vector<sptr<CameraDevice>> GetFullCameraDeviceList()
+    {
+        std::vector<sptr<CameraDevice>> cameraDeviceList = GetCameraDeviceList();
+        std::vector<sptr<CameraDevice>> cameraPhysicalDeviceList = GetCameraPhysicalDeviceListFromServer();
+        cameraDeviceList.insert(
+            cameraDeviceList.end(), cameraPhysicalDeviceList.begin(), cameraPhysicalDeviceList.end());
+        return cameraDeviceList;
+    }
     std::string GetBundleName();
+    std::vector<sptr<CameraDevice>> AddPhysicalCameras();
+    std::vector<sptr<CameraDevice>> GetCameraPhysicalDeviceListFromServer();
     void GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList);
     std::vector<sptr<CameraDevice>> GetCameraDevices();
     bool ShouldClearCache();
@@ -1133,7 +1143,11 @@ private:
         std::shared_ptr<OHOS::Camera::CameraMetadata> metadata, const camera_metadata_item_t& item);
     void ParseDepthCapability(const int32_t modeName, const camera_metadata_item_t& item);
     void AlignVideoFpsProfile(std::vector<sptr<CameraDevice>>& cameraObjList);
+    void SetConstituentCameraDevices(
+        sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     void SetProfile(sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    void SetMultiCameraCombinationInfo(
+        sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
     SceneMode GetFallbackConfigMode(SceneMode profileMode, ProfilesWrapper& profilesWrapper);
     void ParseCapability(ProfilesWrapper& profilesWrapper, sptr<CameraDevice>& camera, const int32_t modeName,
         camera_metadata_item_t& item, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
@@ -1223,6 +1237,9 @@ private:
     std::vector<CameraFormat> GetPhotoFormats();
     void SetPhotoFormats(const std::vector<CameraFormat>& photoFormats);
     std::vector<sptr<CameraDevice>> GetSupportedCamerasList();
+    std::vector<sptr<CameraDevice>> GetSupportedFullCamerasList();
+    std::vector<sptr<CameraDevice>> FilterDeviceList(
+        FoldStatus curFoldStatus, std::vector<sptr<CameraDevice>> cameraDeviceList);
     std::mutex cameraDeviceListMutex_;
     std::mutex innerCameraMutex_;
     std::vector<sptr<CameraDevice>> cameraDeviceList_ = {};
@@ -1274,6 +1291,7 @@ private:
     bool controlCenterResolutionCondition_ = true;
     bool controlCenterPositionCondition_ = true;
     bool controlCenterPrecondition_ = true;
+    SafeMap<string, unordered_set<int>> unsupportedMultiCameraCombinationsMap_;
 };
 
 class CameraManagerGetter {

@@ -21,24 +21,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-class ExposureInfoCallbackListener : public ExposureInfoCallback, public ListenerBase,
-    public std::enable_shared_from_this<ExposureInfoCallbackListener> {
-public:
-    ExposureInfoCallbackListener(napi_env env) : ListenerBase(env) {}
-    ~ExposureInfoCallbackListener() = default;
-    void OnExposureInfoChanged(ExposureInfo info) override;
-
-private:
-    void OnExposureInfoChangedCallback(ExposureInfo info) const;
-    void OnExposureInfoChangedCallbackAsync(ExposureInfo info) const;
-};
-
-struct ExposureInfoChangedCallback {
-    ExposureInfo info_;
-    weak_ptr<const ExposureInfoCallbackListener> listener_;
-    ExposureInfoChangedCallback(ExposureInfo info, shared_ptr<const ExposureInfoCallbackListener> listener)
-        : info_(info), listener_(listener) {}
-};
 
 class ApertureInfoCallbackListener : public ApertureInfoCallback, public ListenerBase,
     public std::enable_shared_from_this<ApertureInfoCallbackListener> {
@@ -137,10 +119,6 @@ public:
     static thread_local napi_ref sConstructor_;
 
 protected:
-    void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
-    void UnregisterExposureInfoCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterAbilityChangeCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce) override;
     void UnregisterAbilityChangeCallbackListener(

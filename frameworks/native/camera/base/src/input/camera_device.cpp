@@ -80,6 +80,15 @@ const std::unordered_map<camera_foldscreen_enum_t, CameraFoldScreenType> CameraD
     {OHOS_CAMERA_FOLDSCREEN_OTHER, CAMERA_FOLDSCREEN_UNSPECIFIED}
 };
 
+const std::unordered_map<Camera_SensorColorFilterArrangement, SensorColorFilterArrangement>
+    CameraDevice::metaToFwCameraColorFilterArrangement_ = {
+        { Camera_SENSOR_COLOR_FILTER_ARRANGEMENT_RGGB, RGGB },
+        { Camera_SENSOR_COLOR_FILTER_ARRANGEMENT_GBRG, GBRG },
+        { Camera_SENSOR_COLOR_FILTER_ARRANGEMENT_GRBG, GRBG },
+        { Camera_SENSOR_COLOR_FILTER_ARRANGEMENT_BGGR, BGGR },
+        { Camera_SENSOR_COLOR_FILTER_ARRANGEMENT_RYYB, RYYB },
+    };
+
 CameraDevice::CameraDevice(std::string cameraID, std::shared_ptr<Camera::CameraMetadata> metadata)
     : cameraID_(cameraID), baseAbility_(MetadataCommonUtils::CopyMetadata(metadata)),
       cachedMetadata_(MetadataCommonUtils::CopyMetadata(metadata))
@@ -220,6 +229,17 @@ void CameraDevice::init(common_metadata_header_t* metadata)
         }
     }
 
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT, &item);
+    if (ret == CAM_META_SUCCESS) {
+        auto iterator = metaToFwCameraColorFilterArrangement_.find(
+            static_cast<Camera_SensorColorFilterArrangement>(item.data.u8[0]));
+        if (iterator != metaToFwCameraColorFilterArrangement_.end()) {
+            sensorColorFilterArrangement_ = iterator->second;
+            MEDIA_INFO_LOG(
+                "CameraDevice::init sensorColorFilterArrangement_:%d", static_cast<int32_t>(iterator->second));
+        }
+    }
+
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_PRELAUNCH_AVAILABLE, &item);
 
     isPrelaunch_ = (ret == CAM_META_SUCCESS && item.data.u8[0] == 1);
@@ -227,6 +247,28 @@ void CameraDevice::init(common_metadata_header_t* metadata)
     ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_AVAILABLE_PROFILE_LEVEL, &item);
 
     supportSpecSearch_ = (ret == CAM_META_SUCCESS && item.count != 0);
+
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_IS_LOGICAL_CAMERA, &item);
+    if (ret == CAM_META_SUCCESS && item.count != 0) {
+        MEDIA_INFO_LOG(" CameraDevice::init OHOS_ABILITY_IS_LOGICAL_CAMERA surpport");
+        isLogicalCamera_ = item.data.u8[0] == 1;
+    }
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_FOCAL_LENGTH, &item);
+    if (ret == CAM_META_SUCCESS && item.count != 0) {
+        lensFocalLength_ = static_cast<double>(item.data.f[0]);
+    }
+    ret = Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_LENS_INFO_MINIMUM_FOCUS_DISTANCE , &item);
+    if (ret == CAM_META_SUCCESS && item.count != 0) {
+        minimumFocusDistance_ = static_cast<double>(item.data.f[0]);
+    }
+
+    InitLensDistortion(metadata);
+
+    InitLensIntrinsicCalibration(metadata);
+
+    InitSensorPhysicalSize(metadata);
+
+    InitSensorPixelArraySize(metadata);
 
     InitLensEquivalentFocalLength(metadata);
 
@@ -240,12 +282,84 @@ void CameraDevice::init(common_metadata_header_t* metadata)
                    moduleType_, foldStatus_, supportSpecSearch_, cameraAutomotivePosition_);
 }
 
+void CameraDevice::InitLensDistortion(common_metadata_header_t* metadata)
+{
+    std::vector<double> lensDistortion = {};
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_LENS_DISTORTION, &item);
+    if (ret == CAM_META_SUCCESS) {
+        lensDistortion.reserve(item.count);
+        for (uint32_t i = 0; i < item.count; i++) {
+            lensDistortion.emplace_back(static_cast<double>(item.data.f[i]));
+        }
+        lensDistortion_ = lensDistortion;
+        MEDIA_INFO_LOG("CameraDevice::InitLensDistortion, lensDistortion_ size: %{public}zu, "
+                       "lensDistortion_: %{public}s",
+            lensDistortion_.size(), Container2String(lensDistortion_.begin(), lensDistortion_.end()).c_str());
+    }
+}
+
+void CameraDevice::InitLensIntrinsicCalibration(common_metadata_header_t* metadata)
+{
+    std::vector<double> lensIntrinsicCalibration = {};
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_LENS_INTRINSIC_CALIBRATION, &item);
+    if (ret == CAM_META_SUCCESS) {
+        lensIntrinsicCalibration.reserve(item.count);
+        for (uint32_t i = 0; i < item.count; i++) {
+            lensIntrinsicCalibration.emplace_back(static_cast<double>(item.data.f[i]));
+        }
+        lensIntrinsicCalibration_ = lensIntrinsicCalibration;
+        MEDIA_INFO_LOG("CameraDevice::InitLensIntrinsicCalibration, lensIntrinsicCalibration_ size: %{public}zu, "
+                       "lensIntrinsicCalibration_: %{public}s",
+            lensIntrinsicCalibration_.size(),
+            Container2String(lensIntrinsicCalibration_.begin(), lensIntrinsicCalibration_.end()).c_str());
+    }
+}
+
+void CameraDevice::InitSensorPhysicalSize(common_metadata_header_t* metadata)
+{
+    std::vector<double> sensorPhysicalSize = {};
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_INFO_PHYSICAL_SIZE , &item);
+    if (ret == CAM_META_SUCCESS) {
+        sensorPhysicalSize.reserve(item.count);
+        for (uint32_t i = 0; i < item.count; i++) {
+            sensorPhysicalSize.emplace_back(static_cast<double>(item.data.f[i]));
+        }
+        sensorPhysicalSize_ = sensorPhysicalSize;
+        MEDIA_INFO_LOG("CameraDevice::InitSensorPhysicalSize, sensorPhysicalSize_ size: %{public}zu, "
+                       "sensorPhysicalSize_: %{public}s",
+            sensorPhysicalSize_.size(),
+            Container2String(sensorPhysicalSize_.begin(), sensorPhysicalSize_.end()).c_str());
+    }
+}
+
+void CameraDevice::InitSensorPixelArraySize(common_metadata_header_t* metadata)
+{
+    std::vector<int> sensorPixelArraySize = {};
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_SENSOR_INFO_PIXEL_ARRAY_SIZE , &item);
+    if (ret == CAM_META_SUCCESS) {
+        sensorPixelArraySize.reserve(item.count);
+        for (uint32_t i = 0; i < item.count; i++) {
+            sensorPixelArraySize.emplace_back(static_cast<int>(item.data.i32[i]));
+        }
+        sensorPixelArraySize_ = sensorPixelArraySize;
+        MEDIA_INFO_LOG("CameraDevice::InitSensorPixelArraySize, sensorPixelArraySize_ size: %{public}zu, "
+                       "sensorPixelArraySize_: %{public}s",
+            sensorPixelArraySize_.size(),
+            Container2String(sensorPixelArraySize_.begin(), sensorPixelArraySize_.end()).c_str());
+    }
+}
+
 void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metadata)
 {
     std::vector<int32_t> lensEquivalentFocalLength = {};
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_LENS_EQUIVALENT_FOCUS, &item);
     if (ret == CAM_META_SUCCESS) {
+        lensEquivalentFocalLength.reserve(item.count);
         for (uint32_t i = 0; i < item.count; i++) {
             lensEquivalentFocalLength.emplace_back(item.data.i32[i]);
         }
