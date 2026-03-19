@@ -52,7 +52,9 @@ public:
     int32_t Release() override;
 
     static int32_t CreatePreviewOutput(Profile &profile, std::string &surfaceId);
+    static ErrInfo CreatePreviewOutputV2(Profile &profile, std::string &surfaceId);
     static int32_t CreatePreviewOutputWithoutProfile(std::string &surfaceId);
+    static ErrInfo CreatePreviewOutputWithoutProfileV2(std::string &surfaceId);
 
     CArrFrameRateRange GetSupportedFrameRates(int32_t *errCode);
     int32_t SetFrameRate(int32_t min, int32_t max);

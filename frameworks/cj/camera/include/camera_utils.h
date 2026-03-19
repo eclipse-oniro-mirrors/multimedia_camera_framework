@@ -168,6 +168,17 @@ struct CArrCJMetadataObject {
     int64_t size;
 };
 
+struct ErrInfo {
+    int32_t errCode;
+    char *errMessage;
+};
+
+struct RetInt64 {
+    int64_t result;
+    int32_t errCode;
+    char *errMessage;
+};
+
 enum CJOutputType { METADATA_OUTPUT = 0, PHOTO_OUTPUT, PREVIEW_OUTPUT, VIDEO_OUTPUT };
 
 CJMetadataObject MetadataObjectToCJMetadataObject(MetadataObject metaObject);

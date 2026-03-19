@@ -147,6 +147,25 @@ int64_t FfiCameraManagerCreatePreviewOutput(CJProfile profile, const char *surfa
     return previewOutputImpl->GetID();
 }
 
+RetInt64 FfiCameraManagerCreatePreviewOutputMsg(CJProfile profile, const char *surfaceId)
+{
+    std::string surfaceId_s = std::string(surfaceId);
+    Size size = {profile.width, profile.height};
+    Profile c_Profile(CameraFormat(profile.format), size);
+
+    ErrInfo errInfo = CJPreviewOutput::CreatePreviewOutputV2(c_Profile, surfaceId_s);
+    if (errInfo.errCode != CameraError::NO_ERROR) {
+        return RetInt64 { .result = -1, .errCode = errInfo.errCode, .errMessage = errInfo.errMessage };
+    }
+
+    auto previewOutputImpl = FFIData::Create<CJPreviewOutput>();
+    if (previewOutputImpl == nullptr) {
+        return RetInt64 { .result = -1, .errCode = CameraError::CAMERA_SERVICE_ERROR,
+            .errMessage = MallocCString("Camera service fatal error.") };
+    }
+    return RetInt64 { .result = previewOutputImpl->GetID(), .errCode = CameraError::NO_ERROR, .errMessage = nullptr };
+}
+
 int64_t FfiCameraManagerCreatePreviewOutputWithoutProfile(const char *surfaceId, int32_t *errCode)
 {
     std::string surfaceId_s = std::string(surfaceId);
@@ -161,6 +180,22 @@ int64_t FfiCameraManagerCreatePreviewOutputWithoutProfile(const char *surfaceId,
         return -1;
     }
     return previewOutputImpl->GetID();
+}
+
+RetInt64 FfiCameraManagerCreatePreviewOutputWithoutProfileMsg(const char *surfaceId)
+{
+    std::string surfaceId_s = std::string(surfaceId);
+    ErrInfo errInfo = CJPreviewOutput::CreatePreviewOutputWithoutProfileV2(surfaceId_s);
+    if (errInfo.errCode != CameraError::NO_ERROR) {
+        return RetInt64 { .result = -1, .errCode = errInfo.errCode, .errMessage = errInfo.errMessage };
+    }
+
+    auto previewOutputImpl = FFIData::Create<CJPreviewOutput>();
+    if (previewOutputImpl == nullptr) {
+        return RetInt64 { .result = -1, .errCode = CameraError::CAMERA_SERVICE_ERROR,
+            .errMessage = MallocCString("Camera service fatal error.") };
+    }
+    return RetInt64 { .result = previewOutputImpl->GetID(), .errCode = CameraError::NO_ERROR, .errMessage = nullptr };
 }
 
 int64_t FfiCameraManagerCreatePhotoOutput(int32_t *errCode)
@@ -1804,6 +1839,11 @@ FFI_EXPORT void FfiCameraZoomSetSmoothZoom(int64_t id, float targetRatio, int32_
     }
 
     *errCode = instance->SetSmoothZoom(targetRatio, static_cast<uint32_t>(mode));
+}
+
+FFI_EXPORT void FfiCameraFree(void *point)
+{
+    free(point);
 }
 
 } // extern "C"
