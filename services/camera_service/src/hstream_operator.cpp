@@ -1834,6 +1834,8 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     std::thread taskThread;
 #ifdef CAMERA_CAPTURE_YUV
     bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
+    MEDIA_INFO_LOG("HStreamOperator::ProcessPhotoProxy GetPhotoLevelInfo"
+        "captureId is: %{public}d, isSystemApp: %{public}d.", captureId, isSystemApp);
     if (isBursting) {
         int32_t cameraShotType = 3;
         photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_);
