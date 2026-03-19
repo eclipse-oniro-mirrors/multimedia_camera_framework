@@ -481,8 +481,8 @@ Camera_ErrorCode OH_CaptureSession_SetMeteringPoint(Camera_CaptureSession* sessi
     return session->SetMeteringPoint(point);
 }
 
-Camera_ErrorCode OH_CaptureSession_GetExposureBiasRange(Camera_CaptureSession* session,
-    float* minExposureBias, float* maxExposureBias, float* step)
+Camera_ErrorCode OH_CaptureSession_GetExposureBiasRange(
+    Camera_CaptureSession* session, float* minExposureBias, float* maxExposureBias, float* step)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetExposureBiasRange is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
@@ -760,6 +760,101 @@ Camera_ErrorCode OH_CaptureSession_SetWhiteBalance(Camera_CaptureSession* sessio
     return session->SetWhiteBalance(colorTemperature);
 }
 
+Camera_ErrorCode OH_CaptureSession_SetExposureDuration(const Camera_CaptureSession* session, int32_t exposureDuration)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetExposureDuration is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->SetExposureDuration(exposureDuration);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetExposureDuration(const Camera_CaptureSession* session, int32_t* exposureDuration)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetExposureDuration is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr || exposureDuration == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, argument is null!");
+    return session->GetExposureDuration(exposureDuration);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetSupportedExposureDurationRange(
+    const Camera_CaptureSession* session, int32_t* minExposureDuration, int32_t* maxExposureDuration)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetSupportedExposureDurationRange is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr || minExposureDuration == nullptr || maxExposureDuration == nullptr,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, argument is null!");
+    return session->GetExposureDurationRange(minExposureDuration, maxExposureDuration);
+}
+
+Camera_ErrorCode OH_CaptureSession_IsExposureMeteringModeSupported(
+    const Camera_CaptureSession* session, OH_Camera_ExposureMeteringMode exposureMeteringMode, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_IsExposureMeteringModeSupported is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, argument is null!");
+    return session->IsExposureMeteringModeSupported(exposureMeteringMode, isSupported);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetExposureMeteringMode(
+    const Camera_CaptureSession* session, OH_Camera_ExposureMeteringMode* exposureMeteringMode)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetExposureMeteringMode is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr || exposureMeteringMode == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, argument is null!");
+    return session->GetMeteringMode(exposureMeteringMode);
+}
+
+Camera_ErrorCode OH_CaptureSession_SetExposureMeteringMode(
+    const Camera_CaptureSession* session, OH_Camera_ExposureMeteringMode exposureMeteringMode)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetExposureMeteringMode is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->SetMeteringMode(exposureMeteringMode);
+}
+
+Camera_ErrorCode OH_CaptureSession_IsFocusDistanceSupported(const Camera_CaptureSession* session, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_IsFocusDistanceSupported is called");
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr || isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, argument is null!");
+    return session->IsFocusDistanceSupported(isSupported);
+}
+
+Camera_ErrorCode OH_CaptureSession_SetFocusDistance(const Camera_CaptureSession* session, float focusDistance)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetFocusDistance is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->SetFocusDistance(focusDistance);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetFocusDistance(const Camera_CaptureSession* session, float* focusDistance)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetFocusDistance is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->GetFocusDistance(focusDistance);
+}
+
+Camera_ErrorCode OH_CaptureSession_SetIso(const Camera_CaptureSession* session, int32_t isoValue)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetIso is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->SetIso(isoValue);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetIso(const Camera_CaptureSession* session, int32_t* isoValue)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetIso is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->GetIso(isoValue);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetSupportedISORange(
+    const Camera_CaptureSession* session, int32_t* minIsoValue, int32_t* maxIsoValue)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetSupportedIsoRange is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr || minIsoValue == nullptr || maxIsoValue == nullptr,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, argument is null!");
+    return session->GetIsoRange(minIsoValue, maxIsoValue);
+}
+
 Camera_ErrorCode OH_CaptureSession_SetWhiteBalanceMode(Camera_CaptureSession* session,
     Camera_WhiteBalanceMode whiteBalanceMode)
 {
@@ -864,6 +959,46 @@ Camera_ErrorCode OH_CaptureSession_UnregisterIsoChangeCallback(
     return CAMERA_OK;
 }
 
+Camera_ErrorCode OH_CaptureSession_RegisterExposureInfoChangeCallback(
+    const Camera_CaptureSession* session, OH_CaptureSession_OnExposureDurationChange exposureDurationChange)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        exposureDurationChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return session->RegisterExposureDurationCallback(exposureDurationChange);
+}
+
+Camera_ErrorCode OH_CaptureSession_UnregisterExposureInfoChangeCallback(
+    const Camera_CaptureSession* session, OH_CaptureSession_OnExposureDurationChange exposureDurationChange)
+{
+    MEDIA_INFO_LOG("Camera_ErrorCode::OH_CaptureSession_UnregisterExposureDurationChangeCallback enter");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        exposureDurationChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    session->UnregisterExposureDurationCallback(exposureDurationChange);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_RegisterFlashStateChangeCallback(
+    const Camera_CaptureSession* session, OH_CaptureSession_OnFlashStateChange flashStateChange)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        flashStateChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return session->RegisterFlashStateCallback(flashStateChange);
+}
+
+Camera_ErrorCode OH_CaptureSession_UnregisterFlashStateChangeCallback(
+    const Camera_CaptureSession* session, OH_CaptureSession_OnFlashStateChange flashStateChange)
+{
+    MEDIA_INFO_LOG("Camera_ErrorCode::OH_CaptureSession_UnregisterFlashStateChangeCallback enter");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        flashStateChange == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    session->UnregisterFlashStateCallback(flashStateChange);
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode OH_CaptureSession_RegisterCameraSwitchRequestCallback(
     Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
 {
@@ -884,6 +1019,105 @@ Camera_ErrorCode OH_CaptureSession_UnregisterRemoteDeviceSwitchCallback(
         cameraSwitchRequest == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
     session->UnregisterRemoteDeviceSwitchCallback(cameraSwitchRequest);
     return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_GetRAWCaptureZoomRatioRange(
+    const Camera_CaptureSession* session, float* minZoom, float* maxZoom)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(minZoom == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, minZoom is null!");
+    CHECK_RETURN_RET_ELOG(maxZoom == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, maxZoom is null!");
+
+    session->GetRAWCaptureZoomRatioRange(minZoom, maxZoom);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_GetPhysicalAperturesSize(const Camera_CaptureSession* session, uint32_t* size)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
+
+    return session->GetPhysicalAperturesSize(size);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetSupportedPhysicalApertures(
+    const Camera_CaptureSession* session, OH_Camera_PhysicalAperture* apertures, uint32_t size)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(apertures == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, apertures is null!");
+    return session->GetSupportedPhysicalApertures(apertures, size);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetPhysicalAperture(const Camera_CaptureSession* session, double* aperture)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(aperture == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, aperture is null!");
+    float fAperture = 0.0f;
+    session->GetPhysicalAperture(&fAperture);
+    *aperture = static_cast<double>(fAperture);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_SetPhysicalAperture(const Camera_CaptureSession* session, double aperture)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    float fAperture = static_cast<float>(aperture);
+    return session->SetPhysicalAperture(fAperture);
+}
+
+Camera_ErrorCode OH_CaptureSession_IsOISModeSupported(const Camera_CaptureSession* session,
+    OH_Camera_OISMode oisMode, bool* isSupported)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_IsOISModeSupported is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
+    return session->IsOISModeSupported(oisMode, isSupported);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetCurrentOISMode(const Camera_CaptureSession* session,
+    OH_Camera_OISMode* oisMode)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetCurrentOISMode is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(oisMode == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, oisMode is null!");
+    return session->GetCurrentOISMode(oisMode);
+}
+
+Camera_ErrorCode OH_CaptureSession_SetOISMode(const Camera_CaptureSession* session,
+    OH_Camera_OISMode oisMode)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetOISMode is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->SetOISMode(oisMode);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetSupportedOISBiasRange(const Camera_CaptureSession* session,
+    OH_Camera_OISAxes oisAxis, float* minBias, float* maxBias, float* step)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetSupportedOISBiasRange is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(minBias == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, minBias is null!");
+    CHECK_RETURN_RET_ELOG(maxBias == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, maxBias is null!");
+    CHECK_RETURN_RET_ELOG(step == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, step is null!");
+    return session->GetSupportedOISBiasRange(oisAxis, minBias, maxBias, step);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetCurrentCustomOISBias(const Camera_CaptureSession* session,
+    float* pitchBias, float* yawBias)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetCurrentCustomOISBias is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(pitchBias == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, pitchBias is null!");
+    CHECK_RETURN_RET_ELOG(yawBias == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, yawBias is null!");
+    return session->GetCurrentCustomOISBias(pitchBias, yawBias); 
+}
+
+Camera_ErrorCode OH_CaptureSession_SetOISModeCustom(const Camera_CaptureSession* session,
+    float pitchBias, float yawBias)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_SetOISModeCustom is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    return session->SetOISModeCustom(pitchBias, yawBias);   
 }
 
 #ifdef __cplusplus

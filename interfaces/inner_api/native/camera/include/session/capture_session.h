@@ -116,6 +116,18 @@ typedef enum {
     METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED,
 } MeteringMode;
 
+enum OISMode {
+    OIS_MODE_OFF = 0,
+    OIS_MODE_AUTO,
+    OIS_MODE_CUSTOM,
+};
+
+enum OISAxes {
+    OIS_AXES_PITCH = 0,
+    OIS_AXES_YAW,
+    OIS_AXES_ROLL,
+};
+
 class CalculationHelper {
 public:
     static bool AreVectorsEqual(const std::vector<float>& a,
@@ -161,6 +173,8 @@ public:
         return oss.str();
     }
 };
+
+enum StreamIntent { Stream_PREVIEW = 0, Stream_VIDEO, Stream_PHOTO };
 
 enum EffectSuggestionType {
     EFFECT_SUGGESTION_NONE = 0,
@@ -234,6 +248,13 @@ enum class ApertureEffectType : int32_t {
     APERTURE_EFFECT_LOWLIGHT,
     APERTURE_EFFECT_MACRO,
     APERTURE_EFFECT_MAX
+};
+
+enum ReadModeSupportedStreamsState : int32_t{
+    MODE = 0,
+    COUNT = 1,
+    TYPE = 3,
+    TYPE_COUNT = 4
 };
 
 typedef struct StreamConfigInfo {
@@ -334,6 +355,26 @@ public:
 typedef struct {
     uint32_t isoValue;
 } IsoInfo;
+
+struct ExposureInfo {
+    uint32_t exposureDurationValue;
+    float exposureBias = 0.0f;
+};
+
+enum HalFlashState {
+    OHOS_CAMERA_FLASH_STATE_UNAVAILABLE,
+    OHOS_CAMERA_FLASH_STATE_CHARGING,
+    OHOS_CAMERA_FLASH_STATE_READY,
+    OHOS_CAMERA_FLASH_STATE_FLASHING,
+    OHOS_CAMERA_FLASH_STATE_UNKNOWN
+};
+
+enum FlashState {
+    FLASH_STATE_UNAVAILABLE = 0,
+    FLASH_STATE_READY = 1,
+    FLASH_STATE_FLASHING = 2,
+
+};
 
 class IsoInfoCallback {
 public:
@@ -594,6 +635,26 @@ public:
     CompositionPositionMatchCallback() = default;
     virtual ~CompositionPositionMatchCallback() = default;
     virtual void OnCompositionPositionMatchAvailable(std::vector<float> zoomRatios) const = 0 ;
+};
+
+class ExposureInfoCallback {
+public:
+    ExposureInfoCallback() = default;
+    virtual ~ExposureInfoCallback() = default;
+    virtual void OnExposureInfoChanged(ExposureInfo info) {}
+    virtual void OnExposureInfoChangedSync(ExposureInfo info) {}
+
+    bool isFirstRecord = true;
+    ExposureInfo currentInfo = ExposureInfo();
+};
+
+class FlashStateCallback {
+public:
+    FlashStateCallback() = default;
+    virtual ~FlashStateCallback() = default;
+    virtual void OnFlashStateChangedSync(FlashState info) = 0;
+
+    FlashState currentInfo = FlashState::FLASH_STATE_UNAVAILABLE;
 };
 
 class ImageStabilizationGuideCallback {
@@ -1054,12 +1115,35 @@ public:
     int32_t GetExposureValue(float& exposure);
 
     /**
+     * @brief Get exposure bias step.
+     * @param exposureBiasStep of exposure bias step.
+     * @return errCode.
+     */
+    int32_t GetExposureBiasStep(float& exposureBiasStep);
+
+    /**
      * @brief Set the exposure callback.
      * which will be called when there is exposure state change.
      *
      * @param The ExposureCallback pointer.
      */
     void SetExposureCallback(std::shared_ptr<ExposureCallback> exposureCallback);
+
+    /**
+     * @brief This function is called when there is exposure time change
+     * and process the exposure time callback.
+     *
+     * @param result metadata got from callback from service layer.
+     */
+    void ProcessSensorExposureTimeChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
+    /**
+     * @brief This function is called when there is flash state change
+     * and process the flash state callback.
+     *
+     * @param result metadata got from callback from service layer.
+     */
+    void ProcessFlashStateChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
     /**
      * @brief This function is called when there is exposure state change
@@ -1099,6 +1183,8 @@ public:
      * @return Returns errCode.
      */
     int32_t IsFocusModeSupported(FocusMode focusMode, bool& isSupported);
+
+    int32_t IsFocusDistanceSupported(bool& isSupported);
 
     /**
      * @brief Set Focus mode.
@@ -1275,6 +1361,8 @@ public:
      * @return Returns errCode.
      */
     int32_t GetZoomRatioRange(std::vector<float>& zoomRatioRange);
+
+    int32_t GetRAWZoomRatioRange(std::vector<float>& zoomRatioRange);
 
     /**
      * @brief Get the current Zoom Ratio.
@@ -1504,11 +1592,19 @@ public:
     int32_t SetFocusDistance(float distance);
 
     /**
+     * @brief Get current focus distance.
+     * @param distance current focus distance.
+     * @return Returns errCode.
+     */
+    virtual int32_t GetFocusDistance(float& distance);
+    /**
      * @brief Get the current FocusDistance.
      * @param distance current Focus Distance.
      * @return Returns errCode.
      */
     float GetMinimumFocusDistance();
+
+    int32_t GetMinimumFocusDistance(float& minimumFocusDistance);
 
     /**
      * @brief Check current status is support macro or not.
@@ -1746,6 +1842,14 @@ public:
      */
     int32_t SetHasFitedRotation(bool isHasFitedRotation);
 
+    int32_t IsOISModeSupported(OISMode oisMode, bool &isSupported);
+    int32_t GetCurrentOISMode(OISMode &oisMode);
+    int32_t SetOISMode(OISMode oisMode);
+
+    int32_t GetSupportedOISBiasRangeAndStep(OISAxes oisAxis, std::vector<float> &biasRange, float &step);
+    int32_t GetCurrentCustomOISBias(OISAxes oisAxis, float &bias);
+    int32_t SetOISModeCustom(float pitchBias, float yawBias, float rollBias);
+
 #ifdef CAMERA_USE_SENSOR
     /**
      * @brief Get Sensor Rotation Once.
@@ -1878,6 +1982,9 @@ public:
     void SetAbilityCallback(std::shared_ptr<AbilityCallback> abilityCallback);
     void ProcessAREngineUpdates(const uint64_t timestamp,
                                     const std::shared_ptr<OHOS::Camera::CameraMetadata> &result);
+
+    void SetExposureInfoCallback(std::shared_ptr<ExposureInfoCallback> callback);
+    void SetFlashStateCallback(std::shared_ptr<FlashStateCallback> callback);
 
     void EnableDeferredType(DeferredDeliveryImageType deferredType, bool isEnableByUser);
     void EnableAutoDeferredVideoEnhancement(bool isEnableByUser);
@@ -2184,13 +2291,58 @@ public:
     std::vector<NightSubMode> GetSupportedNightSubModeTypes();
     void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
     uint32_t GetIsoValue();
+    int32_t GetIsoRange(std::vector<int32_t>& isoRange);
     int32_t SetExposureMeteringMode(MeteringMode mode);
+    int32_t GetSupportedMeteringModes(std::vector<MeteringMode>& meteringModes);
+    bool CheckStreamsNum(CaptureOutputType outputType);
+    bool CheckStreamNum(CaptureOutputType outputType);
+    bool HasConflictingOutput(CaptureOutputType currentType);
+    void FillStreamsModeNumMap();
+    void ProcessStreamsModeNumMap(camera_metadata_item_t& item);
     int32_t SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs);
     int32_t SetParameters(const std::unordered_map<std::string, std::string>& kvPairs);
     int32_t GetParameters(const std::string& key, std::vector<std::string>& values);
     int32_t GetSupportedKeys(std::vector<std::string>& keys);
     int32_t GetActiveParameter(const std::string& key, std::string& value);
+
+    /**
+     * @brief Query whether given meteringMode mode supported.
+     *
+     * @param camera_meter_mode_t flash mode to query.
+     * @param bool True if supported false otherwise.
+     * @return errCode.
+     */
+    int32_t IsMeteringModeSupported(MeteringMode meteringMode, bool& isSupported);
+
+    /**
+     * @brief Get MeteringMode.
+     * @param exposure current MeteringMode .
+     * @return Returns errCode.
+     */
+    int32_t GetMeteringMode(MeteringMode& mode);
+
+    /**
+     * @brief Get ISO.
+     * @param iso current ISO.
+     * @return Returns errCode.
+     */
+    int32_t GetISO(int32_t &iso);
+
+    /**
+     * @brief Set ISO.
+     * @param iso compensation value to be set.
+     * @return Returns errCode.
+     */
+    int32_t SetISO(int32_t iso);
+
+    /**
+     * @brief Checks if the manual ISO is supported.
+     * @return true if supported; false otherwise.
+     */
+    bool IsManualIsoSupported();
+
 protected:
+    static const std::unordered_map<HalFlashState, FlashState> metaFlashStateMap_;
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
     static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> fwkWhiteBalanceModeMap_;
 
@@ -2220,6 +2372,7 @@ protected:
 
     std::shared_ptr<AbilityCallback> abilityCallback_;
     std::atomic<uint32_t> exposureDurationValue_ = 0;
+    std::atomic<FlashState> flashStateValue_ = FlashState::FLASH_STATE_UNAVAILABLE;
 
     float apertureValue_ = 0.0;
 
@@ -2232,6 +2385,11 @@ protected:
     std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback_;
     std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback_;
     std::shared_ptr<ImageStabilizationGuideCallback> imageStabilizationGuideCallback_;
+    std::shared_ptr<ExposureInfoCallback> exposureInfoCallback_;
+    std::shared_ptr<FlashStateCallback> flashStateCallback_;
+
+    SafeMap<SceneMode, SafeMap<OHOS::CameraStandard::CaptureOutputType, int>> StreamsModeNumMap_;
+    static const std::unordered_map<StreamIntent, CaptureOutputType> StreamIntentMap_;
     std::atomic<bool> isSmoothZooming_  = false;
     std::atomic<float> targetZoomRatio_  = -1.0;
     float focusDistance_ = 0.0;
@@ -2473,6 +2631,13 @@ protected:
     void ProcessSmoothZoomDurationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     void SetZoomRatioForAudio(float zoomRatio);
     void SetDefaultColorSpace();
+    int32_t GetSupportedOISModes(std::vector<OISMode>& oisModes);
+    void ParseSupportedOISModes(const SceneMode modeName, const camera_metadata_item_t& item,
+        std::vector<OISMode>& supportModes);
+    void ParseSupportedOISBiasRangeAndStep(const SceneMode modeName, const camera_metadata_item_t& item,
+        std::vector<float>& supportBias);
+    void ProcessOISModeChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+    OISMode oisMode_ = OIS_MODE_OFF;
 };
 } // namespace CameraStandard
 } // namespace OHOS

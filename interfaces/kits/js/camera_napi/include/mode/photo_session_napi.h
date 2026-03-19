@@ -45,7 +45,15 @@ protected:
     void RegisterCameraSwitchRequestCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
         const std::vector<napi_value> &args, bool isOnce) override;
     void UnregisterCameraSwitchRequestCallbackListener(
-        const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterFlashStateChangeCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterFlashStateChangeCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void UnregisterExposureInfoCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
 }
 }

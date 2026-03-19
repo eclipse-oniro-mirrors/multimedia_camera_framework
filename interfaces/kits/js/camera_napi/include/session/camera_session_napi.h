@@ -386,6 +386,46 @@ private:
     void OnMacroStatusCallbackAsync(MacroStatus status) const;
 };
 
+class  ExposureInfoCallbackListener : public ExposureInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<ExposureInfoCallbackListener> {
+public:
+    ExposureInfoCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~ExposureInfoCallbackListener() = default;
+    void OnExposureInfoChanged(ExposureInfo info) override;
+    void OnExposureInfoChangedSync(ExposureInfo info) override;
+
+private:
+    void OnExposureInfoChangedCallback(ExposureInfo info) const;
+    void OnExposureInfoChangedCallbackOneArg(ExposureInfo info) const;
+    void OnExposureInfoChangedCallbackAsync(ExposureInfo info, bool isSync = false) const;
+};
+
+class  FlashStateCallbackListener : public FlashStateCallback, public ListenerBase,
+    public std::enable_shared_from_this<FlashStateCallbackListener> {
+public:
+    FlashStateCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~FlashStateCallbackListener() = default;
+    void OnFlashStateChangedSync(FlashState info) override;
+
+private:
+    void OnFlashStateChangedCallbackOneArg(FlashState info) const;
+    void OnFlashStateChangedCallbackAsync(FlashState info) const;
+};
+
+struct ExposureInfoChangedCallback {
+    ExposureInfo info_;
+    weak_ptr<const ExposureInfoCallbackListener> listener_;
+    ExposureInfoChangedCallback(ExposureInfo info, shared_ptr<const ExposureInfoCallbackListener> listener)
+        : info_(info), listener_(listener) {}
+};
+
+struct FlashStateChangedCallback {
+    FlashState info_;
+    weak_ptr<const FlashStateCallbackListener> listener_;
+    FlashStateChangedCallback(FlashState info, shared_ptr<const FlashStateCallbackListener> listener)
+        : info_(info), listener_(listener) {}
+};
+
 struct MacroStatusCallbackInfo {
     MacroStatusCallback::MacroStatus status_;
     weak_ptr<const MacroStatusCallbackListener> listener_;
@@ -430,6 +470,7 @@ public:
     static napi_value GetExposureBiasRange(napi_env env, napi_callback_info info);
     static napi_value SetExposureBias(napi_env env, napi_callback_info info);
     static napi_value GetExposureValue(napi_env env, napi_callback_info info);
+    static napi_value IsFocusDistanceSupported(napi_env env, napi_callback_info info);
     static napi_value IsFocusModeSupported(napi_env env, napi_callback_info info);
     static napi_value GetFocusMode(napi_env env, napi_callback_info info);
     static napi_value SetFocusMode(napi_env env, napi_callback_info info);
@@ -444,6 +485,7 @@ public:
     static napi_value GetFocusDriven(napi_env env, napi_callback_info info);
     static napi_value SetFocusDriven(napi_env env, napi_callback_info info);
     static napi_value GetZoomRatioRange(napi_env env, napi_callback_info info);
+    static napi_value GetRAWCaptureZoomRatioRange(napi_env env, napi_callback_info info);
     static napi_value GetZoomRatio(napi_env env, napi_callback_info info);
     static napi_value SetZoomRatio(napi_env env, napi_callback_info info);
     static napi_value IsZoomCenterPointSupported(napi_env env, napi_callback_info info);
@@ -461,6 +503,11 @@ public:
     static napi_value GetBeauty(napi_env env, napi_callback_info info);
     static napi_value SetBeauty(napi_env env, napi_callback_info info);
     static napi_value GetSupportedColorSpaces(napi_env env, napi_callback_info info);
+
+    static napi_value GetSupportedISORange(napi_env env, napi_callback_info info);
+    static napi_value GetISO(napi_env env, napi_callback_info info);
+    static napi_value SetISO(napi_env env, napi_callback_info info);
+
     static napi_value IsControlCenterSupported(napi_env env, napi_callback_info info);
     static napi_value GetSupportedEffectTypes(napi_env env, napi_callback_info info);
     static napi_value EnableControlCenter(napi_env env, napi_callback_info info);
@@ -537,12 +584,42 @@ public:
     static napi_value OnIsoInfoChange(napi_env env, napi_callback_info info);
     static napi_value OffIsoInfoChange(napi_env env, napi_callback_info info);
 
+    static napi_value OnExposureInfoChange(napi_env env, napi_callback_info info);
+    static napi_value OffExposureInfoChange(napi_env env, napi_callback_info info);
+
+    static napi_value OnFlashStateChange(napi_env env, napi_callback_info info);
+    static napi_value OffFlashStateChange(napi_env env, napi_callback_info info);
+
     static napi_value SetExposureMeteringMode(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedMeteringModes(napi_env env, napi_callback_info info);
+    static napi_value IsMeteringModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetMeteringMode(napi_env env, napi_callback_info info);
+
+    static napi_value GetSupportedPhysicalApertures(napi_env env, napi_callback_info info);
+    static napi_value GetPhysicalAperture(napi_env env, napi_callback_info info);
+    static napi_value SetPhysicalAperture(napi_env env, napi_callback_info info);
 
     static napi_value SetParameters(napi_env env, napi_callback_info info);
     static napi_value GetParameters(napi_env env, napi_callback_info info);
     static napi_value GetSupportedKeys(napi_env env, napi_callback_info info);
     static napi_value GetActiveParameter(napi_env env, napi_callback_info info);
+    static napi_value GetFocusDistance(napi_env env, napi_callback_info info);
+    static napi_value SetFocusDistance(napi_env env, napi_callback_info info);
+
+    static napi_value GetExposureDurationRange(napi_env env, napi_callback_info info);
+    static napi_value GetExposureDuration(napi_env env, napi_callback_info info);
+    static napi_value GetExposureBiasStep(napi_env env, napi_callback_info info);
+    static napi_value SetExposureDuration(napi_env env, napi_callback_info info);
+
+    static napi_value IsOISModeSupported(napi_env env, napi_callback_info info);
+    static napi_value GetCurrentOISMode(napi_env env, napi_callback_info info);
+    static napi_value SetOISMode(napi_env env, napi_callback_info info);
+    
+    static napi_value GetSupportedOISBiasRange(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedOISBiasStep(napi_env env, napi_callback_info info);
+    static napi_value GetCurrentCustomOISBias(napi_env env, napi_callback_info info);
+    static napi_value SetOISModeCustom(napi_env env, napi_callback_info info);
+    
 
     napi_env env_;
     sptr<CaptureSession> cameraSession_;
@@ -565,6 +642,9 @@ public:
     std::shared_ptr<ApertureEffectChangeCallbackListener> apertureEffectChangeCallbackListener_;
     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_ = nullptr;
     std::shared_ptr<CameraSwitchRequestCallbackListener> cameraSwitchSessionNapiCallback_;
+    std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;
+    std::shared_ptr<FlashStateCallbackListener> flashStateCallback_ = nullptr;
+    
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<CaptureSession> sCameraSession_;
@@ -577,10 +657,12 @@ public:
     static const std::vector<napi_property_descriptor> flash_props;
     static const std::vector<napi_property_descriptor> flash_sys_props;
     static const std::vector<napi_property_descriptor> auto_exposure_props;
+    static const std::vector<napi_property_descriptor> raw_props;
     static const std::vector<napi_property_descriptor> focus_props;
     static const std::vector<napi_property_descriptor> focus_sys_props;
     static const std::vector<napi_property_descriptor> zoom_props;
     static const std::vector<napi_property_descriptor> zoom_sys_props;
+    static const std::vector<napi_property_descriptor> exposure_cb_props;
     static const std::vector<napi_property_descriptor> filter_props;
     static const std::vector<napi_property_descriptor> beauty_props;
     static const std::vector<napi_property_descriptor> macro_props;
@@ -596,6 +678,12 @@ public:
     static const std::vector<napi_property_descriptor> image_stabilization_guide_props;
     static const std::vector<napi_property_descriptor> focus_tracking_props;
     static const std::vector<napi_property_descriptor> iso_props;
+    static const std::vector<napi_property_descriptor> manual_iso_props;
+    static const std::vector<napi_property_descriptor> manual_focus_props;
+    static const std::vector<napi_property_descriptor> manual_exposure_props;
+    static const std::vector<napi_property_descriptor> flash_cb_props;
+    static const std::vector<napi_property_descriptor> physical_aperture_props;
+    static const std::vector<napi_property_descriptor> optical_image_stabilization_props;
 
 private:
     static const EmitterFunctions fun_map_;
@@ -710,6 +798,10 @@ protected:
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
     virtual void UnregisterExposureInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) {}
+    virtual void RegisterFlashStateChangeCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce){}
+    virtual void UnregisterFlashStateChangeCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args){}
     virtual void RegisterApertureInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) {}
     virtual void UnregisterApertureInfoCallbackListener(const std::string& eventName,
@@ -748,6 +840,9 @@ protected:
         SPOT = 2,
         CENTER_HIGHLIGHT_WEIGHTED = 3
     } ExposureMeteringModeofSdk;
+    static const std::unordered_map<MeteringMode, CameraSessionNapi::ExposureMeteringModeofSdk>
+        fwkToSdkMeteringModeMap_;
+    static const std::unordered_map<CameraSessionNapi::ExposureMeteringModeofSdk, MeteringMode> JsToFwkMeteringModeMap_;
 };
 
 struct CameraSessionAsyncContext : public AsyncContext {

@@ -794,13 +794,7 @@ bool ProfessionSession::CanAddOutput(sptr<CaptureOutput> &output)
 }
 
 //callbacks
-void ProfessionSession::SetExposureInfoCallback(std::shared_ptr<ExposureInfoCallback> callback)
-{
-    // LCOV_EXCL_START
-    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-    exposureInfoCallback_ = callback;
-    // LCOV_EXCL_STOP
-}
+
 
 void ProfessionSession::SetIsoInfoCallback(std::shared_ptr<IsoInfoCallback> callback)
 {

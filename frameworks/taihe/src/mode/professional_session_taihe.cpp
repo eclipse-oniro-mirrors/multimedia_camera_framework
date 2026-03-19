@@ -63,7 +63,7 @@ void ProfessionalSessionImpl::SetIso(int32_t iso)
 
 int32_t ProfessionalSessionImpl::GetIso()
 {
-    int32_t iso = -1;
+    int32_t iso = 0;
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), iso,
         "SystemApi GetIso is called!");
     CHECK_RETURN_RET_ELOG(professionSession_ == nullptr, iso,
@@ -185,25 +185,6 @@ void ProfessionalSessionImpl::UnregisterExposureInfoCallbackListener(const std::
 {
     CHECK_RETURN_ELOG(exposureInfoCallback_ == nullptr, "exposureInfoCallback is null");
     exposureInfoCallback_->RemoveCallbackRef(eventName, callback);
-}
-
-void ExposureInfoCallbackListener::OnExposureInfoChanged(OHOS::CameraStandard::ExposureInfo info)
-{
-    MEDIA_DEBUG_LOG("OnExposureInfoChanged is called, info: %{public}d", info.exposureDurationValue);
-    OnExposureInfoChangedCallback(info);
-}
-
-void ExposureInfoCallbackListener::OnExposureInfoChangedCallback(OHOS::CameraStandard::ExposureInfo info) const
-{
-    MEDIA_DEBUG_LOG("OnExposureInfoChangedCallback is called");
-    auto sharePtr = shared_from_this();
-    auto task = [info, sharePtr]() {
-        ExposureInfo exposureInfo{ optional<int32_t>::make(info.exposureDurationValue) };
-        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback<ExposureInfo const&>(
-            "exposureInfoChange", 0, "Callback is OK", exposureInfo));
-    };
-    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
-    mainHandler_->PostTask(task, "OnExposureInfoChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
 void ProfessionalSessionImpl::RegisterApertureInfoCallbackListener(const std::string& eventName,

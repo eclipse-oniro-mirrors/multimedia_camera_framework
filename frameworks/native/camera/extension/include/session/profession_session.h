@@ -378,23 +378,12 @@ private:
 };
 
 typedef struct {
-    uint32_t exposureDurationValue;
-} ExposureInfo;
-
-typedef struct {
     float apertureValue;
 } ApertureInfo;
 
 typedef struct {
     float luminationValue;
 } LuminationInfo;
-
-class ExposureInfoCallback {
-public:
-    ExposureInfoCallback() = default;
-    virtual ~ExposureInfoCallback() = default;
-    virtual void OnExposureInfoChanged(ExposureInfo info) = 0;
-};
 
 class ApertureInfoCallback {
 public:

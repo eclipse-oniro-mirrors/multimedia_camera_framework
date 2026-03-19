@@ -146,6 +146,27 @@ private:
         OHOS::CameraStandard::ControlCenterStatusInfo controlCenterStatusInfo) const;
 };
 
+class ExposureInfoCallbackListener : public OHOS::CameraStandard::ExposureInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<ExposureInfoCallbackListener> {
+public:
+    ExposureInfoCallbackListener(ani_env* env, bool isAsync = true) : ListenerBase(env), isAsync_(isAsync) {}
+    ~ExposureInfoCallbackListener() = default;
+    void OnExposureInfoChanged(OHOS::CameraStandard::ExposureInfo info) override;
+    bool IsAsyncCall() const { return isAsync_; }
+private:
+    void OnExposureInfoChangedCallback(OHOS::CameraStandard::ExposureInfo info) const;
+    bool isAsync_;
+};
+
+class FlashStateCallbackListener : public OHOS::CameraStandard::FlashStateCallback, public ListenerBase,
+    public std::enable_shared_from_this<FlashStateCallbackListener> {
+public:
+    FlashStateCallbackListener(ani_env* env) : ListenerBase(env) {}
+    ~FlashStateCallbackListener() = default;
+    void OnFlashStateChangedSync(OHOS::CameraStandard::FlashState info) override;
+private:
+    void OnFlashStateChangedCallback(OHOS::CameraStandard::FlashState info) const;
+};
 class SessionImpl : public CameraAniEventEmitter<SessionImpl>,
                     virtual public SessionBase {
 public:
@@ -223,6 +244,10 @@ public:
     bool IsControlCenterSupported();
     array<ControlCenterEffectType> GetSupportedEffectTypes();
     void EnableControlCenter(bool enabled);
+    void OnExposureInfoChange(callback_view<void(ExposureInfo const&)> callback);
+    void OffExposureInfoChange(optional_view<callback<void(ExposureInfo const&)>> callback);
+    void OnFlashStateChange(callback_view<void(FlashState)> callback);
+    void OffFlashStateChange(optional_view<callback<void(FlashState)>> callback);
 
     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;
@@ -275,6 +300,10 @@ protected:
     virtual void RegisterExposureInfoCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     virtual void UnregisterExposureInfoCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback);
+    virtual void RegisterFlashStateCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback, bool isOnce);
+    virtual void UnregisterFlashStateCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback);
     virtual void RegisterApertureInfoCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);

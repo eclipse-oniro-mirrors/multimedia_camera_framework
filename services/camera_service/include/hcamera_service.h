@@ -130,6 +130,12 @@ public:
     int32_t GetCameras(vector<string>& cameraIds,
         vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList) override;
     int32_t GetCameraIds(std::vector<std::string>& cameraIds) override;
+    int32_t GetPhysicalCameraIds(std::vector<std::string>& cameraIds) override;
+    void FillPhysicalCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos, vector<string>& cameraIds,
+        vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
+    int32_t GetPhysicalCameras(
+        vector<string>& cameraIds, vector<shared_ptr<OHOS::Camera::CameraMetadata>>& cameraAbilityList);
+    int32_t ParseCamerasInfos(vector<string>& cameraIds, vector<shared_ptr<CameraMetaInfo>>& cameraInfos);
     int32_t GetCameraAbility(const std::string& cameraId,
         std::shared_ptr<OHOS::Camera::CameraMetadata>& cameraAbility) override;
     int32_t CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device) override;

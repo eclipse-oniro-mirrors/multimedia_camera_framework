@@ -81,11 +81,19 @@ public:
 
     Camera_ErrorCode SetSmoothZoom(float targetZoom, Camera_SmoothZoomMode smoothZoomMode);
 
-    Camera_ErrorCode IsFocusModeSupported(Camera_FocusMode focusMode, bool* isSupported);
+    Camera_ErrorCode IsFocusModeSupported(Camera_FocusMode focusMode, bool* isSupported) const;
+
+    Camera_ErrorCode IsFocusDistanceSupported(bool* isSupported) const;
 
     Camera_ErrorCode GetFocusMode(Camera_FocusMode* focusMode);
 
     Camera_ErrorCode SetFocusMode(Camera_FocusMode focusMode);
+
+    Camera_ErrorCode GetFocusDistance(float* focusDistance) const;
+
+    Camera_ErrorCode GetIso(int32_t* isoValue) const;
+
+    Camera_ErrorCode GetIsoRange(int32_t* minIsoValue, int32_t* maxIsoValue) const;
 
     Camera_ErrorCode SetQualityPrioritization(Camera_QualityPrioritization qualityPrioritization);
 
@@ -109,6 +117,8 @@ public:
 
     Camera_ErrorCode SetExposureMode(Camera_ExposureMode exposureMode);
 
+    Camera_ErrorCode GetExposureBiasStep(float* exposureBiasStep);
+
     Camera_ErrorCode GetMeteringPoint(Camera_Point* point);
 
     Camera_ErrorCode SetMeteringPoint(Camera_Point point);
@@ -120,6 +130,13 @@ public:
     Camera_ErrorCode GetExposureBias(float* exposureBias);
 
     Camera_ErrorCode GetExposureValue(float* exposureValue);
+
+    Camera_ErrorCode IsExposureMeteringModeSupported(
+        OH_Camera_ExposureMeteringMode exposureMeteringMode, bool* isSupported) const;
+
+    Camera_ErrorCode GetMeteringMode(OH_Camera_ExposureMeteringMode* exposureMeteringMode) const;
+
+    Camera_ErrorCode SetMeteringMode(OH_Camera_ExposureMeteringMode aeMeteringMode) const;
 
     Camera_ErrorCode GetSupportedColorSpaces(OH_NativeBuffer_ColorSpace** colorSpace, uint32_t* size);
 
@@ -196,6 +213,16 @@ public:
     Camera_ErrorCode GetWhiteBalance(int32_t *colorTemperature);
 
     Camera_ErrorCode SetWhiteBalance(int32_t colorTemperature);
+    
+    Camera_ErrorCode SetIso(int32_t iso) const;
+
+    Camera_ErrorCode SetFocusDistance(float focusDistance) const;
+
+    Camera_ErrorCode GetExposureDuration(int32_t* exposureDuration) const;
+
+    Camera_ErrorCode SetExposureDuration(int32_t exposureDuration) const;
+
+    Camera_ErrorCode GetExposureDurationRange(int32_t* minExposureDuration, int32_t* maxExposureDuration) const;
 
     Camera_ErrorCode SetWhiteBalanceMode(Camera_WhiteBalanceMode whiteBalanceMode);
 
@@ -205,11 +232,45 @@ public:
 
     Camera_ErrorCode RegisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
 
+    Camera_ErrorCode RegisterExposureDurationCallback(
+        OH_CaptureSession_OnExposureDurationChange ExposureDurationChange) const;
+
+    Camera_ErrorCode UnregisterExposureDurationCallback(
+        OH_CaptureSession_OnExposureDurationChange ExposureDurationChange) const;
+
     Camera_ErrorCode UnregisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
 
     Camera_ErrorCode RegisterIsoInfoCallback(OH_CaptureSession_OnIsoChange isoInfoChange);
 
     Camera_ErrorCode UnregisterIsoInfoCallback(OH_CaptureSession_OnIsoChange isoInfoChange);
+
+    Camera_ErrorCode RegisterFlashStateCallback(OH_CaptureSession_OnFlashStateChange flashStateChange) const;
+
+    Camera_ErrorCode UnregisterFlashStateCallback(OH_CaptureSession_OnFlashStateChange flashStateChange) const;
+
+    Camera_ErrorCode GetRAWCaptureZoomRatioRange(float* minZoom, float* maxZoom) const;
+
+    Camera_ErrorCode GetPhysicalAperturesSize(uint32_t* size) const;
+
+    Camera_ErrorCode GetSupportedPhysicalApertures(OH_Camera_PhysicalAperture* apertures, uint32_t size) const;
+
+    Camera_ErrorCode GetPhysicalAperture(float* aperture) const;
+
+    Camera_ErrorCode SetPhysicalAperture(float aperture) const;
+
+
+    Camera_ErrorCode IsOISModeSupported(OH_Camera_OISMode oisMode, bool* isSupported) const;
+
+    Camera_ErrorCode GetCurrentOISMode(OH_Camera_OISMode* oisMode) const;
+
+    Camera_ErrorCode SetOISMode(OH_Camera_OISMode oisMode) const;
+
+    Camera_ErrorCode GetSupportedOISBiasRange(
+        OH_Camera_OISAxes oisAxis, float* minBias, float* maxBias, float* step) const;
+
+    Camera_ErrorCode GetCurrentCustomOISBias(float* pitchBias, float* yawBias) const;
+
+    Camera_ErrorCode SetOISModeCustom(float pitchBias, float yawBias) const;
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };

@@ -783,26 +783,6 @@ void ProfessionSessionNapi::UnregisterAbilityChangeCallbackListener(
     }
 }
 
-void ProfessionSessionNapi::RegisterExposureInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
-{
-    if (exposureInfoCallback_ == nullptr) {
-        exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListener>(env);
-        professionSession_->SetExposureInfoCallback(exposureInfoCallback_);
-    }
-    exposureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
-}
-
-void ProfessionSessionNapi::UnregisterExposureInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
-{
-    if (exposureInfoCallback_ == nullptr) {
-        MEDIA_ERR_LOG("abilityCallback is null");
-    } else {
-        exposureInfoCallback_->RemoveCallbackRef(eventName, callback);
-    }
-}
-
 void ProfessionSessionNapi::RegisterIsoInfoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
@@ -871,56 +851,6 @@ void ProfessionSessionNapi::UnregisterLuminationInfoCallbackListener(
         MEDIA_INFO_LOG("ProfessionSessionNapi SetExposureHintMode set exposureHint %{public}d!", mode);
         luminationInfoCallback_->RemoveCallbackRef(eventName, callback);
     }
-}
-
-void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureInfo info) const
-{
-    MEDIA_DEBUG_LOG("OnExposureInfoChangedCallbackAsync is called");
-    std::unique_ptr<ExposureInfoChangedCallback> callback =
-        std::make_unique<ExposureInfoChangedCallback>(info, shared_from_this());
-    ExposureInfoChangedCallback *event = callback.get();
-    auto task = [event]() {
-        ExposureInfoChangedCallback* callback = reinterpret_cast<ExposureInfoChangedCallback *>(event);
-        if (callback) {
-            auto listener = callback->listener_.lock();
-            if (listener != nullptr) {
-                listener->OnExposureInfoChangedCallback(callback->info_);
-            }
-            delete callback;
-        }
-    };
-    std::unordered_map<std::string, std::string> params = {
-        {"exposureDurationValue", std::to_string(info.exposureDurationValue)},
-    };
-    std::string taskName =
-        CameraNapiUtils::GetTaskName("ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync", params);
-    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
-        MEDIA_ERR_LOG("failed to execute work");
-    } else {
-        callback.release();
-    }
-}
-
-void ExposureInfoCallbackListener::OnExposureInfoChangedCallback(ExposureInfo info) const
-{
-    MEDIA_DEBUG_LOG("OnExposureInfoChangedCallback is called");
-    napi_value result[ARGS_TWO] = { nullptr, nullptr };
-    napi_value retVal;
-
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_create_object(env_, &result[PARAM1]);
-    napi_value value;
-    napi_create_uint32(env_, info.exposureDurationValue, &value);
-    napi_set_named_property(env_, result[PARAM1], "exposureTimeValue", value);
-
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("exposureInfoChange", callbackNapiPara);
-}
-
-void ExposureInfoCallbackListener::OnExposureInfoChanged(ExposureInfo info)
-{
-    MEDIA_DEBUG_LOG("OnExposureInfoChanged is called, info: %{public}d", info.exposureDurationValue);
-    OnExposureInfoChangedCallbackAsync(info);
 }
 
 void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureInfo info) const

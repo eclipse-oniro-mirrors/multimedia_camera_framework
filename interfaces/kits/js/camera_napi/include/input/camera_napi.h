@@ -555,6 +555,17 @@ static const std::unordered_map<std::string, int32_t> mapPhotoQualityPrioritizat
     {"SPEED", 1},
 };
 
+static const std::unordered_map<std::string, int32_t> mapOISMode = {
+    {"OFF", 0},
+    {"AUTO", 1},
+    {"CUSTOM", 2},
+};
+
+static const std::unordered_map<std::string, int32_t> mapOISAxes = {
+    {"PITCH", 0},
+    {"YAW", 1},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

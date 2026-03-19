@@ -37,7 +37,6 @@
 #include "camera_log.h"
 #include "camera_metadata_info.h"
 #include "camera_rotation_api_utils.h"
-#include "camera_security_utils.h"
 #include "camera_service_system_ability_listener.h"
 #include "camera_util.h"
 #include "capture_input.h"
@@ -1550,11 +1549,80 @@ sptr<CameraSharedStatusListenerManager> CameraManager::GetCameraSharedStatusList
 
 sptr<CameraDevice> CameraManager::GetCameraDeviceFromId(std::string cameraId)
 {
-    auto cameraDeviceList = GetCameraDeviceList();
+    auto cameraDeviceList = GetFullCameraDeviceList();
     for (auto& deviceInfo : cameraDeviceList) {
         CHECK_RETURN_RET(deviceInfo->GetID() == cameraId, deviceInfo);
     }
     return nullptr;
+}
+
+bool IsCameraPublic(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
+{
+    camera_metadata_item_t item;
+    int32_t retCode = Camera::FindCameraMetadataItem(cameraAbility->get(), OHOS_ABILITY_IS_CAMERA_PUBLIC, &item);
+    if (retCode != CAMERA_OK || item.count == 0) {
+        MEDIA_INFO_LOG("cameraAbility not support OHOS_ABILITY_IS_CAMERA_PUBLIC");
+        return false;
+    }
+    return static_cast<bool>(item.data.u8[0]);
+}
+
+void CameraManager::SetConstituentCameraDevices(
+    sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    vector<string> cameraDeviceList = {};
+    camera_metadata_item_t item;
+    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CONSTITUENT_CAMERA_DEVICES, &item);
+    if (retCode != CAMERA_OK || item.count == 0) {
+        MEDIA_WARNING_LOG(
+            "cameraAbility not support OHOS_ABILITY_CONSTITUENT_CAMERA_DEVICES, retcode:%{public}d", retCode);
+        return;
+    }
+    int32_t constituentCameraId = 0;
+    for (uint32_t i = 0; i < item.count; i++) {
+        constituentCameraId = item.data.u8[i];
+        cameraDeviceList.emplace_back(to_string(constituentCameraId));
+    }
+    MEDIA_INFO_LOG(
+        "CameraManager::SetConstituentCameraDevices,cameraId: %{public}s, ConstituentCameraDevices: %{public}s",
+        cameraObj->GetID().c_str(), Container2String(cameraDeviceList.begin(), cameraDeviceList.end()).c_str());
+    cameraObj->SetConstituentCameraDevices(cameraDeviceList);
+}
+
+void CameraManager::SetMultiCameraCombinationInfo(
+    sptr<CameraDevice>& cameraObj, std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    CHECK_RETURN(!unsupportedMultiCameraCombinationsMap_.IsEmpty());
+    camera_metadata_item_t item;
+    int32_t retCode =
+        Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS, &item);
+    if (retCode != CAMERA_OK || item.count == 0) {
+        MEDIA_WARNING_LOG("cameraAbility not support OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS");
+        return;
+    }
+    int currentRow = 0;
+    for (uint32_t i = 0; i < item.count; i++) {
+        MEDIA_INFO_LOG("CameraManager::SetMultiCameraCombinationInfo "
+                       "OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS:%{public}d",
+            item.data.i32[i]);
+        if (item.data.i32[i] == -1) {
+            currentRow++;
+            continue;
+        }
+        unordered_set<int> rowInfo;
+        if (!unsupportedMultiCameraCombinationsMap_.Find(to_string(item.data.i32[i]), rowInfo)) {
+            std::unordered_set<int> ele = { currentRow };
+            unsupportedMultiCameraCombinationsMap_.EnsureInsert(to_string(item.data.i32[i]), ele);
+        } else {
+            unsupportedMultiCameraCombinationsMap_.ChangeValueByLambda(
+                to_string(item.data.i32[i]), [currentRow](std::unordered_set<int>& info) { info.insert(currentRow); });
+        }
+    }
+    unsupportedMultiCameraCombinationsMap_.Iterate([](const string cameraId, const unordered_set<int> rowInfo) {
+        MEDIA_INFO_LOG("HCameraDeviceManager::CalMultiCameraCombinationInfo, unsupportedMultiCameraCombinationsMap_ "
+                       "cameraId: %{public}s, unsupportedMultiCameraCombinationsMap_: %{public}s",
+            cameraId.c_str(), Container2String(rowInfo.begin(), rowInfo.end()).c_str());
+    });
 }
 
 sptr<CameraManager>& CameraManager::GetInstance()
@@ -1619,6 +1687,57 @@ dmDeviceInfo CameraManager::GetDmDeviceInfo(
     return deviceInfo;
 }
 
+std::vector<sptr<CameraDevice>> CameraManager::GetCameraPhysicalDeviceListFromServer()
+{
+    CAMERA_SYNC_TRACE;
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(
+        serviceProxy == nullptr, {}, "CameraManager::InitCameraList serviceProxy is null, returning empty list!");
+    std::vector<std::string> cameraIds;
+    std::vector<sptr<CameraDevice>> deviceInfoList = {};
+    int32_t retCode = serviceProxy->GetPhysicalCameraIds(cameraIds);
+    for (auto& cameraId : cameraIds) {
+        MEDIA_DEBUG_LOG(
+            "GetCameraPhysicalDeviceListFromServer GetPhysicalCameraIds cameraId= %{public}s", cameraId.c_str());
+    }
+    if (retCode == CAMERA_OK) {
+        auto dmDeviceInfoList = GetDmDeviceInfo();
+        for (auto& cameraId : cameraIds) {
+            MEDIA_DEBUG_LOG(
+                "GetCameraPhysicalDeviceListFromServer InitCameraList cameraId= %{public}s", cameraId.c_str());
+            std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
+            retCode = serviceProxy->GetCameraAbility(cameraId, cameraAbility);
+            CHECK_CONTINUE_ELOG(
+                cameraAbility == nullptr, "GetCameraPhysicalDeviceListFromServer GetDeviceMetadata failed");
+            CHECK_CONTINUE(retCode != CAMERA_OK || !IsCameraPublic(cameraAbility));
+            MEDIA_INFO_LOG("GetCameraPhysicalDeviceListFromServer InitCameraList cameraId= %{public}s is public.",
+                cameraId.c_str());
+            auto dmDeviceInfo = GetDmDeviceInfo(cameraId, dmDeviceInfoList);
+            sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, dmDeviceInfo, cameraAbility);
+            CHECK_CONTINUE_ELOG(cameraObj == nullptr, "failed to new CameraDevice!");
+            SetProfile(cameraObj, cameraAbility);
+            SetMultiCameraCombinationInfo(cameraObj, cameraAbility);
+            deviceInfoList.emplace_back(cameraObj);
+        }
+    } else {
+        MEDIA_ERR_LOG("Get camera device failed!, retCode: %{public}d", retCode);
+    }
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '4' && !GetIsInWhiteList()) {
+        for (const auto& deviceInfo : deviceInfoList) {
+            if (deviceInfo->GetPosition() == CAMERA_POSITION_FOLD_INNER) {
+                SetInnerCamera(deviceInfo);
+                break;
+            }
+        }
+    }
+    AlignVideoFpsProfile(deviceInfoList);
+    std::sort(
+        deviceInfoList.begin(), deviceInfoList.end(), [](const sptr<CameraDevice>& a, const sptr<CameraDevice>& b) {
+            return static_cast<int>(a->GetConnectionType()) < static_cast<int>(b->GetConnectionType());
+        });
+    return deviceInfoList;
+}
+
 std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
 {
     CAMERA_SYNC_TRACE;
@@ -1634,12 +1753,15 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
             MEDIA_DEBUG_LOG("InitCameraList cameraId= %{public}s", cameraId.c_str());
             std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;
             retCode = serviceProxy->GetCameraAbility(cameraId, cameraAbility);
+            CHECK_CONTINUE_ELOG(
+                cameraAbility == nullptr, "GetCameraDeviceListFromServer GetDeviceMetadata failed");
             CHECK_CONTINUE(retCode != CAMERA_OK);
-
             auto dmDeviceInfo = GetDmDeviceInfo(cameraId, dmDeviceInfoList);
             sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, dmDeviceInfo, cameraAbility);
             CHECK_CONTINUE_ELOG(cameraObj == nullptr, "failed to new CameraDevice!");
+            CHECK_EXECUTE(cameraObj->IsLogicalCamera(), SetConstituentCameraDevices(cameraObj, cameraAbility));
             SetProfile(cameraObj, cameraAbility);
+            SetMultiCameraCombinationInfo(cameraObj, cameraAbility);
             deviceInfoList.emplace_back(cameraObj);
         }
     } else {
@@ -2308,6 +2430,39 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCamerasList()
         cameraDeviceList = GetCameraDeviceList();
     }
     // LCOV_EXCL_STOP
+    return FilterDeviceList(curFoldStatus, cameraDeviceList);
+}
+
+std::vector<sptr<CameraDevice>> CameraManager::GetSupportedFullCamerasList()
+{
+    CAMERA_SYNC_TRACE;
+    auto curFoldStatus = GetFoldStatus();
+    std::vector<sptr<CameraDevice>> cameraDeviceList;
+    // LCOV_EXCL_START
+    cameraDeviceList = GetSupportedCamerasList();
+    std::vector<sptr<CameraDevice>> cameraPhysicalDeviceList = GetCameraPhysicalDeviceListFromServer();
+    cameraDeviceList.insert(cameraDeviceList.end(), cameraPhysicalDeviceList.begin(), cameraPhysicalDeviceList.end());
+    std::unordered_set<string> seenIds;
+    auto it = cameraDeviceList.begin();
+    while (it != cameraDeviceList.end()) {
+        string deviceId = (*it)->GetID();
+        if (seenIds.find(deviceId) != seenIds.end()) {
+            it = cameraDeviceList.erase(it);
+        } else {
+            seenIds.insert(deviceId);
+            ++it;
+        }
+    }
+    for (auto& cameraDevice : cameraDeviceList) {
+        MEDIA_INFO_LOG("GetSupportedFullCamerasList1 cameraId= %{public}s", cameraDevice->GetID().c_str());
+    }
+    // LCOV_EXCL_STOP
+    return FilterDeviceList(curFoldStatus, cameraDeviceList);
+}
+
+std::vector<sptr<CameraDevice>> CameraManager::FilterDeviceList(
+    FoldStatus curFoldStatus, std::vector<sptr<CameraDevice>> cameraDeviceList)
+{
     bool isFoldable = GetIsFoldable();
     CHECK_RETURN_RET(!isFoldable, cameraDeviceList);
     MEDIA_INFO_LOG("fold status: %{public}d", curFoldStatus);
@@ -2393,7 +2548,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedCameras()
 std::vector<sptr<CameraDevice>> CameraManager::GetCameraDevices()
 {
     MEDIA_DEBUG_LOG("CameraManager::GetCameraDevices enter");
-    std::vector<sptr<CameraDevice>> cameraDeviceList = GetSupportedCamerasList();
+    std::vector<sptr<CameraDevice>> cameraDeviceList = GetSupportedFullCamerasList();
     MEDIA_DEBUG_LOG("CameraManager::GetCameraDevices cameras size: %{public}zu", cameraDeviceList.size());
     return cameraDeviceList;
 }
@@ -2541,7 +2696,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
     std::string originCameraId = camera->GetID();
     // LCOV_EXCL_START
     if (isApiCompatRequired && isFoldStatusValid && isFrontCamera) {
-        std::vector<sptr<CameraDevice>> cameraObjList = GetSupportedCameras();
+        std::vector<sptr<CameraDevice>> cameraObjList = GetCameraDevices(); //全量
         sptr<CameraDevice> cameraInfo;
         for (const auto& cameraDevice : cameraObjList) {
             bool isFindDevice =
@@ -2583,7 +2738,7 @@ int CameraManager::CreateCameraInput(CameraPosition position, CameraType cameraT
 {
     CAMERA_SYNC_TRACE;
     sptr<CameraInput> cameraInput = nullptr;
-    std::vector<sptr<CameraDevice>> cameraDeviceList = GetSupportedCameras();
+    std::vector<sptr<CameraDevice>> cameraDeviceList = GetCameraDevices();//全量
     for (size_t i = 0; i < cameraDeviceList.size(); i++) {
         MEDIA_DEBUG_LOG("CreateCameraInput position:%{public}d, Camera Type:%{public}d",
             cameraDeviceList[i]->GetPosition(), cameraDeviceList[i]->GetCameraType());
@@ -2908,7 +3063,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedFullOutputCapability(spt
         "GetSupportedOutputCapability failed, cameraOutputCapability is nullptr");
     // report full preview capabilities in this interface
     cameraOutputCapability->SetPreviewProfiles(camera->GetFullPreviewProfiles(modeName));
-    MEDIA_INFO_LOG("GetFullPreviewProfiles size = %{public}zu",
+    MEDIA_DEBUG_LOG("GetFullPreviewProfiles size = %{public}zu",
                    cameraOutputCapability->GetPreviewProfiles().size());
     std::vector<Profile> photoProfiles = cameraOutputCapability->GetPhotoProfiles();
     CHECK_EXECUTE(!IsSystemApp(), FillExtendedSupportPhotoFormats(photoProfiles));
@@ -2924,7 +3079,7 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedFullOutputCapability(spt
 sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<CameraDevice>& camera, int32_t modeName,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
-    MEDIA_DEBUG_LOG("GetSupportedOutputCapability mode = %{public}d", modeName);
+    MEDIA_DEBUG_LOG("ParseSupportedOutputCapability mode = %{public}d", modeName);
     CHECK_RETURN_RET(camera == nullptr || cameraAbility == nullptr, nullptr);
     sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
     CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
@@ -2933,7 +3088,6 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
     depthProfiles_.clear();
     SetPhotoFormats({});
     SetPhotoFormats(GetSupportPhotoFormat(modeName, cameraAbility));
-
     ParseCapability(profilesWrapper, camera, modeName, item, cameraAbility);
     SceneMode profileMode = static_cast<SceneMode>(modeName);
     auto fallbackMode = GetFallbackConfigMode(profileMode, profilesWrapper);
@@ -2958,7 +3112,8 @@ sptr<CameraOutputCapability> CameraManager::ParseSupportedOutputCapability(sptr<
         cameraOutputCapability->SetVideoProfiles(profilesWrapper.vidProfiles);
     }
     cameraOutputCapability->SetDepthProfiles(depthProfiles_);
-    MEDIA_DEBUG_LOG("SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
+    MEDIA_DEBUG_LOG(
+        "ParseSupportedOutputCapability SetPhotoProfiles size = %{public}zu,SetPreviewProfiles size = %{public}zu"
         "SetVideoProfiles size = %{public}zu,SetDepthProfiles size = %{public}zu",
         profilesWrapper.photoProfiles.size(), profilesWrapper.previewProfiles.size(),
         profilesWrapper.vidProfiles.size(), depthProfiles_.size());
