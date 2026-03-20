@@ -136,5 +136,10 @@ void HCameraRestoreParam::SetFoldStatus(int foldStaus)
 {
     mFoldStatus = foldStaus;
 }
+
+void HCameraRestoreParam::SetScanStatus(bool isScan)
+{
+    mIsScan = isScan;
+}
 } // namespace CameraStandard
 } // namespace OHOS

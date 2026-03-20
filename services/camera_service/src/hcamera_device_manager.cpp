@@ -69,6 +69,79 @@ size_t HCameraDeviceManager::GetActiveCamerasCount()
     return activeCameras_.size();
 }
 
+void HCameraDeviceManager::CalMultiCameraCombinationInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+{
+    CHECK_RETURN(!unsupportedMultiCameraCombinationsMap_.IsEmpty());
+    camera_metadata_item_t item;
+    int32_t retCode = OHOS::Camera::FindCameraMetadataItem(
+        metadata->get(), OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS, &item);
+    if (retCode != CAMERA_OK) {
+        MEDIA_WARNING_LOG("cameraAbility not support OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS");
+        return;
+    }
+    int currentRow = 0;
+    for (uint32_t i = 0; i < item.count; i++) {
+        MEDIA_INFO_LOG("HCameraDeviceManager::CalMultiCameraCombinationInfo "
+                       "OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS:%{public}d",
+            item.data.i32[i]);
+        if (item.data.i32[i] == -1) {
+            currentRow++;
+            continue;
+        }
+        unordered_set<int> rowInfo;
+        if (!unsupportedMultiCameraCombinationsMap_.Find(to_string(item.data.i32[i]), rowInfo)) {
+            std::unordered_set<int> ele = { currentRow };
+            unsupportedMultiCameraCombinationsMap_.EnsureInsert(to_string(item.data.i32[i]), ele);
+        } else {
+            unsupportedMultiCameraCombinationsMap_.ChangeValueByLambda(
+                to_string(item.data.i32[i]), [currentRow](std::unordered_set<int>& info) { info.insert(currentRow); });
+        }
+    }
+    unsupportedMultiCameraCombinationsMap_.Iterate([](const string cameraId, const unordered_set<int> rowInfo) {
+        MEDIA_INFO_LOG("HCameraDeviceManager::CalMultiCameraCombinationInfo, unsupportedMultiCameraCombinationsMap_ "
+                       "cameraId: %{public}s, unsupportedMultiCameraCombinationsMap_: %{public}s",
+            cameraId.c_str(), Container2String(rowInfo.begin(), rowInfo.end()).c_str());
+    });
+}
+
+bool HCameraDeviceManager::IsMultiCameraCombinationSupported(vector<string> cameraIds)
+{
+    std::unordered_set<std::string> uniqueIds(cameraIds.begin(), cameraIds.end());
+    std::unordered_set<int> idxs;
+    std::regex numRegex("\\d+");
+    for (auto cameraId : cameraIds) {
+        std::smatch matchResult;
+        if (std::regex_search(cameraId, matchResult, numRegex)) {
+            cameraId = matchResult.str();
+        }
+        unordered_set<int> rowInfos;
+        bool find = unsupportedMultiCameraCombinationsMap_.Find(cameraId, rowInfos);
+        CHECK_CONTINUE_WLOG(!find,
+            "unsupportedMultiCameraCombinationsMap_ find no information with cameraId: %{public}s", cameraId.c_str());
+        auto iter = find_if(rowInfos.begin(), rowInfos.end(), [&idxs](int rowInfo) {
+            if (idxs.find(rowInfo) == idxs.end()) {
+                idxs.insert(rowInfo);
+                return false;
+            }
+            return true;
+        });
+        CHECK_RETURN_RET(iter != rowInfos.end(), false);
+    }
+    return true;
+}
+
+bool HCameraDeviceManager::CheckCameraCombination(
+    string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> ability)
+{
+    CalMultiCameraCombinationInfo(ability);
+    CHECK_RETURN_RET_ILOG(unsupportedMultiCameraCombinationsMap_.IsEmpty(), true,
+        "HCameraDeviceManager::CheckCameraCombination unsupportedMultiCameraCombinationsMap_ is empty.");
+    vector<string> cameraIds = { cameraId };
+    std::for_each(activeCameras_.begin(), activeCameras_.end(),
+        [&cameraIds](auto& camera) { cameraIds.emplace_back(camera->GetDevice()->GetCameraId()); });
+    return IsMultiCameraCombinationSupported(cameraIds);
+}
+
 void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice start, cameraID: %{public}s", device->GetCameraId().c_str());
@@ -609,6 +682,19 @@ bool HCameraDeviceManager::GetMdmCheck()
     std::lock_guard<std::mutex> lock(mdmMutex_);
     return mdmCheck_;
 }
+
+void HCameraDeviceManager::SetScanSceneBundle(const std::string& bundleName)
+{
+    MEDIA_INFO_LOG("HCameraDeviceManager::SetScanSceneBundle E");
+    scanSceneBundleName_ = bundleName;
+}
+
+std::string HCameraDeviceManager::GetScanSceneBundle()
+{
+    MEDIA_INFO_LOG("HCameraDeviceManager::GetScanSceneBundle E");
+    return scanSceneBundleName_;
+}
+
 
 void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requestCameraHolder)
 {

@@ -35,17 +35,6 @@ private:
     void OnIsoInfoChangedCallback(OHOS::CameraStandard::IsoInfo info) const;
 };
 
-class ExposureInfoCallbackListener : public OHOS::CameraStandard::ExposureInfoCallback, public ListenerBase,
-    public std::enable_shared_from_this<ExposureInfoCallbackListener> {
-public:
-    ExposureInfoCallbackListener(ani_env* env) : ListenerBase(env) {}
-    ~ExposureInfoCallbackListener() = default;
-    void OnExposureInfoChanged(OHOS::CameraStandard::ExposureInfo info) override;
-
-private:
-    void OnExposureInfoChangedCallback(OHOS::CameraStandard::ExposureInfo info) const;
-};
-
 class ApertureInfoCallbackListener : public OHOS::CameraStandard::ApertureInfoCallback, public ListenerBase,
     public std::enable_shared_from_this<ApertureInfoCallbackListener> {
 public:
@@ -101,9 +90,9 @@ protected:
     void RegisterIsoInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
         bool isOnce) override;
     void UnregisterIsoInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
-    void RegisterExposureInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
+    void RegisterExposureInfoCallbackListener(const std::string &eventName, std::shared_ptr<uintptr_t> callback,
         bool isOnce) override;
-    void UnregisterExposureInfoCallbackListener(const std::string& eventName,
+    void UnregisterExposureInfoCallbackListener(const std::string &eventName,
         std::shared_ptr<uintptr_t> callback) override;
     void RegisterApertureInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
         bool isOnce) override;

@@ -122,6 +122,12 @@ typedef enum Camera_ErrorCode {
     CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS = 7400110,
 
     /**
+     * Multiple cameras cannot be opened simultaneously.
+     * @since 24
+     */
+    CAMERA_MULTI_CAMERA_NOT_SUPPORTED = 7400113,
+
+    /**
      * Camera service fatal error.
      */
     CAMERA_SERVICE_FATAL_ERROR = 7400201
@@ -378,6 +384,12 @@ typedef enum Camera_Format {
     CAMERA_FORMAT_RGBA_8888 = 3,
 
     /**
+     * DNG Format.
+     * @since 24
+     */
+    CAMERA_FORMAT_DNG = 4,
+
+    /**
      * YUV 420 Format.
      */
     CAMERA_FORMAT_YUV_420_SP = 1003,
@@ -466,6 +478,37 @@ typedef enum Camera_ExposureMode {
      */
     EXPOSURE_MODE_CONTINUOUS_AUTO = 2
 } Camera_ExposureMode;
+
+/**
+ * @brief Enum for exposure metering mode.
+ *
+ * @since 24
+ */
+typedef enum OH_Camera_ExposureMeteringMode {
+    /**
+     * Matrix metering mode: Measures the light in the whole frame, ideal for shooting natural landscapes.
+     * @since 24
+     */
+    OH_CAMERA_EXPOSURE_METERING_MODE_MATRIX = 0,
+
+    /** 
+     * Center metering mode: Focuses in on light near the center of the screen, ideal for shooting portraits.
+     * @since 24
+     */
+    OH_CAMERA_EXPOSURE_METERING_MODE_CENTER = 1,
+
+    /**
+     * Spot metering mode: Focuses in on light from a specific tiny region, such as a subject's eyes.
+     * @since 24
+     */
+    OH_CAMERA_EXPOSURE_METERING_MODE_SPOT = 2,
+    
+    /**
+     * Center highlight weighted metering mode: Focuses in on highlight area near the center of the screen.
+     * @since 24
+     */
+    OH_CAMERA_CENTER_HIGHLIGHT_WEIGH = 3
+} OH_Camera_ExposureMeteringMode;
 
 /**
  * @brief Enum for focus mode.
@@ -820,6 +863,31 @@ typedef enum Camera_HostDeviceType {
      */
     HOST_DEVICE_TYPE_WIFI_CAMERA = 0x08,
 } Camera_HostDeviceType;
+
+/**
+ * @brief Enum for flash state.
+ *
+ * @since 24
+ */
+typedef enum OH_Camera_FlashState {
+    /**
+     * Flash is unavailable, default value.
+     * @since 24
+     */
+   OH_CAMERA_FLASH_STATE_UNAVAILABLE = 0,
+ 
+    /**
+     * This status indicates that the flash is available.
+     * @since 24
+     */
+    OH_CAMERA_FLASH_STATE_READY = 1,
+ 
+    /**
+     * This status indicates that flashing can be performed.
+     * @since 24
+     */
+    OH_CAMERA_FLASH_STATE_FLASHING = 2
+} OH_Camera_FlashState;
 
 /**
  * @brief Size parameter.
@@ -1490,6 +1558,48 @@ typedef enum Camera_ControlCenterEffectType {
 } Camera_ControlCenterEffectType;
 
 /**
+ * @brief Describes the zoom range configuration.
+ * @since 24
+ */
+typedef struct OH_Camera_ZoomRange {
+    /**
+     * Minimum zoom value.
+     * @since 24
+     */
+    float minZoom;
+ 
+    /**
+     * Maximum zoom value.
+     * @since 24
+    */
+    float maxZoom;
+} OH_Camera_ZoomRange;
+
+/**
+ * @brief Describes the physical aperture configuration.
+ * @since 24
+ */
+typedef struct OH_Camera_PhysicalAperture {
+    /**
+     * Zoom range specification.
+     * @since 24
+     */
+    OH_Camera_ZoomRange zoomRange;
+ 
+    /**
+     * Array of supported aperture values.
+     * @since 24
+     */
+    float* apertures;
+ 
+    /**
+     * Number of aperture values.
+     * @since 24
+     */
+    size_t apertureCount;
+} OH_Camera_PhysicalAperture;
+
+/**
  * @brief Control center status info.
  *
  * @since 20
@@ -1542,6 +1652,85 @@ typedef struct Camera_OcclusionDetectionResult {
      */
     bool isCameraLensDirty;
 } Camera_OcclusionDetectionResult;
+
+/**
+ * @brief Sensor color filter arrangement.
+ *
+ * @since 24
+ */
+typedef enum OH_Camera_SensorColorFilterArrangement{
+    /**
+     * Blue-Green-Green-Red (BGGR) filter arrangement.
+     * @since 24
+     */
+    OH_CAMERA_SENSOR_CFA_BGGR = 0,
+
+    /**
+     * Green-Blue-Red-Green (GBRG) filter arrangement.
+     * @since 24
+     */
+    OH_CAMERA_SENSOR_CFA_GBRG = 1,
+
+    /**
+     * Green-Red-Green-Blue (GRBG) filter arrangement.
+     * @since 24
+     */
+    OH_CAMERA_SENSOR_CFA_GRBG = 2,
+
+    /**
+     * Red-Green-Green-Blue (RGGB) filter arrangement. 
+     * @since 24
+     */
+    OH_CAMERA_SENSOR_CFA_RGGB = 3
+} OH_Camera_SensorColorFilterArrangement;
+
+/**
+ * @brief Enum for OIS (Optical Image Stabilization) mode.
+ *
+ * @since 24
+ * @version 1.0
+ */
+typedef enum OH_Camera_OISMode {
+    /**
+     * OIS is disabled.
+     * @since 24
+     */
+    OH_CAMERA_OIS_MODE_OFF = 0,
+
+    /**
+     * OIS is controlled automatically.
+     * @since 24
+     */
+    OH_CAMERA_OIS_MODE_AUTO = 1,
+
+    /** 
+     * OIS is controlled by the application.
+     * @since 24
+     */
+    OH_CAMERA_OIS_MODE_CUSTOM = 2
+} OH_Camera_OISMode;
+
+/**
+ * @brief Enum for OIS (Optical Image Stabilization) axes.
+ *
+ * @since 24
+ * @version 1.0
+ */
+typedef enum OH_Camera_OISAxes {
+    /**
+     * Pitch axis: up-and-down rotation of the camera body.
+     * Rotation around the horizontal axis through the lens.
+     * @since 24
+     */
+    OH_CAMERA_OIS_AXES_PITCH = 0,
+
+    /**
+     * Yaw axis: side-to-side rotation of the camera body.
+     * Rotation around the vertical axis.
+     * @since 24
+     */
+    OH_CAMERA_OIS_AXES_YAW = 1
+} OH_Camera_OISAxes;
 #ifdef __cplusplus
 }
 #endif

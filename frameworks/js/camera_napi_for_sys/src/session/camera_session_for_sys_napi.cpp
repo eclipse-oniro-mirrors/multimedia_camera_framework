@@ -1728,15 +1728,21 @@ void CameraSessionForSysNapi::UnregisterSlowMotionStateCb(
 void CameraSessionForSysNapi::RegisterExposureInfoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
 {
-    CameraNapiUtils::ThrowError(
-        env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be registered in current session!");
+    if (exposureInfoCallback_ == nullptr) {
+        exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListener>(env);
+        cameraSessionForSys_->SetExposureInfoCallback(exposureInfoCallback_);
+    }
+    exposureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
 void CameraSessionForSysNapi::UnregisterExposureInfoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CameraNapiUtils::ThrowError(
-        env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be unregistered in current session!");
+    if (exposureInfoCallback_ == nullptr) {
+        MEDIA_ERR_LOG("abilityCallback is null");
+    } else {
+        exposureInfoCallback_->RemoveCallbackRef(eventName, callback);
+    }
 }
 
 void CameraSessionForSysNapi::RegisterIsoInfoCallbackListener(

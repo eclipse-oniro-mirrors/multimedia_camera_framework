@@ -737,7 +737,13 @@ enum SystemPressureLevel: i32 {
   SYSTEM_PRESSURE_SHUTDOWN = 4
 }
 
-interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance {
+enum FlashState: i32 {
+  FLASH_STATE_UNAVAILABLE = 0,
+  FLASH_STATE_READY = 2,
+  FLASH_STATE_FLASHING = 3,
+}
+
+interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ManualIso, ManualFocus, ManualExposure {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
@@ -841,6 +847,12 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
   GetSessionConflictFunctions(): Array<PhotoConflictFunctions>;
 
   GetSpecificImplPtr(): i64;
+
+  OnExposureInfoChange(callback:(data: ExposureInfo)=> void): void;
+  OffExposureInfoChange(callback: Optional<(data: ExposureInfo)=> void>): void;
+
+  OnFlashStateChange(callback:(data: FlashState)=> void): void;
+  OffFlashStateChange(callback: Optional<(data: FlashState)=> void>): void;
 }
 
 interface PhotoConflictFunctions : ZoomQuery, MacroQuery {
@@ -2427,16 +2439,21 @@ interface Stabilization : StabilizationQuery {
 
 interface ManualExposureQuery {
   GetSupportedExposureRange(): Array<i32>;
+  GetExposureDuration(): i32;
+  GetSupportedExposureDurationRange(): Array<i32>;
+  GetExposureBiasStep(): f64;
 }
 
 interface ManualExposure : ManualExposureQuery{
   GetExposure(): i32;
   SetExposure(exposure: i32): void;
+  SetExposureDuration(exposure: i32): void;
 }
 
 interface ManualFocus {
   GetFocusDistance(): f64;
   SetFocusDistance(distance: f64): void;
+  IsManualFocusSupported(): bool;
 }
 
 interface WhiteBalanceQuery {
@@ -2454,6 +2471,7 @@ interface WhiteBalance : WhiteBalanceQuery {
 interface ManualIsoQuery {
   GetIsoRange(): Array<i32>;
   IsManualIsoSupported(): bool;
+  GetSupportedISORange(): Array<i32>;
 }
 
 interface ManualIso : ManualIsoQuery {

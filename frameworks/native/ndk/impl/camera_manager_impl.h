@@ -122,7 +122,23 @@ public:
     static Camera_ErrorCode GetAutomotiveCameraPosition(Camera_Device* camera, Camera_AutomotivePosition* position);
 
     static Camera_ErrorCode GetSupportedSceneModes(Camera_Device* camera,
-        Camera_SceneMode** sceneModes, uint32_t* size);
+         Camera_SceneMode** sceneModes, uint32_t* size);
+    static Camera_ErrorCode IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera);
+
+    static Camera_ErrorCode GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size);
+    static Camera_ErrorCode GetLogicalCameraConstituentCameraDevices(
+        const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size);
+    static Camera_ErrorCode GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength);
+    static Camera_ErrorCode GetMinimumFocusDistance(const Camera_Device* camera, float* minimumFocusDistance);
+    static Camera_ErrorCode GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size);
+    static Camera_ErrorCode GetLensEquivalentFocalLengths(
+        const Camera_Device* camera, uint32_t** equivalentFocalLengths, uint32_t* size);
+    static Camera_ErrorCode GetIntrinsicCalibration(
+        const Camera_Device* camera, float** intrinsicCalibration, uint32_t* size);
+    static Camera_ErrorCode GetSensorPhysicalSize(const Camera_Device* camera, float* width, float* height);
+    static Camera_ErrorCode GetSensorPixelArraySize(const Camera_Device* camera, uint32_t* width, uint32_t* height);
+    static Camera_ErrorCode GetSensorColorFilterArrangement(
+        const Camera_Device* camera, OH_Camera_SensorColorFilterArrangement* sensorCFA);
 
     Camera_ErrorCode DeleteSceneModes(Camera_SceneMode* sceneModes);
 

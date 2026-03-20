@@ -79,6 +79,7 @@ using OHOS::HDI::Camera::V1_0::IStreamOperator;
 using OHOS::HDI::Camera::V1_5::StreamInfo_V1_5;
 constexpr int32_t CAPTURE_ID_UNSET = 0;
 constexpr int32_t STREAM_ID_UNSET = 0;
+using RecordFunction = std::function<void()>;
 class HStreamCommon : virtual public RefBase {
 public:
     explicit HStreamCommon(
@@ -151,7 +152,8 @@ public:
     std::shared_ptr<OHOS::Camera::CameraMetadata> streamSettingsMeta_ =
         std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
     std::string videoId_;
-
+    void SetCameraPermissionUsedRecordFunction(RecordFunction recordFunction);
+    void AddCameraPermissionUsedRecord();
 protected:
     /*
      * Prepare a capture id, return CAMERA_OK or CAMERA_CAPTURE_LIMIT_EXCEED
@@ -194,6 +196,7 @@ private:
     int32_t hdiStreamId_ = STREAM_ID_UNSET;
     int32_t curCaptureID_ = CAPTURE_ID_UNSET;
     std::mutex basicInfoLock_;
+    RecordFunction recordFunction_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

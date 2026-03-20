@@ -15,6 +15,7 @@
 
 #include "input/camera_manager_napi.h"
 
+#include "qos.h"
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
@@ -753,7 +754,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("createDepthDataOutput", CreateDepthDataOutputInstance),
         DECLARE_NAPI_FUNCTION("createMovieFileOutput", CreateMovieFileOutputInstance),
         DECLARE_NAPI_FUNCTION("isTorchSupported", IsTorchSupported),
-        DECLARE_NAPI_FUNCTION("isTorchLevelControlSupported", IsTorchLevelControlSupported),
+         DECLARE_NAPI_FUNCTION("isTorchLevelControlSupported", IsTorchLevelControlSupported),
         DECLARE_NAPI_FUNCTION("isTorchModeSupported", IsTorchModeSupported),
         DECLARE_NAPI_FUNCTION("getTorchMode", GetTorchMode),
         DECLARE_NAPI_FUNCTION("setTorchMode", SetTorchMode),
@@ -1342,16 +1343,44 @@ napi_value CameraManagerNapi::GetCameraDevices(napi_env env, napi_callback_info 
         MEDIA_DEBUG_LOG("CameraManagerNapi::GetCameraDevices found %{public}zu camera devices",
             cameraDeviceList.size());
     }
+    return GetCameraDevicesInner(env, cameraDeviceList);
+}
 
+napi_value CameraManagerNapi::GetCameraDevicesInner(
+    napi_env env, const std::vector<sptr<CameraDevice>>& cameraDeviceList)
+{
     napi_value result = nullptr;
+    std::unordered_map<std::string, napi_value> deviceMap;
+    std::unordered_map<std::string, std::vector<std::string>> logicalDeviceConstituents;
     napi_create_array_with_length(env, cameraDeviceList.size(), &result);
     for (size_t i = 0; i < cameraDeviceList.size(); ++i) {
         if (cameraDeviceList[i] == nullptr) {
             MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevices camera device at index %{public}zu is null", i);
             continue;
         }
+        string deviceId = cameraDeviceList[i]->GetID();
         napi_value jsDevice = CameraNapiObjCameraDevice(*cameraDeviceList[i]).GenerateNapiValue(env);
+        deviceMap[deviceId] = jsDevice;
+        if (cameraDeviceList[i]->IsLogicalCamera()) {
+            auto constituentDeviceIds = cameraDeviceList[i]->GetConstituentCameraDevices();
+            for (auto& device : constituentDeviceIds) {
+                device = "device/" + device;
+                logicalDeviceConstituents[deviceId].emplace_back(device);
+            }
+        }
         napi_set_element(env, result, i, jsDevice);
+    }
+    for (auto& [logicalDeviceId, jsLogicalDevice] : deviceMap) {
+        if (logicalDeviceConstituents.find(logicalDeviceId) == logicalDeviceConstituents.end()) {
+            continue;
+        }
+        napi_value jsConstituentArray;
+        napi_create_array_with_length(env, logicalDeviceConstituents[logicalDeviceId].size(), &jsConstituentArray);
+        for (size_t j = 0; j < logicalDeviceConstituents[logicalDeviceId].size(); ++j) {
+            std::string constDeviceId = logicalDeviceConstituents[logicalDeviceId][j];
+            napi_set_element(env, jsConstituentArray, j, deviceMap[constDeviceId]);
+        }
+        napi_set_named_property(env, deviceMap[logicalDeviceId], "constituentCameraDevices", jsConstituentArray);
     }
     return result;
 }
@@ -1452,6 +1481,26 @@ void CameraManagerNapi::ParseGetCameraConcurrentInfos(napi_env env, napi_value a
             std::string cameraidonly = std::string(buffer);
             cameraIdv.push_back(cameraidonly);
         }
+    }
+}
+
+void CameraManagerNapi::ParseGetCameraIds(napi_env env, napi_value arrayParam, std::vector<std::string>& cameraIds)
+{
+    MEDIA_DEBUG_LOG("ParseGetCameraIds is called");
+    uint32_t length = 0;
+    napi_value value;
+    napi_get_array_length(env, arrayParam, &length);
+    for (uint32_t i = 0; i < length; i++) {
+        napi_get_element(env, arrayParam, i, &value);
+        size_t sizeofres;
+        char buffer[PATH_MAX];
+        napi_status status = napi_get_value_string_utf8(env, value, buffer, PATH_MAX, &sizeofres);
+        if (status != napi_ok) {
+            MEDIA_ERR_LOG("CameraManagerNapi::ParseGetCameraIds get cameraid failed!");
+            continue;
+        }
+        std::string cameraidonly = std::string(buffer);
+        cameraIds.emplace_back(cameraidonly);
     }
 }
 
@@ -2231,6 +2280,7 @@ napi_value CameraManagerNapi::IsPrelaunchSupported(napi_env env, napi_callback_i
 napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("PrelaunchCamera is called");
+    QOS::SetThreadQos(QOS::QosLevel::QOS_USER_INTERACTIVE);
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi PrelaunchCamera is called!");
         return nullptr;
@@ -2258,6 +2308,7 @@ napi_value CameraManagerNapi::PrelaunchCamera(napi_env env, napi_callback_info i
     }
     MEDIA_INFO_LOG("PrelaunchCamera");
     napi_get_undefined(env, &result);
+    QOS::ResetThreadQos();
     return result;
 }
 
@@ -2365,9 +2416,9 @@ napi_value CameraManagerNapi::IsTorchLevelControlSupported(napi_env env, napi_ca
     size_t argc = ARGS_ZERO;
     napi_value argv[ARGS_ZERO];
     napi_value thisVar = nullptr;
- 
+
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
- 
+
     napi_get_undefined(env, &result);
     CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
@@ -2380,7 +2431,7 @@ napi_value CameraManagerNapi::IsTorchLevelControlSupported(napi_env env, napi_ca
     }
     return result;
 }
-
+ 	
 napi_value CameraManagerNapi::IsTorchModeSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("IsTorchModeSupported is called");
@@ -2461,7 +2512,6 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
     }
     return result;
 }
-
 napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("SetTorchModeOnWithLevel is called");
@@ -2470,9 +2520,9 @@ napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callbac
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE];
     napi_value thisVar = nullptr;
- 
+
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
- 
+
     napi_get_undefined(env, &result);
     CameraManagerNapi* cameraManagerNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
@@ -2508,7 +2558,7 @@ napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callbac
     }
     return result;
 }
-
+ 	 
 napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<CameraManagerNapi>::On(env, info);

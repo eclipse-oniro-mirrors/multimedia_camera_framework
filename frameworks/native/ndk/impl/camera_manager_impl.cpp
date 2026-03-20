@@ -100,6 +100,17 @@ const std::unordered_map<AutomotiveCameraPosition, Camera_AutomotivePosition>
         Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_3_RIGHT},
 };
 
+const std::unordered_map<SensorColorFilterArrangement, OH_Camera_SensorColorFilterArrangement> g_FWKToNDKCFA_ = {
+    { SensorColorFilterArrangement::BGGR,
+        OH_Camera_SensorColorFilterArrangement::OH_CAMERA_SENSOR_CFA_BGGR },
+    { SensorColorFilterArrangement::GBRG,
+        OH_Camera_SensorColorFilterArrangement::OH_CAMERA_SENSOR_CFA_GBRG },
+    { SensorColorFilterArrangement::GRBG,
+        OH_Camera_SensorColorFilterArrangement::OH_CAMERA_SENSOR_CFA_GRBG },
+    { SensorColorFilterArrangement::RGGB,
+        OH_Camera_SensorColorFilterArrangement::OH_CAMERA_SENSOR_CFA_RGGB },
+};
+
 namespace OHOS::CameraStandard {
 class InnerCameraManagerCameraStatusCallback : public CameraManagerCallback {
 public:
@@ -899,6 +910,241 @@ Camera_ErrorCode Camera_Manager::GetAutomotiveCameraPosition(Camera_Device* came
     CHECK_RETURN_RET_ELOG(itr == g_fwToNdkAutomotiveCameraPosition_.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetAutomotiveCameraPosition fail, automotiveCameraPosition = %{public}d not supported!", pos);
     *position = itr->second;
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::IsLogicalCamera failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    *isLogicalCamera = device->IsLogicalCamera();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(
+            !innerCamera, "Camera_Manager::GetLogicalCameraConstituentCameraDevices failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(logicalCamera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    auto cameraDevices = device->GetConstituentCameraDevices();
+    *size = cameraDevices.size();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetLogicalCameraConstituentCameraDevices(
+    const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(
+            !innerCamera, "Camera_Manager::GetLogicalCameraConstituentCameraDevices failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(logicalCamera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    auto cameraDevices = device->GetConstituentCameraDevices();
+    uint32_t realSize = std::min(size, static_cast<uint32_t>(cameraDevices.size()));
+    for (uint32_t i = 0; i < realSize; i++) {
+        sptr<CameraDevice> innerConstituentCamera =
+            CameraManager::GetInstance()->GetCameraDeviceFromId("device/" + cameraDevices[i]);
+        CHECK_CONTINUE_ELOG(!innerConstituentCamera,
+            "Camera_Manager::GetLogicalCameraConstituentCameraDevices failed, innerConstituentCamera is nullptr");
+        (constituentCameras)[i].cameraId = strdup(innerConstituentCamera->GetID().c_str());
+        CameraPosition position = innerConstituentCamera->GetPosition();
+        auto itr = g_FwkCameraPositionToNdk_.find(position);
+        CHECK_RETURN_RET_ELOG(itr == g_FwkCameraPositionToNdk_.end(), CAMERA_INVALID_ARGUMENT,
+            "Camera_Manager::GetLogicalCameraConstituentCameraDevices Position not found!");
+        (constituentCameras)[i].cameraPosition = itr->second;
+        (constituentCameras)[i].cameraType = static_cast<Camera_Type>(innerConstituentCamera->GetCameraType());
+        (constituentCameras)[i].connectionType =
+            static_cast<Camera_Connection>(innerConstituentCamera->GetConnectionType());
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetLensFocalLength failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    *lensFocalLength = device->GetLensFocalLength();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetMinimumFocusDistance(const Camera_Device* camera, float* minimumFocusDistance)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetMinimumFocusDistance failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    *minimumFocusDistance = device->GetMinimumFocusDistance();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetLensDistortion failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    auto distortion = device->GetLensDistortion();
+    *size = distortion.size();
+    *lens = new float[*size];
+    CHECK_RETURN_RET_ELOG(*lens == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetLensDistortion allocate memory for lens fail!");
+    for (uint32_t i = 0; i < *size; i++) {
+        (*lens)[i] = static_cast<float>(distortion[i]);
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetLensEquivalentFocalLengths(
+    const Camera_Device* camera, uint32_t** equivalentFocalLengths, uint32_t* size)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetLensDistortion failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    auto lensEquivalentFocalLengths = device->GetLensEquivalentFocalLengths();
+    *size = lensEquivalentFocalLengths.size();
+    *equivalentFocalLengths = new uint32_t[*size];
+    CHECK_RETURN_RET_ELOG(*equivalentFocalLengths == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetLensDistortion allocate memory for lens fail!");
+    for (uint32_t i = 0; i < *size; i++) {
+        (*equivalentFocalLengths)[i] = static_cast<uint32_t>(lensEquivalentFocalLengths[i]);
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetIntrinsicCalibration(
+    const Camera_Device* camera, float** intrinsicCalibration, uint32_t* size)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetIntrinsicCalibration failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    auto calibration = device->GetLensIntrinsicCalibration();
+    *size = calibration.size();
+    *intrinsicCalibration = new float[*size];
+    CHECK_RETURN_RET_ELOG(*intrinsicCalibration == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::GetIntrinsicCalibration allocate memory for intrinsicCalibration fail!");
+    for (uint32_t i = 0; i < *size; i++) {
+        (*intrinsicCalibration)[i] = static_cast<float>(calibration[i]);
+    }
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetSensorPhysicalSize(const Camera_Device* camera, float* width, float* height)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetSensorPhysicalSize failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    auto size = device->GetSensorPhysicalSize();
+    CHECK_RETURN_RET(size.size() < 2, CAMERA_SERVICE_FATAL_ERROR);
+    *width = size.front();
+    *height = size.back();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetSensorPixelArraySize(const Camera_Device* camera, uint32_t* width, uint32_t* height)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetSensorPixelArraySize failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    auto size = device->GetSensorPixelArraySize();
+    CHECK_RETURN_RET(size.size() < 2, CAMERA_SERVICE_FATAL_ERROR);
+    *width = size.front();
+    *height = size.back();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_Manager::GetSensorColorFilterArrangement(
+    const Camera_Device* camera, OH_Camera_SensorColorFilterArrangement* sensorCFA)
+{
+    CameraDevice* device = nullptr;
+    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
+    for (auto& innerCamera : cameras) {
+        CHECK_CONTINUE_DLOG(
+            !innerCamera, "Camera_Manager::GetSensorColorFilterArrangement failed, innerCamera is nullptr");
+        if (innerCamera->GetID() == std::string(camera->cameraId)) {
+            device = innerCamera;
+            break;
+        }
+    }
+
+    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+    auto internalCFA = device->GetSensorColorFilterArrangement();
+    auto itr = g_FWKToNDKCFA_.find(internalCFA);
+    CHECK_RETURN_RET_ELOG(itr == g_FWKToNDKCFA_.end(), CAMERA_INVALID_ARGUMENT,
+        "Camera_Manager::GetSensorColorFilterArrangement internalCFA not found!");
+    *sensorCFA = itr->second;
     return CAMERA_OK;
 }
 

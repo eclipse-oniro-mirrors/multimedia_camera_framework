@@ -117,6 +117,22 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_pr
     DECLARE_NAPI_FUNCTION("getActiveParameter", CameraSessionNapi::GetActiveParameter),
 };
 
+const std::unordered_map<MeteringMode, CameraSessionNapi::ExposureMeteringModeofSdk>
+    CameraSessionNapi::fwkToSdkMeteringModeMap_ = {
+        { MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED, ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED },
+        { MeteringMode::METERING_MODE_CENTER_WEIGHTED, ExposureMeteringModeofSdk::CENTER },
+        { MeteringMode::METERING_MODE_REGION, ExposureMeteringModeofSdk::MATRIX },
+        { MeteringMode::METERING_MODE_SPOT, ExposureMeteringModeofSdk::SPOT },
+    };
+
+const std::unordered_map<CameraSessionNapi::ExposureMeteringModeofSdk, MeteringMode>
+    CameraSessionNapi::JsToFwkMeteringModeMap_ = {
+        { ExposureMeteringModeofSdk::CENTER, MeteringMode::METERING_MODE_CENTER_WEIGHTED },
+        { ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED, MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED },
+        { ExposureMeteringModeofSdk::MATRIX, MeteringMode::METERING_MODE_REGION },
+        { ExposureMeteringModeofSdk::SPOT, MeteringMode::METERING_MODE_SPOT },
+    };
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_sys_props = {
     DECLARE_NAPI_FUNCTION("setUsage", CameraSessionNapi::SetUsage)
 };
@@ -130,6 +146,12 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::stabilization_pro
 const std::vector<napi_property_descriptor> CameraSessionNapi::image_stabilization_guide_props = {
     DECLARE_NAPI_FUNCTION("isImageStabilizationGuideSupported", CameraSessionNapi::IsImageStabilizationGuideSupported),
     DECLARE_NAPI_FUNCTION("enableImageStabilizationGuide", CameraSessionNapi::EnableImageStabilizationGuide),
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::manual_iso_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedIsoRange", CameraSessionNapi::GetSupportedISORange),
+    DECLARE_NAPI_FUNCTION("getIso", CameraSessionNapi::GetISO),
+    DECLARE_NAPI_FUNCTION("setIso", CameraSessionNapi::SetISO)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::flash_props = {
@@ -157,6 +179,15 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::auto_exposure_pro
     DECLARE_NAPI_FUNCTION("setExposureMeteringMode", CameraSessionNapi::SetExposureMeteringMode),
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::manual_exposure_props = {
+    DECLARE_NAPI_FUNCTION("getExposureMeteringMode", CameraSessionNapi::GetMeteringMode),
+    DECLARE_NAPI_FUNCTION("isExposureMeteringModeSupported", CameraSessionNapi::IsMeteringModeSupported ),
+    DECLARE_NAPI_FUNCTION("getExposureBiasStep", CameraSessionNapi::GetExposureBiasStep),
+    DECLARE_NAPI_FUNCTION("getSupportedExposureDurationRange", CameraSessionNapi::GetExposureDurationRange),
+    DECLARE_NAPI_FUNCTION("getExposureDuration", CameraSessionNapi::GetExposureDuration),
+    DECLARE_NAPI_FUNCTION("setExposureDuration", CameraSessionNapi::SetExposureDuration)
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
     DECLARE_NAPI_FUNCTION("isFocusModeSupported", CameraSessionNapi::IsFocusModeSupported),
     DECLARE_NAPI_FUNCTION("getFocusMode", CameraSessionNapi::GetFocusMode),
@@ -164,6 +195,12 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_props = {
     DECLARE_NAPI_FUNCTION("getFocusPoint", CameraSessionNapi::GetFocusPoint),
     DECLARE_NAPI_FUNCTION("setFocusPoint", CameraSessionNapi::SetFocusPoint),
     DECLARE_NAPI_FUNCTION("getFocalLength", CameraSessionNapi::GetFocalLength)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::manual_focus_props = {
+    DECLARE_NAPI_FUNCTION("isFocusDistanceSupported", CameraSessionNapi::IsFocusDistanceSupported),
+    DECLARE_NAPI_FUNCTION("getFocusDistance", CameraSessionNapi::GetFocusDistance),
+    DECLARE_NAPI_FUNCTION("setFocusDistance", CameraSessionNapi::SetFocusDistance),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::focus_sys_props = {
@@ -177,6 +214,10 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_sys_props =
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::quality_prioritization_props = {
     DECLARE_NAPI_FUNCTION("setQualityPrioritization", CameraSessionNapi::SetQualityPrioritization),
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::raw_props = {
+    DECLARE_NAPI_FUNCTION("getRAWCaptureZoomRatioRange", CameraSessionNapi::GetRAWCaptureZoomRatioRange),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::zoom_props = {
@@ -193,6 +234,16 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::zoom_sys_props = 
     DECLARE_NAPI_FUNCTION("prepareZoom", CameraSessionNapi::PrepareZoom),
     DECLARE_NAPI_FUNCTION("unprepareZoom", CameraSessionNapi::UnPrepareZoom),
     DECLARE_NAPI_FUNCTION("getZoomPointInfos", CameraSessionNapi::GetZoomPointInfos)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::exposure_cb_props = {
+    DECLARE_NAPI_FUNCTION("onExposureInfoChange", CameraSessionNapi::OnExposureInfoChange),
+    DECLARE_NAPI_FUNCTION("offExposureInfoChange", CameraSessionNapi::OffExposureInfoChange)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::flash_cb_props = {
+    DECLARE_NAPI_FUNCTION("onFlashStateChange", CameraSessionNapi::OnFlashStateChange),
+    DECLARE_NAPI_FUNCTION("offFlashStateChange", CameraSessionNapi::OffFlashStateChange)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::filter_props = {
@@ -286,6 +337,22 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_tracking_pr
 const std::vector<napi_property_descriptor> CameraSessionNapi::iso_props = {
     DECLARE_NAPI_FUNCTION("onIsoInfoChange", CameraSessionNapi::OnIsoInfoChange),
     DECLARE_NAPI_FUNCTION("offIsoInfoChange", CameraSessionNapi::OffIsoInfoChange)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::physical_aperture_props = {
+    DECLARE_NAPI_FUNCTION("getSupportedPhysicalApertures", CameraSessionNapi::GetSupportedPhysicalApertures),
+    DECLARE_NAPI_FUNCTION("getPhysicalAperture", CameraSessionNapi::GetPhysicalAperture),
+    DECLARE_NAPI_FUNCTION("setPhysicalAperture", CameraSessionNapi::SetPhysicalAperture)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::optical_image_stabilization_props = {
+    DECLARE_NAPI_FUNCTION("isOISModeSupported", CameraSessionNapi::IsOISModeSupported),
+    DECLARE_NAPI_FUNCTION("getCurrentOISMode", CameraSessionNapi::GetCurrentOISMode),
+    DECLARE_NAPI_FUNCTION("setOISMode", CameraSessionNapi::SetOISMode),
+    DECLARE_NAPI_FUNCTION("getSupportedOISBiasRange", CameraSessionNapi::GetSupportedOISBiasRange),
+    DECLARE_NAPI_FUNCTION("getSupportedOISBiasStep", CameraSessionNapi::GetSupportedOISBiasStep),
+    DECLARE_NAPI_FUNCTION("getCurrentCustomOISBias", CameraSessionNapi::GetCurrentCustomOISBias),
+    DECLARE_NAPI_FUNCTION("setOISModeCustom", CameraSessionNapi::SetOISModeCustom),
 };
 
 void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info, bool isSync) const
@@ -1879,6 +1946,100 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
     return result;
 }
 
+napi_value CameraSessionNapi::GetSupportedISORange(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedISORange is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        std::vector<int32_t> vecIsoList;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorSensitivityRange(vecIsoList);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CameraSessionNapi::GetSupportedISORange len = %{public}zu", vecIsoList.size());
+
+        if (!vecIsoList.empty() && napi_create_array(env, &result) == napi_ok) {
+            for (size_t i = 0; i < vecIsoList.size(); i++) {
+                int32_t iso = vecIsoList[i];
+                napi_value value;
+                napi_create_int32(env, iso, &value);
+                napi_set_element(env, result, i, value);
+            }
+        } else {
+            MEDIA_ERR_LOG("vecIsoList is empty or failed to create array!");
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedISORange call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetISO(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetISO is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t iso;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetISO(iso);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_create_int32(env, iso, &result);
+    } else {
+        MEDIA_ERR_LOG("GetISO call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetISO(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetISO is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t iso;
+        napi_get_value_int32(env, argv[PARAM0], &iso);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetISO(iso);
+        MEDIA_INFO_LOG("CameraSessionNapi::SetISO set iso:%{public}d", iso);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetISO call Failed!");
+    }
+    return result;
+}
+
 napi_value CameraSessionNapi::HasFlash(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("HasFlash is called");
@@ -2253,6 +2414,33 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
     return result;
 }
 
+napi_value CameraSessionNapi::IsFocusDistanceSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsFocusDistanceSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusDistanceSupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsFocusDistanceSupported call Failed!");
+    }
+    return result;
+}
+
 napi_value CameraSessionNapi::IsFocusModeSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("IsFocusModeSupported is called");
@@ -2307,6 +2495,61 @@ napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info in
         napi_create_double(env, CameraNapiUtils::FloatToDouble(focalLength), &result);
     } else {
         MEDIA_ERR_LOG("GetFocalLength call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetFocusDistance(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetFocusDistance is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr &&
+        cameraSessionNapi->cameraSession_ != nullptr) {
+        float distance;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusDistance(distance);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        napi_create_double(env, distance, &result);
+    } else {
+        MEDIA_ERR_LOG("GetFocusDistance call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetFocusDistance(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetFocusDistance is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = { 0 };
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        double value;
+        napi_get_value_double(env, argv[PARAM0], &value);
+        float distance = static_cast<float>(value);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        cameraSessionNapi->cameraSession_->SetFocusDistance(distance);
+        MEDIA_INFO_LOG("CameraSessionNapi::SetFocusDistance set focusDistance:%{public}f!", distance);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetFocusDistance call Failed!");
     }
     return result;
 }
@@ -2507,6 +2750,47 @@ napi_value CameraSessionNapi::SetFocusDriven(napi_env env, napi_callback_info in
         "System api can be invoked only by system applications");
     return nullptr;
 }
+
+napi_value CameraSessionNapi::GetRAWCaptureZoomRatioRange(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetRAWCaptureZoomRatioRange is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        std::vector<float> vecZoomRatioList;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetRAWZoomRatioRange(vecZoomRatioList);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        MEDIA_INFO_LOG("CameraSessionNapi::GetRAWCaptureZoomRatioRange len = %{public}zu",
+            vecZoomRatioList.size());
+
+        if (!vecZoomRatioList.empty() && napi_create_array(env, &result) == napi_ok) {
+            for (size_t i = 0; i < vecZoomRatioList.size(); i++) {
+                float zoomRatio = vecZoomRatioList[i];
+                napi_value value;
+                napi_create_double(env, CameraNapiUtils::FloatToDouble(zoomRatio), &value);
+                napi_set_element(env, result, i, value);
+            }
+        } else {
+            MEDIA_ERR_LOG("vecSupportedZoomRatioList is empty or failed to create array!");
+        }
+    } else {
+        MEDIA_ERR_LOG("GetRAWCaptureZoomRatioRange call Failed!");
+    }
+    return result;
+}
+
 
 napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info info)
 {
@@ -3641,6 +3925,34 @@ napi_value CameraSessionNapi::GetActiveParameter(napi_env env, napi_callback_inf
     return result;
 }
 
+napi_value CameraSessionNapi::OnExposureInfoChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::OnExposureInfoChange is called");
+    const std::string eventName = "exposureInfoChange";
+    return ListenerTemplate<CameraSessionNapi>::On(env, info, eventName);
+}
+
+napi_value CameraSessionNapi::OffExposureInfoChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::OffExposureInfoChange is called");
+    const std::string eventName = "exposureInfoChange";
+    return ListenerTemplate<CameraSessionNapi>::Off(env, info, eventName);
+}
+
+napi_value CameraSessionNapi::OnFlashStateChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::OnFlashStateChange is called");
+    const std::string eventName = "flashStateChange";
+    return ListenerTemplate<CameraSessionNapi>::On(env, info, eventName);
+}
+
+napi_value CameraSessionNapi::OffFlashStateChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::OffFlashStateChange is called");
+    const std::string eventName = "flashStateChange";
+    return ListenerTemplate<CameraSessionNapi>::Off(env, info, eventName);
+}
+
 napi_value CameraSessionNapi::OnIsoInfoChange(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CameraSessionNapi::OnIsoInfoChange is called");
@@ -3911,6 +4223,9 @@ const CameraSessionNapi::EmitterFunctions CameraSessionNapi::fun_map_ = {
     { "exposureInfoChange", {
         &CameraSessionNapi::RegisterExposureInfoCallbackListener,
         &CameraSessionNapi::UnregisterExposureInfoCallbackListener} },
+    { "flashStateChange", {
+        &CameraSessionNapi::RegisterFlashStateChangeCallbackListener,
+        &CameraSessionNapi::UnregisterFlashStateChangeCallbackListener} },
     { "isoInfoChange", {
         &CameraSessionNapi::RegisterIsoInfoCallbackListener,
         &CameraSessionNapi::UnregisterIsoInfoCallbackListener } },
@@ -4719,13 +5034,81 @@ void MacroStatusCallbackListener::OnMacroStatusChanged(MacroStatus status)
     OnMacroStatusCallbackAsync(status);
 }
 
+void ExposureInfoCallbackListener::OnExposureInfoChangedCallback(ExposureInfo info) const
+{
+    MEDIA_DEBUG_LOG("OnExposureInfoChangedCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_value retVal;
+
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    napi_value exposureDurationValue;
+    napi_create_uint32(env_, info.exposureDurationValue, &exposureDurationValue);
+    napi_set_named_property(env_, result[PARAM1], "exposureTimeValue", exposureDurationValue);
+
+    napi_value exposureBias;
+    napi_create_double(env_, info.exposureBias, &exposureBias);
+    napi_set_named_property(env_, result[PARAM1], "exposureBias", exposureBias);
+
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("exposureInfoChange", callbackNapiPara);
+}
+
+void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackOneArg(ExposureInfo info) const
+{
+    MEDIA_DEBUG_LOG("OnExposureInfoChangedCallbackOneArg is called");
+    ExecuteCallbackScopeSafe(
+        "exposureInfoChange",
+        [&]() {
+            napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+            napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+            napi_create_object(env_, &callbackObj);
+            napi_value exposureDurationValue;
+            napi_create_uint32(env_, info.exposureDurationValue, &exposureDurationValue);
+            napi_set_named_property(env_, callbackObj, "exposureTime", exposureDurationValue);
+
+            return ExecuteCallbackData(env_, errCode, callbackObj);
+        },
+        false);
+}
+
+void ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync(ExposureInfo info, bool isSync) const
+{
+    MEDIA_DEBUG_LOG("OnExposureInfoChangedCallbackAsync is called");
+    std::unique_ptr<ExposureInfoChangedCallback> callback =
+        std::make_unique<ExposureInfoChangedCallback>(info, shared_from_this());
+    ExposureInfoChangedCallback *event = callback.get();
+    auto task = [event, isSync]() {
+        ExposureInfoChangedCallback* callback = reinterpret_cast<ExposureInfoChangedCallback *>(event);
+        if (callback) {
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                isSync ? listener->OnExposureInfoChangedCallbackOneArg(callback->info_) :
+                         listener->OnExposureInfoChangedCallback(callback->info_);
+            }
+            delete callback;
+        }
+    };
+    std::unordered_map<std::string, std::string> params = {
+        {"exposureDurationValue", std::to_string(info.exposureDurationValue)},
+        {"exposureBias", std::to_string(info.exposureBias)}
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("ExposureInfoCallbackListener::OnExposureInfoChangedCallbackAsync", params);
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callback.release();
+    }
+}
+
 void CameraSwitchRequestCallbackListener::OnAppCameraSwitch(const std::string &cameraId)
 {
     MEDIA_INFO_LOG("OnAppCameraSwitch is called");
     OnAppCameraSwitchCallbackAsync(cameraId);
 }
 
-void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallbackAsync(const std::string &cameraId) const
+    void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallbackAsync(const std::string &cameraId) const
 {
     MEDIA_INFO_LOG("OnAppCameraSwitchCallbackAsync is called");
     std::unique_ptr<CameraSwitchRequestCallbackInfoCameraId> callbackInfo =
@@ -4785,6 +5168,70 @@ void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallback(std::string 
     ExecuteCallback("cameraSwitchRequest", callbackNapiPara);
 }
 
+void ExposureInfoCallbackListener::OnExposureInfoChanged(ExposureInfo info) {
+    MEDIA_DEBUG_LOG("OnExposureInfoChanged is called, info: duration: %{public}d, bias: %{public}f",
+        info.exposureDurationValue, info.exposureBias);
+    OnExposureInfoChangedCallbackAsync(info);
+}
+
+void ExposureInfoCallbackListener::OnExposureInfoChangedSync(ExposureInfo info)
+{
+    MEDIA_DEBUG_LOG("OnExposureInfoChanged is called, info: duration: %{public}d, bias: %{public}f",
+        info.exposureDurationValue, info.exposureBias);
+    OnExposureInfoChangedCallbackAsync(info, true);
+}
+
+void FlashStateCallbackListener::OnFlashStateChangedSync(FlashState info)
+{
+    MEDIA_DEBUG_LOG("OnFlashStateChangedSync is called, FlashState: %{public}d", info);
+    OnFlashStateChangedCallbackAsync(info);
+}
+
+void FlashStateCallbackListener::OnFlashStateChangedCallbackAsync(FlashState info) const
+{
+    MEDIA_DEBUG_LOG("OnFlashStateChangedCallbackAsync is called");
+    std::unique_ptr<FlashStateChangedCallback> callback =
+        std::make_unique<FlashStateChangedCallback>(info, shared_from_this());
+    FlashStateChangedCallback *event = callback.get();
+    auto task = [event]() {
+        FlashStateChangedCallback* callback = reinterpret_cast<FlashStateChangedCallback *>(event);
+        if (callback) {
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnFlashStateChangedCallbackOneArg(callback->info_);
+            }
+            delete callback;
+        }
+    };
+    std::unordered_map<std::string, std::string> params = {
+        {"flashState", std::to_string(info)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("FlashStateCallbackListener::OnFlashStateChangedCallbackAsync", params);
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callback.release();
+    }
+}
+
+void FlashStateCallbackListener::OnFlashStateChangedCallbackOneArg(FlashState info) const
+{
+    MEDIA_DEBUG_LOG("OnFlashStateChangedCallbackOneArg is called");
+    ExecuteCallbackScopeSafe(
+        "flashStateChange",
+        [&]() {
+            napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+            napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+            napi_create_object(env_, &callbackObj);
+            napi_value flashState;
+            napi_create_uint32(env_, info, &flashState);
+            napi_set_named_property(env_, callbackObj, "flashState", flashState);
+            return ExecuteCallbackData(env_, errCode, callbackObj);
+        },
+        false);
+}
+
 napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("SetExposureMeteringMode is called");
@@ -4813,6 +5260,472 @@ napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callbac
         cameraSessionNapi->cameraSession_->UnlockForControl();
     } else {
         MEDIA_ERR_LOG("SetExposureMeteringMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsMeteringModeSupported(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        int32_t value;
+        napi_get_value_int32(env, argv[PARAM0], &value);
+        auto itr = JsToFwkMeteringModeMap_.find(static_cast<ExposureMeteringModeofSdk>(value));
+        if (itr == JsToFwkMeteringModeMap_.end()) {
+            return nullptr;
+        }
+        MeteringMode mode = itr->second;
+        bool isSupported;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsMeteringModeSupported(mode, isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsMeteringModeSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetMeteringMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetMeteringMode is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        MeteringMode mode;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetMeteringMode(mode);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        auto itr = CameraSessionNapi::fwkToSdkMeteringModeMap_.find(mode);
+        if (itr == fwkToSdkMeteringModeMap_.end()) {
+            return nullptr;
+        }
+        CameraSessionNapi::ExposureMeteringModeofSdk modeOfSdk = itr->second;
+        napi_create_int32(env, modeOfSdk, &result);
+    } else {
+        MEDIA_ERR_LOG("GetMeteringMode call Failed!");
+    }
+    return result;
+}
+
+// ExposureDuration
+napi_value CameraSessionNapi::GetExposureDurationRange(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("getExposureDurationRange is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        std::vector<uint32_t> vecExposureList;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorExposureTimeRange(vecExposureList);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (vecExposureList.empty() || napi_create_array(env, &result) != napi_ok) {
+            return result;
+        }
+        for (size_t i = 0; i < vecExposureList.size(); i++) {
+            uint32_t exposure = vecExposureList[i];
+            MEDIA_DEBUG_LOG("EXPOSURE_RANGE : exposureDuration = %{public}d", vecExposureList[i]);
+            napi_value value;
+            napi_create_uint32(env, exposure, &value);
+            napi_set_element(env, result, i, value);
+        }
+        MEDIA_DEBUG_LOG("EXPOSURE_RANGE ExposureList size : %{public}zu", vecExposureList.size());
+    } else {
+        MEDIA_ERR_LOG("getExposureDurationRange call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetExposureDuration(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetExposureDuration is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi!= nullptr) {
+        uint32_t exposureDurationValue;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorExposureTime(exposureDurationValue);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        MEDIA_DEBUG_LOG("GetExposureDuration : exposureDuration = %{public}d", exposureDurationValue);
+        napi_create_uint32(env, exposureDurationValue, &result);
+    } else {
+        MEDIA_ERR_LOG("GetExposureDuration call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetExposureBiasStep(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetExposureBiasStep is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi!= nullptr) {
+        float exposureBiasStep;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetExposureBiasStep(exposureBiasStep);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(exposureBiasStep), &result);
+    } else {
+        MEDIA_ERR_LOG("GetExposureBiasStep call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetExposureDuration(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetExposureDuration is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        uint32_t exposureDurationValue;
+        napi_get_value_uint32(env, argv[PARAM0], &exposureDurationValue);
+        MEDIA_DEBUG_LOG("SetExposureDuration : exposureDuration = %{public}d", exposureDurationValue);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetSensorExposureTime(exposureDurationValue);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+    } else {
+        MEDIA_ERR_LOG("SetExposureDuration call Failed!");
+    }
+    return result;
+}
+
+
+napi_value CameraSessionNapi::GetSupportedPhysicalApertures(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetSupportedPhysicalApertures is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedPhysicalApertures parse parameter occur error");
+        return nullptr;
+    }
+
+    napi_status status;
+    napi_value result = nullptr;
+    status = napi_create_array(env, &result);
+    if (status != napi_ok) {
+        MEDIA_ERR_LOG("napi_create_array call Failed!");
+        return nullptr;
+    }
+
+    if (status == napi_ok && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<std::vector<float>> physicalApertures = {};
+        int32_t retCode =
+            cameraSessionNapi->cameraSession_->GetSupportedPhysicalApertures(physicalApertures);
+        MEDIA_INFO_LOG("GetSupportedPhysicalApertures len = %{public}zu", physicalApertures.size());
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        if (!physicalApertures.empty()) {
+            result = CameraNapiUtils::ProcessingPhysicalApertures(env, physicalApertures);
+        }
+    } else {
+        MEDIA_ERR_LOG("GetSupportedPhysicalApertures call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetPhysicalAperture(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("controlCenterSessionNapi::GetPhysicalAperture parse parameter occur error");
+        return nullptr;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        float physicalAperture = 0.0;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetPhysicalAperture(physicalAperture);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_value result = nullptr;
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(physicalAperture), &result);
+        return result;
+    } else {
+        MEDIA_ERR_LOG("GetPhysicalAperture call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetPhysicalAperture is called");
+    double physicalAperture = 0.0;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, physicalAperture);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("controlCenterSessionNapi::SetPhysicalAperture parse parameter occur error");
+        return nullptr;
+    }
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetPhysicalAperture(static_cast<float>(physicalAperture));
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        MEDIA_INFO_LOG("SetPhysicalAperture set physicalAperture %{public}f!", ConfusingNumber(physicalAperture));
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("SetPhysicalAperture call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::IsOISModeSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::IsOISModeSupported is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    int32_t oisMode;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisMode);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsOISModeSupported parse parameter occur error");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = false;
+        int32_t retCode =
+            cameraSessionNapi->cameraSession_->IsOISModeSupported(static_cast<OISMode>(oisMode), isSupported);
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+            "CameraSessionNapi::IsOISModeSupported execute cameraSession_ function failed.");
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsOISModeSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetCurrentOISMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::GetCurrentOISMode is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetCurrentOISMode parse parameter occur error");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        OISMode oisMode;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetCurrentOISMode(oisMode);
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+            "CameraSessionNapi::GetCurrentOISMode execute cameraSession_ function failed.");
+        napi_create_int32(env, static_cast<int32_t>(oisMode), &result);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetCurrentOISMode get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetOISMode(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::SetOISMode is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    int32_t oisMode;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisMode);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetOISMode parse parameter occur error");
+        return nullptr;
+    }
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode =
+            cameraSessionNapi->cameraSession_->SetOISMode(static_cast<OISMode>(oisMode));
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+            "CameraSessionNapi::SetOISMode execute failed.");
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetOISMode get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetSupportedOISBiasRange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetSupportedOISBiasRange is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    int32_t oisAxes;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxes);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetSupportedOISBiasRange parse parameter occur error");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<float> biasRange;
+        float step = 0.0f;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedOISBiasRangeAndStep(
+            static_cast<OISAxes>(oisAxes), biasRange, step);
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+            "CameraSessionNapi::GetSupportedOISBiasRange execute failed.");
+        if (!biasRange.empty() && napi_create_array(env, &result) == napi_ok) {
+            for (size_t i = 0; i < biasRange.size(); i++) {
+                double biasValue = CameraNapiUtils::FloatToDouble(biasRange[i]);
+                napi_value value;
+                napi_create_double(env, biasValue, &value);
+                napi_set_element(env, result, i, value);
+            }
+        } else {
+            MEDIA_ERR_LOG("biasRange is empty or failed to create array!");
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedOISBiasRange get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetSupportedOISBiasStep(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetSupportedOISBiasStep is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    int32_t oisAxis;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetSupportedOISBiasStep parse parameter occur error");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<float> biasRange;
+        float step = 0.0f;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedOISBiasRangeAndStep(
+            static_cast<OISAxes>(oisAxis), biasRange, step);
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+            "CameraSessionNapi::GetSupportedOISBiasStep execute failed.");
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(step), &result);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedOISBiasStep get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetCurrentCustomOISBias(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetCurrentCustomOISBias is called");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    int32_t oisAxis;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetCurrentCustomOISBias parse parameter occur error");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        float biasValue = 0.0f;
+        int32_t retCode =
+            cameraSessionNapi->cameraSession_->GetCurrentCustomOISBias(static_cast<OISAxes>(oisAxis), biasValue);
+        CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
+            "CameraSessionNapi::GetCurrentCustomOISBias execute failed.");
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(biasValue), &result);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetCurrentCustomOISBias get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetOISModeCustom(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraSessionNapi::SetOISModeCustom is called");
+    napi_status status;
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO];
+    napi_value thisVar = nullptr;
+    napi_get_undefined(env, &result);
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    CameraSessionNapi *cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void **>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        double pitchBias = 0.0f;
+        double yawBias = 0.0f;
+        double rollBias = 0.0f;
+        napi_get_value_double(env, argv[PARAM0], &pitchBias);
+        napi_get_value_double(env, argv[PARAM1], &yawBias);
+        if (cameraSessionNapi->cameraSession_ != nullptr) {
+            cameraSessionNapi->cameraSession_->LockForControl();
+            int32_t retCode = cameraSessionNapi->cameraSession_->SetOISModeCustom(
+                static_cast<float>(pitchBias), static_cast<float>(yawBias), static_cast<float>(rollBias));
+            cameraSessionNapi->cameraSession_->UnlockForControl();
+            CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode),
+                nullptr,
+                "CameraSessionNapi::SetOISModeCustom execute failed.");
+        } else {
+            MEDIA_ERR_LOG("CameraSessionNapi::SetOISModeCustom set fail");
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::SetOISModeCustom get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return nullptr;
     }
     return result;
 }

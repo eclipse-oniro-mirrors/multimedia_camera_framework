@@ -761,8 +761,13 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
             CHECK_EXECUTE(opMode == static_cast<SceneMode>(opMode), repeatStream->SetCurrentMode(opMode));
         }
         stream->SetStreamInfo(curStreamInfo);
-        CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA,
-            allStreamInfos.push_back(curStreamInfo));
+        CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA, allStreamInfos.push_back(curStreamInfo));
+        auto weakDevice = wptr<HCameraDevice>(cameraDevice_);
+        stream->SetCameraPermissionUsedRecordFunction([weakDevice]() {
+            if (auto device = weakDevice.promote()) {
+                device->AddCameraPermissionUsedRecord();
+            }
+        });
     }
 
     rc = CreateAndCommitStreams(allStreamInfos, settings, opMode);
@@ -1829,6 +1834,8 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
     std::thread taskThread;
 #ifdef CAMERA_CAPTURE_YUV
     bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
+    MEDIA_INFO_LOG("HStreamOperator::ProcessPhotoProxy GetPhotoLevelInfo"
+        "captureId is: %{public}d, isSystemApp: %{public}d.", captureId, isSystemApp);
     if (isBursting) {
         int32_t cameraShotType = 3;
         photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_);

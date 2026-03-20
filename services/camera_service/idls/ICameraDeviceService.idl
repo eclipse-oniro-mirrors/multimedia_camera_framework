@@ -14,6 +14,7 @@
  */
 
 package OHOS.CameraStandard;
+import CameraTypes;
 import ICameraDeviceServiceCallback;
 sequenceable CameraMetadataInfo..OHOS.Camera.CameraMetadata;
 option_stub_hooks on;
@@ -39,4 +40,5 @@ interface ICameraDeviceService {
    [ipccode 17] void SetMdmCheck([in] boolean mdmCheck);
    [ipccode 18] void SetCameraIdTransform([in] String originCameraId);
    [ipccode 19] void SetFirstCallerTokenID([in] unsigned int tokenId);
+   [ipccode 20] void Open([in] CallerDeviceInfo callerInfo);
 }

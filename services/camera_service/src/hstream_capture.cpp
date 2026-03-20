@@ -357,6 +357,7 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_5 &streamInfo)
     } else if (format_ == OHOS_CAMERA_FORMAT_DNG_XDRAW) {
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_4::ENCODE_TYPE_DNG_XDRAW);
+    } else if (format_ == OHOS_CAMERA_FORMAT_DNG) {
     } else {
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
     }
@@ -836,9 +837,8 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     CaptureInfo captureInfoPhoto;
     captureInfoPhoto.streamIds_ = { GetHdiStreamId() };
     ProcessCaptureInfoPhoto(captureInfoPhoto, captureSettings, preparedCaptureId);
-    auto callingTokenId = IPCSkeleton::GetCallingTokenID();
-    const std::string permissionName = "ohos.permission.CAMERA";
-    AddCameraPermissionUsedRecord(callingTokenId, permissionName);
+
+    AddCameraPermissionUsedRecord();
 
     // report capture performance dfx
     std::shared_ptr<OHOS::Camera::CameraMetadata> captureMetadataSetting_ = nullptr;
@@ -860,7 +860,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
 #ifdef CAMERA_CAPTURE_YUV
     bool isSystemApp = CheckSystemApp();
     PhotoLevelManager::GetInstance().SetPhotoLevelInfo(preparedCaptureId, isSystemApp);
-    MEDIA_DEBUG_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
+    MEDIA_INFO_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
         preparedCaptureId, isSystemApp);
 #endif
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, isBursting_));

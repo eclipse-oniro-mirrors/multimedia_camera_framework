@@ -315,6 +315,9 @@ public:
                                sptr<HCameraDeviceHolder> &cameraRequestOpen);
 
     bool IsProcessHasConcurrentDevice(pid_t pid);
+    bool CheckCameraCombination(string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>);
+    void CalMultiCameraCombinationInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+    bool IsMultiCameraCombinationSupported(vector<string> cameraIds);
     bool PermDisableSA();
 
     bool GetDisablePolicy();
@@ -331,7 +334,13 @@ public:
     void SetLiveScene(bool isLiveScene);
     bool IsLiveScene();
 #endif
+
+    void SetScanSceneBundle(const std::string& bundleName);
+    std::string GetScanSceneBundle();
+    bool IsScanScene();
+
 private:
+    SafeMap<string, unordered_set<int>> unsupportedMultiCameraCombinationsMap_;
     HCameraDeviceManager();
     static sptr<HCameraDeviceManager> cameraDeviceManager_;
     static std::mutex instanceMutex_;
@@ -361,6 +370,7 @@ private:
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
     std::atomic<bool> isLiveScene_ = false;
 #endif
+    std::string scanSceneBundleName_ = "";
 };
 } // namespace CameraStandard
 } // namespace OHOS

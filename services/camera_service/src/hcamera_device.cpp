@@ -676,7 +676,7 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
     if (mdmCheck_) {
         CHECK_RETURN_RET_ELOG(HCameraDeviceManager::GetInstance()->GetDisablePolicy(), false, "policy disabled");
     }
-    CHECK_RETURN_RET_ELOG(!IsHapTokenId(callerToken_), true, "system ability called not need privacy");
+    CHECK_RETURN_RET_ELOG(!cameraPrivacy->IsRemote() && !IsHapTokenId(callerToken_), true, "local sa not need privacy");
     std::vector<sptr<HCameraDeviceHolder>> holders =
         HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(cameraPid_);
     CHECK_RETURN_RET_ELOG(!holders.empty(), true, "current pid has active clients, no action is required");
@@ -891,13 +891,23 @@ void HCameraDevice::HandleFoldableDevice()
 void HCameraDevice::HandleScanScene(std::string clientName)
 {
     MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene clientName:%s", clientName.c_str());
-    bool isEnableScan = system::GetParameter("const.camera_service.scan_enable", "false") == "true";
-    MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene isEnableScan:%d", isEnableScan);
-    if (clientName != SYSTEM_CAMERA && isEnableScan) {
-        bool isScanSceneSupport = GetScanScene();
-        CHECK_EXECUTE(
-            isScanSceneSupport, UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_SPEED));
+    std::string scanScanBundle = HCameraDeviceManager::GetInstance()->GetScanSceneBundle();
+    MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene scanScanBundle:%s", scanScanBundle.c_str());
+    if (clientName != scanScanBundle) {
+        MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene not allowed app");
+        return;
     }
+    uint32_t previewQuality = OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_SPEED;
+    if (clientName != SYSTEM_CAMERA) {
+        bool isScanSceneSupport = GetScanScene();
+        CHECK_EXECUTE(isScanSceneSupport, UpdateScanSceneMetadata(previewQuality));
+    }
+}
+
+void HCameraDevice::AddCameraPermissionUsedRecord()
+{
+    auto cameraPrivacy = GetCameraPrivacy();
+    CHECK_EXECUTE(cameraPrivacy, cameraPrivacy->AddCameraPermissionUsedRecord());
 }
 
 void HCameraDevice::ReleaseSessionBeforeCloseDevice()
@@ -917,19 +927,12 @@ int32_t HCameraDevice::CloseDevice()
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     CHECK_EXECUTE(isFoldable, UnregisterDisplayModeListener());
     UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
+    HCameraDeviceManager::GetInstance()->SetScanSceneBundle("");
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_RETURN_RET_ELOG(!isOpenedCameraDevice_.load(), CAMERA_OK, "CloseDevice device has benn closed");
         if (hdiCameraDevice_ != nullptr) {
-            isOpenedCameraDevice_.store(false);
-            HILOG_COMM_INFO("Closing camera device: %{public}s start", cameraID_.c_str());
-            hdiCameraDevice_->Close();
-            ResetCachedSettings();
-            ResetDeviceOpenLifeCycleSettings();
-            HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
-            MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
-            hdiCameraDevice_ = nullptr;
-            HandlePrivacyAfterCloseDevice();
+            RemoveHdiCamera();
         } else {
             MEDIA_INFO_LOG("hdiCameraDevice is null");
         }
@@ -958,6 +961,19 @@ int32_t HCameraDevice::CloseDevice()
         "HCameraDevice::CloseDevice HookCloseDevice is failed");
 #endif
     return CAMERA_OK;
+}
+
+void HCameraDevice::RemoveHdiCamera()
+{
+    isOpenedCameraDevice_.store(false);
+    HILOG_COMM_INFO("Closing camera device: %{public}s start", cameraID_.c_str());
+    hdiCameraDevice_->Close();
+    ResetCachedSettings();
+    ResetDeviceOpenLifeCycleSettings();
+    HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
+    MEDIA_INFO_LOG("Closing camera device: %{public}s end", cameraID_.c_str());
+    hdiCameraDevice_ = nullptr;
+    HandlePrivacyAfterCloseDevice();
 }
 
 int32_t HCameraDevice::closeDelayedDevice()
@@ -2064,6 +2080,19 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
     EventFwk::CommonEventManager::PublishCommonEvent(CommonEventData, publishInfo);
     MEDIA_DEBUG_LOG("HCameraDevice::NotifyCameraStatus end");
 }
+
+int32_t HCameraDevice::Open(const CallerDeviceInfo& callerInfo)
+{
+    constexpr int32_t MAX_SA_UID = 10000;
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    CHECK_RETURN_RET_ELOG(uid >= MAX_SA_UID, CAMERA_OPERATION_NOT_ALLOWED, "uid %{public}d not sa", uid);
+    using OHOS::Security::AccessToken::RemoteCallerInfo;
+    RemoteCallerInfo info{ .remoteDeviceId = callerInfo.deviceId, .remoteDeviceName = callerInfo.deviceName };
+    auto cameraPrivacy = GetCameraPrivacy();
+    CHECK_EXECUTE(cameraPrivacy, cameraPrivacy->SetRemoteCallerInfo(info));
+    return Open();
+}
+
 // LCOV_EXCL_START
 int32_t HCameraDevice::Open(int32_t concurrentType)
 {
@@ -2077,6 +2106,9 @@ int32_t HCameraDevice::Open(int32_t concurrentType)
         "HCameraDevice::Open Camera width concurrent:[%{public}s, %{public}d]", cameraID_.c_str(), concurrentType);
     SetCameraConcurrentType(concurrentType);
     EnableDeviceOpenedByConcurrent(true);
+    bool canOpen = HCameraDeviceManager::GetInstance()->CheckCameraCombination(cameraID_, GetDeviceAbility());
+    CHECK_RETURN_RET_ELOG(
+        !canOpen, CAMERA_UNSUPPORTED_COMBINATION, "HCameraDevice::open CheckCameraCombination failed.");
     int32_t result = OpenDevice();
     return result;
 }

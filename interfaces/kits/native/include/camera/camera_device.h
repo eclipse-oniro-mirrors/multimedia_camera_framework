@@ -77,6 +77,150 @@ Camera_ErrorCode OH_CameraDevice_GetHostDeviceType(Camera_Device* camera, Camera
 Camera_ErrorCode OH_CameraDevice_GetAutomotiveCameraPosition(Camera_Device* camera,
     Camera_AutomotivePosition* position);
 
+/**
+ * @brief Gets the equivalent focal lengths of a camera device.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param equivalentFocalLengths Output parameter, returns equivalent focal lengths array.
+ * @param size Output parameter, returns array size.
+ * @return {@link #CAMERA_OK} if successful
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or type incorrect
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetLensEquivalentFocalLengths(const Camera_Device* camera,
+    uint32_t** equivalentFocalLengths, uint32_t* size);
+
+/**
+ * @brief Checks if a camera device is a logical camera.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param isLogicalCamera Output parameter, returns boolean indicating if it's a logical camera.
+ * @return {@link #CAMERA_OK} if successful
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or type incorrect
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera);
+
+/**
+ * @brief Gets the array size of the constituent cameras.
+ *
+ * @param logicalCamera Pointer to the logical Camera_Device.
+ * @param size The size of the array
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size);
+
+/**
+ * @brief Gets the constituent camera devices of a logical camera.
+ * Gets the array size of the constituent cameras by calling {@link OH_CameraDevice_GetConstituentCamerasSize} .
+ *
+ * @param logicalCamera Pointer to the logical Camera_Device.
+ * @param constituentCameras Output parameter, returns array of constituent camera devices.
+ * @param size Output parameter, returns array size.
+
+ * @return {@link #CAMERA_OK} if successful
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or type incorrect
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(const Camera_Device* logicalCamera,
+    Camera_Device* constituentCameras, uint32_t size);
+
+/**
+ * @brief Gets the focal length of a camera lens.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param lensFocalLength Output parameter, returns lens focal length value.
+ * @return {@link #CAMERA_OK} if successful
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or type incorrect
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength);
+
+/**
+ * @brief Gets the minimum focus distance of a camera device.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param minimumFocusDistance Output parameter, returns the minimum focus distance.
+ * @return {@link #CAMERA_OK} if the operation succeeds
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter is missing or invalid
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fails
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetMinimumFocusDistance(const Camera_Device* camera, float* minimumFocusDistance);
+
+/**
+ * @brief Gets the lens distortion parameters of a camera device.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param lens Output parameter, returns the lens distortion parameters array.
+ * @param size Output parameter, returns the size of the array.
+ * @return {@link #CAMERA_OK} if the operation succeeds
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter is missing or invalid
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fails
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size);
+
+/**
+ * @brief Gets the intrinsic calibration parameters of a camera device.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param intrinsicCalibration Output parameter, returns the intrinsic calibration parameters array.
+ * @param size Output parameter, returns the size of the array.
+ * @return {@link #CAMERA_OK} if the operation succeeds
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter is missing or invalid
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fails
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetIntrinsicCalibration(const Camera_Device* camera,
+    float** intrinsicCalibration, uint32_t* size);
+
+/**
+ * @brief Gets the physical size of a camera sensor.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param width Output parameter, returns the sensor width in millimeters.
+ * @param height Output parameter, returns the sensor height in millimeters.
+ * @return {@link #CAMERA_OK} if the operation succeeds
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter is missing or invalid
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fails
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetSensorPhysicalSize(const Camera_Device* camera, float* width, float* height);
+
+/**
+ * @brief Gets the pixel array size of a camera sensor.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param width Output parameter, returns the pixel array width in pixels.
+ * @param height Output parameter, returns the pixel array height in pixels.
+ * @return {@link #CAMERA_OK} if the operation succeeds
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter is missing or invalid
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fails
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetSensorPixelArraySize(const Camera_Device* camera,
+    uint32_t* width, uint32_t* height);
+
+/**
+ * @brief Gets the color filter arrangement of a camera sensor.
+ *
+ * @param camera Pointer to the Camera_Device used to retrieve attributes.
+ * @param sensorCFA Output parameter, returns the sensor color filter arrangement enum value.
+ * @return {@link #CAMERA_OK} if the operation succeeds
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter is missing or invalid
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fails
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_GetSensorColorFilterArrangement(const Camera_Device* camera,
+    OH_Camera_SensorColorFilterArrangement* sensorCFA);
+
 #ifdef __cplusplus
 }
 #endif

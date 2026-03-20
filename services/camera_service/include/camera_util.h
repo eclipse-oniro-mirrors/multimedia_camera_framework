@@ -136,6 +136,7 @@ enum CamServiceError {
     CAMERA_SESSION_MAX_INSTANCE_NUMBER_REACHED,
     CAMERA_DEVICE_SWITCH_FREQUENT,
     CAMERA_DEVICE_LENS_RETRACTED,
+    CAMERA_UNSUPPORTED_COMBINATION,
 };
 
 enum ClientPriorityLevels {
@@ -204,8 +205,6 @@ bool IsInForeGround(const uint32_t callerToken);
 EXPORT_API bool IsCameraNeedClose(const uint32_t callerToken, const pid_t& pid, const pid_t& pidCompared);
 
 EXPORT_API int32_t CheckPermission(std::string permissionName, uint32_t callerToken);
-
-void AddCameraPermissionUsedRecord(const uint32_t callingTokenId, const std::string permissionName);
 
 int32_t GetStreamRotation(int32_t& sensorOrientation, camera_position_enum_t& cameraPosition, int& displayRotation,
     std::string& deviceClass);

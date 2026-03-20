@@ -64,6 +64,7 @@ public:
     int32_t Open() override;
     int32_t OpenSecureCamera(uint64_t& secureSeqId) override;
     int32_t Open(int32_t concurrentType) override;
+    int32_t Open(const CallerDeviceInfo& callerInfo) override;
     int32_t Close() override;
     int32_t closeDelayed() override;
     int32_t Release() override;
@@ -215,6 +216,7 @@ public:
 #endif
     void HandleScanScene(std::string clientName);
 
+    void AddCameraPermissionUsedRecord();
 private:
     class FoldScreenListener;
     class DisplayModeListener;
@@ -312,6 +314,7 @@ private:
     void CreateMuteSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     int32_t UpdateDeviceSetting();
     void ReleaseSessionBeforeCloseDevice();
+    void RemoveHdiCamera();
 #ifdef MEMMGR_OVERRID
     int32_t RequireMemory(const std::string& reason);
 #endif
