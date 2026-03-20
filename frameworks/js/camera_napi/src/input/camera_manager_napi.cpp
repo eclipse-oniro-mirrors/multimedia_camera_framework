@@ -754,7 +754,7 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("createDepthDataOutput", CreateDepthDataOutputInstance),
         DECLARE_NAPI_FUNCTION("createMovieFileOutput", CreateMovieFileOutputInstance),
         DECLARE_NAPI_FUNCTION("isTorchSupported", IsTorchSupported),
-         DECLARE_NAPI_FUNCTION("isTorchLevelControlSupported", IsTorchLevelControlSupported),
+        DECLARE_NAPI_FUNCTION("isTorchLevelControlSupported", IsTorchLevelControlSupported),
         DECLARE_NAPI_FUNCTION("isTorchModeSupported", IsTorchModeSupported),
         DECLARE_NAPI_FUNCTION("getTorchMode", GetTorchMode),
         DECLARE_NAPI_FUNCTION("setTorchMode", SetTorchMode),
