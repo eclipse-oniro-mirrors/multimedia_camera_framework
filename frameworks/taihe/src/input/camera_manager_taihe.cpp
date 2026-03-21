@@ -1279,7 +1279,6 @@ bool CameraManagerImpl::IsTorchModeSupported(TorchMode mode)
 bool CameraManagerImpl::IsTorchLevelControlSupported()
 {
     return cameraManager_->IsTorchLevelControlSupported();
- 
 }
  
 int32_t CameraManagerImpl::SetTorchModeOnWithLevel(double torchLevel)
@@ -1287,7 +1286,6 @@ int32_t CameraManagerImpl::SetTorchModeOnWithLevel(double torchLevel)
     int32_t service_fatal_error = 7400201;
     if (torchLevel < 0.0 || torchLevel > 1.0) return service_fatal_error;
     return cameraManager_->SetTorchModeOnWithLevel(torchLevel);
- 
 }
 
 bool CameraManagerImpl::IsControlCenterActive()
