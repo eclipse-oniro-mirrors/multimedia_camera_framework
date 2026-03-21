@@ -1276,7 +1276,7 @@ bool CameraManagerImpl::IsTorchModeSupported(TorchMode mode)
     return isTorchModeSupported;
 }
 
-bool CameraManagerImpl::IsTorchLevelControlSupported() 
+bool CameraManagerImpl::IsTorchLevelControlSupported()
 {
     return cameraManager_->IsTorchLevelControlSupported();
  
