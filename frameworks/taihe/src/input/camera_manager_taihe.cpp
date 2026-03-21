@@ -964,8 +964,6 @@ PreviewOutput CameraManagerImpl::CreateDeferredPreviewOutput(optional_view<Profi
     auto Result = [](OHOS::sptr<OHOS::CameraStandard::PreviewOutput> output) {
         return make_holder<PreviewOutputImpl, PreviewOutput>(output);
     };
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), Result(nullptr),
-        "SystemApi CreateDeferredPreviewOutputInstance is called!");
     CHECK_RETURN_RET_ELOG(!(profile.has_value()), Result(nullptr),
         "CreateDeferredPreviewOutput args is invalid!");
     OHOS::CameraStandard::Profile innerProfile {

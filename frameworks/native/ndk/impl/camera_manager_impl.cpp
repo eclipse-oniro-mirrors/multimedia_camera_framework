@@ -1442,3 +1442,22 @@ Camera_ErrorCode Camera_Manager::UnregisterFoldStatusCallback(
     cameraManager_->UnregisterFoldListener(callback);
     return CAMERA_OK;
 }
+
+Camera_ErrorCode Camera_Manager::CreateDeferredPreviewOutput(
+    const Camera_Profile* profile, Camera_PreviewOutput** previewOutput)
+{
+    sptr<PreviewOutput> innerPreviewOutput = nullptr;
+    Size size;
+    size.width = profile->size.width;
+    size.height = profile->size.height;
+    Profile innerProfile(static_cast<CameraFormat>(profile->format), size);
+
+    int32_t retCode = CameraManager::GetInstance()->CreateDeferredPreviewOutput(innerProfile, &innerPreviewOutput);
+    CHECK_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET_ELOG(innerPreviewOutput == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_Manager::CreateDeferredPreviewOutput create innerPreviewOutput fail!");
+    Camera_PreviewOutput* out = new Camera_PreviewOutput(innerPreviewOutput);
+    *previewOutput = out;
+    MEDIA_ERR_LOG("Camera_Manager::CreateDeferredPreviewOutput");
+    return CAMERA_OK;
+}

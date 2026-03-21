@@ -1162,7 +1162,6 @@ int32_t HCameraService::CreateDeferredPreviewOutput(
     int32_t format, int32_t width, int32_t height, sptr<IStreamRepeat>& previewOutput)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     CameraXCollie cameraXCollie = CameraXCollie("HCameraService::CreateDeferredPreviewOutput");
     sptr<HStreamRepeat> streamDeferredPreview;
     MEDIA_INFO_LOG("HCameraService::CreateDeferredPreviewOutput prepare execute");

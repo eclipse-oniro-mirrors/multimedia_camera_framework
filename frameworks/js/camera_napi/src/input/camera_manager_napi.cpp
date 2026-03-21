@@ -1012,11 +1012,6 @@ napi_value CameraManagerNapi::CreatePreviewOutputInstance(napi_env env, napi_cal
 napi_value CameraManagerNapi::CreateDeferredPreviewOutputInstance(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("CreateDeferredPreviewOutputInstance is called");
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi CreateDeferredPreviewOutputInstance is called!");
-        return nullptr;
-    }
-
     CameraManagerNapi* cameraManagerNapi = nullptr;
     Profile profile;
     CameraNapiObject profileSizeObj {{

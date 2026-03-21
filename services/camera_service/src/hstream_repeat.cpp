@@ -1320,7 +1320,6 @@ int32_t HStreamRepeat::CallbackEnter([[maybe_unused]] uint32_t code)
     int32_t errCode = OperatePermissionCheck(code);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "HStreamRepeat::OperatePermissionCheck fail");
     switch (static_cast<IStreamRepeatIpcCode>(code)) {
-        case IStreamRepeatIpcCode::COMMAND_ADD_DEFERRED_SURFACE:
         case IStreamRepeatIpcCode::COMMAND_FORK_SKETCH_STREAM_REPEAT:
         case IStreamRepeatIpcCode::COMMAND_UPDATE_SKETCH_RATIO: {
             CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamRepeat::CheckSystemApp fail");

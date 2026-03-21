@@ -606,6 +606,19 @@ Camera_ErrorCode OH_CameraManager_GetCameraConcurrentInfos(Camera_Manager *camer
     CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "lnvalid argument, cameraDevice is null!");
     return cameraManager->GetCameraConcurrentInfos(camera, deviceSize, cameraConcurrentInfo, infoSize);
 }
+
+Camera_ErrorCode OH_CameraManager_CreateDeferredPreviewOutput(Camera_Manager* cameraManager,
+    const Camera_Profile* profile,  Camera_PreviewOutput** previewOutput)
+{
+    CHECK_RETURN_RET_ELOG(
+        cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
+    CHECK_RETURN_RET_ELOG(profile == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, profile is null!");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+
+    return cameraManager->CreateDeferredPreviewOutput(profile, previewOutput);
+}
+
 #ifdef __cplusplus
 }
 #endif

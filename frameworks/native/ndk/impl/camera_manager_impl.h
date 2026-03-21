@@ -146,6 +146,8 @@ public:
 
     Camera_ErrorCode UnregisterFoldStatusCallback(OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback);
 
+    Camera_ErrorCode CreateDeferredPreviewOutput(const Camera_Profile* profile, Camera_PreviewOutput** previewOutput);
+
 private:
     Camera_ErrorCode GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,
         std::vector<OHOS::CameraStandard::Profile> &previewProfiles);

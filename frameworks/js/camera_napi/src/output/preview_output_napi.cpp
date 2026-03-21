@@ -543,11 +543,6 @@ napi_value PreviewOutputNapi::Release(napi_env env, napi_callback_info info)
 napi_value PreviewOutputNapi::AddDeferredSurface(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("AddDeferredSurface is called");
-    if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi AddDeferredSurface is called!");
-        return nullptr;
-    }
-
     PreviewOutputNapi* previewOutputNapi;
     std::string surfaceId;
     CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, surfaceId);

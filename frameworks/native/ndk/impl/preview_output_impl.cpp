@@ -15,9 +15,13 @@
 
 #include "preview_output_impl.h"
 #include <mutex>
+#include <charconv>
 #include "camera_log.h"
 #include "camera_output_capability.h"
 #include "camera_util.h"
+#include "image_receiver.h"
+#include "input/camera_manager.h"
+#include "surface_utils.h"
 
 using namespace std;
 using namespace OHOS;
@@ -253,5 +257,24 @@ Camera_ErrorCode Camera_PreviewOutput::EnableBandwidthCompression(bool enabled)
         "Camera_PreviewOutput::EnableBandwidthCompression camera session not config! ret: %{public}d", ret);
     CHECK_RETURN_RET_ELOG(ret == CAMERA_OPERATION_NOT_ALLOWED, CAMERA_OPERATION_NOT_ALLOWED,
         "Camera_PreviewOutput::EnableBandwidthCompression camera operation not allowed! ret: %{public}d", ret);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_PreviewOutput::AddDeferredSurface(const char* surfaceId)
+{
+    uint64_t iSurfaceId;
+    const char* begin = surfaceId;
+    const char* end = surfaceId + std::strlen(surfaceId);
+    auto result = std::from_chars(begin, end, iSurfaceId);
+    CHECK_RETURN_RET_ELOG(
+        result.ec != std::errc() || result.ptr != end, CAMERA_INVALID_ARGUMENT, "surfaceId is invalid argument!");
+    sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+    surface = (surface == nullptr) ? Media::ImageReceiver::getSurfaceById(surfaceId) : surface;
+    CHECK_RETURN_RET_ELOG(surface == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Failed to get previewOutput surface");
+    auto previewProfile = innerPreviewOutput_->GetPreviewProfile();
+    if (previewProfile != nullptr) {
+        surface->SetUserData(CameraManager::surfaceFormat, std::to_string(previewProfile->GetCameraFormat()));
+    }
+    innerPreviewOutput_->AddDeferredSurface(surface);
     return CAMERA_OK;
 }
