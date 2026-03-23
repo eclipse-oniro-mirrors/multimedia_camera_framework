@@ -202,8 +202,10 @@ public:
     static napi_value CreateMovieFileOutputInstance(napi_env env, napi_callback_info info);
     static napi_value IsTorchSupported(napi_env env, napi_callback_info info);
     static napi_value IsTorchModeSupported(napi_env env, napi_callback_info info);
+    static napi_value IsTorchLevelControlSupported(napi_env env, napi_callback_info info);
     static napi_value GetTorchMode(napi_env env, napi_callback_info info);
     static napi_value SetTorchMode(napi_env env, napi_callback_info info);
+    static napi_value SetTorchModeOnWithLevel(napi_env env, napi_callback_info info);
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Once(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
@@ -212,6 +214,7 @@ public:
     static napi_value GetCameraDevicesInner(napi_env env, const std::vector<sptr<CameraDevice>>& cameraDeviceList);
     static napi_value GetCameraConcurrentInfos(napi_env env, napi_callback_info info);
     static napi_value GetCameraStorageSize(napi_env env, napi_callback_info info);
+
     CameraManagerNapi(napi_env env);
     ~CameraManagerNapi() override;
 
@@ -238,7 +241,8 @@ private:
         std::vector<std::vector<sptr<CameraOutputCapability>>> &outputCapabilities);
     static napi_value SplitGetCameraConcurrentInfos(napi_env env, CameraManagerNapi* cameraManagerNapi,
         std::vector<sptr<CameraDevice>> &cameraDeviceArrray);
-    void ParseGetCameraConcurrentInfos(napi_env env, napi_value arrayParam, std::vector<string>& cameraIdv);
+    void ParseGetCameraConcurrentInfos(napi_env env, napi_value arrayParam,
+        std::vector<string> &cameraIdv);
     void ParseGetCameraIds(napi_env env, napi_value arrayParam, std::vector<std::string>& cameraIds);
 
     void RegisterCameraStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,

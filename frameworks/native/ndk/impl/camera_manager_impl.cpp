@@ -1205,6 +1205,23 @@ Camera_ErrorCode Camera_Manager::IsTorchSupported(bool* isTorchSupported)
     return CAMERA_OK;
 }
 
+Camera_ErrorCode Camera_Manager::IsTorchLevelControlSupported(bool* isTorchSupported) const {
+    MEDIA_DEBUG_LOG("Camera_Manager::IsTorchLevelControlSupported is called");
+ 
+    *isTorchSupported = CameraManager::GetInstance()->IsTorchLevelControlSupported();
+    MEDIA_DEBUG_LOG("IsTorchLevelControlSupported[%{public}d]", *isTorchSupported);
+    return CAMERA_OK;
+}
+ 
+Camera_ErrorCode Camera_Manager::SetTorchModeOnWithLevel(float level) const {
+    TorchMode mode;
+    if (level == 0.0) mode = TorchMode::TORCH_MODE_OFF;
+    else if (level > 0.0 && level <= 1.0) mode = TorchMode::TORCH_MODE_ON;
+    else return CAMERA_INVALID_ARGUMENT;
+    int32_t ret = CameraManager::GetInstance()->SetTorchModeOnWithLevel(mode, level);
+    return FrameworkToNdkCameraError(ret);
+}
+
 Camera_ErrorCode Camera_Manager::IsTorchSupportedByTorchMode(Camera_TorchMode torchMode, bool* isTorchSupported)
 {
     MEDIA_DEBUG_LOG("Camera_Manager::IsTorchSupportedByTorchMode is called");

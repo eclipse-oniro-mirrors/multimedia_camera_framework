@@ -1276,6 +1276,18 @@ bool CameraManagerImpl::IsTorchModeSupported(TorchMode mode)
     return isTorchModeSupported;
 }
 
+bool CameraManagerImpl::IsTorchLevelControlSupported()
+{
+    return cameraManager_->IsTorchLevelControlSupported();
+}
+ 
+int32_t CameraManagerImpl::SetTorchModeOnWithLevel(double torchLevel)
+{
+    int32_t service_fatal_error = 7400201;
+    if (torchLevel < 0.0 || torchLevel > 1.0) return service_fatal_error;
+    return cameraManager_->SetTorchModeOnWithLevel(OHOS::CameraStandard::TorchMode::TORCH_MODE_ON, torchLevel);
+}
+
 bool CameraManagerImpl::IsControlCenterActive()
 {
     MEDIA_INFO_LOG("isControlCenterActive is called");

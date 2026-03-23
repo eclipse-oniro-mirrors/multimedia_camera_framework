@@ -187,7 +187,8 @@ public:
     virtual const EmitterFunctions& GetEmitterFunctions() override;
     bool IsTorchModeSupported(TorchMode mode);
     bool IsControlCenterActive();
-
+    bool IsTorchLevelControlSupported();
+    int32_t SetTorchModeOnWithLevel(double torchLevel);
     static uint32_t cameraManagerTaskId_;
 private:
     static void GetSupportedOutputCapabilityAdaptNormalMode(OHOS::CameraStandard::SceneMode fwkMode,

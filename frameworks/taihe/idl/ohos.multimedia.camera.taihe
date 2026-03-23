@@ -1744,6 +1744,8 @@ interface CameraManager {
   @overload("createMetadataOutput")
   CreateMetadataOutput(metadataObjectTypes: Array<MetadataObjectType>): MetadataOutput;
   IsTorchModeSupported(mode: TorchMode): bool;
+  IsTorchLevelControlSupported(): bool;
+  SetTorchModeOnWithLevel(torchLevel: f64): i32;
   GetCameraDevice(position: CameraPosition, type: CameraType): CameraDevice;
   GetCameraDevices(position: CameraPosition, types: Array<CameraType>, connectionType: ConnectionType): Array<CameraDevice>;
   CreateMovieFileOutput(profile: Optional<VideoProfile>): MovieFileOutput;

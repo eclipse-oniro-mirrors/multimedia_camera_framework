@@ -95,6 +95,10 @@ public:
 
     Camera_ErrorCode IsTorchSupported(bool* isTorchSupported);
 
+    Camera_ErrorCode IsTorchLevelControlSupported(bool* isTorchSupported) const;
+ 
+    Camera_ErrorCode SetTorchModeOnWithLevel(float level) const;
+
     Camera_ErrorCode IsTorchSupportedByTorchMode(Camera_TorchMode torchMode, bool* isTorchSupported);
 
     Camera_ErrorCode SetTorchMode(Camera_TorchMode torchMode);
