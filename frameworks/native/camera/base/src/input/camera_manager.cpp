@@ -2803,7 +2803,7 @@ void CameraManager::ParseBasicCapability(ProfilesWrapper& profilesWrapper,
         CHECK_CONTINUE(format != CAMERA_FORMAT_RGBA_8888);
         profilesWrapper.photoProfiles.push_back(profile);
 #else
-        if (format == CAMERA_FORMAT_JPEG || format == CAMERA_FORMAT_YUV_420_SP) {
+        if (format == CAMERA_FORMAT_JPEG) {
             profilesWrapper.photoProfiles.push_back(profile);
             continue;
         }
