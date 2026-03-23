@@ -118,6 +118,30 @@ int32_t CJPreviewOutput::CreatePreviewOutput(Profile &profile, std::string &surf
     return retCode;
 }
 
+ErrInfo CJPreviewOutput::CreatePreviewOutputV2(Profile &profile, std::string &surfaceId)
+{
+    uint64_t iSurfaceId;
+    std::istringstream iss(surfaceId);
+    iss >> iSurfaceId;
+    sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+    if (!surface) {
+        surface = Media::ImageReceiver::getSurfaceById(surfaceId);
+    }
+    if (surface == nullptr) {
+        MEDIA_ERR_LOG("Failed to get previewOutput surface");
+        return ErrInfo { .errCode = CameraError::CAMERA_SERVICE_ERROR,
+            .errMessage = MallocCString("Failed to get previewOutput surface.") };
+    }
+    surface->SetUserData(CameraManager::surfaceFormat, std::to_string(profile.GetCameraFormat()));
+    int32_t retCode = CameraManager::GetInstance()->CreatePreviewOutput(profile, surface, &sPreviewOutput_);
+    if (sPreviewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("failed to create previewOutput");
+        return ErrInfo { .errCode = CameraError::CAMERA_SERVICE_ERROR,
+            .errMessage = MallocCString("Camera service fatal error.") };
+    }
+    return ErrInfo { .errCode = retCode, .errMessage = nullptr };
+}
+
 int32_t CJPreviewOutput::CreatePreviewOutputWithoutProfile(std::string &surfaceId)
 {
     uint64_t iSurfaceId;
@@ -138,6 +162,29 @@ int32_t CJPreviewOutput::CreatePreviewOutputWithoutProfile(std::string &surfaceI
     }
 
     return retCode;
+}
+
+ErrInfo CJPreviewOutput::CreatePreviewOutputWithoutProfileV2(std::string &surfaceId)
+{
+    uint64_t iSurfaceId;
+    std::istringstream iss(surfaceId);
+    iss >> iSurfaceId;
+    sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
+    if (!surface) {
+        surface = Media::ImageReceiver::getSurfaceById(surfaceId);
+    }
+    if (surface == nullptr) {
+        MEDIA_ERR_LOG("failed to get surface");
+        return ErrInfo { .errCode = CameraError::CAMERA_SERVICE_ERROR,
+            .errMessage = MallocCString("Failed to get previewOutput surface.") };
+    }
+    int32_t retCode = CameraManager::GetInstance()->CreatePreviewOutputWithoutProfile(surface, &sPreviewOutput_);
+    if (sPreviewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("failed to create previewOutput");
+        return ErrInfo { .errCode = CameraError::CAMERA_SERVICE_ERROR,
+            .errMessage = MallocCString("Camera service fatal error.") };
+    }
+    return ErrInfo { .errCode = retCode, .errMessage = nullptr };
 }
 
 CArrFrameRateRange CJPreviewOutput::GetSupportedFrameRates(int32_t *errCode)

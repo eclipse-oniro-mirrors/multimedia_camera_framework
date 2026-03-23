@@ -48,7 +48,9 @@ FFI_EXPORT int64_t FfiCameraManagerCreateCameraInputWithCameraDevice(int64_t id,
 FFI_EXPORT int64_t FfiCameraManagerCreateCameraInputWithCameraDeviceInfo(int64_t id, int32_t cameraPosition,
                                                                          int32_t cameraType, int32_t *errCode);
 FFI_EXPORT int64_t FfiCameraManagerCreatePreviewOutput(CJProfile profile, const char *surfaceId, int32_t *errCode);
+FFI_EXPORT RetInt64 FfiCameraManagerCreatePreviewOutputMsg(CJProfile profile, const char *surfaceId);
 FFI_EXPORT int64_t FfiCameraManagerCreatePreviewOutputWithoutProfile(const char *surfaceId, int32_t *errCode);
+FFI_EXPORT RetInt64 FfiCameraManagerCreatePreviewOutputWithoutProfileMsg(const char *surfaceId);
 FFI_EXPORT int64_t FfiCameraManagerCreatePhotoOutput(int32_t *errCode);
 FFI_EXPORT int64_t FfiCameraManagerCreatePhotoOutputWithProfile(CJProfile profile, int32_t *errCode);
 FFI_EXPORT int64_t FfiCameraManagerCreateVideoOutput(CJVideoProfile profile, char *surfaceId, int32_t *errCode);
@@ -228,6 +230,8 @@ FFI_EXPORT CArrFloat32 FfiCameraZoomGetZoomRatioRange(int64_t id, int32_t *errCo
 FFI_EXPORT void FfiCameraZoomSetZoomRatio(int64_t id, float zoomRatio, int32_t *errCode);
 FFI_EXPORT float FfiCameraZoomGetZoomRatio(int64_t id, int32_t *errCode);
 FFI_EXPORT void FfiCameraZoomSetSmoothZoom(int64_t id, float targetRatio, int32_t mode, int32_t *errCode);
+
+FFI_EXPORT void FfiCameraFree(void *point);
 }
 } // namespace CameraStandard
 } // namespace OHOS
