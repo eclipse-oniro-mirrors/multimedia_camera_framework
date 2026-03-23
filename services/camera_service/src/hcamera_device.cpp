@@ -2162,6 +2162,11 @@ std::string HCameraDevice::GetCameraIdTransform()
     std::lock_guard<std::mutex> lock(originCameraIdLock_);
     return originCameraId_;
 }
+
+int32_t HCameraDevice::GetPid()
+{
+    return cameraPid_;
+}
 // LCOV_EXCL_STOP
 #ifdef CAMERA_LIVE_SCENE_RECOGNITION
 void HCameraDevice::UpdateLiveStreamSceneMetadata(uint32_t mode)
