@@ -170,8 +170,6 @@ double PreviewOutputImpl::GetSketchRatio()
 
 void PreviewOutputImpl::AddDeferredSurface(string_view surfaceId)
 {
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi AddDeferredSurface is called!");
     std::string nativeStr(surfaceId);
     uint64_t iSurfaceId;
     std::istringstream iss(nativeStr);

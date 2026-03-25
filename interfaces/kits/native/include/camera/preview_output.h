@@ -310,6 +310,18 @@ Camera_ErrorCode OH_PreviewOutput_IsBandwidthCompressionSupported(Camera_Preview
  */
 Camera_ErrorCode OH_PreviewOutput_EnableBandwidthCompression(Camera_PreviewOutput* previewOutput, bool enabled);
 
+/**
+ * @brief Adds a deferred surface.
+ *
+ * @param previewOutput the {@link Camera_PreviewOutput} instance which used to enable bandwidth compression or not.
+ * @param surfaceId the which use to create {@link Camera_PreviewOutput}.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 24
+ */
+Camera_ErrorCode OH_PreviewOutput_AddDeferredSurface(Camera_PreviewOutput* previewOutput, const char* surfaceId);
+
 #ifdef __cplusplus
 }
 #endif
