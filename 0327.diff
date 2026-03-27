@@ -1,0 +1,2649 @@
+diff --git a/frameworks/js/camera_napi/src/camera_napi_object_types.cpp b/frameworks/js/camera_napi/src/camera_napi_object_types.cpp
+index ad6bc3bb6..b0b41ea03 100644
+--- a/frameworks/js/camera_napi/src/camera_napi_object_types.cpp
++++ b/frameworks/js/camera_napi/src/camera_napi_object_types.cpp
+@@ -88,16 +88,49 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
+     auto hostDeviceType = Hold<uint32_t>(cameraDevice_.GetDeviceType());
+     auto cameraOrientation = Hold<int32_t>(cameraDevice_.GetStaticCameraOrientation());
+     auto isRetractable = Hold<bool>(cameraDevice_.GetisRetractable());
+-    auto lensEquivalentFocalLength = Hold<std::vector<int32_t>>(cameraDevice_.GetLensEquivalentFocalLength());
+-    auto isLogicalCamera = Hold<bool>(cameraDevice_.IsLogicalCamera());
+-    auto lensFocalLength = Hold<double>(cameraDevice_.GetLensFocalLength());
+-    auto minimumFocusDistance = Hold<double>(cameraDevice_.GetMinimumFocusDistance());
+-    auto lensDistortion = Hold<std::vector<double>>(cameraDevice_.GetLensDistortion());
+-    auto lensIntrinsicCalibration = Hold<std::vector<double>>(cameraDevice_.GetLensIntrinsicCalibration());
+-    auto sensorPhysicalSize = Hold<std::vector<double>>(cameraDevice_.GetSensorPhysicalSize());
+-    auto sensorPixelArraySize = Hold<std::vector<int32_t>>(cameraDevice_.GetSensorPixelArraySize());
+-    auto sensorColorFilterArrangement = Hold<int32_t>(cameraDevice_.GetSensorColorFilterArrangement());
++    auto lensEquivalentFocalLengthOpt = cameraDevice_.GetLensEquivalentFocalLength();
++    auto lensEquivalentFocalLength = lensEquivalentFocalLengthOpt.has_value() ?
++        Hold<std::vector<int32_t>>(lensEquivalentFocalLengthOpt.value()) : nullptr;
++    auto isLogicalCameraOpt = cameraDevice_.IsLogicalCamera();
++    auto isLogicalCamera = isLogicalCameraOpt.has_value() ?
++        Hold<bool>(isLogicalCameraOpt.value()) : nullptr;
++    auto lensFocalLengthOpt = cameraDevice_.GetLensFocalLength();
++    auto lensFocalLength = lensFocalLengthOpt.has_value() ?
++        Hold<double>(lensFocalLengthOpt.value()) : nullptr;
++    auto minimumFocusDistanceOpt = cameraDevice_.GetMinimumFocusDistance();
++    auto minimumFocusDistance = minimumFocusDistanceOpt.has_value() ?
++        Hold<double>(minimumFocusDistanceOpt.value()) : nullptr; 
++    auto lensDistortionOpt = cameraDevice_.GetLensDistortion();
++    auto lensDistortion = lensDistortionOpt.has_value() ?
++        Hold<std::vector<double>>(lensDistortionOpt.value()) : nullptr;
++    auto lensIntrinsicCalibrationOpt = cameraDevice_.GetLensIntrinsicCalibration();
++    auto lensIntrinsicCalibration = lensIntrinsicCalibrationOpt.has_value() ?
++        Hold<std::vector<double>>(lensIntrinsicCalibrationOpt.value()) : nullptr;  
++    auto sensorPhysicalSizeOpt = cameraDevice_.GetSensorPhysicalSize();
++    auto sensorPhysicalSize = sensorPhysicalSizeOpt.has_value() ?
++        Hold<std::vector<double>>(sensorPhysicalSizeOpt.value()) : nullptr;
++    auto sensorPixelArraySizeOpt = cameraDevice_.GetSensorPixelArraySize();
++    auto sensorPixelArraySize = sensorPixelArraySizeOpt.has_value() ?
++        Hold<std::vector<int32_t>>(sensorPixelArraySizeOpt.value()) : nullptr;
++    auto sensorColorFilterArrangementOpt = cameraDevice_.GetSensorColorFilterArrangement();
++    auto sensorColorFilterArrangement = sensorColorFilterArrangementOpt.has_value() ?
++        Hold<int32_t>(static_cast<int32_t>(sensorColorFilterArrangementOpt.value())) : nullptr;
+     auto automotiveCameraPosition = Hold<int32_t>(cameraDevice_.GetAutomotivePosition());
++    auto constituentCameraDevices = cameraDevice_.GetConstituentCameraDevices();
++    auto napiDevice = Hold<std::list<CameraNapiObject>>();
++    if (constituentCameraDevices.has_value() && !constituentCameraDevices.value().empty()) {
++        for (size_t j = 0; j < constituentCameraDevices.value().size(); j++) {
++            auto constituentCameraDeviceId = "device/" + constituentCameraDevices.value()[j];
++            sptr<CameraDevice> device =
++                CameraManager::GetInstance()->GetCameraDeviceFromId(constituentCameraDeviceId);
++            if (device && !device->GetConstituentCameraDevices().has_value()) {
++                napiDevice->emplace_back(std::move(Hold<CameraNapiObjCameraDevice>(*device)->GetCameraNapiObject()));
++            }
++        }
++    } else {
++        // is physical camera
++        napiDevice = nullptr;
++    }
+     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
+         { "cameraId", cameraId },
+         { "cameraPosition", cameraPosition },
+@@ -116,7 +149,8 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
+         { "lensIntrinsicCalibration", lensIntrinsicCalibration },
+         { "sensorPhysicalSize", sensorPhysicalSize },
+         { "sensorPixelArraySize", sensorPixelArraySize },
+-        { "sensorColorFilterArrangement", sensorColorFilterArrangement }});
++        { "sensorColorFilterArrangement", sensorColorFilterArrangement },
++        { "constituentCameraDevices", napiDevice}});
+ }
+ 
+ CameraNapiObject& CameraNapiBoundingBox::GetCameraNapiObject()
+diff --git a/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp b/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
+index 419023fe8..dc226a668 100644
+--- a/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
++++ b/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
+@@ -1340,48 +1340,19 @@ napi_value CameraManagerNapi::GetCameraDevices(napi_env env, napi_callback_info
+         CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "cameraDeviceList is null.");
+         return nullptr;
+     } else {
+-        MEDIA_DEBUG_LOG("CameraManagerNapi::GetCameraDevices found %{public}zu camera devices",
+-            cameraDeviceList.size());
++        MEDIA_DEBUG_LOG(
++            "CameraManagerNapi::GetCameraDevices found %{public}zu camera devices", cameraDeviceList.size());
+     }
+-    return GetCameraDevicesInner(env, cameraDeviceList);
+-}
+-
+-napi_value CameraManagerNapi::GetCameraDevicesInner(
+-    napi_env env, const std::vector<sptr<CameraDevice>>& cameraDeviceList)
+-{
+     napi_value result = nullptr;
+-    std::unordered_map<std::string, napi_value> deviceMap;
+-    std::unordered_map<std::string, std::vector<std::string>> logicalDeviceConstituents;
+     napi_create_array_with_length(env, cameraDeviceList.size(), &result);
+     for (size_t i = 0; i < cameraDeviceList.size(); ++i) {
+         if (cameraDeviceList[i] == nullptr) {
+             MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevices camera device at index %{public}zu is null", i);
+             continue;
+         }
+-        string deviceId = cameraDeviceList[i]->GetID();
+         napi_value jsDevice = CameraNapiObjCameraDevice(*cameraDeviceList[i]).GenerateNapiValue(env);
+-        deviceMap[deviceId] = jsDevice;
+-        if (cameraDeviceList[i]->IsLogicalCamera()) {
+-            auto constituentDeviceIds = cameraDeviceList[i]->GetConstituentCameraDevices();
+-            for (auto& device : constituentDeviceIds) {
+-                device = "device/" + device;
+-                logicalDeviceConstituents[deviceId].emplace_back(device);
+-            }
+-        }
+         napi_set_element(env, result, i, jsDevice);
+     }
+-    for (auto& [logicalDeviceId, jsLogicalDevice] : deviceMap) {
+-        if (logicalDeviceConstituents.find(logicalDeviceId) == logicalDeviceConstituents.end()) {
+-            continue;
+-        }
+-        napi_value jsConstituentArray;
+-        napi_create_array_with_length(env, logicalDeviceConstituents[logicalDeviceId].size(), &jsConstituentArray);
+-        for (size_t j = 0; j < logicalDeviceConstituents[logicalDeviceId].size(); ++j) {
+-            std::string constDeviceId = logicalDeviceConstituents[logicalDeviceId][j];
+-            napi_set_element(env, jsConstituentArray, j, deviceMap[constDeviceId]);
+-        }
+-        napi_set_named_property(env, deviceMap[logicalDeviceId], "constituentCameraDevices", jsConstituentArray);
+-    }
+     return result;
+ }
+ 
+diff --git a/frameworks/js/camera_napi/src/input/camera_napi.cpp b/frameworks/js/camera_napi/src/input/camera_napi.cpp
+index 70b6ccbc8..4da58ca23 100644
+--- a/frameworks/js/camera_napi/src/input/camera_napi.cpp
++++ b/frameworks/js/camera_napi/src/input/camera_napi.cpp
+@@ -210,6 +210,9 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
+             CreateObjectWithMap(env, "OISMode", mapOISMode, g_ignoreRef_)),
+         DECLARE_NAPI_PROPERTY("OISAxes",
+             CreateObjectWithMap(env, "OISAxes", mapOISAxes, g_ignoreRef_)),
++        DECLARE_NAPI_PROPERTY("SensorColorFilterArrangement",
++            CreateObjectWithMap(env, "SensorColorFilterArrangement",
++                        mapSensorColorFilterArrangement, g_ignoreRef_)),
+     };
+ 
+     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,
+diff --git a/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp b/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp
+index 71659aaec..a44cd1c30 100644
+--- a/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp
++++ b/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp
+@@ -210,7 +210,7 @@ void PhotoSessionNapi::RegisterFlashStateChangeCallbackListener(
+ void PhotoSessionNapi::UnregisterFlashStateChangeCallbackListener(
+     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+ {
+-    CHECK_RETURN_ELOG(flashStateCallback_ == nullptr, "%{public}s abilityCallback is null", __func__);
++    CHECK_RETURN_ELOG(flashStateCallback_ == nullptr, "%{public}s flashStateChangeCallback is null", __func__);
+     flashStateCallback_->RemoveCallbackRef(eventName, callback);
+ }
+ 
+diff --git a/frameworks/js/camera_napi/src/session/camera_session_napi.cpp b/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
+index dc25e5bcf..48f3c2de6 100644
+--- a/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
++++ b/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
+@@ -128,7 +128,6 @@ const std::unordered_map<MeteringMode, CameraSessionNapi::ExposureMeteringModeof
+ const std::unordered_map<CameraSessionNapi::ExposureMeteringModeofSdk, MeteringMode>
+     CameraSessionNapi::JsToFwkMeteringModeMap_ = {
+         { ExposureMeteringModeofSdk::CENTER, MeteringMode::METERING_MODE_CENTER_WEIGHTED },
+-        { ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED, MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED },
+         { ExposureMeteringModeofSdk::MATRIX, MeteringMode::METERING_MODE_REGION },
+         { ExposureMeteringModeofSdk::SPOT, MeteringMode::METERING_MODE_SPOT },
+     };
+@@ -1949,19 +1948,14 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
+ napi_value CameraSessionNapi::GetSupportedISORange(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("GetSupportedISORange is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
+     napi_get_undefined(env, &result);
+ 
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::GetSupportedISORange parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         std::vector<int32_t> vecIsoList;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorSensitivityRange(vecIsoList);
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+@@ -1988,18 +1982,13 @@ napi_value CameraSessionNapi::GetSupportedISORange(napi_env env, napi_callback_i
+ napi_value CameraSessionNapi::GetISO(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("GetISO is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::GetISO parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         int32_t iso;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetISO(iso);
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+@@ -2016,20 +2005,14 @@ napi_value CameraSessionNapi::SetISO(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("SetISO is called");
+     CAMERA_SYNC_TRACE;
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ONE;
+-    napi_value argv[ARGS_ONE] = {0};
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
++    int32_t iso;
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+-        int32_t iso;
+-        napi_get_value_int32(env, argv[PARAM0], &iso);
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, iso);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::SetISO parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         cameraSessionNapi->cameraSession_->LockForControl();
+         cameraSessionNapi->cameraSession_->SetISO(iso);
+         MEDIA_INFO_LOG("CameraSessionNapi::SetISO set iso:%{public}d", iso);
+@@ -2417,18 +2400,13 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
+ napi_value CameraSessionNapi::IsFocusDistanceSupported(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("IsFocusDistanceSupported is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::IsFocusDistanceSupported parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         bool isSupported;
+         int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusDistanceSupported(isSupported);
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+@@ -2502,19 +2480,13 @@ napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info in
+ napi_value CameraSessionNapi::GetFocusDistance(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("GetFocusDistance is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr &&
+-        cameraSessionNapi->cameraSession_ != nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::GetFocusDistance parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         float distance;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusDistance(distance);
+         CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+@@ -2529,20 +2501,14 @@ napi_value CameraSessionNapi::SetFocusDistance(napi_env env, napi_callback_info
+ {
+     MEDIA_DEBUG_LOG("SetFocusDistance is called");
+     CAMERA_SYNC_TRACE;
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ONE;
+-    napi_value argv[ARGS_ONE] = { 0 };
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
++    double value;
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+-        double value;
+-        napi_get_value_double(env, argv[PARAM0], &value);
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, value);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::SetFocusDistance parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         float distance = static_cast<float>(value);
+         cameraSessionNapi->cameraSession_->LockForControl();
+         cameraSessionNapi->cameraSession_->SetFocusDistance(distance);
+@@ -2754,19 +2720,13 @@ napi_value CameraSessionNapi::SetFocusDriven(napi_env env, napi_callback_info in
+ napi_value CameraSessionNapi::GetRAWCaptureZoomRatioRange(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("GetRAWCaptureZoomRatioRange is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
+     napi_get_undefined(env, &result);
+-
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::GetRAWCaptureZoomRatioRange parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         std::vector<float> vecZoomRatioList;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetRAWZoomRatioRange(vecZoomRatioList);
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+@@ -5251,6 +5211,7 @@ napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callbac
+         int32_t value = 0;
+         napi_get_value_int32(env, argv[PARAM0], &value);
+         if (value == static_cast<int32_t>(CameraSessionNapi::ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED)) {
++            CHECK_RETURN_RET(!CameraNapiSecurity::CheckSystemApp(env, false), result);
+             value = static_cast<int32_t>(MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED);
+         }
+         MeteringMode mode = static_cast<MeteringMode>(value);
+@@ -5266,20 +5227,14 @@ napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callbac
+ 
+ napi_value CameraSessionNapi::IsMeteringModeSupported(napi_env env, napi_callback_info info)
+ {
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ONE;
+-    napi_value argv[ARGS_ONE] = {0};
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
++    int32_t value;
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+-        int32_t value;
+-        napi_get_value_int32(env, argv[PARAM0], &value);
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, value);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::IsMeteringModeSupported parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         auto itr = JsToFwkMeteringModeMap_.find(static_cast<ExposureMeteringModeofSdk>(value));
+         if (itr == JsToFwkMeteringModeMap_.end()) {
+             return nullptr;
+@@ -5300,18 +5255,13 @@ napi_value CameraSessionNapi::IsMeteringModeSupported(napi_env env, napi_callbac
+ napi_value CameraSessionNapi::GetMeteringMode(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("GetMeteringMode is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::GetMeteringMode parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         MeteringMode mode;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetMeteringMode(mode);
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+@@ -5333,18 +5283,13 @@ napi_value CameraSessionNapi::GetMeteringMode(napi_env env, napi_callback_info i
+ napi_value CameraSessionNapi::GetExposureDurationRange(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("getExposureDurationRange is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::GetExposureDurationRange parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         std::vector<uint32_t> vecExposureList;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorExposureTimeRange(vecExposureList);
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+@@ -5354,10 +5299,10 @@ napi_value CameraSessionNapi::GetExposureDurationRange(napi_env env, napi_callba
+             return result;
+         }
+         for (size_t i = 0; i < vecExposureList.size(); i++) {
+-            uint32_t exposure = vecExposureList[i];
++            int32_t exposure = static_cast<int32_t>(vecExposureList[i]);
+             MEDIA_DEBUG_LOG("EXPOSURE_RANGE : exposureDuration = %{public}d", vecExposureList[i]);
+             napi_value value;
+-            napi_create_uint32(env, exposure, &value);
++            napi_create_int32(env, exposure, &value);
+             napi_set_element(env, result, i, value);
+         }
+         MEDIA_DEBUG_LOG("EXPOSURE_RANGE ExposureList size : %{public}zu", vecExposureList.size());
+@@ -5370,18 +5315,14 @@ napi_value CameraSessionNapi::GetExposureDurationRange(napi_env env, napi_callba
+ napi_value CameraSessionNapi::GetExposureDuration(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("GetExposureDuration is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+ 
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi!= nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::GetExposureDuration parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         uint32_t exposureDurationValue;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorExposureTime(exposureDurationValue);
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+@@ -5398,18 +5339,13 @@ napi_value CameraSessionNapi::GetExposureDuration(napi_env env, napi_callback_in
+ napi_value CameraSessionNapi::GetExposureBiasStep(napi_env env, napi_callback_info info)
+ {
+     MEDIA_DEBUG_LOG("GetExposureBiasStep is called");
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ZERO;
+-    napi_value argv[ARGS_ZERO];
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi!= nullptr) {
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::GetExposureDuration parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         float exposureBiasStep;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetExposureBiasStep(exposureBiasStep);
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+@@ -5426,23 +5362,18 @@ napi_value CameraSessionNapi::SetExposureDuration(napi_env env, napi_callback_in
+ {
+     MEDIA_DEBUG_LOG("SetExposureDuration is called");
+     CAMERA_SYNC_TRACE;
+-    napi_status status;
+     napi_value result = nullptr;
+-    size_t argc = ARGS_ONE;
+-    napi_value argv[ARGS_ONE] = {0};
+-    napi_value thisVar = nullptr;
+-
+-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+-
++    int32_t exposureDurationValue;
+     napi_get_undefined(env, &result);
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+-        uint32_t exposureDurationValue;
+-        napi_get_value_uint32(env, argv[PARAM0], &exposureDurationValue);
++    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, exposureDurationValue);
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
++        "CameraSessionNapi::IsOISModeSupported parse parameter occur error");
++    if (cameraSessionNapi->cameraSession_ != nullptr) {
+         MEDIA_DEBUG_LOG("SetExposureDuration : exposureDuration = %{public}d", exposureDurationValue);
+         cameraSessionNapi->cameraSession_->LockForControl();
+-        int32_t retCode = cameraSessionNapi->cameraSession_->SetSensorExposureTime(exposureDurationValue);
++        int32_t retCode =
++            cameraSessionNapi->cameraSession_->SetSensorExposureTime(static_cast<uint32_t>(exposureDurationValue));
+         cameraSessionNapi->cameraSession_->UnlockForControl();
+         if (!CameraNapiUtils::CheckError(env, retCode)) {
+             return result;
+@@ -5459,7 +5390,7 @@ napi_value CameraSessionNapi::GetSupportedPhysicalApertures(napi_env env, napi_c
+     MEDIA_DEBUG_LOG("GetSupportedPhysicalApertures is called");
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+-    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
++    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
+         MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedPhysicalApertures parse parameter occur error");
+         return nullptr;
+     }
+@@ -5494,7 +5425,7 @@ napi_value CameraSessionNapi::GetPhysicalAperture(napi_env env, napi_callback_in
+     MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+-    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
++    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
+         MEDIA_ERR_LOG("controlCenterSessionNapi::GetPhysicalAperture parse parameter occur error");
+         return nullptr;
+     }
+@@ -5520,7 +5451,7 @@ napi_value CameraSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_in
+     double physicalAperture = 0.0;
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, physicalAperture);
+-    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
++    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
+         MEDIA_ERR_LOG("controlCenterSessionNapi::SetPhysicalAperture parse parameter occur error");
+         return nullptr;
+     }
+@@ -5544,7 +5475,7 @@ napi_value CameraSessionNapi::IsOISModeSupported(napi_env env, napi_callback_inf
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     int32_t oisMode;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisMode);
+-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+         "CameraSessionNapi::IsOISModeSupported parse parameter occur error");
+     auto result = CameraNapiUtils::GetUndefinedValue(env);
+     if (cameraSessionNapi->cameraSession_ != nullptr) {
+@@ -5567,7 +5498,7 @@ napi_value CameraSessionNapi::GetCurrentOISMode(napi_env env, napi_callback_info
+     MEDIA_INFO_LOG("CameraSessionNapi::GetCurrentOISMode is called");
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+         "CameraSessionNapi::GetCurrentOISMode parse parameter occur error");
+     auto result = CameraNapiUtils::GetUndefinedValue(env);
+     if (cameraSessionNapi->cameraSession_ != nullptr) {
+@@ -5590,7 +5521,7 @@ napi_value CameraSessionNapi::SetOISMode(napi_env env, napi_callback_info info)
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     int32_t oisMode;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisMode);
+-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
++    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
+         MEDIA_ERR_LOG("CameraSessionNapi::SetOISMode parse parameter occur error");
+         return nullptr;
+     }
+@@ -5616,7 +5547,7 @@ napi_value CameraSessionNapi::GetSupportedOISBiasRange(napi_env env, napi_callba
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     int32_t oisAxes;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxes);
+-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+         "CameraSessionNapi::GetSupportedOISBiasRange parse parameter occur error");
+     auto result = CameraNapiUtils::GetUndefinedValue(env);
+     if (cameraSessionNapi->cameraSession_ != nullptr) {
+@@ -5649,7 +5580,7 @@ napi_value CameraSessionNapi::GetSupportedOISBiasStep(napi_env env, napi_callbac
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     int32_t oisAxis;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
+-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+         "CameraSessionNapi::GetSupportedOISBiasStep parse parameter occur error");
+     auto result = CameraNapiUtils::GetUndefinedValue(env);
+     if (cameraSessionNapi->cameraSession_ != nullptr) {
+@@ -5674,7 +5605,7 @@ napi_value CameraSessionNapi::GetCurrentCustomOISBias(napi_env env, napi_callbac
+     CameraSessionNapi* cameraSessionNapi = nullptr;
+     int32_t oisAxis;
+     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
+-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
++    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+         "CameraSessionNapi::GetCurrentCustomOISBias parse parameter occur error");
+     auto result = CameraNapiUtils::GetUndefinedValue(env);
+     if (cameraSessionNapi->cameraSession_ != nullptr) {
+diff --git a/frameworks/native/camera/base/src/input/camera_device.cpp b/frameworks/native/camera/base/src/input/camera_device.cpp
+index 34f3104bc..396685888 100644
+--- a/frameworks/native/camera/base/src/input/camera_device.cpp
++++ b/frameworks/native/camera/base/src/input/camera_device.cpp
+@@ -293,9 +293,10 @@ void CameraDevice::InitLensDistortion(common_metadata_header_t* metadata)
+             lensDistortion.emplace_back(static_cast<double>(item.data.f[i]));
+         }
+         lensDistortion_ = lensDistortion;
+-        MEDIA_INFO_LOG("CameraDevice::InitLensDistortion, lensDistortion_ size: %{public}zu, "
+-                       "lensDistortion_: %{public}s",
+-            lensDistortion_.size(), Container2String(lensDistortion_.begin(), lensDistortion_.end()).c_str());
++        MEDIA_INFO_LOG(
++            "CameraDevice::InitLensDistortion, lensDistortion_ size: %{public}zu, lensDistortion_: %{public}s",
++            lensDistortion_.value().size(),
++            Container2String(lensDistortion_.value().begin(), lensDistortion_.value().end()).c_str());
+     }
+ }
+ 
+@@ -312,8 +313,9 @@ void CameraDevice::InitLensIntrinsicCalibration(common_metadata_header_t* metada
+         lensIntrinsicCalibration_ = lensIntrinsicCalibration;
+         MEDIA_INFO_LOG("CameraDevice::InitLensIntrinsicCalibration, lensIntrinsicCalibration_ size: %{public}zu, "
+                        "lensIntrinsicCalibration_: %{public}s",
+-            lensIntrinsicCalibration_.size(),
+-            Container2String(lensIntrinsicCalibration_.begin(), lensIntrinsicCalibration_.end()).c_str());
++            lensIntrinsicCalibration_.value().size(),
++            Container2String(lensIntrinsicCalibration_.value().begin(), lensIntrinsicCalibration_.value().end())
++                .c_str());
+     }
+ }
+ 
+@@ -330,8 +332,8 @@ void CameraDevice::InitSensorPhysicalSize(common_metadata_header_t* metadata)
+         sensorPhysicalSize_ = sensorPhysicalSize;
+         MEDIA_INFO_LOG("CameraDevice::InitSensorPhysicalSize, sensorPhysicalSize_ size: %{public}zu, "
+                        "sensorPhysicalSize_: %{public}s",
+-            sensorPhysicalSize_.size(),
+-            Container2String(sensorPhysicalSize_.begin(), sensorPhysicalSize_.end()).c_str());
++            sensorPhysicalSize_.value().size(),
++            Container2String(sensorPhysicalSize_.value().begin(), sensorPhysicalSize_.value().end()).c_str());
+     }
+ }
+ 
+@@ -348,8 +350,8 @@ void CameraDevice::InitSensorPixelArraySize(common_metadata_header_t* metadata)
+         sensorPixelArraySize_ = sensorPixelArraySize;
+         MEDIA_INFO_LOG("CameraDevice::InitSensorPixelArraySize, sensorPixelArraySize_ size: %{public}zu, "
+                        "sensorPixelArraySize_: %{public}s",
+-            sensorPixelArraySize_.size(),
+-            Container2String(sensorPixelArraySize_.begin(), sensorPixelArraySize_.end()).c_str());
++            sensorPixelArraySize_.value().size(),
++            Container2String(sensorPixelArraySize_.value().begin(), sensorPixelArraySize_.value().end()).c_str());
+     }
+ }
+ 
+@@ -363,11 +365,13 @@ void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metad
+         for (uint32_t i = 0; i < item.count; i++) {
+             lensEquivalentFocalLength.emplace_back(item.data.i32[i]);
+         }
++        lensEquivalentFocalLength_ = lensEquivalentFocalLength;
++        MEDIA_INFO_LOG("CameraDevice::InitLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
++                       "lensEquivalentFocalLength: %{public}s",
++            lensEquivalentFocalLength_.value().size(),
++            Container2String(lensEquivalentFocalLength_.value().begin(), lensEquivalentFocalLength_.value().end())
++                .c_str());
+     }
+-    lensEquivalentFocalLength_ = lensEquivalentFocalLength;
+-    MEDIA_INFO_LOG("CameraDevice::InitLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
+-        "lensEquivalentFocalLength: %{public}s", lensEquivalentFocalLength_.size(),
+-        Container2String(lensEquivalentFocalLength_.begin(), lensEquivalentFocalLength_.end()).c_str());
+ }
+ 
+ void CameraDevice::InitVariableOrientation(common_metadata_header_t* metadata)
+@@ -572,11 +576,15 @@ bool CameraDevice::GetisRetractable()
+     return isRetractable_;
+ }
+ 
+-std::vector<int32_t> CameraDevice::GetLensEquivalentFocalLength()
++std::optional<std::vector<int32_t>> CameraDevice::GetLensEquivalentFocalLength()
+ {
+-    MEDIA_INFO_LOG("CameraDevice::GetLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
+-        "lensEquivalentFocalLength: %{public}s", lensEquivalentFocalLength_.size(),
+-        Container2String(lensEquivalentFocalLength_.begin(), lensEquivalentFocalLength_.end()).c_str());
++    if (lensEquivalentFocalLength_.has_value()) {
++        MEDIA_INFO_LOG("CameraDevice::GetLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
++                       "lensEquivalentFocalLength: %{public}s",
++            lensEquivalentFocalLength_.value().size(),
++            Container2String(lensEquivalentFocalLength_.value().begin(), lensEquivalentFocalLength_.value().end())
++                .c_str());
++    }
+     return lensEquivalentFocalLength_;
+ }
+ 
+diff --git a/frameworks/native/camera/base/src/input/camera_manager.cpp b/frameworks/native/camera/base/src/input/camera_manager.cpp
+index cc113b5a1..5d461c6ac 100644
+--- a/frameworks/native/camera/base/src/input/camera_manager.cpp
++++ b/frameworks/native/camera/base/src/input/camera_manager.cpp
+@@ -1759,7 +1759,8 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
+             auto dmDeviceInfo = GetDmDeviceInfo(cameraId, dmDeviceInfoList);
+             sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, dmDeviceInfo, cameraAbility);
+             CHECK_CONTINUE_ELOG(cameraObj == nullptr, "failed to new CameraDevice!");
+-            CHECK_EXECUTE(cameraObj->IsLogicalCamera(), SetConstituentCameraDevices(cameraObj, cameraAbility));
++            CHECK_EXECUTE(
++                cameraObj->IsLogicalCamera().value_or(false), SetConstituentCameraDevices(cameraObj, cameraAbility));
+             SetProfile(cameraObj, cameraAbility);
+             SetMultiCameraCombinationInfo(cameraObj, cameraAbility);
+             deviceInfoList.emplace_back(cameraObj);
+diff --git a/frameworks/native/camera/base/src/session/capture_session.cpp b/frameworks/native/camera/base/src/session/capture_session.cpp
+index 97018b751..cc9305aa4 100644
+--- a/frameworks/native/camera/base/src/session/capture_session.cpp
++++ b/frameworks/native/camera/base/src/session/capture_session.cpp
+@@ -2223,15 +2223,15 @@ int32_t CaptureSession::IsOISModeSupported(OISMode oisMode, bool &isSupported)
+     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+         "CaptureSession::IsOISModeSupported Session is not Commited");
+     auto inputDevice = GetInputDevice();
+-    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::OPERATION_NOT_ALLOWED,
++    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
+         "IsOISModeSupported camera device is null");
+     // check if physical device
+     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
++    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true), CameraErrorCode::SUCCESS,
+         "IsOISModeSupported device is null or not physical");
+     // get ois mode ability
+     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+-    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
++    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+         "IsOISModeSupported camera metadata is null");
+     camera_metadata_item_t item;
+     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_OPTICAL_IMAGE_STABILIZATION_MODES, &item);
+@@ -2307,8 +2307,8 @@ int32_t CaptureSession::GetCurrentOISMode(OISMode &oisMode)
+         "GetCurrentOISMode camera device is null");
+     // check if physical device
+     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+-        "GetCurrentOISMode device is null or not physical");
++    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
++        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetCurrentOISMode device is null or not physical");
+     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+         "GetCurrentOISMode camera metadata is null");
+@@ -2331,8 +2331,8 @@ int32_t CaptureSession::SetOISMode(OISMode oisMode)
+         "SetOISMode camera device is null");
+     // check if physical device
+     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+-        "SetOISMode device is null or not physical");
++    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
++        CameraErrorCode::OPERATION_NOT_ALLOWED, "SetOISMode device is null or not physical");
+     // check if oisMode supported
+     bool isSupported = false;
+     IsOISModeSupported(oisMode, isSupported);
+@@ -2342,6 +2342,8 @@ int32_t CaptureSession::SetOISMode(OISMode oisMode)
+     uint32_t count = 1;
+     camera_metadata_item_t item;
+     int32_t stabilizationModes = static_cast<int32_t>(oisMode);
++    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
++        "CaptureSession::SetOISMode Need to call LockForControl() before setting camera properties");
+     int32_t ret =
+         Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_OPTICAL_IMAGE_STABILIZATION_MODE, &item);
+     if (ret == CAM_META_ITEM_NOT_FOUND) {
+@@ -2366,8 +2368,8 @@ int32_t CaptureSession::GetSupportedOISBiasRangeAndStep(
+         "GetSupportedOISBiasRangeAndStep camera device is null");
+     // check if physical device
+     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+-        "GetSupportedOISBiasRangeAndStep device is null or not physical");
++    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
++        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetSupportedOISBiasRangeAndStep device is null or not physical");
+     // get ois bias ability
+     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+@@ -2445,8 +2447,8 @@ int32_t CaptureSession::GetCurrentCustomOISBias(OISAxes oisAxis, float &bias)
+         "GetCurrentCustomOISBias camera device is null");
+     // check if physical device
+     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+-        "GetCurrentCustomOISBias device is null or not physical");
++    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
++        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetCurrentCustomOISBias device is null or not physical");
+     std::shared_ptr<Camera::CameraMetadata> metadata = device->GetCachedMetadata();
+     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+         "GetCurrentCustomOISBias camera metadata is null");
+@@ -2481,9 +2483,9 @@ int32_t CaptureSession::SetOISModeCustom(float pitchBias, float yawBias, float r
+         "SetOISModeCustom camera device is null");
+     // check if physical device
+     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+-        "SetOISModeCustom device is null or not physical");
+-    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
++    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
++        CameraErrorCode::OPERATION_NOT_ALLOWED, "SetOISModeCustom device is null or not physical");
++    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+         "CaptureSession::SetOISModeCustom Need to call LockForControl() before setting camera properties");
+     // check if custom mode
+     CHECK_RETURN_RET_ELOG(oisMode_ != OIS_MODE_CUSTOM, CameraErrorCode::OPERATION_NOT_ALLOWED,
+@@ -2875,17 +2877,17 @@ int32_t CaptureSession::GetExposureBiasStep(float& exposureBiasStep)
+     MEDIA_INFO_LOG("GetExposureBiasStep sceneMode:%{public}d", sceneMode);
+     CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
+     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+-        "CaptureSession::GetExposureValue Session is not Commited");
++        "CaptureSession::GetExposureBiasStep Session is not Commited");
+     auto inputDevice = GetInputDevice();
+     CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+-        "CaptureSession::GetExposureValue camera device is null");
++        "CaptureSession::GetExposureBiasStep camera device is null");
+     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+     CHECK_RETURN_RET_ELOG(
+         metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED, "GetExposureValue camera metadata is null");
+     camera_metadata_item_t item;
+     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_STEP, &item);
+     CHECK_RETURN_RET_WLOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+-        "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
++        "CaptureSession::GetExposureBiasStep Failed with return code %{public}d", ret);
+     int32_t stepNumerator = item.data.r->numerator;
+     int32_t stepDenominator = item.data.r->denominator;
+     if (stepDenominator == 0) {
+@@ -2996,10 +2998,11 @@ int32_t CaptureSession::IsFocusModeSupported(FocusMode focusMode, bool& isSuppor
+ 
+ int32_t CaptureSession::IsFocusDistanceSupported(bool& isSupported)
+ {
+-    float minimumFocusDistance = 0.0f;
+-    int32_t ret = GetMinimumFocusDistance(minimumFocusDistance);
++    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
++        "CaptureSession::SetFocusMode Session is not Commited");
++    float minimumFocusDistance = GetMinimumFocusDistance();
+     isSupported = FloatIsEqual(minimumFocusDistance, 0.0) ? false : true;
+-    return ret;
++    return CameraErrorCode::SUCCESS;
+ }
+ 
+ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
+@@ -4449,30 +4452,6 @@ float CaptureSession::GetMinimumFocusDistance() __attribute__((no_sanitize("cfi"
+     return minimumFocusDistance;
+ }
+ 
+-int32_t CaptureSession::GetMinimumFocusDistance(float& minimumFocusDistance)
+-{
+-    minimumFocusDistance = 0.0f;
+-    SceneMode sceneMode = GetMode();
+-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
+-    auto inputDevice = GetInputDevice();
+-    CHECK_RETURN_RET_ELOG(
+-        !inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED, "CaptureSession::GetISO camera device is null");
+-    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(
+-        !inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED, "CaptureSession::GetISO camera deviceInfo is null");
+-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
+-    CHECK_RETURN_RET_ELOG(
+-        metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED, "GetISO camera metadata is null");
+-    camera_metadata_item_t item;
+-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LENS_INFO_MINIMUM_FOCUS_DISTANCE, &item);
+-    CHECK_RETURN_RET_ILOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
+-        "CaptureSession::GetISO Failed with return code %{public}d", ret);
+-    // LCOV_EXCL_START
+-    minimumFocusDistance = item.data.f[0];
+-    MEDIA_DEBUG_LOG("minimumFocusDistance: %{public}f", minimumFocusDistance);
+-    return CameraErrorCode::SUCCESS;
+-}
+-
+ void CaptureSession::ProcessFocusDistanceUpdates(const std::shared_ptr<Camera::CameraMetadata>& result)
+ {
+     CHECK_RETURN_ELOG(!result, "CaptureSession::ProcessFocusDistanceUpdates camera metadata is null");
+diff --git a/frameworks/native/camera/test/unittest/framework_native/device/src/camera_device_unittest.cpp b/frameworks/native/camera/test/unittest/framework_native/device/src/camera_device_unittest.cpp
+index 2a49f7118..d25781cee 100644
+--- a/frameworks/native/camera/test/unittest/framework_native/device/src/camera_device_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/framework_native/device/src/camera_device_unittest.cpp
+@@ -179,8 +179,10 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_007, TestSize.Level0)
+ {
+     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+ 
+-    cameras[0]->lensEquivalentFocalLength_ = {15, 20};
+-    EXPECT_EQ(cameras[0]->GetLensEquivalentFocalLength(), cameras[0]->lensEquivalentFocalLength_);
++    std::vector<int32_t> testFocalLengthVec = { 15, 20 };
++    cameras[0]->lensEquivalentFocalLength_ = optional<vector<int32_t>>(std::in_place, testFocalLengthVec);
++    EXPECT_EQ(cameras[0]->GetLensEquivalentFocalLength().value_or(vector<int32_t> {}),
++        cameras[0]->lensEquivalentFocalLength_);
+ }
+ 
+ /*
+diff --git a/frameworks/native/ndk/camera_manager.cpp b/frameworks/native/ndk/camera_manager.cpp
+index 2fb92eb97..9830b3a54 100644
+--- a/frameworks/native/ndk/camera_manager.cpp
++++ b/frameworks/native/ndk/camera_manager.cpp
+@@ -386,22 +386,25 @@ Camera_ErrorCode OH_CameraDevice_IsLogicalCamera(const Camera_Device* camera, bo
+     return Camera_Manager::IsLogicalCamera(camera, isLogicalCamera);
+ }
+ 
+-Camera_ErrorCode OH_CameraDevice_GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size)
++Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(
++    const Camera_Device* logicalCamera, Camera_Device** constituentCameras, uint32_t* size)
+ {
+     CHECK_RETURN_RET_ELOG(
+         logicalCamera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, logicalCamera is null!");
++    CHECK_RETURN_RET_ELOG(
++        constituentCameras == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, constituentCameras is null!");
+     CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
+-    return Camera_Manager::GetConstituentCamerasSize(logicalCamera, size);
++    return Camera_Manager::GetLogicalCameraConstituentCameraDevices(logicalCamera, constituentCameras, size);
+ }
+ 
+-Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(
++Camera_ErrorCode OH_CameraDevice_DeleteConstituentCameraDevices(
+     const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size)
+ {
+     CHECK_RETURN_RET_ELOG(
+         logicalCamera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, logicalCamera is null!");
+     CHECK_RETURN_RET_ELOG(
+         constituentCameras == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, constituentCameras is null!");
+-    return Camera_Manager::GetLogicalCameraConstituentCameraDevices(logicalCamera, constituentCameras, size);
++    return Camera_Manager::DeleteConstituentCameras(logicalCamera, constituentCameras, size);
+ }
+ 
+ Camera_ErrorCode OH_CameraDevice_GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength)
+diff --git a/frameworks/native/ndk/capture_session.cpp b/frameworks/native/ndk/capture_session.cpp
+index d1cca2712..26aa13643 100644
+--- a/frameworks/native/ndk/capture_session.cpp
++++ b/frameworks/native/ndk/capture_session.cpp
+@@ -1032,20 +1032,22 @@ Camera_ErrorCode OH_CaptureSession_GetRAWCaptureZoomRatioRange(
+     return CAMERA_OK;
+ }
+ 
+-Camera_ErrorCode OH_CaptureSession_GetPhysicalAperturesSize(const Camera_CaptureSession* session, uint32_t* size)
++Camera_ErrorCode OH_CaptureSession_GetSupportedPhysicalApertures(
++    const Camera_CaptureSession* session, OH_Camera_PhysicalAperture** apertures, uint32_t* size)
+ {
+     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
++    CHECK_RETURN_RET_ELOG(apertures == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, apertures is null!");
+     CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
+-
+-    return session->GetPhysicalAperturesSize(size);
++ 
++    return session->GetSupportedPhysicalApertures(apertures, size);
+ }
+ 
+-Camera_ErrorCode OH_CaptureSession_GetSupportedPhysicalApertures(
+-    const Camera_CaptureSession* session, OH_Camera_PhysicalAperture* apertures, uint32_t size)
++Camera_ErrorCode OH_CaptureSession_DeletePhysicalApertures(const Camera_CaptureSession* session,
++    OH_Camera_PhysicalAperture* apertures, uint32_t size)
+ {
+     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+     CHECK_RETURN_RET_ELOG(apertures == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, apertures is null!");
+-    return session->GetSupportedPhysicalApertures(apertures, size);
++    return session->DeletePhysicalApertures(apertures, size);
+ }
+ 
+ Camera_ErrorCode OH_CaptureSession_GetPhysicalAperture(const Camera_CaptureSession* session, double* aperture)
+diff --git a/frameworks/native/ndk/impl/camera_manager_impl.cpp b/frameworks/native/ndk/impl/camera_manager_impl.cpp
+index bf059b3dc..0b8eef5f2 100644
+--- a/frameworks/native/ndk/impl/camera_manager_impl.cpp
++++ b/frameworks/native/ndk/impl/camera_manager_impl.cpp
+@@ -924,13 +924,17 @@ Camera_ErrorCode Camera_Manager::IsLogicalCamera(const Camera_Device* camera, bo
+             break;
+         }
+     }
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    *isLogicalCamera = device->IsLogicalCamera();
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    if(device->IsLogicalCamera().has_value()){
++        *isLogicalCamera = device->IsLogicalCamera().value();
++    }
+     return CAMERA_OK;
+ }
+ 
+-Camera_ErrorCode Camera_Manager::GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size)
++Camera_ErrorCode Camera_Manager::GetLogicalCameraConstituentCameraDevices(
++    const Camera_Device* logicalCamera, Camera_Device** constituentCameras, uint32_t* size)
+ {
++    *size = 0;
+     CameraDevice* device = nullptr;
+     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+@@ -941,50 +945,77 @@ Camera_ErrorCode Camera_Manager::GetConstituentCamerasSize(const Camera_Device*
+             break;
+         }
+     }
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    auto cameraDevices = device->GetConstituentCameraDevices();
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    auto cameraDevicesOpt = device->GetConstituentCameraDevices();
++    CHECK_RETURN_RET(!cameraDevicesOpt.has_value() || cameraDevicesOpt.value().empty(), CAMERA_OK);
++    auto cameraDevices = cameraDevicesOpt.value();
++    auto constituentCamerasInner = new (nothrow) Camera_Device[cameraDevices.size()];
++    CHECK_RETURN_RET_ELOG(
++        constituentCamerasInner == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Failed to allocate memory for apertures!");
++    for (uint32_t i = 0; i < cameraDevices.size(); i++) {
++        sptr<CameraDevice> innerConstituentCamera =
++            CameraManager::GetInstance()->GetCameraDeviceFromId("device/" + cameraDevices[i]);
++        if (!innerConstituentCamera) {
++            MEDIA_ERR_LOG(
++                "Camera_Manager::GetLogicalCameraConstituentCameraDevices failed, innerConstituentCamera is nullptr");
++            DeleteConstituentCameras(logicalCamera, constituentCamerasInner, cameraDevices.size());
++            return CAMERA_SERVICE_FATAL_ERROR;
++        }
++        char* cameraId = strdup(innerConstituentCamera->GetID().c_str());
++        CHECK_PRINT_ELOG(!cameraId,
++            "Camera_Manager::GetLogicalCameraConstituentCameraDevices failed, memory allocation for cameraId failed");
++        CHECK_EXECUTE(cameraId, constituentCamerasInner[i].cameraId = cameraId);
++        constituentCamerasInner[i].cameraType = static_cast<Camera_Type>(innerConstituentCamera->GetCameraType());
++        constituentCamerasInner[i].connectionType =
++            static_cast<Camera_Connection>(innerConstituentCamera->GetConnectionType());
++        CameraPosition position = innerConstituentCamera->GetPosition();
++        auto itr = g_FwkCameraPositionToNdk_.find(position);
++        CHECK_CONTINUE_ELOG(itr == g_FwkCameraPositionToNdk_.end(),
++            "Camera_Manager::GetLogicalCameraConstituentCameraDevices Position not found!");
++        constituentCamerasInner[i].cameraPosition = itr->second;
++    }
++    *constituentCameras = constituentCamerasInner;
+     *size = cameraDevices.size();
+     return CAMERA_OK;
+ }
+ 
+-Camera_ErrorCode Camera_Manager::GetLogicalCameraConstituentCameraDevices(
++Camera_ErrorCode Camera_Manager::DeleteConstituentCameras(
+     const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size)
+ {
++    MEDIA_DEBUG_LOG("Camera_Manager::DeleteCameraDevices is called");
++    CHECK_RETURN_RET_ELOG(
++        size <= 0, CAMERA_INVALID_ARGUMENT, "Camera_Manager::DeleteCameraDevices error, size is Invalid!");
+     CameraDevice* device = nullptr;
+     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+-        CHECK_CONTINUE_DLOG(
+-            !innerCamera, "Camera_Manager::GetLogicalCameraConstituentCameraDevices failed, innerCamera is nullptr");
++        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::DeleteConstituentCameras failed, innerCamera is nullptr");
+         if (innerCamera->GetID() == std::string(logicalCamera->cameraId)) {
+             device = innerCamera;
+             break;
+         }
+     }
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    auto cameraDevices = device->GetConstituentCameraDevices();
+-    uint32_t realSize = std::min(size, static_cast<uint32_t>(cameraDevices.size()));
+-    for (uint32_t i = 0; i < realSize; i++) {
+-        sptr<CameraDevice> innerConstituentCamera =
+-            CameraManager::GetInstance()->GetCameraDeviceFromId("device/" + cameraDevices[i]);
+-        CHECK_CONTINUE_ELOG(!innerConstituentCamera,
+-            "Camera_Manager::GetLogicalCameraConstituentCameraDevices failed, innerConstituentCamera is nullptr");
+-        (constituentCameras)[i].cameraId = strdup(innerConstituentCamera->GetID().c_str());
+-        CameraPosition position = innerConstituentCamera->GetPosition();
+-        auto itr = g_FwkCameraPositionToNdk_.find(position);
+-        CHECK_RETURN_RET_ELOG(itr == g_FwkCameraPositionToNdk_.end(), CAMERA_INVALID_ARGUMENT,
+-            "Camera_Manager::GetLogicalCameraConstituentCameraDevices Position not found!");
+-        (constituentCameras)[i].cameraPosition = itr->second;
+-        (constituentCameras)[i].cameraType = static_cast<Camera_Type>(innerConstituentCamera->GetCameraType());
+-        (constituentCameras)[i].connectionType =
+-            static_cast<Camera_Connection>(innerConstituentCamera->GetConnectionType());
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    uint32_t cleanupSize = 0;
++    auto fullConstituentCameras = device->GetConstituentCameraDevices();
++    CHECK_RETURN_RET_ELOG(!fullConstituentCameras.has_value() || fullConstituentCameras.value().empty(),
++        CAMERA_INVALID_ARGUMENT, "GetConstituentCameraDevices empty at device %{public}s.", logicalCamera->cameraId);
++    cleanupSize = std::min(static_cast<uint32_t>(fullConstituentCameras.value().size()), size);
++    MEDIA_INFO_LOG("Camera_Manager::DeleteConstituentCameras cleanupSize:%{public}d", cleanupSize);
++    CHECK_RETURN_RET_ELOG(!cleanupSize, CAMERA_INVALID_ARGUMENT, "cameras is illegal.");
++    for (uint32_t index = 0; index < cleanupSize; ++index) {
++        if (constituentCameras[index].cameraId != nullptr) {
++            free(constituentCameras[index].cameraId);
++            constituentCameras[index].cameraId = nullptr;
++        }
+     }
++    delete[] constituentCameras;
+     return CAMERA_OK;
+ }
+ 
+ Camera_ErrorCode Camera_Manager::GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength)
+ {
+     CameraDevice* device = nullptr;
+-    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
++    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+         CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetLensFocalLength failed, innerCamera is nullptr");
+         if (innerCamera->GetID() == std::string(camera->cameraId)) {
+@@ -992,15 +1023,20 @@ Camera_ErrorCode Camera_Manager::GetLensFocalLength(const Camera_Device* camera,
+             break;
+         }
+     }
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    *lensFocalLength = device->GetLensFocalLength();
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    auto lensFocalLengthOpt = device->GetLensFocalLength();
++    if (!lensFocalLengthOpt.has_value()) {
++        MEDIA_ERR_LOG("Camera_Manager::GetLensFocalLength failed, lensFocalLength is not available");
++        return CAMERA_OK;
++    }
++    *lensFocalLength = static_cast<float>(lensFocalLengthOpt.value());
+     return CAMERA_OK;
+ }
+ 
+ Camera_ErrorCode Camera_Manager::GetMinimumFocusDistance(const Camera_Device* camera, float* minimumFocusDistance)
+ {
+     CameraDevice* device = nullptr;
+-    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
++    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+         CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetMinimumFocusDistance failed, innerCamera is nullptr");
+         if (innerCamera->GetID() == std::string(camera->cameraId)) {
+@@ -1008,16 +1044,21 @@ Camera_ErrorCode Camera_Manager::GetMinimumFocusDistance(const Camera_Device* ca
+             break;
+         }
+     }
+-
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    *minimumFocusDistance = device->GetMinimumFocusDistance();
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    auto minimumFocusDistanceOpt = device->GetMinimumFocusDistance();
++    if (!minimumFocusDistanceOpt.has_value()) {
++        MEDIA_ERR_LOG("Camera_Manager::GetMinimumFocusDistance failed, minimumFocusDistance is not available");
++        return CAMERA_OK;
++    }
++    *minimumFocusDistance = static_cast<float>(minimumFocusDistanceOpt.value());
+     return CAMERA_OK;
+ }
+ 
+ Camera_ErrorCode Camera_Manager::GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size)
+ {
++    *size = 0;
+     CameraDevice* device = nullptr;
+-    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
++    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+         CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetLensDistortion failed, innerCamera is nullptr");
+         if (innerCamera->GetID() == std::string(camera->cameraId)) {
+@@ -1025,38 +1066,49 @@ Camera_ErrorCode Camera_Manager::GetLensDistortion(const Camera_Device* camera,
+             break;
+         }
+     }
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    auto distortion = device->GetLensDistortion();
+-    *size = distortion.size();
+-    *lens = new float[*size];
+-    CHECK_RETURN_RET_ELOG(*lens == nullptr, CAMERA_SERVICE_FATAL_ERROR,
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    auto distortionOpt = device->GetLensDistortion();
++    if (!distortionOpt.has_value() || distortionOpt.value().empty()) {
++        MEDIA_ERR_LOG("Camera_Manager::GetLensDistortion failed, lensDistortion is not available");
++        return CAMERA_OK;
++    }
++    auto distortion = distortionOpt.value();
++    auto newLens = new float[distortion.size()];
++    CHECK_RETURN_RET_ELOG(newLens == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+         "Camera_Manager::GetLensDistortion allocate memory for lens fail!");
+-    for (uint32_t i = 0; i < *size; i++) {
+-        (*lens)[i] = static_cast<float>(distortion[i]);
++    for (uint32_t i = 0; i < distortion.size(); i++) {
++        newLens[i] = static_cast<float>(distortion[i]);
+     }
++    *size = distortion.size();
++    *lens = newLens;
+     return CAMERA_OK;
+ }
+ 
+ Camera_ErrorCode Camera_Manager::GetLensEquivalentFocalLengths(
+     const Camera_Device* camera, uint32_t** equivalentFocalLengths, uint32_t* size)
+ {
++    *size = 0;
+     CameraDevice* device = nullptr;
+-    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
++    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+-        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetLensDistortion failed, innerCamera is nullptr");
++        CHECK_CONTINUE_DLOG(
++            !innerCamera, "Camera_Manager::GetLensEquivalentFocalLengths failed, innerCamera is nullptr");
+         if (innerCamera->GetID() == std::string(camera->cameraId)) {
+             device = innerCamera;
+             break;
+         }
+     }
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    auto lensEquivalentFocalLengths = device->GetLensEquivalentFocalLengths();
+-    *size = lensEquivalentFocalLengths.size();
+-    *equivalentFocalLengths = new uint32_t[*size];
+-    CHECK_RETURN_RET_ELOG(*equivalentFocalLengths == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+-        "Camera_Manager::GetLensDistortion allocate memory for lens fail!");
+-    for (uint32_t i = 0; i < *size; i++) {
+-        (*equivalentFocalLengths)[i] = static_cast<uint32_t>(lensEquivalentFocalLengths[i]);
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    auto lensEquivalentFocalLengths = device->GetLensEquivalentFocalLength();
++    if (lensEquivalentFocalLengths.has_value() && !lensEquivalentFocalLengths.value().empty()) {
++        auto newEquivalentFocalLengths = new uint32_t[lensEquivalentFocalLengths.value().size()];
++        CHECK_RETURN_RET_ELOG(newEquivalentFocalLengths == nullptr, CAMERA_SERVICE_FATAL_ERROR,
++            "Camera_Manager::GetLensEquivalentFocalLengths allocate memory for lens fail!");
++        for (uint32_t i = 0; i < lensEquivalentFocalLengths.value().size(); i++) {
++            newEquivalentFocalLengths[i] = static_cast<uint32_t>(lensEquivalentFocalLengths.value()[i]);
++        }
++        *equivalentFocalLengths = newEquivalentFocalLengths;
++        *size = lensEquivalentFocalLengths.value().size();
+     }
+     return CAMERA_OK;
+ }
+@@ -1064,8 +1116,9 @@ Camera_ErrorCode Camera_Manager::GetLensEquivalentFocalLengths(
+ Camera_ErrorCode Camera_Manager::GetIntrinsicCalibration(
+     const Camera_Device* camera, float** intrinsicCalibration, uint32_t* size)
+ {
++    *size = 0;
+     CameraDevice* device = nullptr;
+-    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
++    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+         CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetIntrinsicCalibration failed, innerCamera is nullptr");
+         if (innerCamera->GetID() == std::string(camera->cameraId)) {
+@@ -1073,14 +1126,17 @@ Camera_ErrorCode Camera_Manager::GetIntrinsicCalibration(
+             break;
+         }
+     }
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
+     auto calibration = device->GetLensIntrinsicCalibration();
+-    *size = calibration.size();
+-    *intrinsicCalibration = new float[*size];
+-    CHECK_RETURN_RET_ELOG(*intrinsicCalibration == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+-        "Camera_Manager::GetIntrinsicCalibration allocate memory for intrinsicCalibration fail!");
+-    for (uint32_t i = 0; i < *size; i++) {
+-        (*intrinsicCalibration)[i] = static_cast<float>(calibration[i]);
++    if (calibration.has_value() && !calibration.value().empty()) {
++        auto newIntrinsicCalibration = new float[calibration.value().size()];
++        CHECK_RETURN_RET_ELOG(*intrinsicCalibration == nullptr, CAMERA_SERVICE_FATAL_ERROR,
++            "Camera_Manager::GetIntrinsicCalibration allocate memory for intrinsicCalibration fail!");
++        for (uint32_t i = 0; i < calibration.value().size(); i++) {
++            newIntrinsicCalibration[i] = static_cast<float>(calibration.value()[i]);
++        }
++        *size = calibration.value().size();
++        *intrinsicCalibration = newIntrinsicCalibration;
+     }
+     return CAMERA_OK;
+ }
+@@ -1088,7 +1144,7 @@ Camera_ErrorCode Camera_Manager::GetIntrinsicCalibration(
+ Camera_ErrorCode Camera_Manager::GetSensorPhysicalSize(const Camera_Device* camera, float* width, float* height)
+ {
+     CameraDevice* device = nullptr;
+-    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
++    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+         CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetSensorPhysicalSize failed, innerCamera is nullptr");
+         if (innerCamera->GetID() == std::string(camera->cameraId)) {
+@@ -1096,9 +1152,13 @@ Camera_ErrorCode Camera_Manager::GetSensorPhysicalSize(const Camera_Device* came
+             break;
+         }
+     }
+-
+     CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    auto size = device->GetSensorPhysicalSize();
++    auto sizeOpt = device->GetSensorPhysicalSize();
++    if (!sizeOpt.has_value() || sizeOpt.value().empty()) {
++        MEDIA_ERR_LOG("Camera_Manager::GetSensorPhysicalSize failed, sensorPhysicalSize is not available");
++        return CAMERA_OK;
++    }
++    auto size = sizeOpt.value();
+     CHECK_RETURN_RET(size.size() < 2, CAMERA_SERVICE_FATAL_ERROR);
+     *width = size.front();
+     *height = size.back();
+@@ -1108,7 +1168,7 @@ Camera_ErrorCode Camera_Manager::GetSensorPhysicalSize(const Camera_Device* came
+ Camera_ErrorCode Camera_Manager::GetSensorPixelArraySize(const Camera_Device* camera, uint32_t* width, uint32_t* height)
+ {
+     CameraDevice* device = nullptr;
+-    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
++    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+         CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetSensorPixelArraySize failed, innerCamera is nullptr");
+         if (innerCamera->GetID() == std::string(camera->cameraId)) {
+@@ -1117,9 +1177,13 @@ Camera_ErrorCode Camera_Manager::GetSensorPixelArraySize(const Camera_Device* ca
+         }
+     }
+ 
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    auto size = device->GetSensorPixelArraySize();
+-    CHECK_RETURN_RET(size.size() < 2, CAMERA_SERVICE_FATAL_ERROR);
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    auto sizeOpt = device->GetSensorPixelArraySize();
++    if (!sizeOpt.has_value() || sizeOpt.value().size() < 2) {
++        MEDIA_ERR_LOG("Camera_Manager::GetSensorPixelArraySize failed, sensorPixelArraySize is not available");
++        return CAMERA_SERVICE_FATAL_ERROR;
++    }
++    auto size = sizeOpt.value();
+     *width = size.front();
+     *height = size.back();
+     return CAMERA_OK;
+@@ -1129,7 +1193,7 @@ Camera_ErrorCode Camera_Manager::GetSensorColorFilterArrangement(
+     const Camera_Device* camera, OH_Camera_SensorColorFilterArrangement* sensorCFA)
+ {
+     CameraDevice* device = nullptr;
+-    auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
++    auto cameras = CameraManager::GetInstance()->GetCameraDevices();
+     for (auto& innerCamera : cameras) {
+         CHECK_CONTINUE_DLOG(
+             !innerCamera, "Camera_Manager::GetSensorColorFilterArrangement failed, innerCamera is nullptr");
+@@ -1139,10 +1203,16 @@ Camera_ErrorCode Camera_Manager::GetSensorColorFilterArrangement(
+         }
+     }
+ 
+-    CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
+-    auto internalCFA = device->GetSensorColorFilterArrangement();
++    CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
++    auto internalCFAOpt = device->GetSensorColorFilterArrangement();
++    if (!internalCFAOpt.has_value()) {
++        MEDIA_ERR_LOG(
++            "Camera_Manager::GetSensorColorFilterArrangement failed, sensorColorFilterArrangement is not available");
++        return CAMERA_SERVICE_FATAL_ERROR;
++    }
++    auto internalCFA = internalCFAOpt.value();
+     auto itr = g_FWKToNDKCFA_.find(internalCFA);
+-    CHECK_RETURN_RET_ELOG(itr == g_FWKToNDKCFA_.end(), CAMERA_INVALID_ARGUMENT,
++    CHECK_RETURN_RET_ELOG(itr == g_FWKToNDKCFA_.end(), CAMERA_SERVICE_FATAL_ERROR,
+         "Camera_Manager::GetSensorColorFilterArrangement internalCFA not found!");
+     *sensorCFA = itr->second;
+     return CAMERA_OK;
+diff --git a/frameworks/native/ndk/impl/camera_manager_impl.h b/frameworks/native/ndk/impl/camera_manager_impl.h
+index facd1657e..982495516 100644
+--- a/frameworks/native/ndk/impl/camera_manager_impl.h
++++ b/frameworks/native/ndk/impl/camera_manager_impl.h
+@@ -125,9 +125,12 @@ public:
+          Camera_SceneMode** sceneModes, uint32_t* size);
+     static Camera_ErrorCode IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera);
+ 
+-    static Camera_ErrorCode GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size);
+     static Camera_ErrorCode GetLogicalCameraConstituentCameraDevices(
+-        const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size);
++        const Camera_Device* logicalCamera, Camera_Device** constituentCameras, uint32_t* size);
++
++    static Camera_ErrorCode DeleteConstituentCameras(
++         const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size);
++    
+     static Camera_ErrorCode GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength);
+     static Camera_ErrorCode GetMinimumFocusDistance(const Camera_Device* camera, float* minimumFocusDistance);
+     static Camera_ErrorCode GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size);
+diff --git a/frameworks/native/ndk/impl/capture_session_impl.cpp b/frameworks/native/ndk/impl/capture_session_impl.cpp
+index e0c91cea6..4a7670c52 100644
+--- a/frameworks/native/ndk/impl/capture_session_impl.cpp
++++ b/frameworks/native/ndk/impl/capture_session_impl.cpp
+@@ -27,6 +27,8 @@ using namespace std;
+ using namespace OHOS;
+ using namespace OHOS::CameraStandard;
+ namespace {
++constexpr uint32_t ZOOM_RANGE_COUNT = 2;
++constexpr uint32_t APERTURE_SIZE_MAX_FOR_SAFETY = 10;
+ const std::unordered_map<Camera_SceneMode, SceneMode> g_ndkToFwMode_ = {
+     {Camera_SceneMode::NORMAL_PHOTO, SceneMode::CAPTURE},
+     {Camera_SceneMode::NORMAL_VIDEO, SceneMode::VIDEO},
+@@ -39,8 +41,6 @@ const std::unordered_map<FlashState, OH_Camera_FlashState> g_FwToNdkFlashState_
+ };
+ 
+ const std::unordered_map<MeteringMode, OH_Camera_ExposureMeteringMode> g_FwToNdkExposureMeteringMode_ = {
+-    { MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED,
+-        OH_Camera_ExposureMeteringMode::OH_CAMERA_CENTER_HIGHLIGHT_WEIGH },
+     { MeteringMode::METERING_MODE_CENTER_WEIGHTED,
+         OH_Camera_ExposureMeteringMode::OH_CAMERA_EXPOSURE_METERING_MODE_CENTER },
+     { MeteringMode::METERING_MODE_SPOT, OH_Camera_ExposureMeteringMode::OH_CAMERA_EXPOSURE_METERING_MODE_SPOT },
+@@ -48,8 +48,6 @@ const std::unordered_map<MeteringMode, OH_Camera_ExposureMeteringMode> g_FwToNdk
+ };
+ 
+ const std::unordered_map<OH_Camera_ExposureMeteringMode, MeteringMode> g_NdkToFwExposureMeteringMode_ = {
+-    { OH_Camera_ExposureMeteringMode::OH_CAMERA_CENTER_HIGHLIGHT_WEIGH,
+-        MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED },
+     { OH_Camera_ExposureMeteringMode::OH_CAMERA_EXPOSURE_METERING_MODE_CENTER,
+         MeteringMode::METERING_MODE_CENTER_WEIGHTED },
+     { OH_Camera_ExposureMeteringMode::OH_CAMERA_EXPOSURE_METERING_MODE_SPOT, MeteringMode::METERING_MODE_SPOT },
+@@ -1447,49 +1445,63 @@ Camera_ErrorCode Camera_CaptureSession::GetRAWCaptureZoomRatioRange(float* minZo
+     return CAMERA_OK;
+ }
+ 
+-Camera_ErrorCode Camera_CaptureSession::GetPhysicalAperturesSize(uint32_t* size) const
++Camera_ErrorCode Camera_CaptureSession::GetSupportedPhysicalApertures(
++    OH_Camera_PhysicalAperture** apertures, uint32_t* size) const
+ {
+     vector<vector<float>> physicalApertures = {};
++    *size = 0;
+     int32_t retCode = innerCaptureSession_->GetSupportedPhysicalApertures(physicalApertures);
+     if (retCode != CAMERA_OK || physicalApertures.empty()) {
+         MEDIA_ERR_LOG("GetSupportedPhysicalApertures failed, retCode: %{public}d", retCode);
+         return FrameworkToNdkCameraError(retCode);
+     }
++    OH_Camera_PhysicalAperture* newApertures = new (nothrow) OH_Camera_PhysicalAperture[physicalApertures.size()];
++    CHECK_RETURN_RET_ELOG(newApertures == nullptr, CAMERA_OK, "Failed to allocate memory for apertures!");
++    for (size_t i = 0; i < physicalApertures.size(); ++i) {
++        if (physicalApertures[i].size() < ZOOM_RANGE_COUNT) {
++            MEDIA_ERR_LOG("Invalid physical aperture configuration at index %{public}zu", i);
++            DeletePhysicalApertures(newApertures, physicalApertures.size());
++            return CAMERA_OK;
++        }
++        int32_t offset = 1;
++        newApertures[i].zoomRange.minZoom = physicalApertures[i][0];
++        newApertures[i].zoomRange.maxZoom = physicalApertures[i][offset];
++        size_t apertureCount = physicalApertures[i].size() - ZOOM_RANGE_COUNT;
++        newApertures[i].apertureCount = 0;
++        if (apertureCount == 0) {
++            newApertures[i].apertures = nullptr;
++            continue;
++        }
++        newApertures[i].apertures = new (nothrow) float[apertureCount];
++        CHECK_CONTINUE_ELOG(
++            newApertures[i].apertures == nullptr, "Failed to allocate memory for apertures array at index %zu!", i);
++        auto ret = memcpy_s(newApertures[i].apertures, apertureCount * sizeof(float),
++            &physicalApertures[i][ZOOM_RANGE_COUNT], apertureCount * sizeof(float));
++        if (ret != 0) {
++            MEDIA_ERR_LOG("Camera_CaptureSession::GetSupportedPhysicalApertures memcpy_s err:%{public}d", ret);
++            delete[] newApertures[i].apertures;
++            newApertures[i].apertures = nullptr;
++            continue;
++        }
++        newApertures[i].apertureCount = apertureCount;
++    }
+     *size = physicalApertures.size();
++    *apertures = newApertures;
+     return CAMERA_OK;
+ }
+ 
+-Camera_ErrorCode Camera_CaptureSession::GetSupportedPhysicalApertures(
++Camera_ErrorCode Camera_CaptureSession::DeletePhysicalApertures(
+     OH_Camera_PhysicalAperture* apertures, uint32_t size) const
+ {
+-    vector<vector<float>> physicalApertures = {};
+-    int32_t retCode = innerCaptureSession_->GetSupportedPhysicalApertures(physicalApertures);
+-    if (retCode != CAMERA_OK || physicalApertures.empty()) {
+-        MEDIA_ERR_LOG("GetSupportedPhysicalApertures failed, retCode: %{public}d", retCode);
+-        return FrameworkToNdkCameraError(retCode);
+-    }
+-    auto realSize = std::min(size, static_cast<uint32_t>(physicalApertures.size()));
+-    for (size_t i = 0; i < realSize; ++i) {
+-        if (physicalApertures[i].size() < 2) {
+-            MEDIA_ERR_LOG("Invalid physical aperture configuration at index %{pubic}zu", i);
+-            return CAMERA_INVALID_ARGUMENT;
+-        }
+-        int32_t offset = 1;
+-        apertures[i].zoomRange.minZoom = physicalApertures[i][0];
+-        apertures[i].zoomRange.maxZoom = physicalApertures[i][offset];
+-        size_t apertureCount = physicalApertures[i].size() - 2;
+-        if (apertureCount == 0) {
+-            apertures[i].apertures = nullptr;
+-            continue;
++    MEDIA_DEBUG_LOG("Camera_CaptureSession::DeletePhysicalApertures");
++    uint32_t safeSize = min(size, APERTURE_SIZE_MAX_FOR_SAFETY);
++    for (size_t index = 0; index < safeSize; index++) {
++        if (apertures[index].apertures != nullptr) {
++            delete[] apertures[index].apertures;
++            apertures[index].apertures = nullptr;
+         }
+-        apertures[i].apertures = new float[apertureCount];
+-        CHECK_RETURN_RET_ELOG(apertures[i].apertures == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+-            "Failed to allocate memory for apertures array at index %zu!", i);
+-        auto ret = memcpy_s(apertures[i].apertures, apertureCount * sizeof(float), &physicalApertures[i][2],
+-            apertureCount * sizeof(float));
+-        CHECK_PRINT_ELOG(ret != 0, "Camera_CaptureSession::GetSupportedPhysicalApertures err:%{public}d", ret);
+-        apertures[i].apertureCount = apertureCount;
+     }
++    delete[] apertures;
+     return CAMERA_OK;
+ }
+ 
+diff --git a/frameworks/native/ndk/impl/capture_session_impl.h b/frameworks/native/ndk/impl/capture_session_impl.h
+index 8e3c1cd4b..3921b88b4 100644
+--- a/frameworks/native/ndk/impl/capture_session_impl.h
++++ b/frameworks/native/ndk/impl/capture_session_impl.h
+@@ -250,9 +250,9 @@ public:
+ 
+     Camera_ErrorCode GetRAWCaptureZoomRatioRange(float* minZoom, float* maxZoom) const;
+ 
+-    Camera_ErrorCode GetPhysicalAperturesSize(uint32_t* size) const;
++    Camera_ErrorCode GetSupportedPhysicalApertures(OH_Camera_PhysicalAperture** apertures, uint32_t* size) const;
+ 
+-    Camera_ErrorCode GetSupportedPhysicalApertures(OH_Camera_PhysicalAperture* apertures, uint32_t size) const;
++    Camera_ErrorCode DeletePhysicalApertures(OH_Camera_PhysicalAperture* apertures, uint32_t size) const;
+ 
+     Camera_ErrorCode GetPhysicalAperture(float* aperture) const;
+ 
+diff --git a/frameworks/taihe/idl/ohos.multimedia.camera.taihe b/frameworks/taihe/idl/ohos.multimedia.camera.taihe
+index 94715844f..96bf1ca46 100644
+--- a/frameworks/taihe/idl/ohos.multimedia.camera.taihe
++++ b/frameworks/taihe/idl/ohos.multimedia.camera.taihe
+@@ -102,6 +102,13 @@ enum ColorReservationType : i32 {
+   PORTRAIT = 1
+ }
+ 
++enum SensorColorFilterArrangement : i32 {
++  BGGR = 0,
++  GBRG = 1,
++  GRBG = 2,
++  RGGB = 3
++}
++
+ enum LightPaintingType : i32 {
+   TRAFFIC_TRAILS = 0,
+   STAR_TRAILS = 1,
+@@ -188,6 +195,15 @@ struct CameraDevice {
+   @readonly cameraOrientation: i32;
+   @readonly lensEquivalentFocalLength: Optional<Array<i32>>;
+   @readonly automotiveCameraPosition: Optional<AutomotiveCameraPosition>;
++  @readonly isLogicalCamera: Optional<bool>;
++  @readonly constituentCameraDevices: Optional<Array<CameraDevice>>;
++  @readonly lensFocalLength: Optional<f64>;
++  @readonly minimumFocusDistance: Optional<f64>;
++  @readonly lensDistortion: Optional<Array<f64>>;
++  @readonly lensIntrinsicCalibration: Optional<Array<f64>>;
++  @readonly sensorPhysicalSize: Optional<Array<f64>>;
++  @readonly sensorPixelArraySize: Optional<Array<i32>>;
++  @readonly sensorColorFilterArrangement: Optional<SensorColorFilterArrangement>;
+ }
+ 
+ struct ZoomPointInfo {
+@@ -623,6 +639,8 @@ interface Flash : FlashQuery {
+   EnableLcdFlash(enabled: bool): void;
+   SetFlashMode(flashMode: FlashMode): void;
+   GetFlashMode(): FlashMode;
++  OnFlashStateChange(callback:(data: FlashState)=> void): void;
++  OffFlashStateChange(callback: Optional<(data: FlashState)=> void>): void;
+ }
+ 
+ enum SmoothZoomMode : i32 {
+@@ -633,6 +651,7 @@ interface ZoomQuery {
+   GetZoomRatioRange(): Array<f64>;
+   GetZoomPointInfos(): Array<ZoomPointInfo>;
+   IsZoomCenterPointSupported(): bool;
++  GetRAWCaptureZoomRatioRange(): Array<f64>;
+ }
+ 
+ interface Zoom : ZoomQuery {
+@@ -739,11 +758,11 @@ enum SystemPressureLevel: i32 {
+ 
+ enum FlashState: i32 {
+   FLASH_STATE_UNAVAILABLE = 0,
+-  FLASH_STATE_READY = 2,
+-  FLASH_STATE_FLASHING = 3,
++  FLASH_STATE_READY = 1,
++  FLASH_STATE_FLASHING = 2,
+ }
+ 
+-interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ManualIso, ManualFocus, ManualExposure {
++interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ManualIso, ManualFocus, ManualExposure, Aperture {
+   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
+   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
+   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
+@@ -848,11 +867,11 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
+ 
+   GetSpecificImplPtr(): i64;
+ 
++  OnIsoInfoChange(callback:(data: IsoInfo)=> void): void;
++  OffIsoInfoChange(callback: Optional<(data: IsoInfo)=> void>): void;
++
+   OnExposureInfoChange(callback:(data: ExposureInfo)=> void): void;
+   OffExposureInfoChange(callback: Optional<(data: ExposureInfo)=> void>): void;
+-
+-  OnFlashStateChange(callback:(data: FlashState)=> void): void;
+-  OffFlashStateChange(callback: Optional<(data: FlashState)=> void>): void;
+ }
+ 
+ interface PhotoConflictFunctions : ZoomQuery, MacroQuery {
+@@ -2439,7 +2458,6 @@ interface Stabilization : StabilizationQuery {
+ 
+ interface ManualExposureQuery {
+   GetSupportedExposureRange(): Array<i32>;
+-  GetExposureDuration(): i32;
+   GetSupportedExposureDurationRange(): Array<i32>;
+   GetExposureBiasStep(): f64;
+ }
+@@ -2448,12 +2466,16 @@ interface ManualExposure : ManualExposureQuery{
+   GetExposure(): i32;
+   SetExposure(exposure: i32): void;
+   SetExposureDuration(exposure: i32): void;
++  GetExposureDuration(): i32;
+ }
+ 
+-interface ManualFocus {
++interface ManualFocus : ManualFocusQuery{
+   GetFocusDistance(): f64;
+   SetFocusDistance(distance: f64): void;
+-  IsManualFocusSupported(): bool;
++}
++
++interface ManualFocusQuery {
++  IsFocusDistanceSupported(): bool;
+ }
+ 
+ interface WhiteBalanceQuery {
+@@ -2471,7 +2493,7 @@ interface WhiteBalance : WhiteBalanceQuery {
+ interface ManualIsoQuery {
+   GetIsoRange(): Array<i32>;
+   IsManualIsoSupported(): bool;
+-  GetSupportedISORange(): Array<i32>;
++  GetSupportedIsoRange(): Array<i32>;
+ }
+ 
+ interface ManualIso : ManualIsoQuery {
+diff --git a/frameworks/taihe/include/camera_utils_taihe.h b/frameworks/taihe/include/camera_utils_taihe.h
+index 9b405a207..8a4765b05 100644
+--- a/frameworks/taihe/include/camera_utils_taihe.h
++++ b/frameworks/taihe/include/camera_utils_taihe.h
+@@ -39,7 +39,9 @@ using namespace OHOS;
+ class CameraUtilsTaihe {
+ public:
+     static string ToTaiheString(const std::string &src);
++    static string ToTaiheArrayString(const std::string &src);
+     static CameraDevice ToTaiheCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj);
++    static CameraDevice ToTaihePhysicalCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj);
+     static CameraDevice GetNullCameraDevice();
+     static array<CameraDevice> GetNullCameraDeviceArray();
+     static array<DepthProfile> ToTaiheArrayDepthProfiles(std::vector<OHOS::CameraStandard::DepthProfile> profiles);
+diff --git a/frameworks/taihe/include/mode/photo_session_taihe.h b/frameworks/taihe/include/mode/photo_session_taihe.h
+index 15f980e4a..50b675426 100644
+--- a/frameworks/taihe/include/mode/photo_session_taihe.h
++++ b/frameworks/taihe/include/mode/photo_session_taihe.h
+@@ -27,7 +27,7 @@ using namespace ohos::multimedia::camera;
+ class PhotoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public AutoExposureImpl,
+                          public ColorManagementImpl, public AutoDeviceSwitchImpl, public FocusImpl,
+                          public WhiteBalanceImpl, public MacroImpl, public ManualIsoImpl, public ManualFocusImpl,
+-                         public ManualExposureImpl {
++                         public ManualExposureImpl, public ApertureImpl {
+ public:
+     explicit PhotoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
+     {
+@@ -50,10 +50,10 @@ public:
+     }
+     void SetIso(int32_t iso) override;
+     int32_t GetIso() override;
+-    array<int32_t> GetSupportedISORange() override;
++    array<int32_t> GetSupportedIsoRange() override;
+     double GetFocusDistance() override;
+     void SetFocusDistance(double distance) override;
+-    bool IsManualFocusSupported() override;
++    bool IsFocusDistanceSupported() override;
+     int32_t GetExposureDuration() override;
+     array<int32_t> GetSupportedExposureDurationRange() override;
+     double GetExposureBiasStep() override;
+@@ -61,6 +61,10 @@ public:
+     ExposureMeteringMode GetExposureMeteringMode() override;
+     void SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode) override;
+     bool IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode) override;
++    array<PhysicalAperture> GetSupportedPhysicalApertures() override;
++    void SetPhysicalAperture(double aperture) override;
++    double GetPhysicalAperture() override;
++    array<double> GetRAWCaptureZoomRatioRange() override;
+ protected:
+     sptr<OHOS::CameraStandard::CaptureSession> photoSession_ = nullptr;
+     std::shared_ptr<PressureCallbackListener> pressureCallback_ = nullptr;
+@@ -76,10 +80,15 @@ protected:
+         bool isOnce) override;
+     void UnregisterFlashStateCallbackListener(const std::string& eventName,
+         std::shared_ptr<uintptr_t> callback) override;
++    void RegisterIsoInfoCallbackListener(const std::string& eventName,
++        std::shared_ptr<uintptr_t> callback, bool isOnce) override;
++    void UnregisterIsoInfoCallbackListener(const std::string& eventName,
++        std::shared_ptr<uintptr_t> callback) override;
+         
+ private:
+     std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;
+     std::shared_ptr<FlashStateCallbackListener> flashStateCallback_ = nullptr;
++    std::shared_ptr<IsoInfoSyncCallbackListener> isoInfoCallback_ = nullptr;
+ };
+ } // namespace Camera
+ } // namespace Ani
+diff --git a/frameworks/taihe/include/query/camera_query_taihe.h b/frameworks/taihe/include/query/camera_query_taihe.h
+index c773e22d4..064eeca89 100644
+--- a/frameworks/taihe/include/query/camera_query_taihe.h
++++ b/frameworks/taihe/include/query/camera_query_taihe.h
+@@ -71,6 +71,7 @@ public:
+     array<double> GetZoomRatioRange();
+     array<ZoomPointInfo> GetZoomPointInfos();
+     bool IsZoomCenterPointSupported();
++    virtual array<double> GetRAWCaptureZoomRatioRange();
+ };
+ 
+ class ZoomImpl : public ZoomQueryImpl {
+@@ -272,7 +273,7 @@ public:
+     virtual ~ManualIsoQueryImpl() = default;
+     virtual array<int32_t> GetIsoRange();
+     virtual bool IsManualIsoSupported();
+-    virtual array<int32_t> GetSupportedISORange();
++    virtual array<int32_t> GetSupportedIsoRange();
+ };
+ 
+ class ManualIsoImpl : public ManualIsoQueryImpl {
+@@ -287,7 +288,7 @@ class ApertureQueryImpl : virtual public SessionBase, virtual public FunctionBas
+ public:
+     explicit ApertureQueryImpl() {}
+     virtual ~ApertureQueryImpl() = default;
+-    array<PhysicalAperture> GetSupportedPhysicalApertures();
++    virtual array<PhysicalAperture> GetSupportedPhysicalApertures();
+     array<double> GetSupportedVirtualApertures();
+ };
+ 
+@@ -297,8 +298,8 @@ public:
+     virtual ~ApertureImpl() = default;
+     void SetVirtualAperture(double aperture);
+     double GetVirtualAperture();
+-    void SetPhysicalAperture(double aperture);
+-    double GetPhysicalAperture();
++    virtual void SetPhysicalAperture(double aperture);
++    virtual double GetPhysicalAperture();
+ };
+ 
+ class EffectSuggestionImpl : virtual public SessionBase {
+@@ -332,7 +333,7 @@ public:
+     virtual ~ManualFocusImpl() = default;
+     virtual double GetFocusDistance();
+     virtual void SetFocusDistance(double distance);
+-    virtual bool IsManualFocusSupported();
++    virtual bool IsFocusDistanceSupported();
+ };
+ 
+ class PortraitQueryImpl : virtual public SessionBase, virtual public FunctionBase {
+diff --git a/frameworks/taihe/include/session/camera_session_taihe.h b/frameworks/taihe/include/session/camera_session_taihe.h
+index eb0475321..951cbeaf1 100644
+--- a/frameworks/taihe/include/session/camera_session_taihe.h
++++ b/frameworks/taihe/include/session/camera_session_taihe.h
+@@ -167,6 +167,16 @@ public:
+ private:
+     void OnFlashStateChangedCallback(OHOS::CameraStandard::FlashState info) const;
+ };
++
++class IsoInfoSyncCallbackListener : public OHOS::CameraStandard::IsoInfoSyncCallback, public ListenerBase,
++    public std::enable_shared_from_this<IsoInfoSyncCallbackListener> {
++public:
++    IsoInfoSyncCallbackListener(ani_env* env) : ListenerBase(env) {}
++    ~IsoInfoSyncCallbackListener() = default;
++    void OnIsoInfoChangedSync(OHOS::CameraStandard::IsoInfo info) override;
++private:
++    void OnIsoInfoChangedCallback(OHOS::CameraStandard::IsoInfo info) const;
++};
+ class SessionImpl : public CameraAniEventEmitter<SessionImpl>,
+                     virtual public SessionBase {
+ public:
+@@ -248,6 +258,8 @@ public:
+     void OffExposureInfoChange(optional_view<callback<void(ExposureInfo const&)>> callback);
+     void OnFlashStateChange(callback_view<void(FlashState)> callback);
+     void OffFlashStateChange(optional_view<callback<void(FlashState)>> callback);
++    void OnIsoInfoChange(callback_view<void(IsoInfo const&)> callback);
++    void OffIsoInfoChange(optional_view<callback<void(IsoInfo const&)>> callback);
+ 
+     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
+     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;
+diff --git a/frameworks/taihe/src/camera_utils_taihe.cpp b/frameworks/taihe/src/camera_utils_taihe.cpp
+index f7f101561..f3f5d1214 100644
+--- a/frameworks/taihe/src/camera_utils_taihe.cpp
++++ b/frameworks/taihe/src/camera_utils_taihe.cpp
+@@ -115,8 +115,7 @@ array<PhysicalAperture> CameraUtilsTaihe::ToTaiheArrayPhysicalAperture(
+ CameraDevice CameraUtilsTaihe::GetNullCameraDevice()
+ {
+     std::string defaultString = "";
+-    CameraDevice cameraTaihe {
+-        .cameraId = CameraUtilsTaihe::ToTaiheString(defaultString),
++    CameraDevice cameraTaihe { .cameraId = CameraUtilsTaihe::ToTaiheString(defaultString),
+         .cameraPosition = CameraPosition::key_t::CAMERA_POSITION_UNSPECIFIED,
+         .cameraType = CameraType::key_t::CAMERA_TYPE_DEFAULT,
+         .connectionType = ConnectionType::key_t::CAMERA_CONNECTION_BUILT_IN,
+@@ -126,6 +125,15 @@ CameraDevice CameraUtilsTaihe::GetNullCameraDevice()
+         .cameraOrientation = 0,
+         .lensEquivalentFocalLength = optional<array<int32_t>>(std::nullopt),
+         .automotiveCameraPosition = optional<AutomotiveCameraPosition>(std::nullopt),
++        .isLogicalCamera = optional<bool>(std::nullopt),
++        .constituentCameraDevices = optional<array<CameraDevice>>(std::nullopt),
++        .lensFocalLength = optional<double>(std::nullopt),
++        .minimumFocusDistance = optional<double>(std::nullopt),
++        .lensDistortion = optional<array<double>>(std::nullopt),
++        .lensIntrinsicCalibration = optional<array<double>>(std::nullopt),
++        .sensorPhysicalSize = optional<array<double>>(std::nullopt),
++        .sensorPixelArraySize = optional<array<int32_t>>(std::nullopt),
++        .sensorColorFilterArrangement = optional<SensorColorFilterArrangement>(std::nullopt),
+     };
+     return cameraTaihe;
+ }
+@@ -149,11 +157,95 @@ CameraDevice CameraUtilsTaihe::ToTaiheCameraDevice(sptr<OHOS::CameraStandard::Ca
+     cameraTaihe.hostDeviceType = HostDeviceType::from_value(static_cast<int32_t>(obj->GetDeviceType()));
+     cameraTaihe.hostDeviceName = ToTaiheString(obj->GetHostName());
+     cameraTaihe.cameraOrientation = obj->GetCameraOrientation();
+-    std::vector<int32_t> lensEquivalentFocalLength = obj->GetLensEquivalentFocalLength();
++    std::vector<int32_t> lensEquivalentFocalLength =
++        obj->GetLensEquivalentFocalLength().value_or(std::vector<int32_t> {});
+     cameraTaihe.lensEquivalentFocalLength =
+         optional<array<int32_t>>(std::in_place, array<int32_t>(lensEquivalentFocalLength));
+     cameraTaihe.automotiveCameraPosition = optional<AutomotiveCameraPosition>(std::in_place,
+         AutomotiveCameraPosition::from_value(static_cast<int32_t>(obj->GetAutomotivePosition())));
++    CHECK_EXECUTE(obj->IsLogicalCamera().has_value(),
++        cameraTaihe.isLogicalCamera = optional<bool>::make(obj->IsLogicalCamera().value()));
++    CHECK_EXECUTE(obj->GetLensFocalLength().has_value(),
++        cameraTaihe.lensFocalLength = optional<double>::make(obj->GetLensFocalLength().value()));
++    CHECK_EXECUTE(obj->GetMinimumFocusDistance().has_value(),
++        cameraTaihe.minimumFocusDistance = optional<double>::make(obj->GetMinimumFocusDistance().value()));
++    auto lensDistortionOpt = obj->GetLensDistortion();
++    CHECK_EXECUTE(lensDistortionOpt.has_value(),
++        cameraTaihe.lensDistortion = optional<array<double>>(std::in_place, array<double>(lensDistortionOpt.value())));
++    auto lensIntrinsicCalibrationOpt = obj->GetLensIntrinsicCalibration();
++    CHECK_EXECUTE(lensIntrinsicCalibrationOpt.has_value(),
++        cameraTaihe.lensIntrinsicCalibration =
++            optional<array<double>>(std::in_place, array<double>(lensIntrinsicCalibrationOpt.value())));
++    auto sensorPhysicalSizeOpt = obj->GetSensorPhysicalSize();
++    CHECK_EXECUTE(sensorPhysicalSizeOpt.has_value(),
++        cameraTaihe.sensorPhysicalSize =
++            optional<array<double>>(std::in_place, array<double>(sensorPhysicalSizeOpt.value())));
++    auto sensorPixelArraySizeopt = obj->GetSensorPixelArraySize();
++    CHECK_EXECUTE(sensorPixelArraySizeopt.has_value(),
++        cameraTaihe.sensorPixelArraySize =
++            optional<array<int32_t>>(std::in_place, array<int32_t>(sensorPixelArraySizeopt.value())));
++    auto sensorColorFilterArrangementOpt = obj->GetSensorColorFilterArrangement();
++    CHECK_EXECUTE(sensorColorFilterArrangementOpt.has_value(),
++        cameraTaihe.sensorColorFilterArrangement = optional<SensorColorFilterArrangement>(std::in_place,
++            SensorColorFilterArrangement::from_value(static_cast<int32_t>(sensorColorFilterArrangementOpt.value()))));
++    CHECK_RETURN_RET(!obj->IsLogicalCamera().value_or(false), cameraTaihe);
++    auto constituentDeviceIdsOpt = obj->GetConstituentCameraDevices();
++    if (constituentDeviceIdsOpt.has_value() && !constituentDeviceIdsOpt.value().empty()) {
++        std::vector<std::string> constituentDeviceIds = constituentDeviceIdsOpt.value();
++        std::vector<CameraDevice> constituentCameraDevicesList;
++        for (const auto& deviceId : constituentDeviceIds) {
++            std::string fullDeviceId = "device/" + deviceId;
++            OHOS::sptr<OHOS::CameraStandard::CameraDevice> cameraInfo =
++                OHOS::CameraStandard::CameraManager::GetInstance()->GetCameraDeviceFromId(fullDeviceId);
++            CameraDevice cameraTaiheSub = ToTaihePhysicalCameraDevice(cameraInfo);
++            constituentCameraDevicesList.emplace_back(cameraTaiheSub);
++        }
++        if (!constituentCameraDevicesList.empty()) {
++            cameraTaihe.constituentCameraDevices =
++                optional<array<CameraDevice>>(std::in_place, array<CameraDevice>(constituentCameraDevicesList));
++        }
++    }
++    return cameraTaihe;
++}
++
++CameraDevice CameraUtilsTaihe::ToTaihePhysicalCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj)
++{
++    CameraDevice cameraTaihe = CameraUtilsTaihe::GetNullCameraDevice();
++    CHECK_RETURN_RET_ELOG(!obj, cameraTaihe, "obj is null");
++    cameraTaihe.cameraId = ToTaiheString(obj->GetID());
++    cameraTaihe.cameraPosition = CameraPosition::from_value(static_cast<int32_t>(obj->GetPosition()));
++    cameraTaihe.cameraType = CameraType::from_value(static_cast<int32_t>(obj->GetCameraType()));
++    cameraTaihe.connectionType = ConnectionType::from_value(static_cast<int32_t>(obj->GetConnectionType()));
++    cameraTaihe.isRetractable = optional<bool>::make(obj->GetisRetractable());
++    cameraTaihe.hostDeviceType = HostDeviceType::from_value(static_cast<int32_t>(obj->GetDeviceType()));
++    cameraTaihe.hostDeviceName = ToTaiheString(obj->GetHostName());
++    cameraTaihe.cameraOrientation = static_cast<int32_t>(obj->GetCameraOrientation());
++
++    std::vector<int32_t> lensEquivalentFocalLength =
++        obj->GetLensEquivalentFocalLength().value_or(std::vector<int32_t> {});
++    cameraTaihe.lensEquivalentFocalLength =
++        optional<array<int32_t>>(std::in_place, array<int32_t>(lensEquivalentFocalLength));
++    CHECK_EXECUTE(obj->IsLogicalCamera().has_value(),
++        cameraTaihe.isLogicalCamera = optional<bool>::make(obj->IsLogicalCamera().value()));
++    CHECK_EXECUTE(obj->GetLensFocalLength().has_value(),
++        cameraTaihe.lensFocalLength = optional<double>::make(obj->GetLensFocalLength().value()));
++    CHECK_EXECUTE(obj->GetMinimumFocusDistance().has_value(),
++        cameraTaihe.minimumFocusDistance = optional<double>::make(obj->GetMinimumFocusDistance().value()));
++    auto lensDistortionOpt = obj->GetLensDistortion();
++    CHECK_EXECUTE(lensDistortionOpt.has_value(),
++        cameraTaihe.lensDistortion = optional<array<double>>(std::in_place, array<double>(lensDistortionOpt.value())));
++    auto lensIntrinsicCalibrationOpt = obj->GetLensIntrinsicCalibration();
++    CHECK_EXECUTE(lensIntrinsicCalibrationOpt.has_value(),
++        cameraTaihe.lensIntrinsicCalibration =
++            optional<array<double>>(std::in_place, array<double>(lensIntrinsicCalibrationOpt.value())));
++    auto sensorPhysicalSizeOpt = obj->GetSensorPhysicalSize();
++    CHECK_EXECUTE(sensorPhysicalSizeOpt.has_value(),
++        cameraTaihe.sensorPhysicalSize =
++            optional<array<double>>(std::in_place, array<double>(sensorPhysicalSizeOpt.value())));
++    auto sensorColorFilterArrangementOpt = obj->GetSensorColorFilterArrangement();
++    CHECK_EXECUTE(sensorColorFilterArrangementOpt.has_value(),
++        cameraTaihe.sensorColorFilterArrangement = optional<SensorColorFilterArrangement>(std::in_place,
++            SensorColorFilterArrangement::from_value(static_cast<int32_t>(sensorColorFilterArrangementOpt.value()))));
+     return cameraTaihe;
+ }
+ 
+diff --git a/frameworks/taihe/src/mode/photo_session_taihe.cpp b/frameworks/taihe/src/mode/photo_session_taihe.cpp
+index f3ce22584..09c611d42 100644
+--- a/frameworks/taihe/src/mode/photo_session_taihe.cpp
++++ b/frameworks/taihe/src/mode/photo_session_taihe.cpp
+@@ -57,6 +57,53 @@ bool PhotoSessionImpl::IsExposureMeteringModeSupported(ExposureMeteringMode aeMe
+     return supported;
+ }
+ 
++array<PhysicalAperture> PhotoSessionImpl::GetSupportedPhysicalApertures()
++{
++    std::vector<std::vector<float>> physicalApertures = {};
++    CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, array<PhysicalAperture>(nullptr, 0),
++        "GetSupportedPhysicalApertures photoSession_ is null");
++    int32_t retCode = photoSession_->GetSupportedPhysicalApertures(physicalApertures);
++    MEDIA_INFO_LOG("GetSupportedPhysicalApertures len = %{public}zu", physicalApertures.size());
++    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<PhysicalAperture>(nullptr, 0));
++    return CameraUtilsTaihe::ToTaiheArrayPhysicalAperture(physicalApertures);
++}
++
++void PhotoSessionImpl::SetPhysicalAperture(double aperture)
++{
++    MEDIA_DEBUG_LOG("SetPhysicalAperture is called");
++    CHECK_RETURN_ELOG(photoSession_ == nullptr, "SetPhysicalAperture photoSession_ is null");
++    photoSession_->LockForControl();
++    int32_t retCode = photoSession_->SetPhysicalAperture(static_cast<float>(aperture));
++    MEDIA_INFO_LOG(
++        "SetPhysicalAperture set physicalAperture %{public}f!", OHOS::CameraStandard::ConfusingNumber(aperture));
++    photoSession_->UnlockForControl();
++    CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
++}
++
++double PhotoSessionImpl::GetPhysicalAperture()
++{
++    float physicalAperture = -1.0;
++    MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
++    CHECK_RETURN_RET_ELOG(
++        photoSession_ == nullptr, physicalAperture, "GetPhysicalAperture captureSessionForSys_ is null");
++    int32_t retCode = photoSession_->GetPhysicalAperture(physicalAperture);
++    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), physicalAperture);
++    return static_cast<double>(physicalAperture);
++}
++
++array<double> PhotoSessionImpl::GetRAWCaptureZoomRatioRange()
++{
++    std::vector<float> vecZoomRatioList;
++    int32_t retCode = photoSession_->GetRAWZoomRatioRange(vecZoomRatioList);
++    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<double>(nullptr, 0));
++    MEDIA_INFO_LOG("PhotoSessionImpl::GetRAWCaptureZoomRatioRange len = %{public}zu", vecZoomRatioList.size());
++    if (!vecZoomRatioList.empty()) {
++        std::vector<double> doubleVec(vecZoomRatioList.begin(), vecZoomRatioList.end());
++        return array<double>(doubleVec);
++    }
++    return array<double>(nullptr, 0);
++}
++
+ array<PhotoFunctions> CreateFunctionsPhotoFunctionsArray(
+     std::vector<sptr<OHOS::CameraStandard::CameraAbility>> functionsList)
+ {
+@@ -98,14 +145,14 @@ taihe::array<PhotoFunctions> PhotoSessionImpl::GetSessionFunctions(CameraOutputC
+     return result;
+ }
+ 
+-array<int32_t> PhotoSessionImpl::GetSupportedISORange()
++array<int32_t> PhotoSessionImpl::GetSupportedIsoRange()
+ {
+     CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, array<int32_t>(nullptr, 0),
+         "GetIsoRange failed, photoSession_ is nullptr!");
+     std::vector<int32_t> vecIsoList;
+     int32_t retCode = photoSession_->GetSensorSensitivityRange(vecIsoList);
+     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<int32_t>(nullptr, 0));
+-    MEDIA_INFO_LOG("PhotoSessionImpl::getSupportedISORange len = %{public}zu", vecIsoList.size());
++    MEDIA_INFO_LOG("PhotoSessionImpl::GetSupportedIsoRange len = %{public}zu", vecIsoList.size());
+     return array<int32_t>(vecIsoList);
+ }
+ 
+@@ -167,17 +214,13 @@ void PhotoSessionImpl::SetFocusDistance(double distance)
+     photoSession_->UnlockForControl();
+ }
+ 
+-bool PhotoSessionImpl::IsManualFocusSupported()
++bool PhotoSessionImpl::IsFocusDistanceSupported()
+ {
+-    CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, false,"IsManualFocusSupported failed, photoSession is nullptr!");
++    CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, false, "IsFocusDistanceSupported failed, photoSession is nullptr!");
+     bool isSupported = false;
+-    OHOS::CameraStandard::FocusMode focusMode =
+-        static_cast<OHOS::CameraStandard::FocusMode>(FocusMode::key_t::FOCUS_MODE_MANUAL);
+-    int32_t retCode = photoSession_->IsFocusModeSupported(focusMode, isSupported);
+-    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
+-        false,
+-        "%{public}s: IsManualFocusSupported() Failed",
+-        __FUNCTION__);
++    int32_t retCode = photoSession_->IsFocusDistanceSupported(isSupported);
++    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS, false,
++        "%{public}s: IsFocusDistanceSupported() Failed", __FUNCTION__);
+     return isSupported;
+ }
+ 
+@@ -307,5 +350,24 @@ void PhotoSessionImpl::UnregisterFlashStateCallbackListener(const std::string& e
+     CHECK_RETURN_ELOG(flashStateCallback_ == nullptr, "flashStateCallback is null");
+     flashStateCallback_->RemoveCallbackRef(eventName, callback);
+ }
++
++void PhotoSessionImpl::RegisterIsoInfoCallbackListener(const std::string& eventName,
++    std::shared_ptr<uintptr_t> callback, bool isOnce)
++{
++    CHECK_RETURN_ELOG(photoSession_ == nullptr, "photoSession_ is null!");
++    if (isoInfoCallback_ == nullptr) {
++        ani_env *env = get_env();
++        isoInfoCallback_ = std::make_shared<IsoInfoSyncCallbackListener>(env);
++        photoSession_->SetIsoInfoCallback(isoInfoCallback_);
++    }
++    isoInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
++}
++
++void PhotoSessionImpl::UnregisterIsoInfoCallbackListener(const std::string& eventName,
++    std::shared_ptr<uintptr_t> callback)
++{
++    CHECK_RETURN_ELOG(isoInfoCallback_ == nullptr, "isoInfoCallback is null");
++    isoInfoCallback_->RemoveCallbackRef(eventName, callback);
++}
+ } // namespace Camera
+ } // namespace Ani
+\ No newline at end of file
+diff --git a/frameworks/taihe/src/query/camera_query_taihe.cpp b/frameworks/taihe/src/query/camera_query_taihe.cpp
+index 322086d83..2a6610b9c 100644
+--- a/frameworks/taihe/src/query/camera_query_taihe.cpp
++++ b/frameworks/taihe/src/query/camera_query_taihe.cpp
+@@ -119,6 +119,14 @@ FlashMode FlashImpl::GetFlashMode()
+     return FlashMode(static_cast<FlashMode::key_t>(flashMode));
+ }
+ 
++array<double> ZoomQueryImpl::GetRAWCaptureZoomRatioRange()
++{
++    array<double> zoomRatioRange = {};
++    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
++        "can not GetRAWCaptureZoomRatioRange in current session!");
++    return zoomRatioRange;
++}
++
+ array<double> ZoomQueryImpl::GetZoomRatioRange()
+ {
+     MEDIA_DEBUG_LOG("GetZoomRatioRange is called");
+@@ -1067,7 +1075,7 @@ bool ManualIsoQueryImpl::IsManualIsoSupported()
+     return false;
+ }
+ 
+-array<int32_t> ManualIsoQueryImpl::GetSupportedISORange()
++array<int32_t> ManualIsoQueryImpl::GetSupportedIsoRange()
+ {
+     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+         "can not GetIsoRange in current session!");
+@@ -1307,12 +1315,12 @@ void ManualFocusImpl::SetFocusDistance(double distance)
+     captureSessionForSys_->UnlockForControl();
+ }
+ 
+-bool ManualFocusImpl::IsManualFocusSupported()
++bool ManualFocusImpl::IsFocusDistanceSupported()
+ {
+     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+-        "SystemApi IsManualFocusSupported is called!");
++        "SystemApi IsFocusDistanceSupported is called!");
+     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+-        "can not IsManualFocusSupported in current session!");
++        "can not IsFocusDistanceSupported in current session!");
+     return false;
+ }
+ 
+diff --git a/frameworks/taihe/src/session/camera_session_taihe.cpp b/frameworks/taihe/src/session/camera_session_taihe.cpp
+index c4a54a3d4..321e8c3a9 100644
+--- a/frameworks/taihe/src/session/camera_session_taihe.cpp
++++ b/frameworks/taihe/src/session/camera_session_taihe.cpp
+@@ -1076,12 +1076,41 @@ void SessionImpl::OffFlashStateChange(optional_view<callback<void(FlashState)>>
+     ListenerTemplate<SessionImpl>::Off(this, callback, "flashStateChange");
+ }
+ 
++void SessionImpl::OnIsoInfoChange(callback_view<void(IsoInfo const&)> callback)
++{
++    ListenerTemplate<SessionImpl>::On(this, callback, "isoInfoChange");
++}
++
++void SessionImpl::OffIsoInfoChange(optional_view<callback<void(IsoInfo const&)>> callback)
++{
++    ListenerTemplate<SessionImpl>::Off(this, callback, "isoInfoChange");
++}
++
+ void FlashStateCallbackListener::OnFlashStateChangedSync(OHOS::CameraStandard::FlashState info)
+ {
+     MEDIA_DEBUG_LOG("OnFlashStateChangedSync is called, info: %{public}d", info);
+     OnFlashStateChangedCallback(info);
+ }
+ 
++void IsoInfoSyncCallbackListener::OnIsoInfoChangedSync(OHOS::CameraStandard::IsoInfo info)
++{
++    MEDIA_DEBUG_LOG("OnIsoInfoChangedSync is called, info: %{public}d", info.isoValue);
++    OnIsoInfoChangedCallback(info);
++}
++
++void IsoInfoSyncCallbackListener::OnIsoInfoChangedCallback(OHOS::CameraStandard::IsoInfo info) const
++{
++    MEDIA_DEBUG_LOG("OnIsoInfoChangedCallback is called");
++    auto sharePtr = shared_from_this();
++    auto task = [info, sharePtr]() {
++        IsoInfo isoInfo { optional<int32_t>::make(info.isoValue) };
++        CHECK_EXECUTE(sharePtr != nullptr,
++            sharePtr->ExecuteCallback<IsoInfo>("isoInfoChange", isoInfo));
++    };
++    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
++    mainHandler_->PostTask(task, "OnIsoInfoChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
++}
++
+ void FlashStateCallbackListener::OnFlashStateChangedCallback(OHOS::CameraStandard::FlashState info) const
+ {
+     MEDIA_DEBUG_LOG("OnFlashStateChangedCallback is called");
+diff --git a/interfaces/inner_api/native/camera/include/input/camera_device.h b/interfaces/inner_api/native/camera/include/input/camera_device.h
+index 59cef3de7..3cd7ebb84 100644
+--- a/interfaces/inner_api/native/camera/include/input/camera_device.h
++++ b/interfaces/inner_api/native/camera/include/input/camera_device.h
+@@ -18,6 +18,7 @@
+ 
+ #include <iostream>
+ #include <memory>
++#include <optional>
+ #include <refbase.h>
+ #include <type_traits>
+ #include <unordered_map>
+@@ -297,9 +298,9 @@ public:
+     *
+     * @return Returns the camera lensEquivalentFocalLength.
+     */
+-    std::vector<int32_t> GetLensEquivalentFocalLength();
++    std::optional<std::vector<int32_t>> GetLensEquivalentFocalLength();
+ 
+-    inline bool IsLogicalCamera()
++    inline std::optional<bool> IsLogicalCamera()
+     {
+         return isLogicalCamera_;
+     }
+@@ -416,90 +417,52 @@ public:
+         constituentCameraDevices_ = constituentCameraDevices;
+     }
+ 
+-    inline std::vector<string> GetConstituentCameraDevices()
++    inline std::optional<std::vector<std::string>> GetConstituentCameraDevices()
+     {
+         return constituentCameraDevices_;
+     }
+ 
+-    inline bool CheckMatchedConstituentCameraDevices(string cameraId)
++    inline void SetLensFocalLength(double focalLength)
+     {
+-        auto itr = find_if(constituentCameraDevices_.begin(), constituentCameraDevices_.end(),
+-            [cameraId](string camera) { return "device/" + camera == cameraId; });
+-        return itr != constituentCameraDevices_.end();
++        lensFocalLength_ = focalLength;
+     }
+ 
+-    inline void SetLensFocalLength(double lensFocalLength)
+-    {
+-        lensFocalLength_ = lensFocalLength;
+-    }
+-
+-    inline double GetLensFocalLength()
++    inline std::optional<double> GetLensFocalLength()
+     {
+         return lensFocalLength_;
+     }
+ 
+-    inline void SetMinimumFocusDistance(double minimumFocusDistance)
++    inline void SetMinimumFocusDistance(double focusDistance)
+     {
+-        minimumFocusDistance_ = minimumFocusDistance;
++        minimumFocusDistance_ = focusDistance;
+     }
+ 
+-    inline double GetMinimumFocusDistance()
++    inline std::optional<double> GetMinimumFocusDistance()
+     {
+         return minimumFocusDistance_;
+     }
+ 
+-    inline void SetLensDistortion(std::vector<double> lensDistortion)
+-    {
+-        lensDistortion_ = lensDistortion;
+-    }
+-
+-
+-    inline std::vector<double> GetLensDistortion()
++    inline std::optional<std::vector<double>> GetLensDistortion()
+     {
+         return lensDistortion_;
+     }
+ 
+-    inline std::vector<int32_t> GetLensEquivalentFocalLengths()
+-    {
+-        return lensEquivalentFocalLength_;
+-    }
+-
+-    inline void SetLensIntrinsicCalibration(std::vector<double> lensIntrinsicCalibration)
+-    {
+-        lensIntrinsicCalibration_ = lensIntrinsicCalibration;
+-    }
+-
+-    inline std::vector<double> GetLensIntrinsicCalibration()
++    inline std::optional<std::vector<double>> GetLensIntrinsicCalibration()
+     {
+         return lensIntrinsicCalibration_;
+     }
+ 
+-    inline void SetSensorPhysicalSize(std::vector<double> sensorPhysicalSize)
+-    {
+-        sensorPhysicalSize_ = sensorPhysicalSize;
+-    }
+-
+-    inline std::vector<double> GetSensorPhysicalSize()
++    inline std::optional<std::vector<double>> GetSensorPhysicalSize()
+     {
+         return sensorPhysicalSize_;
+     }
+ 
+-    inline void SetSensorPixelArraySize(std::vector<int> sensorPixelArraySize)
+-    {
+-        sensorPixelArraySize_ = sensorPixelArraySize;
+-    }
+-
+-    inline std::vector<int> GetSensorPixelArraySize()
++    inline std::optional<std::vector<int>> GetSensorPixelArraySize()
+     {
+         return sensorPixelArraySize_;
+     }
+ 
+-    inline void SetSensorColorFilterArrangement(SensorColorFilterArrangement sensorColorFilterArrangement)
+-    {
+-        sensorColorFilterArrangement_ = sensorColorFilterArrangement;
+-    }
+-
+-    inline SensorColorFilterArrangement GetSensorColorFilterArrangement()
++    inline std::optional<SensorColorFilterArrangement> GetSensorColorFilterArrangement()
+     {
+         return sensorColorFilterArrangement_;
+     }
+@@ -524,16 +487,16 @@ private:
+     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
+     uint32_t cameraOrientation_ = 0;
+     bool isRetractable_ = false;
+-    std::vector<int32_t> lensEquivalentFocalLength_ = {};
+-    bool isLogicalCamera_ = false;
+-    std::vector<string> constituentCameraDevices_ = {};
+-    double lensFocalLength_ = 0.0;
+-    double minimumFocusDistance_ = 0.0;
+-    std::vector<double> lensDistortion_ = {};
+-    std::vector<double> lensIntrinsicCalibration_ = {};
+-    std::vector<double> sensorPhysicalSize_ = {};
+-    std::vector<int> sensorPixelArraySize_ = {};
+-    SensorColorFilterArrangement sensorColorFilterArrangement_;
++    std::optional<std::vector<int32_t>> lensEquivalentFocalLength_ = std::nullopt;
++    std::optional<bool> isLogicalCamera_ = std::nullopt;
++    std::optional<std::vector<std::string>> constituentCameraDevices_ = std::nullopt;
++    std::optional<double> lensFocalLength_ = std::nullopt;
++    std::optional<double> minimumFocusDistance_ = std::nullopt;
++    std::optional<std::vector<double>> lensDistortion_ = std::nullopt;
++    std::optional<std::vector<double>> lensIntrinsicCalibration_ = std::nullopt;
++    std::optional<std::vector<double>> sensorPhysicalSize_ = std::nullopt;
++    std::optional<std::vector<int>> sensorPixelArraySize_ = std::nullopt;
++    std::optional<SensorColorFilterArrangement> sensorColorFilterArrangement_ = std::nullopt;
+     std::unordered_map<uint32_t, uint32_t> foldStateSensorOrientationMap_ = {};
+     std::unordered_map<uint32_t, std::vector<uint32_t>> foldWithDirectionOrientationMap_ = {};
+     uint32_t moduleType_ = 0;
+diff --git a/interfaces/inner_api/native/camera/include/session/capture_session.h b/interfaces/inner_api/native/camera/include/session/capture_session.h
+index a344945c1..f61137760 100644
+--- a/interfaces/inner_api/native/camera/include/session/capture_session.h
++++ b/interfaces/inner_api/native/camera/include/session/capture_session.h
+@@ -1604,8 +1604,6 @@ public:
+      */
+     float GetMinimumFocusDistance();
+ 
+-    int32_t GetMinimumFocusDistance(float& minimumFocusDistance);
+-
+     /**
+      * @brief Check current status is support macro or not.
+      */
+@@ -2637,7 +2635,7 @@ protected:
+     void ParseSupportedOISBiasRangeAndStep(const SceneMode modeName, const camera_metadata_item_t& item,
+         std::vector<float>& supportBias);
+     void ProcessOISModeChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+-    OISMode oisMode_ = OIS_MODE_OFF;
++    OISMode oisMode_ = OIS_MODE_AUTO;
+ };
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/interfaces/kits/js/camera_napi/include/camera_napi_object.h b/interfaces/kits/js/camera_napi/include/camera_napi_object.h
+index 9286bad31..7ab0cd693 100644
+--- a/interfaces/kits/js/camera_napi/include/camera_napi_object.h
++++ b/interfaces/kits/js/camera_napi/include/camera_napi_object.h
+@@ -136,50 +136,84 @@ private:
+     class CreateNapiObjVisitor {
+     public:
+         explicit CreateNapiObjVisitor(napi_env& env) : env_(env) {}
++
++    private:
++        napi_value CreateUndefined()
++        {
++            napi_value result = nullptr;
++            napi_get_undefined(env_, &result);
++            return result;
++        }
++
++    public:
+         napi_value operator()(bool*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_get_boolean(env_, *variantAddr, &result);
+             return status == napi_ok ? result : nullptr;
+         }
+         napi_value operator()(int32_t*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_int32(env_, *variantAddr, &result);
+             return status == napi_ok ? result : nullptr;
+         }
+         napi_value operator()(uint32_t*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_uint32(env_, *variantAddr, &result);
+             return status == napi_ok ? result : nullptr;
+         }
+         napi_value operator()(int64_t*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_int64(env_, *variantAddr, &result);
+             return status == napi_ok ? result : nullptr;
+         }
+         napi_value operator()(float*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_double(env_, *variantAddr, &result);
+             return status == napi_ok ? result : nullptr;
+         }
+         napi_value operator()(double*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_double(env_, *variantAddr, &result);
+             return status == napi_ok ? result : nullptr;
+         }
+         napi_value operator()(std::string*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_string_utf8(env_, variantAddr->c_str(), variantAddr->size(), &result);
+             return status == napi_ok ? result : nullptr;
+         }
+         napi_value operator()(CameraNapiObject*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             return variantAddr->CreateNapiObjFromMap(env_);
+         }
+         napi_value operator()(napi_value& variantAddr)
+@@ -188,6 +222,9 @@ private:
+         }
+         napi_value operator()(std::vector<int32_t>*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_array(env_, &result);
+             if (status != napi_ok) {
+@@ -205,6 +242,9 @@ private:
+         }
+         napi_value operator()(std::vector<double>*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_array(env_, &result);
+             if (status != napi_ok) {
+@@ -222,6 +262,9 @@ private:
+         }
+         napi_value operator()(std::list<CameraNapiObject>*& variantAddr)
+         {
++            if (variantAddr == nullptr) {
++                return CreateUndefined();
++            }
+             napi_value result = nullptr;
+             napi_status status = napi_create_array(env_, &result);
+             if (status != napi_ok) {
+diff --git a/interfaces/kits/js/camera_napi/include/input/camera_manager_napi.h b/interfaces/kits/js/camera_napi/include/input/camera_manager_napi.h
+index 99372633e..00f30b180 100644
+--- a/interfaces/kits/js/camera_napi/include/input/camera_manager_napi.h
++++ b/interfaces/kits/js/camera_napi/include/input/camera_manager_napi.h
+@@ -211,7 +211,6 @@ public:
+     static napi_value Off(napi_env env, napi_callback_info info);
+     static napi_value GetCameraDevice(napi_env env, napi_callback_info info);
+     static napi_value GetCameraDevices(napi_env env, napi_callback_info info);
+-    static napi_value GetCameraDevicesInner(napi_env env, const std::vector<sptr<CameraDevice>>& cameraDeviceList);
+     static napi_value GetCameraConcurrentInfos(napi_env env, napi_callback_info info);
+     static napi_value GetCameraStorageSize(napi_env env, napi_callback_info info);
+ 
+diff --git a/interfaces/kits/js/camera_napi/include/input/camera_napi.h b/interfaces/kits/js/camera_napi/include/input/camera_napi.h
+index dfc3f054b..0b239901b 100644
+--- a/interfaces/kits/js/camera_napi/include/input/camera_napi.h
++++ b/interfaces/kits/js/camera_napi/include/input/camera_napi.h
+@@ -566,6 +566,13 @@ static const std::unordered_map<std::string, int32_t> mapOISAxes = {
+     {"YAW", 1},
+ };
+ 
++static const std::unordered_map<std::string, int32_t> mapSensorColorFilterArrangement = {
++    {"BGGR", 0},
++    {"GBRG", 1},
++    {"GRBG", 2},
++    {"RGGB", 3},
++};
++
+ enum CreateAsyncCallbackModes {
+     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
+ };
+diff --git a/interfaces/kits/native/include/camera/camera.h b/interfaces/kits/native/include/camera/camera.h
+index 4c6c290fd..1f679ca12 100644
+--- a/interfaces/kits/native/include/camera/camera.h
++++ b/interfaces/kits/native/include/camera/camera.h
+@@ -502,12 +502,6 @@ typedef enum OH_Camera_ExposureMeteringMode {
+      * @since 24
+      */
+     OH_CAMERA_EXPOSURE_METERING_MODE_SPOT = 2,
+-    
+-    /**
+-     * Center highlight weighted metering mode: Focuses in on highlight area near the center of the screen.
+-     * @since 24
+-     */
+-    OH_CAMERA_CENTER_HIGHLIGHT_WEIGH = 3
+ } OH_Camera_ExposureMeteringMode;
+ 
+ /**
+diff --git a/interfaces/kits/native/include/camera/camera_device.h b/interfaces/kits/native/include/camera/camera_device.h
+index fce720a31..6d44433ff 100644
+--- a/interfaces/kits/native/include/camera/camera_device.h
++++ b/interfaces/kits/native/include/camera/camera_device.h
+@@ -104,31 +104,32 @@ Camera_ErrorCode OH_CameraDevice_GetLensEquivalentFocalLengths(const Camera_Devi
+ Camera_ErrorCode OH_CameraDevice_IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera);
+ 
+ /**
+- * @brief Gets the array size of the constituent cameras.
++ * @brief Gets the constituent camera devices of a logical camera.
++ * Release resources of the constituent cameras by calling {@link OH_CameraDevice_DeleteConstituentCameraDevices} .
+  *
+  * @param logicalCamera Pointer to the logical Camera_Device.
+- * @param size The size of the array
+- * @return {@link #CAMERA_OK} if the method call succeeds.
+- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
++ * @param constituentCameras returns array of constituent camera devices.
++ * @param size the size of constituentCameras.
++ * @return {@link #CAMERA_OK} if successful
++ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or type incorrect
++ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error
+  * @since 24
+  */
+-Camera_ErrorCode OH_CameraDevice_GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size);
++Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(
++    const Camera_Device* logicalCamera, Camera_Device** constituentCameras, uint32_t* size);
+ 
+ /**
+- * @brief Gets the constituent camera devices of a logical camera.
+- * Gets the array size of the constituent cameras by calling {@link OH_CameraDevice_GetConstituentCamerasSize} .
++ * @brief delete the constituent cameras of logicalCamera.
+  *
+  * @param logicalCamera Pointer to the logical Camera_Device.
+- * @param constituentCameras Output parameter, returns array of constituent camera devices.
+- * @param size Output parameter, returns array size.
+-
+- * @return {@link #CAMERA_OK} if successful
+- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or type incorrect
+- *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error
++ * @param constituentCameras the constituent cameras to be released.
++ * @param size The size of the constituent cameras array.
++ * @return {@link #CAMERA_OK} if the method call succeeds.
++ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+  * @since 24
+  */
+-Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(const Camera_Device* logicalCamera,
+-    Camera_Device* constituentCameras, uint32_t size);
++Camera_ErrorCode OH_CameraDevice_DeleteConstituentCameraDevices(
++    const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size);
+ 
+ /**
+  * @brief Gets the focal length of a camera lens.
+diff --git a/interfaces/kits/native/include/camera/capture_session.h b/interfaces/kits/native/include/camera/capture_session.h
+index 7369e88b5..3a5d9187a 100644
+--- a/interfaces/kits/native/include/camera/capture_session.h
++++ b/interfaces/kits/native/include/camera/capture_session.h
+@@ -1300,33 +1300,21 @@ Camera_ErrorCode OH_CaptureSession_UnregisterIsoChangeCallback(
+ Camera_ErrorCode OH_CaptureSession_GetRAWCaptureZoomRatioRange(const Camera_CaptureSession* session,
+     float* minZoom, float* maxZoom);
+ 
+-/**
+- * @brief Gets the array size of the physical apertures.
+- *
+- * @param session the {@link Camera_CaptureSession} instance.
+- * @param size returned the array size of the physical apertures.
+- * @return {@link #CAMERA_OK} if the method call succeeds.
+- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+- * @since 24
+- */
+-Camera_ErrorCode OH_CaptureSession_GetPhysicalAperturesSize(const Camera_CaptureSession* session,
+-    uint32_t* size);
+-
+ /**
+  * @brief Gets the supported physical apertures list. 
+- * Gets the array size of the physical apertures by calling {@link OH_CaptureSession_GetPhysicalAperturesSize}.
++ * Release the physical apertures memory by calling {@link OH_CaptureSession_DeletePhysicalApertures}.
+  *
+  * @param session the {@link Camera_CaptureSession} instance
+  * @param apertures pointer to an array for storing physical aperture values
+- * @param size the size of physical apertures by calling {@link OH_CaptureSession_GetPhysicalAperturesSize}
++ * @param size the size of physical apertures.
+  * @return {@link #CAMERA_OK} success 
+  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+  *         {@link #CAMERA_OPERATION_NOT_ALLOWED} if operation not allowed, session or inputdevice maybe abnormal.
+- *         {@link #CAMERA_SESSION_NOT_CONFIG} if session config locked.
++ *         {@link #CAMERA_SESSION_NOT_CONFIG} if the capture session not config.
+  * @since 24
+  */
+ Camera_ErrorCode OH_CaptureSession_GetSupportedPhysicalApertures(const Camera_CaptureSession* session,
+-    OH_Camera_PhysicalAperture* apertures, uint32_t size);
++    OH_Camera_PhysicalAperture** apertures, uint32_t* size);
+ 
+ /**
+  * @brief Get current physical aperture value
+@@ -1341,6 +1329,19 @@ Camera_ErrorCode OH_CaptureSession_GetSupportedPhysicalApertures(const Camera_Ca
+  */
+ Camera_ErrorCode OH_CaptureSession_GetPhysicalAperture(const Camera_CaptureSession* session, double* aperture);
+ 
++/**
++ * @brief Delete the physical apertures.
++ *
++ * @param session the {@link Camera_CaptureSession} instance.
++ * @param apertures pointer to an array for storing physical aperture values
++ * @param size the array size of the physical apertures.
++ * @return {@link #CAMERA_OK} if the method call succeeds.
++ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
++ * @since 24
++ */
++Camera_ErrorCode OH_CaptureSession_DeletePhysicalApertures(const Camera_CaptureSession* session,
++    OH_Camera_PhysicalAperture* apertures, uint32_t size);
++
+ /**
+  * @brief Set physical aperture value
+  *
+diff --git a/services/camera_service/include/hcamera_device_manager.h b/services/camera_service/include/hcamera_device_manager.h
+index 3d913d403..ce4f91daa 100644
+--- a/services/camera_service/include/hcamera_device_manager.h
++++ b/services/camera_service/include/hcamera_device_manager.h
+@@ -315,9 +315,6 @@ public:
+                                sptr<HCameraDeviceHolder> &cameraRequestOpen);
+ 
+     bool IsProcessHasConcurrentDevice(pid_t pid);
+-    bool CheckCameraCombination(string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>);
+-    void CalMultiCameraCombinationInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
+-    bool IsMultiCameraCombinationSupported(vector<string> cameraIds);
+     bool PermDisableSA();
+ 
+     bool GetDisablePolicy();
+diff --git a/services/camera_service/src/hcamera_device.cpp b/services/camera_service/src/hcamera_device.cpp
+index b6ae573c8..832922b1c 100644
+--- a/services/camera_service/src/hcamera_device.cpp
++++ b/services/camera_service/src/hcamera_device.cpp
+@@ -1962,7 +1962,8 @@ bool HCameraDevice::CanOpenCamera()
+         return ret;
+     }
+     std::vector<sptr<HCameraDevice>> cameraNeedEvict;
+-    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this, cameraConcurrentType_);
++    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(
++        cameraNeedEvict, this, cameraConcurrentType_);
+     if (cameraNeedEvict.size() != 0) {
+         MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close other devices");
+         for (auto deviceItem : cameraNeedEvict) {
+@@ -2106,9 +2107,6 @@ int32_t HCameraDevice::Open(int32_t concurrentType)
+         "HCameraDevice::Open Camera width concurrent:[%{public}s, %{public}d]", cameraID_.c_str(), concurrentType);
+     SetCameraConcurrentType(concurrentType);
+     EnableDeviceOpenedByConcurrent(true);
+-    bool canOpen = HCameraDeviceManager::GetInstance()->CheckCameraCombination(cameraID_, GetDeviceAbility());
+-    CHECK_RETURN_RET_ELOG(
+-        !canOpen, CAMERA_UNSUPPORTED_COMBINATION, "HCameraDevice::open CheckCameraCombination failed.");
+     int32_t result = OpenDevice();
+     return result;
+ }
+diff --git a/services/camera_service/src/hcamera_device_manager.cpp b/services/camera_service/src/hcamera_device_manager.cpp
+index 938dbbf48..5fc1054c1 100644
+--- a/services/camera_service/src/hcamera_device_manager.cpp
++++ b/services/camera_service/src/hcamera_device_manager.cpp
+@@ -69,79 +69,6 @@ size_t HCameraDeviceManager::GetActiveCamerasCount()
+     return activeCameras_.size();
+ }
+ 
+-void HCameraDeviceManager::CalMultiCameraCombinationInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata)
+-{
+-    CHECK_RETURN(!unsupportedMultiCameraCombinationsMap_.IsEmpty());
+-    camera_metadata_item_t item;
+-    int32_t retCode = OHOS::Camera::FindCameraMetadataItem(
+-        metadata->get(), OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS, &item);
+-    if (retCode != CAMERA_OK) {
+-        MEDIA_WARNING_LOG("cameraAbility not support OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS");
+-        return;
+-    }
+-    int currentRow = 0;
+-    for (uint32_t i = 0; i < item.count; i++) {
+-        MEDIA_INFO_LOG("HCameraDeviceManager::CalMultiCameraCombinationInfo "
+-                       "OHOS_ABILITY_UNSUPPORTED_MULTI_CAMERA_COMBINATIONS:%{public}d",
+-            item.data.i32[i]);
+-        if (item.data.i32[i] == -1) {
+-            currentRow++;
+-            continue;
+-        }
+-        unordered_set<int> rowInfo;
+-        if (!unsupportedMultiCameraCombinationsMap_.Find(to_string(item.data.i32[i]), rowInfo)) {
+-            std::unordered_set<int> ele = { currentRow };
+-            unsupportedMultiCameraCombinationsMap_.EnsureInsert(to_string(item.data.i32[i]), ele);
+-        } else {
+-            unsupportedMultiCameraCombinationsMap_.ChangeValueByLambda(
+-                to_string(item.data.i32[i]), [currentRow](std::unordered_set<int>& info) { info.insert(currentRow); });
+-        }
+-    }
+-    unsupportedMultiCameraCombinationsMap_.Iterate([](const string cameraId, const unordered_set<int> rowInfo) {
+-        MEDIA_INFO_LOG("HCameraDeviceManager::CalMultiCameraCombinationInfo, unsupportedMultiCameraCombinationsMap_ "
+-                       "cameraId: %{public}s, unsupportedMultiCameraCombinationsMap_: %{public}s",
+-            cameraId.c_str(), Container2String(rowInfo.begin(), rowInfo.end()).c_str());
+-    });
+-}
+-
+-bool HCameraDeviceManager::IsMultiCameraCombinationSupported(vector<string> cameraIds)
+-{
+-    std::unordered_set<std::string> uniqueIds(cameraIds.begin(), cameraIds.end());
+-    std::unordered_set<int> idxs;
+-    std::regex numRegex("\\d+");
+-    for (auto cameraId : cameraIds) {
+-        std::smatch matchResult;
+-        if (std::regex_search(cameraId, matchResult, numRegex)) {
+-            cameraId = matchResult.str();
+-        }
+-        unordered_set<int> rowInfos;
+-        bool find = unsupportedMultiCameraCombinationsMap_.Find(cameraId, rowInfos);
+-        CHECK_CONTINUE_WLOG(!find,
+-            "unsupportedMultiCameraCombinationsMap_ find no information with cameraId: %{public}s", cameraId.c_str());
+-        auto iter = find_if(rowInfos.begin(), rowInfos.end(), [&idxs](int rowInfo) {
+-            if (idxs.find(rowInfo) == idxs.end()) {
+-                idxs.insert(rowInfo);
+-                return false;
+-            }
+-            return true;
+-        });
+-        CHECK_RETURN_RET(iter != rowInfos.end(), false);
+-    }
+-    return true;
+-}
+-
+-bool HCameraDeviceManager::CheckCameraCombination(
+-    string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata> ability)
+-{
+-    CalMultiCameraCombinationInfo(ability);
+-    CHECK_RETURN_RET_ILOG(unsupportedMultiCameraCombinationsMap_.IsEmpty(), true,
+-        "HCameraDeviceManager::CheckCameraCombination unsupportedMultiCameraCombinationsMap_ is empty.");
+-    vector<string> cameraIds = { cameraId };
+-    std::for_each(activeCameras_.begin(), activeCameras_.end(),
+-        [&cameraIds](auto& camera) { cameraIds.emplace_back(camera->GetDevice()->GetCameraId()); });
+-    return IsMultiCameraCombinationSupported(cameraIds);
+-}
+-
+ void HCameraDeviceManager::AddDevice(pid_t pid, sptr<HCameraDevice> device)
+ {
+     MEDIA_INFO_LOG("HCameraDeviceManager::AddDevice start, cameraID: %{public}s", device->GetCameraId().c_str());
+@@ -330,7 +257,7 @@ void HCameraDeviceManager::RefreshCameraDeviceHolderState(sptr<HCameraDeviceHold
+ }
+ 
+ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>& cameraNeedEvict,
+-                                              sptr<HCameraDevice> cameraRequestOpen, int32_t concurrentTypeOfRequest)
++    sptr<HCameraDevice> cameraRequestOpen, int32_t concurrentTypeOfRequest)
+ {
+     std::vector<pid_t> pidOfActiveClients = GetActiveClient();
+     pid_t pidOfOpenRequest = IPCSkeleton::GetCallingPid();
+@@ -382,7 +309,6 @@ bool HCameraDeviceManager::GetConflictDevices(std::vector<sptr<HCameraDevice>>&
+             cameraNeedEvict.emplace_back((*it)->GetDevice());
+         }
+     }
+-
+     // Return Can the cameras that must be left be concurrent.
+     MEDIA_DEBUG_LOG("HCameraDeviceManager::GetConflictDevices reservedCameras size: %{public}zu",
+         concurrentSelector_->GetCamerasRetainable().size());
