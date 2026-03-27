@@ -2223,15 +2223,15 @@ int32_t CaptureSession::IsOISModeSupported(OISMode oisMode, bool &isSupported)
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::IsOISModeSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::SUCCESS,
         "IsOISModeSupported camera device is null");
     // check if physical device
     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true), CameraErrorCode::SUCCESS,
         "IsOISModeSupported device is null or not physical");
     // get ois mode ability
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
         "IsOISModeSupported camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_OPTICAL_IMAGE_STABILIZATION_MODES, &item);
@@ -2307,8 +2307,8 @@ int32_t CaptureSession::GetCurrentOISMode(OISMode &oisMode)
         "GetCurrentOISMode camera device is null");
     // check if physical device
     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "GetCurrentOISMode device is null or not physical");
+    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetCurrentOISMode device is null or not physical");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "GetCurrentOISMode camera metadata is null");
@@ -2331,8 +2331,8 @@ int32_t CaptureSession::SetOISMode(OISMode oisMode)
         "SetOISMode camera device is null");
     // check if physical device
     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "SetOISMode device is null or not physical");
+    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "SetOISMode device is null or not physical");
     // check if oisMode supported
     bool isSupported = false;
     IsOISModeSupported(oisMode, isSupported);
@@ -2342,6 +2342,8 @@ int32_t CaptureSession::SetOISMode(OISMode oisMode)
     uint32_t count = 1;
     camera_metadata_item_t item;
     int32_t stabilizationModes = static_cast<int32_t>(oisMode);
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetOISMode Need to call LockForControl() before setting camera properties");
     int32_t ret =
         Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_OPTICAL_IMAGE_STABILIZATION_MODE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -2366,8 +2368,8 @@ int32_t CaptureSession::GetSupportedOISBiasRangeAndStep(
         "GetSupportedOISBiasRangeAndStep camera device is null");
     // check if physical device
     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "GetSupportedOISBiasRangeAndStep device is null or not physical");
+    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetSupportedOISBiasRangeAndStep device is null or not physical");
     // get ois bias ability
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
@@ -2445,8 +2447,8 @@ int32_t CaptureSession::GetCurrentCustomOISBias(OISAxes oisAxis, float &bias)
         "GetCurrentCustomOISBias camera device is null");
     // check if physical device
     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "GetCurrentCustomOISBias device is null or not physical");
+    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "GetCurrentCustomOISBias device is null or not physical");
     std::shared_ptr<Camera::CameraMetadata> metadata = device->GetCachedMetadata();
     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "GetCurrentCustomOISBias camera metadata is null");
@@ -2481,9 +2483,9 @@ int32_t CaptureSession::SetOISModeCustom(float pitchBias, float yawBias, float r
         "SetOISModeCustom camera device is null");
     // check if physical device
     sptr<CameraDevice> device = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "SetOISModeCustom device is null or not physical");
-    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(device == nullptr || device->IsLogicalCamera().value_or(true),
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "SetOISModeCustom device is null or not physical");
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetOISModeCustom Need to call LockForControl() before setting camera properties");
     // check if custom mode
     CHECK_RETURN_RET_ELOG(oisMode_ != OIS_MODE_CUSTOM, CameraErrorCode::OPERATION_NOT_ALLOWED,
@@ -2875,17 +2877,17 @@ int32_t CaptureSession::GetExposureBiasStep(float& exposureBiasStep)
     MEDIA_INFO_LOG("GetExposureBiasStep sceneMode:%{public}d", sceneMode);
     CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "CaptureSession::GetExposureValue Session is not Commited");
+        "CaptureSession::GetExposureBiasStep Session is not Commited");
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "CaptureSession::GetExposureValue camera device is null");
+        "CaptureSession::GetExposureBiasStep camera device is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
     CHECK_RETURN_RET_ELOG(
         metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED, "GetExposureValue camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AE_COMPENSATION_STEP, &item);
     CHECK_RETURN_RET_WLOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetExposureValue Failed with return code %{public}d", ret);
+        "CaptureSession::GetExposureBiasStep Failed with return code %{public}d", ret);
     int32_t stepNumerator = item.data.r->numerator;
     int32_t stepDenominator = item.data.r->denominator;
     if (stepDenominator == 0) {
@@ -2996,10 +2998,11 @@ int32_t CaptureSession::IsFocusModeSupported(FocusMode focusMode, bool& isSuppor
 
 int32_t CaptureSession::IsFocusDistanceSupported(bool& isSupported)
 {
-    float minimumFocusDistance = 0.0f;
-    int32_t ret = GetMinimumFocusDistance(minimumFocusDistance);
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetFocusMode Session is not Commited");
+    float minimumFocusDistance = GetMinimumFocusDistance();
     isSupported = FloatIsEqual(minimumFocusDistance, 0.0) ? false : true;
-    return ret;
+    return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
@@ -4447,30 +4450,6 @@ float CaptureSession::GetMinimumFocusDistance() __attribute__((no_sanitize("cfi"
     float minimumFocusDistance = item.data.f[0];
     MEDIA_DEBUG_LOG("CaptureSession::GetMinimumFocusDistance minimumFocusDistance=%{public}f", minimumFocusDistance);
     return minimumFocusDistance;
-}
-
-int32_t CaptureSession::GetMinimumFocusDistance(float& minimumFocusDistance)
-{
-    minimumFocusDistance = 0.0f;
-    SceneMode sceneMode = GetMode();
-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
-    auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(
-        !inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED, "CaptureSession::GetISO camera device is null");
-    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(
-        !inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED, "CaptureSession::GetISO camera deviceInfo is null");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
-    CHECK_RETURN_RET_ELOG(
-        metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED, "GetISO camera metadata is null");
-    camera_metadata_item_t item;
-    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LENS_INFO_MINIMUM_FOCUS_DISTANCE, &item);
-    CHECK_RETURN_RET_ILOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetISO Failed with return code %{public}d", ret);
-    // LCOV_EXCL_START
-    minimumFocusDistance = item.data.f[0];
-    MEDIA_DEBUG_LOG("minimumFocusDistance: %{public}f", minimumFocusDistance);
-    return CameraErrorCode::SUCCESS;
 }
 
 void CaptureSession::ProcessFocusDistanceUpdates(const std::shared_ptr<Camera::CameraMetadata>& result)

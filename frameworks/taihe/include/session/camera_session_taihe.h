@@ -167,6 +167,16 @@ public:
 private:
     void OnFlashStateChangedCallback(OHOS::CameraStandard::FlashState info) const;
 };
+
+class IsoInfoSyncCallbackListener : public OHOS::CameraStandard::IsoInfoSyncCallback, public ListenerBase,
+    public std::enable_shared_from_this<IsoInfoSyncCallbackListener> {
+public:
+    IsoInfoSyncCallbackListener(ani_env* env) : ListenerBase(env) {}
+    ~IsoInfoSyncCallbackListener() = default;
+    void OnIsoInfoChangedSync(OHOS::CameraStandard::IsoInfo info) override;
+private:
+    void OnIsoInfoChangedCallback(OHOS::CameraStandard::IsoInfo info) const;
+};
 class SessionImpl : public CameraAniEventEmitter<SessionImpl>,
                     virtual public SessionBase {
 public:
@@ -248,6 +258,8 @@ public:
     void OffExposureInfoChange(optional_view<callback<void(ExposureInfo const&)>> callback);
     void OnFlashStateChange(callback_view<void(FlashState)> callback);
     void OffFlashStateChange(optional_view<callback<void(FlashState)>> callback);
+    void OnIsoInfoChange(callback_view<void(IsoInfo const&)> callback);
+    void OffIsoInfoChange(optional_view<callback<void(IsoInfo const&)>> callback);
 
     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;

@@ -128,7 +128,6 @@ const std::unordered_map<MeteringMode, CameraSessionNapi::ExposureMeteringModeof
 const std::unordered_map<CameraSessionNapi::ExposureMeteringModeofSdk, MeteringMode>
     CameraSessionNapi::JsToFwkMeteringModeMap_ = {
         { ExposureMeteringModeofSdk::CENTER, MeteringMode::METERING_MODE_CENTER_WEIGHTED },
-        { ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED, MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED },
         { ExposureMeteringModeofSdk::MATRIX, MeteringMode::METERING_MODE_REGION },
         { ExposureMeteringModeofSdk::SPOT, MeteringMode::METERING_MODE_SPOT },
     };
@@ -1949,19 +1948,14 @@ napi_value CameraSessionNapi::SetVideoStabilizationMode(napi_env env, napi_callb
 napi_value CameraSessionNapi::GetSupportedISORange(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetSupportedISORange is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
 
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetSupportedISORange parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<int32_t> vecIsoList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorSensitivityRange(vecIsoList);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -1988,18 +1982,13 @@ napi_value CameraSessionNapi::GetSupportedISORange(napi_env env, napi_callback_i
 napi_value CameraSessionNapi::GetISO(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetISO is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetISO parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         int32_t iso;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetISO(iso);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -2016,20 +2005,14 @@ napi_value CameraSessionNapi::SetISO(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("SetISO is called");
     CAMERA_SYNC_TRACE;
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
+    int32_t iso;
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        int32_t iso;
-        napi_get_value_int32(env, argv[PARAM0], &iso);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, iso);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::SetISO parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         cameraSessionNapi->cameraSession_->LockForControl();
         cameraSessionNapi->cameraSession_->SetISO(iso);
         MEDIA_INFO_LOG("CameraSessionNapi::SetISO set iso:%{public}d", iso);
@@ -2417,18 +2400,13 @@ napi_value CameraSessionNapi::SetExposureBias(napi_env env, napi_callback_info i
 napi_value CameraSessionNapi::IsFocusDistanceSupported(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("IsFocusDistanceSupported is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsFocusDistanceSupported parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsFocusDistanceSupported(isSupported);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -2502,19 +2480,13 @@ napi_value CameraSessionNapi::GetFocalLength(napi_env env, napi_callback_info in
 napi_value CameraSessionNapi::GetFocusDistance(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetFocusDistance is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr &&
-        cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetFocusDistance parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         float distance;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusDistance(distance);
         CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
@@ -2529,20 +2501,14 @@ napi_value CameraSessionNapi::SetFocusDistance(napi_env env, napi_callback_info 
 {
     MEDIA_DEBUG_LOG("SetFocusDistance is called");
     CAMERA_SYNC_TRACE;
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = { 0 };
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
+    double value;
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        double value;
-        napi_get_value_double(env, argv[PARAM0], &value);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, value);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::SetFocusDistance parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         float distance = static_cast<float>(value);
         cameraSessionNapi->cameraSession_->LockForControl();
         cameraSessionNapi->cameraSession_->SetFocusDistance(distance);
@@ -2754,19 +2720,13 @@ napi_value CameraSessionNapi::SetFocusDriven(napi_env env, napi_callback_info in
 napi_value CameraSessionNapi::GetRAWCaptureZoomRatioRange(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetRAWCaptureZoomRatioRange is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
-
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetRAWCaptureZoomRatioRange parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<float> vecZoomRatioList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetRAWZoomRatioRange(vecZoomRatioList);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -5251,6 +5211,7 @@ napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callbac
         int32_t value = 0;
         napi_get_value_int32(env, argv[PARAM0], &value);
         if (value == static_cast<int32_t>(CameraSessionNapi::ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED)) {
+            CHECK_RETURN_RET(!CameraNapiSecurity::CheckSystemApp(env, false), result);
             value = static_cast<int32_t>(MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED);
         }
         MeteringMode mode = static_cast<MeteringMode>(value);
@@ -5266,20 +5227,14 @@ napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callbac
 
 napi_value CameraSessionNapi::IsMeteringModeSupported(napi_env env, napi_callback_info info)
 {
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
+    int32_t value;
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
-        int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, value);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsMeteringModeSupported parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         auto itr = JsToFwkMeteringModeMap_.find(static_cast<ExposureMeteringModeofSdk>(value));
         if (itr == JsToFwkMeteringModeMap_.end()) {
             return nullptr;
@@ -5300,18 +5255,13 @@ napi_value CameraSessionNapi::IsMeteringModeSupported(napi_env env, napi_callbac
 napi_value CameraSessionNapi::GetMeteringMode(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetMeteringMode is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetMeteringMode parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         MeteringMode mode;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetMeteringMode(mode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -5333,18 +5283,13 @@ napi_value CameraSessionNapi::GetMeteringMode(napi_env env, napi_callback_info i
 napi_value CameraSessionNapi::GetExposureDurationRange(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("getExposureDurationRange is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetExposureDurationRange parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<uint32_t> vecExposureList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorExposureTimeRange(vecExposureList);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -5354,10 +5299,10 @@ napi_value CameraSessionNapi::GetExposureDurationRange(napi_env env, napi_callba
             return result;
         }
         for (size_t i = 0; i < vecExposureList.size(); i++) {
-            uint32_t exposure = vecExposureList[i];
+            int32_t exposure = static_cast<int32_t>(vecExposureList[i]);
             MEDIA_DEBUG_LOG("EXPOSURE_RANGE : exposureDuration = %{public}d", vecExposureList[i]);
             napi_value value;
-            napi_create_uint32(env, exposure, &value);
+            napi_create_int32(env, exposure, &value);
             napi_set_element(env, result, i, value);
         }
         MEDIA_DEBUG_LOG("EXPOSURE_RANGE ExposureList size : %{public}zu", vecExposureList.size());
@@ -5370,18 +5315,14 @@ napi_value CameraSessionNapi::GetExposureDurationRange(napi_env env, napi_callba
 napi_value CameraSessionNapi::GetExposureDuration(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetExposureDuration is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi!= nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetExposureDuration parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         uint32_t exposureDurationValue;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSensorExposureTime(exposureDurationValue);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -5398,18 +5339,13 @@ napi_value CameraSessionNapi::GetExposureDuration(napi_env env, napi_callback_in
 napi_value CameraSessionNapi::GetExposureBiasStep(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("GetExposureBiasStep is called");
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ZERO;
-    napi_value argv[ARGS_ZERO];
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi!= nullptr) {
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::GetExposureDuration parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         float exposureBiasStep;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetExposureBiasStep(exposureBiasStep);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -5426,23 +5362,18 @@ napi_value CameraSessionNapi::SetExposureDuration(napi_env env, napi_callback_in
 {
     MEDIA_DEBUG_LOG("SetExposureDuration is called");
     CAMERA_SYNC_TRACE;
-    napi_status status;
     napi_value result = nullptr;
-    size_t argc = ARGS_ONE;
-    napi_value argv[ARGS_ONE] = {0};
-    napi_value thisVar = nullptr;
-
-    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
-
+    int32_t exposureDurationValue;
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
-        uint32_t exposureDurationValue;
-        napi_get_value_uint32(env, argv[PARAM0], &exposureDurationValue);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, exposureDurationValue);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsOISModeSupported parse parameter occur error");
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
         MEDIA_DEBUG_LOG("SetExposureDuration : exposureDuration = %{public}d", exposureDurationValue);
         cameraSessionNapi->cameraSession_->LockForControl();
-        int32_t retCode = cameraSessionNapi->cameraSession_->SetSensorExposureTime(exposureDurationValue);
+        int32_t retCode =
+            cameraSessionNapi->cameraSession_->SetSensorExposureTime(static_cast<uint32_t>(exposureDurationValue));
         cameraSessionNapi->cameraSession_->UnlockForControl();
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return result;
@@ -5459,7 +5390,7 @@ napi_value CameraSessionNapi::GetSupportedPhysicalApertures(napi_env env, napi_c
     MEDIA_DEBUG_LOG("GetSupportedPhysicalApertures is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
         MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedPhysicalApertures parse parameter occur error");
         return nullptr;
     }
@@ -5494,7 +5425,7 @@ napi_value CameraSessionNapi::GetPhysicalAperture(napi_env env, napi_callback_in
     MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::GetPhysicalAperture parse parameter occur error");
         return nullptr;
     }
@@ -5520,7 +5451,7 @@ napi_value CameraSessionNapi::SetPhysicalAperture(napi_env env, napi_callback_in
     double physicalAperture = 0.0;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, physicalAperture);
-    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
         MEDIA_ERR_LOG("controlCenterSessionNapi::SetPhysicalAperture parse parameter occur error");
         return nullptr;
     }
@@ -5544,7 +5475,7 @@ napi_value CameraSessionNapi::IsOISModeSupported(napi_env env, napi_callback_inf
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisMode;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisMode);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::IsOISModeSupported parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -5567,7 +5498,7 @@ napi_value CameraSessionNapi::GetCurrentOISMode(napi_env env, napi_callback_info
     MEDIA_INFO_LOG("CameraSessionNapi::GetCurrentOISMode is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::GetCurrentOISMode parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -5590,7 +5521,7 @@ napi_value CameraSessionNapi::SetOISMode(napi_env env, napi_callback_info info)
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisMode;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisMode);
-    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
         MEDIA_ERR_LOG("CameraSessionNapi::SetOISMode parse parameter occur error");
         return nullptr;
     }
@@ -5616,7 +5547,7 @@ napi_value CameraSessionNapi::GetSupportedOISBiasRange(napi_env env, napi_callba
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisAxes;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxes);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::GetSupportedOISBiasRange parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -5649,7 +5580,7 @@ napi_value CameraSessionNapi::GetSupportedOISBiasStep(napi_env env, napi_callbac
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisAxis;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::GetSupportedOISBiasStep parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -5674,7 +5605,7 @@ napi_value CameraSessionNapi::GetCurrentCustomOISBias(napi_env env, napi_callbac
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisAxis;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error"), nullptr,
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::GetCurrentCustomOISBias parse parameter occur error");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {

@@ -119,6 +119,14 @@ FlashMode FlashImpl::GetFlashMode()
     return FlashMode(static_cast<FlashMode::key_t>(flashMode));
 }
 
+array<double> ZoomQueryImpl::GetRAWCaptureZoomRatioRange()
+{
+    array<double> zoomRatioRange = {};
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not GetRAWCaptureZoomRatioRange in current session!");
+    return zoomRatioRange;
+}
+
 array<double> ZoomQueryImpl::GetZoomRatioRange()
 {
     MEDIA_DEBUG_LOG("GetZoomRatioRange is called");
@@ -1067,7 +1075,7 @@ bool ManualIsoQueryImpl::IsManualIsoSupported()
     return false;
 }
 
-array<int32_t> ManualIsoQueryImpl::GetSupportedISORange()
+array<int32_t> ManualIsoQueryImpl::GetSupportedIsoRange()
 {
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not GetIsoRange in current session!");
@@ -1307,12 +1315,12 @@ void ManualFocusImpl::SetFocusDistance(double distance)
     captureSessionForSys_->UnlockForControl();
 }
 
-bool ManualFocusImpl::IsManualFocusSupported()
+bool ManualFocusImpl::IsFocusDistanceSupported()
 {
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
-        "SystemApi IsManualFocusSupported is called!");
+        "SystemApi IsFocusDistanceSupported is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
-        "can not IsManualFocusSupported in current session!");
+        "can not IsFocusDistanceSupported in current session!");
     return false;
 }
 

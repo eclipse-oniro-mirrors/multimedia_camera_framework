@@ -502,12 +502,6 @@ typedef enum OH_Camera_ExposureMeteringMode {
      * @since 24
      */
     OH_CAMERA_EXPOSURE_METERING_MODE_SPOT = 2,
-    
-    /**
-     * Center highlight weighted metering mode: Focuses in on highlight area near the center of the screen.
-     * @since 24
-     */
-    OH_CAMERA_CENTER_HIGHLIGHT_WEIGH = 3
 } OH_Camera_ExposureMeteringMode;
 
 /**

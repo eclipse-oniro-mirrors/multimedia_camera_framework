@@ -566,6 +566,13 @@ static const std::unordered_map<std::string, int32_t> mapOISAxes = {
     {"YAW", 1},
 };
 
+static const std::unordered_map<std::string, int32_t> mapSensorColorFilterArrangement = {
+    {"BGGR", 0},
+    {"GBRG", 1},
+    {"GRBG", 2},
+    {"RGGB", 3},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

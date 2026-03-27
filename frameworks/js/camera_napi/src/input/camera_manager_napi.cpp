@@ -1335,47 +1335,18 @@ napi_value CameraManagerNapi::GetCameraDevices(napi_env env, napi_callback_info 
         CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "cameraDeviceList is null.");
         return nullptr;
     } else {
-        MEDIA_DEBUG_LOG("CameraManagerNapi::GetCameraDevices found %{public}zu camera devices",
-            cameraDeviceList.size());
+        MEDIA_DEBUG_LOG(
+            "CameraManagerNapi::GetCameraDevices found %{public}zu camera devices", cameraDeviceList.size());
     }
-    return GetCameraDevicesInner(env, cameraDeviceList);
-}
-
-napi_value CameraManagerNapi::GetCameraDevicesInner(
-    napi_env env, const std::vector<sptr<CameraDevice>>& cameraDeviceList)
-{
     napi_value result = nullptr;
-    std::unordered_map<std::string, napi_value> deviceMap;
-    std::unordered_map<std::string, std::vector<std::string>> logicalDeviceConstituents;
     napi_create_array_with_length(env, cameraDeviceList.size(), &result);
     for (size_t i = 0; i < cameraDeviceList.size(); ++i) {
         if (cameraDeviceList[i] == nullptr) {
             MEDIA_ERR_LOG("CameraManagerNapi::GetCameraDevices camera device at index %{public}zu is null", i);
             continue;
         }
-        string deviceId = cameraDeviceList[i]->GetID();
         napi_value jsDevice = CameraNapiObjCameraDevice(*cameraDeviceList[i]).GenerateNapiValue(env);
-        deviceMap[deviceId] = jsDevice;
-        if (cameraDeviceList[i]->IsLogicalCamera()) {
-            auto constituentDeviceIds = cameraDeviceList[i]->GetConstituentCameraDevices();
-            for (auto& device : constituentDeviceIds) {
-                device = "device/" + device;
-                logicalDeviceConstituents[deviceId].emplace_back(device);
-            }
-        }
         napi_set_element(env, result, i, jsDevice);
-    }
-    for (auto& [logicalDeviceId, jsLogicalDevice] : deviceMap) {
-        if (logicalDeviceConstituents.find(logicalDeviceId) == logicalDeviceConstituents.end()) {
-            continue;
-        }
-        napi_value jsConstituentArray;
-        napi_create_array_with_length(env, logicalDeviceConstituents[logicalDeviceId].size(), &jsConstituentArray);
-        for (size_t j = 0; j < logicalDeviceConstituents[logicalDeviceId].size(); ++j) {
-            std::string constDeviceId = logicalDeviceConstituents[logicalDeviceId][j];
-            napi_set_element(env, jsConstituentArray, j, deviceMap[constDeviceId]);
-        }
-        napi_set_named_property(env, deviceMap[logicalDeviceId], "constituentCameraDevices", jsConstituentArray);
     }
     return result;
 }

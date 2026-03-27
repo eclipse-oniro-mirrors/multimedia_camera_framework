@@ -115,8 +115,7 @@ array<PhysicalAperture> CameraUtilsTaihe::ToTaiheArrayPhysicalAperture(
 CameraDevice CameraUtilsTaihe::GetNullCameraDevice()
 {
     std::string defaultString = "";
-    CameraDevice cameraTaihe {
-        .cameraId = CameraUtilsTaihe::ToTaiheString(defaultString),
+    CameraDevice cameraTaihe { .cameraId = CameraUtilsTaihe::ToTaiheString(defaultString),
         .cameraPosition = CameraPosition::key_t::CAMERA_POSITION_UNSPECIFIED,
         .cameraType = CameraType::key_t::CAMERA_TYPE_DEFAULT,
         .connectionType = ConnectionType::key_t::CAMERA_CONNECTION_BUILT_IN,
@@ -126,6 +125,15 @@ CameraDevice CameraUtilsTaihe::GetNullCameraDevice()
         .cameraOrientation = 0,
         .lensEquivalentFocalLength = optional<array<int32_t>>(std::nullopt),
         .automotiveCameraPosition = optional<AutomotiveCameraPosition>(std::nullopt),
+        .isLogicalCamera = optional<bool>(std::nullopt),
+        .constituentCameraDevices = optional<array<CameraDevice>>(std::nullopt),
+        .lensFocalLength = optional<double>(std::nullopt),
+        .minimumFocusDistance = optional<double>(std::nullopt),
+        .lensDistortion = optional<array<double>>(std::nullopt),
+        .lensIntrinsicCalibration = optional<array<double>>(std::nullopt),
+        .sensorPhysicalSize = optional<array<double>>(std::nullopt),
+        .sensorPixelArraySize = optional<array<int32_t>>(std::nullopt),
+        .sensorColorFilterArrangement = optional<SensorColorFilterArrangement>(std::nullopt),
     };
     return cameraTaihe;
 }
@@ -149,11 +157,95 @@ CameraDevice CameraUtilsTaihe::ToTaiheCameraDevice(sptr<OHOS::CameraStandard::Ca
     cameraTaihe.hostDeviceType = HostDeviceType::from_value(static_cast<int32_t>(obj->GetDeviceType()));
     cameraTaihe.hostDeviceName = ToTaiheString(obj->GetHostName());
     cameraTaihe.cameraOrientation = obj->GetCameraOrientation();
-    std::vector<int32_t> lensEquivalentFocalLength = obj->GetLensEquivalentFocalLength();
+    std::vector<int32_t> lensEquivalentFocalLength =
+        obj->GetLensEquivalentFocalLength().value_or(std::vector<int32_t> {});
     cameraTaihe.lensEquivalentFocalLength =
         optional<array<int32_t>>(std::in_place, array<int32_t>(lensEquivalentFocalLength));
     cameraTaihe.automotiveCameraPosition = optional<AutomotiveCameraPosition>(std::in_place,
         AutomotiveCameraPosition::from_value(static_cast<int32_t>(obj->GetAutomotivePosition())));
+    CHECK_EXECUTE(obj->IsLogicalCamera().has_value(),
+        cameraTaihe.isLogicalCamera = optional<bool>::make(obj->IsLogicalCamera().value()));
+    CHECK_EXECUTE(obj->GetLensFocalLength().has_value(),
+        cameraTaihe.lensFocalLength = optional<double>::make(obj->GetLensFocalLength().value()));
+    CHECK_EXECUTE(obj->GetMinimumFocusDistance().has_value(),
+        cameraTaihe.minimumFocusDistance = optional<double>::make(obj->GetMinimumFocusDistance().value()));
+    auto lensDistortionOpt = obj->GetLensDistortion();
+    CHECK_EXECUTE(lensDistortionOpt.has_value(),
+        cameraTaihe.lensDistortion = optional<array<double>>(std::in_place, array<double>(lensDistortionOpt.value())));
+    auto lensIntrinsicCalibrationOpt = obj->GetLensIntrinsicCalibration();
+    CHECK_EXECUTE(lensIntrinsicCalibrationOpt.has_value(),
+        cameraTaihe.lensIntrinsicCalibration =
+            optional<array<double>>(std::in_place, array<double>(lensIntrinsicCalibrationOpt.value())));
+    auto sensorPhysicalSizeOpt = obj->GetSensorPhysicalSize();
+    CHECK_EXECUTE(sensorPhysicalSizeOpt.has_value(),
+        cameraTaihe.sensorPhysicalSize =
+            optional<array<double>>(std::in_place, array<double>(sensorPhysicalSizeOpt.value())));
+    auto sensorPixelArraySizeopt = obj->GetSensorPixelArraySize();
+    CHECK_EXECUTE(sensorPixelArraySizeopt.has_value(),
+        cameraTaihe.sensorPixelArraySize =
+            optional<array<int32_t>>(std::in_place, array<int32_t>(sensorPixelArraySizeopt.value())));
+    auto sensorColorFilterArrangementOpt = obj->GetSensorColorFilterArrangement();
+    CHECK_EXECUTE(sensorColorFilterArrangementOpt.has_value(),
+        cameraTaihe.sensorColorFilterArrangement = optional<SensorColorFilterArrangement>(std::in_place,
+            SensorColorFilterArrangement::from_value(static_cast<int32_t>(sensorColorFilterArrangementOpt.value()))));
+    CHECK_RETURN_RET(!obj->IsLogicalCamera().value_or(false), cameraTaihe);
+    auto constituentDeviceIdsOpt = obj->GetConstituentCameraDevices();
+    if (constituentDeviceIdsOpt.has_value() && !constituentDeviceIdsOpt.value().empty()) {
+        std::vector<std::string> constituentDeviceIds = constituentDeviceIdsOpt.value();
+        std::vector<CameraDevice> constituentCameraDevicesList;
+        for (const auto& deviceId : constituentDeviceIds) {
+            std::string fullDeviceId = "device/" + deviceId;
+            OHOS::sptr<OHOS::CameraStandard::CameraDevice> cameraInfo =
+                OHOS::CameraStandard::CameraManager::GetInstance()->GetCameraDeviceFromId(fullDeviceId);
+            CameraDevice cameraTaiheSub = ToTaihePhysicalCameraDevice(cameraInfo);
+            constituentCameraDevicesList.emplace_back(cameraTaiheSub);
+        }
+        if (!constituentCameraDevicesList.empty()) {
+            cameraTaihe.constituentCameraDevices =
+                optional<array<CameraDevice>>(std::in_place, array<CameraDevice>(constituentCameraDevicesList));
+        }
+    }
+    return cameraTaihe;
+}
+
+CameraDevice CameraUtilsTaihe::ToTaihePhysicalCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj)
+{
+    CameraDevice cameraTaihe = CameraUtilsTaihe::GetNullCameraDevice();
+    CHECK_RETURN_RET_ELOG(!obj, cameraTaihe, "obj is null");
+    cameraTaihe.cameraId = ToTaiheString(obj->GetID());
+    cameraTaihe.cameraPosition = CameraPosition::from_value(static_cast<int32_t>(obj->GetPosition()));
+    cameraTaihe.cameraType = CameraType::from_value(static_cast<int32_t>(obj->GetCameraType()));
+    cameraTaihe.connectionType = ConnectionType::from_value(static_cast<int32_t>(obj->GetConnectionType()));
+    cameraTaihe.isRetractable = optional<bool>::make(obj->GetisRetractable());
+    cameraTaihe.hostDeviceType = HostDeviceType::from_value(static_cast<int32_t>(obj->GetDeviceType()));
+    cameraTaihe.hostDeviceName = ToTaiheString(obj->GetHostName());
+    cameraTaihe.cameraOrientation = static_cast<int32_t>(obj->GetCameraOrientation());
+
+    std::vector<int32_t> lensEquivalentFocalLength =
+        obj->GetLensEquivalentFocalLength().value_or(std::vector<int32_t> {});
+    cameraTaihe.lensEquivalentFocalLength =
+        optional<array<int32_t>>(std::in_place, array<int32_t>(lensEquivalentFocalLength));
+    CHECK_EXECUTE(obj->IsLogicalCamera().has_value(),
+        cameraTaihe.isLogicalCamera = optional<bool>::make(obj->IsLogicalCamera().value()));
+    CHECK_EXECUTE(obj->GetLensFocalLength().has_value(),
+        cameraTaihe.lensFocalLength = optional<double>::make(obj->GetLensFocalLength().value()));
+    CHECK_EXECUTE(obj->GetMinimumFocusDistance().has_value(),
+        cameraTaihe.minimumFocusDistance = optional<double>::make(obj->GetMinimumFocusDistance().value()));
+    auto lensDistortionOpt = obj->GetLensDistortion();
+    CHECK_EXECUTE(lensDistortionOpt.has_value(),
+        cameraTaihe.lensDistortion = optional<array<double>>(std::in_place, array<double>(lensDistortionOpt.value())));
+    auto lensIntrinsicCalibrationOpt = obj->GetLensIntrinsicCalibration();
+    CHECK_EXECUTE(lensIntrinsicCalibrationOpt.has_value(),
+        cameraTaihe.lensIntrinsicCalibration =
+            optional<array<double>>(std::in_place, array<double>(lensIntrinsicCalibrationOpt.value())));
+    auto sensorPhysicalSizeOpt = obj->GetSensorPhysicalSize();
+    CHECK_EXECUTE(sensorPhysicalSizeOpt.has_value(),
+        cameraTaihe.sensorPhysicalSize =
+            optional<array<double>>(std::in_place, array<double>(sensorPhysicalSizeOpt.value())));
+    auto sensorColorFilterArrangementOpt = obj->GetSensorColorFilterArrangement();
+    CHECK_EXECUTE(sensorColorFilterArrangementOpt.has_value(),
+        cameraTaihe.sensorColorFilterArrangement = optional<SensorColorFilterArrangement>(std::in_place,
+            SensorColorFilterArrangement::from_value(static_cast<int32_t>(sensorColorFilterArrangementOpt.value()))));
     return cameraTaihe;
 }
 

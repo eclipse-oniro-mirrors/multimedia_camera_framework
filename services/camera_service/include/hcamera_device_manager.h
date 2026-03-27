@@ -315,9 +315,6 @@ public:
                                sptr<HCameraDeviceHolder> &cameraRequestOpen);
 
     bool IsProcessHasConcurrentDevice(pid_t pid);
-    bool CheckCameraCombination(string cameraId, std::shared_ptr<OHOS::Camera::CameraMetadata>);
-    void CalMultiCameraCombinationInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> metadata);
-    bool IsMultiCameraCombinationSupported(vector<string> cameraIds);
     bool PermDisableSA();
 
     bool GetDisablePolicy();

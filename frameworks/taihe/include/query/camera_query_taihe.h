@@ -71,6 +71,7 @@ public:
     array<double> GetZoomRatioRange();
     array<ZoomPointInfo> GetZoomPointInfos();
     bool IsZoomCenterPointSupported();
+    virtual array<double> GetRAWCaptureZoomRatioRange();
 };
 
 class ZoomImpl : public ZoomQueryImpl {
@@ -272,7 +273,7 @@ public:
     virtual ~ManualIsoQueryImpl() = default;
     virtual array<int32_t> GetIsoRange();
     virtual bool IsManualIsoSupported();
-    virtual array<int32_t> GetSupportedISORange();
+    virtual array<int32_t> GetSupportedIsoRange();
 };
 
 class ManualIsoImpl : public ManualIsoQueryImpl {
@@ -287,7 +288,7 @@ class ApertureQueryImpl : virtual public SessionBase, virtual public FunctionBas
 public:
     explicit ApertureQueryImpl() {}
     virtual ~ApertureQueryImpl() = default;
-    array<PhysicalAperture> GetSupportedPhysicalApertures();
+    virtual array<PhysicalAperture> GetSupportedPhysicalApertures();
     array<double> GetSupportedVirtualApertures();
 };
 
@@ -297,8 +298,8 @@ public:
     virtual ~ApertureImpl() = default;
     void SetVirtualAperture(double aperture);
     double GetVirtualAperture();
-    void SetPhysicalAperture(double aperture);
-    double GetPhysicalAperture();
+    virtual void SetPhysicalAperture(double aperture);
+    virtual double GetPhysicalAperture();
 };
 
 class EffectSuggestionImpl : virtual public SessionBase {
@@ -332,7 +333,7 @@ public:
     virtual ~ManualFocusImpl() = default;
     virtual double GetFocusDistance();
     virtual void SetFocusDistance(double distance);
-    virtual bool IsManualFocusSupported();
+    virtual bool IsFocusDistanceSupported();
 };
 
 class PortraitQueryImpl : virtual public SessionBase, virtual public FunctionBase {

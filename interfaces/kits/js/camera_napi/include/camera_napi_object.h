@@ -136,50 +136,84 @@ private:
     class CreateNapiObjVisitor {
     public:
         explicit CreateNapiObjVisitor(napi_env& env) : env_(env) {}
+
+    private:
+        napi_value CreateUndefined()
+        {
+            napi_value result = nullptr;
+            napi_get_undefined(env_, &result);
+            return result;
+        }
+
+    public:
         napi_value operator()(bool*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_get_boolean(env_, *variantAddr, &result);
             return status == napi_ok ? result : nullptr;
         }
         napi_value operator()(int32_t*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_int32(env_, *variantAddr, &result);
             return status == napi_ok ? result : nullptr;
         }
         napi_value operator()(uint32_t*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_uint32(env_, *variantAddr, &result);
             return status == napi_ok ? result : nullptr;
         }
         napi_value operator()(int64_t*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_int64(env_, *variantAddr, &result);
             return status == napi_ok ? result : nullptr;
         }
         napi_value operator()(float*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_double(env_, *variantAddr, &result);
             return status == napi_ok ? result : nullptr;
         }
         napi_value operator()(double*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_double(env_, *variantAddr, &result);
             return status == napi_ok ? result : nullptr;
         }
         napi_value operator()(std::string*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_string_utf8(env_, variantAddr->c_str(), variantAddr->size(), &result);
             return status == napi_ok ? result : nullptr;
         }
         napi_value operator()(CameraNapiObject*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             return variantAddr->CreateNapiObjFromMap(env_);
         }
         napi_value operator()(napi_value& variantAddr)
@@ -188,6 +222,9 @@ private:
         }
         napi_value operator()(std::vector<int32_t>*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_array(env_, &result);
             if (status != napi_ok) {
@@ -205,6 +242,9 @@ private:
         }
         napi_value operator()(std::vector<double>*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_array(env_, &result);
             if (status != napi_ok) {
@@ -222,6 +262,9 @@ private:
         }
         napi_value operator()(std::list<CameraNapiObject>*& variantAddr)
         {
+            if (variantAddr == nullptr) {
+                return CreateUndefined();
+            }
             napi_value result = nullptr;
             napi_status status = napi_create_array(env_, &result);
             if (status != napi_ok) {

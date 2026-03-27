@@ -210,6 +210,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             CreateObjectWithMap(env, "OISMode", mapOISMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("OISAxes",
             CreateObjectWithMap(env, "OISAxes", mapOISAxes, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("SensorColorFilterArrangement", CreateObjectWithMap(env, "SensorColorFilterArrangement",
+            mapSensorColorFilterArrangement, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,

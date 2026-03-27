@@ -293,9 +293,10 @@ void CameraDevice::InitLensDistortion(common_metadata_header_t* metadata)
             lensDistortion.emplace_back(static_cast<double>(item.data.f[i]));
         }
         lensDistortion_ = lensDistortion;
-        MEDIA_INFO_LOG("CameraDevice::InitLensDistortion, lensDistortion_ size: %{public}zu, "
-                       "lensDistortion_: %{public}s",
-            lensDistortion_.size(), Container2String(lensDistortion_.begin(), lensDistortion_.end()).c_str());
+        MEDIA_INFO_LOG(
+            "CameraDevice::InitLensDistortion, lensDistortion_ size: %{public}zu, lensDistortion_: %{public}s",
+            lensDistortion_.value().size(),
+            Container2String(lensDistortion_.value().begin(), lensDistortion_.value().end()).c_str());
     }
 }
 
@@ -312,8 +313,9 @@ void CameraDevice::InitLensIntrinsicCalibration(common_metadata_header_t* metada
         lensIntrinsicCalibration_ = lensIntrinsicCalibration;
         MEDIA_INFO_LOG("CameraDevice::InitLensIntrinsicCalibration, lensIntrinsicCalibration_ size: %{public}zu, "
                        "lensIntrinsicCalibration_: %{public}s",
-            lensIntrinsicCalibration_.size(),
-            Container2String(lensIntrinsicCalibration_.begin(), lensIntrinsicCalibration_.end()).c_str());
+            lensIntrinsicCalibration_.value().size(),
+            Container2String(lensIntrinsicCalibration_.value().begin(), lensIntrinsicCalibration_.value().end())
+                .c_str());
     }
 }
 
@@ -330,8 +332,8 @@ void CameraDevice::InitSensorPhysicalSize(common_metadata_header_t* metadata)
         sensorPhysicalSize_ = sensorPhysicalSize;
         MEDIA_INFO_LOG("CameraDevice::InitSensorPhysicalSize, sensorPhysicalSize_ size: %{public}zu, "
                        "sensorPhysicalSize_: %{public}s",
-            sensorPhysicalSize_.size(),
-            Container2String(sensorPhysicalSize_.begin(), sensorPhysicalSize_.end()).c_str());
+            sensorPhysicalSize_.value().size(),
+            Container2String(sensorPhysicalSize_.value().begin(), sensorPhysicalSize_.value().end()).c_str());
     }
 }
 
@@ -348,8 +350,8 @@ void CameraDevice::InitSensorPixelArraySize(common_metadata_header_t* metadata)
         sensorPixelArraySize_ = sensorPixelArraySize;
         MEDIA_INFO_LOG("CameraDevice::InitSensorPixelArraySize, sensorPixelArraySize_ size: %{public}zu, "
                        "sensorPixelArraySize_: %{public}s",
-            sensorPixelArraySize_.size(),
-            Container2String(sensorPixelArraySize_.begin(), sensorPixelArraySize_.end()).c_str());
+            sensorPixelArraySize_.value().size(),
+            Container2String(sensorPixelArraySize_.value().begin(), sensorPixelArraySize_.value().end()).c_str());
     }
 }
 
@@ -363,11 +365,13 @@ void CameraDevice::InitLensEquivalentFocalLength(common_metadata_header_t* metad
         for (uint32_t i = 0; i < item.count; i++) {
             lensEquivalentFocalLength.emplace_back(item.data.i32[i]);
         }
+        lensEquivalentFocalLength_ = lensEquivalentFocalLength;
+        MEDIA_INFO_LOG("CameraDevice::InitLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
+                       "lensEquivalentFocalLength: %{public}s",
+            lensEquivalentFocalLength_.value().size(),
+            Container2String(lensEquivalentFocalLength_.value().begin(), lensEquivalentFocalLength_.value().end())
+                .c_str());
     }
-    lensEquivalentFocalLength_ = lensEquivalentFocalLength;
-    MEDIA_INFO_LOG("CameraDevice::InitLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
-        "lensEquivalentFocalLength: %{public}s", lensEquivalentFocalLength_.size(),
-        Container2String(lensEquivalentFocalLength_.begin(), lensEquivalentFocalLength_.end()).c_str());
 }
 
 void CameraDevice::InitVariableOrientation(common_metadata_header_t* metadata)
@@ -572,11 +576,15 @@ bool CameraDevice::GetisRetractable()
     return isRetractable_;
 }
 
-std::vector<int32_t> CameraDevice::GetLensEquivalentFocalLength()
+std::optional<std::vector<int32_t>> CameraDevice::GetLensEquivalentFocalLength()
 {
-    MEDIA_INFO_LOG("CameraDevice::GetLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
-        "lensEquivalentFocalLength: %{public}s", lensEquivalentFocalLength_.size(),
-        Container2String(lensEquivalentFocalLength_.begin(), lensEquivalentFocalLength_.end()).c_str());
+    if (lensEquivalentFocalLength_.has_value()) {
+        MEDIA_INFO_LOG("CameraDevice::GetLensEquivalentFocalLength, lensEquivalentFocalLength size: %{public}zu, "
+                       "lensEquivalentFocalLength: %{public}s",
+            lensEquivalentFocalLength_.value().size(),
+            Container2String(lensEquivalentFocalLength_.value().begin(), lensEquivalentFocalLength_.value().end())
+                .c_str());
+    }
     return lensEquivalentFocalLength_;
 }
 

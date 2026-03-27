@@ -104,31 +104,32 @@ Camera_ErrorCode OH_CameraDevice_GetLensEquivalentFocalLengths(const Camera_Devi
 Camera_ErrorCode OH_CameraDevice_IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera);
 
 /**
- * @brief Gets the array size of the constituent cameras.
- *
- * @param logicalCamera Pointer to the logical Camera_Device.
- * @param size The size of the array
- * @return {@link #CAMERA_OK} if the method call succeeds.
- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
- * @since 24
- */
-Camera_ErrorCode OH_CameraDevice_GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size);
-
-/**
  * @brief Gets the constituent camera devices of a logical camera.
- * Gets the array size of the constituent cameras by calling {@link OH_CameraDevice_GetConstituentCamerasSize} .
+ * Release resources of the constituent cameras by calling {@link OH_CameraDevice_DeleteConstituentCameraDevices} .
  *
  * @param logicalCamera Pointer to the logical Camera_Device.
- * @param constituentCameras Output parameter, returns array of constituent camera devices.
- * @param size Output parameter, returns array size.
-
+ * @param constituentCameras returns array of constituent camera devices.
+ * @param size the size of constituentCameras.
  * @return {@link #CAMERA_OK} if successful
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or type incorrect
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error
  * @since 24
  */
-Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(const Camera_Device* logicalCamera,
-    Camera_Device* constituentCameras, uint32_t size);
+Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(
+    const Camera_Device* logicalCamera, Camera_Device** constituentCameras, uint32_t* size);
+
+/**
+ * @brief delete the constituent cameras of logicalCamera.
+ *
+ * @param logicalCamera Pointer to the logical Camera_Device.
+ * @param constituentCameras the constituent cameras to be released.
+ * @param size The size of the constituent cameras array.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 24
+ */
+Camera_ErrorCode OH_CameraDevice_DeleteConstituentCameraDevices(
+    const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size);
 
 /**
  * @brief Gets the focal length of a camera lens.

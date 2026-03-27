@@ -39,7 +39,9 @@ using namespace OHOS;
 class CameraUtilsTaihe {
 public:
     static string ToTaiheString(const std::string &src);
+    static string ToTaiheArrayString(const std::string &src);
     static CameraDevice ToTaiheCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj);
+    static CameraDevice ToTaihePhysicalCameraDevice(sptr<OHOS::CameraStandard::CameraDevice> &obj);
     static CameraDevice GetNullCameraDevice();
     static array<CameraDevice> GetNullCameraDeviceArray();
     static array<DepthProfile> ToTaiheArrayDepthProfiles(std::vector<OHOS::CameraStandard::DepthProfile> profiles);

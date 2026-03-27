@@ -1076,10 +1076,39 @@ void SessionImpl::OffFlashStateChange(optional_view<callback<void(FlashState)>> 
     ListenerTemplate<SessionImpl>::Off(this, callback, "flashStateChange");
 }
 
+void SessionImpl::OnIsoInfoChange(callback_view<void(IsoInfo const&)> callback)
+{
+    ListenerTemplate<SessionImpl>::On(this, callback, "isoInfoChange");
+}
+
+void SessionImpl::OffIsoInfoChange(optional_view<callback<void(IsoInfo const&)>> callback)
+{
+    ListenerTemplate<SessionImpl>::Off(this, callback, "isoInfoChange");
+}
+
 void FlashStateCallbackListener::OnFlashStateChangedSync(OHOS::CameraStandard::FlashState info)
 {
     MEDIA_DEBUG_LOG("OnFlashStateChangedSync is called, info: %{public}d", info);
     OnFlashStateChangedCallback(info);
+}
+
+void IsoInfoSyncCallbackListener::OnIsoInfoChangedSync(OHOS::CameraStandard::IsoInfo info)
+{
+    MEDIA_DEBUG_LOG("OnIsoInfoChangedSync is called, info: %{public}d", info.isoValue);
+    OnIsoInfoChangedCallback(info);
+}
+
+void IsoInfoSyncCallbackListener::OnIsoInfoChangedCallback(OHOS::CameraStandard::IsoInfo info) const
+{
+    MEDIA_DEBUG_LOG("OnIsoInfoChangedCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [info, sharePtr]() {
+        IsoInfo isoInfo { optional<int32_t>::make(info.isoValue) };
+        CHECK_EXECUTE(sharePtr != nullptr,
+            sharePtr->ExecuteCallback<IsoInfo>("isoInfoChange", isoInfo));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnIsoInfoChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
 void FlashStateCallbackListener::OnFlashStateChangedCallback(OHOS::CameraStandard::FlashState info) const

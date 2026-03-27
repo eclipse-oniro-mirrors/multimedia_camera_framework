@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <refbase.h>
 #include <type_traits>
 #include <unordered_map>
@@ -297,9 +298,9 @@ public:
     *
     * @return Returns the camera lensEquivalentFocalLength.
     */
-    std::vector<int32_t> GetLensEquivalentFocalLength();
+    std::optional<std::vector<int32_t>> GetLensEquivalentFocalLength();
 
-    inline bool IsLogicalCamera()
+    inline std::optional<bool> IsLogicalCamera()
     {
         return isLogicalCamera_;
     }
@@ -416,90 +417,52 @@ public:
         constituentCameraDevices_ = constituentCameraDevices;
     }
 
-    inline std::vector<string> GetConstituentCameraDevices()
+    inline std::optional<std::vector<std::string>> GetConstituentCameraDevices()
     {
         return constituentCameraDevices_;
     }
 
-    inline bool CheckMatchedConstituentCameraDevices(string cameraId)
+    inline void SetLensFocalLength(double focalLength)
     {
-        auto itr = find_if(constituentCameraDevices_.begin(), constituentCameraDevices_.end(),
-            [cameraId](string camera) { return "device/" + camera == cameraId; });
-        return itr != constituentCameraDevices_.end();
+        lensFocalLength_ = focalLength;
     }
 
-    inline void SetLensFocalLength(double lensFocalLength)
-    {
-        lensFocalLength_ = lensFocalLength;
-    }
-
-    inline double GetLensFocalLength()
+    inline std::optional<double> GetLensFocalLength()
     {
         return lensFocalLength_;
     }
 
-    inline void SetMinimumFocusDistance(double minimumFocusDistance)
+    inline void SetMinimumFocusDistance(double focusDistance)
     {
-        minimumFocusDistance_ = minimumFocusDistance;
+        minimumFocusDistance_ = focusDistance;
     }
 
-    inline double GetMinimumFocusDistance()
+    inline std::optional<double> GetMinimumFocusDistance()
     {
         return minimumFocusDistance_;
     }
 
-    inline void SetLensDistortion(std::vector<double> lensDistortion)
-    {
-        lensDistortion_ = lensDistortion;
-    }
-
-
-    inline std::vector<double> GetLensDistortion()
+    inline std::optional<std::vector<double>> GetLensDistortion()
     {
         return lensDistortion_;
     }
 
-    inline std::vector<int32_t> GetLensEquivalentFocalLengths()
-    {
-        return lensEquivalentFocalLength_;
-    }
-
-    inline void SetLensIntrinsicCalibration(std::vector<double> lensIntrinsicCalibration)
-    {
-        lensIntrinsicCalibration_ = lensIntrinsicCalibration;
-    }
-
-    inline std::vector<double> GetLensIntrinsicCalibration()
+    inline std::optional<std::vector<double>> GetLensIntrinsicCalibration()
     {
         return lensIntrinsicCalibration_;
     }
 
-    inline void SetSensorPhysicalSize(std::vector<double> sensorPhysicalSize)
-    {
-        sensorPhysicalSize_ = sensorPhysicalSize;
-    }
-
-    inline std::vector<double> GetSensorPhysicalSize()
+    inline std::optional<std::vector<double>> GetSensorPhysicalSize()
     {
         return sensorPhysicalSize_;
     }
 
-    inline void SetSensorPixelArraySize(std::vector<int> sensorPixelArraySize)
-    {
-        sensorPixelArraySize_ = sensorPixelArraySize;
-    }
-
-    inline std::vector<int> GetSensorPixelArraySize()
+    inline std::optional<std::vector<int>> GetSensorPixelArraySize()
     {
         return sensorPixelArraySize_;
     }
 
-    inline void SetSensorColorFilterArrangement(SensorColorFilterArrangement sensorColorFilterArrangement)
-    {
-        sensorColorFilterArrangement_ = sensorColorFilterArrangement;
-    }
-
-    inline SensorColorFilterArrangement GetSensorColorFilterArrangement()
+    inline std::optional<SensorColorFilterArrangement> GetSensorColorFilterArrangement()
     {
         return sensorColorFilterArrangement_;
     }
@@ -524,16 +487,16 @@ private:
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;
     uint32_t cameraOrientation_ = 0;
     bool isRetractable_ = false;
-    std::vector<int32_t> lensEquivalentFocalLength_ = {};
-    bool isLogicalCamera_ = false;
-    std::vector<string> constituentCameraDevices_ = {};
-    double lensFocalLength_ = 0.0;
-    double minimumFocusDistance_ = 0.0;
-    std::vector<double> lensDistortion_ = {};
-    std::vector<double> lensIntrinsicCalibration_ = {};
-    std::vector<double> sensorPhysicalSize_ = {};
-    std::vector<int> sensorPixelArraySize_ = {};
-    SensorColorFilterArrangement sensorColorFilterArrangement_;
+    std::optional<std::vector<int32_t>> lensEquivalentFocalLength_ = std::nullopt;
+    std::optional<bool> isLogicalCamera_ = std::nullopt;
+    std::optional<std::vector<std::string>> constituentCameraDevices_ = std::nullopt;
+    std::optional<double> lensFocalLength_ = std::nullopt;
+    std::optional<double> minimumFocusDistance_ = std::nullopt;
+    std::optional<std::vector<double>> lensDistortion_ = std::nullopt;
+    std::optional<std::vector<double>> lensIntrinsicCalibration_ = std::nullopt;
+    std::optional<std::vector<double>> sensorPhysicalSize_ = std::nullopt;
+    std::optional<std::vector<int>> sensorPixelArraySize_ = std::nullopt;
+    std::optional<SensorColorFilterArrangement> sensorColorFilterArrangement_ = std::nullopt;
     std::unordered_map<uint32_t, uint32_t> foldStateSensorOrientationMap_ = {};
     std::unordered_map<uint32_t, std::vector<uint32_t>> foldWithDirectionOrientationMap_ = {};
     uint32_t moduleType_ = 0;

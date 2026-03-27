@@ -211,7 +211,6 @@ public:
     static napi_value Off(napi_env env, napi_callback_info info);
     static napi_value GetCameraDevice(napi_env env, napi_callback_info info);
     static napi_value GetCameraDevices(napi_env env, napi_callback_info info);
-    static napi_value GetCameraDevicesInner(napi_env env, const std::vector<sptr<CameraDevice>>& cameraDeviceList);
     static napi_value GetCameraConcurrentInfos(napi_env env, napi_callback_info info);
     static napi_value GetCameraStorageSize(napi_env env, napi_callback_info info);
 
