@@ -925,7 +925,7 @@ Camera_ErrorCode Camera_Manager::IsLogicalCamera(const Camera_Device* camera, bo
         }
     }
     CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
-    if(device->IsLogicalCamera().has_value()){
+    if (device->IsLogicalCamera().has_value()) {
         *isLogicalCamera = device->IsLogicalCamera().value();
     }
     return CAMERA_OK;
@@ -1179,7 +1179,8 @@ Camera_ErrorCode Camera_Manager::GetSensorPixelArraySize(const Camera_Device* ca
 
     CHECK_RETURN_RET(device == nullptr, CAMERA_INVALID_ARGUMENT);
     auto sizeOpt = device->GetSensorPixelArraySize();
-    if (!sizeOpt.has_value() || sizeOpt.value().size() < 2) {
+    uint32_t sizeMin = 2
+    if (!sizeOpt.has_value() || sizeOpt.value().size() < sizeMin) {
         MEDIA_ERR_LOG("Camera_Manager::GetSensorPixelArraySize failed, sensorPixelArraySize is not available");
         return CAMERA_SERVICE_FATAL_ERROR;
     }

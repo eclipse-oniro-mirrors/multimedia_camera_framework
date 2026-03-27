@@ -99,13 +99,13 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
         Hold<double>(lensFocalLengthOpt.value()) : nullptr;
     auto minimumFocusDistanceOpt = cameraDevice_.GetMinimumFocusDistance();
     auto minimumFocusDistance = minimumFocusDistanceOpt.has_value() ?
-        Hold<double>(minimumFocusDistanceOpt.value()) : nullptr; 
+        Hold<double>(minimumFocusDistanceOpt.value()) : nullptr;
     auto lensDistortionOpt = cameraDevice_.GetLensDistortion();
     auto lensDistortion = lensDistortionOpt.has_value() ?
         Hold<std::vector<double>>(lensDistortionOpt.value()) : nullptr;
     auto lensIntrinsicCalibrationOpt = cameraDevice_.GetLensIntrinsicCalibration();
     auto lensIntrinsicCalibration = lensIntrinsicCalibrationOpt.has_value() ?
-        Hold<std::vector<double>>(lensIntrinsicCalibrationOpt.value()) : nullptr;  
+        Hold<std::vector<double>>(lensIntrinsicCalibrationOpt.value()) : nullptr;
     auto sensorPhysicalSizeOpt = cameraDevice_.GetSensorPhysicalSize();
     auto sensorPhysicalSize = sensorPhysicalSizeOpt.has_value() ?
         Hold<std::vector<double>>(sensorPhysicalSizeOpt.value()) : nullptr;
