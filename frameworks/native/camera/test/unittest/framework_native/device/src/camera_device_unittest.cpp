@@ -179,8 +179,10 @@ HWTEST_F(CameraDeviceUnit, camera_device_unittest_007, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
 
-    cameras[0]->lensEquivalentFocalLength_ = {15, 20};
-    EXPECT_EQ(cameras[0]->GetLensEquivalentFocalLength(), cameras[0]->lensEquivalentFocalLength_);
+    std::vector<int32_t> testFocalLengthVec = { 15, 20 };
+    cameras[0]->lensEquivalentFocalLength_ = optional<vector<int32_t>>(std::in_place, testFocalLengthVec);
+    EXPECT_EQ(cameras[0]->GetLensEquivalentFocalLength().value_or(vector<int32_t> {}),
+        cameras[0]->lensEquivalentFocalLength_);
 }
 
 /*

@@ -1759,7 +1759,8 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
             auto dmDeviceInfo = GetDmDeviceInfo(cameraId, dmDeviceInfoList);
             sptr<CameraDevice> cameraObj = new (std::nothrow) CameraDevice(cameraId, dmDeviceInfo, cameraAbility);
             CHECK_CONTINUE_ELOG(cameraObj == nullptr, "failed to new CameraDevice!");
-            CHECK_EXECUTE(cameraObj->IsLogicalCamera(), SetConstituentCameraDevices(cameraObj, cameraAbility));
+            CHECK_EXECUTE(
+                cameraObj->IsLogicalCamera().value_or(false), SetConstituentCameraDevices(cameraObj, cameraAbility));
             SetProfile(cameraObj, cameraAbility);
             SetMultiCameraCombinationInfo(cameraObj, cameraAbility);
             deviceInfoList.emplace_back(cameraObj);

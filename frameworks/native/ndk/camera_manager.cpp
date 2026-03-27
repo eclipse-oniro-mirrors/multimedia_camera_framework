@@ -386,22 +386,25 @@ Camera_ErrorCode OH_CameraDevice_IsLogicalCamera(const Camera_Device* camera, bo
     return Camera_Manager::IsLogicalCamera(camera, isLogicalCamera);
 }
 
-Camera_ErrorCode OH_CameraDevice_GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size)
+Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(
+    const Camera_Device* logicalCamera, Camera_Device** constituentCameras, uint32_t* size)
 {
     CHECK_RETURN_RET_ELOG(
         logicalCamera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, logicalCamera is null!");
+    CHECK_RETURN_RET_ELOG(
+        constituentCameras == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, constituentCameras is null!");
     CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
-    return Camera_Manager::GetConstituentCamerasSize(logicalCamera, size);
+    return Camera_Manager::GetLogicalCameraConstituentCameraDevices(logicalCamera, constituentCameras, size);
 }
 
-Camera_ErrorCode OH_CameraDevice_GetLogicalCameraConstituentCameraDevices(
+Camera_ErrorCode OH_CameraDevice_DeleteConstituentCameraDevices(
     const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size)
 {
     CHECK_RETURN_RET_ELOG(
         logicalCamera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, logicalCamera is null!");
     CHECK_RETURN_RET_ELOG(
         constituentCameras == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, constituentCameras is null!");
-    return Camera_Manager::GetLogicalCameraConstituentCameraDevices(logicalCamera, constituentCameras, size);
+    return Camera_Manager::DeleteConstituentCameras(logicalCamera, constituentCameras, size);
 }
 
 Camera_ErrorCode OH_CameraDevice_GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength)

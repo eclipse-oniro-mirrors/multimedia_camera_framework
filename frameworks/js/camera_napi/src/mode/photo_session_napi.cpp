@@ -210,7 +210,7 @@ void PhotoSessionNapi::RegisterFlashStateChangeCallbackListener(
 void PhotoSessionNapi::UnregisterFlashStateChangeCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_RETURN_ELOG(flashStateCallback_ == nullptr, "%{public}s abilityCallback is null", __func__);
+    CHECK_RETURN_ELOG(flashStateCallback_ == nullptr, "%{public}s flashStateChangeCallback is null", __func__);
     flashStateCallback_->RemoveCallbackRef(eventName, callback);
 }
 

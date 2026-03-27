@@ -1032,20 +1032,22 @@ Camera_ErrorCode OH_CaptureSession_GetRAWCaptureZoomRatioRange(
     return CAMERA_OK;
 }
 
-Camera_ErrorCode OH_CaptureSession_GetPhysicalAperturesSize(const Camera_CaptureSession* session, uint32_t* size)
-{
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
-
-    return session->GetPhysicalAperturesSize(size);
-}
-
 Camera_ErrorCode OH_CaptureSession_GetSupportedPhysicalApertures(
-    const Camera_CaptureSession* session, OH_Camera_PhysicalAperture* apertures, uint32_t size)
+    const Camera_CaptureSession* session, OH_Camera_PhysicalAperture** apertures, uint32_t* size)
 {
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     CHECK_RETURN_RET_ELOG(apertures == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, apertures is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
+ 
     return session->GetSupportedPhysicalApertures(apertures, size);
+}
+
+Camera_ErrorCode OH_CaptureSession_DeletePhysicalApertures(const Camera_CaptureSession* session,
+    OH_Camera_PhysicalAperture* apertures, uint32_t size)
+{
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(apertures == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, apertures is null!");
+    return session->DeletePhysicalApertures(apertures, size);
 }
 
 Camera_ErrorCode OH_CaptureSession_GetPhysicalAperture(const Camera_CaptureSession* session, double* aperture)

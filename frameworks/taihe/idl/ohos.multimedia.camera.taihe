@@ -102,6 +102,13 @@ enum ColorReservationType : i32 {
   PORTRAIT = 1
 }
 
+enum SensorColorFilterArrangement : i32 {
+  BGGR = 0,
+  GBRG = 1,
+  GRBG = 2,
+  RGGB = 3
+}
+
 enum LightPaintingType : i32 {
   TRAFFIC_TRAILS = 0,
   STAR_TRAILS = 1,
@@ -188,6 +195,15 @@ struct CameraDevice {
   @readonly cameraOrientation: i32;
   @readonly lensEquivalentFocalLength: Optional<Array<i32>>;
   @readonly automotiveCameraPosition: Optional<AutomotiveCameraPosition>;
+  @readonly isLogicalCamera: Optional<bool>;
+  @readonly constituentCameraDevices: Optional<Array<CameraDevice>>;
+  @readonly lensFocalLength: Optional<f64>;
+  @readonly minimumFocusDistance: Optional<f64>;
+  @readonly lensDistortion: Optional<Array<f64>>;
+  @readonly lensIntrinsicCalibration: Optional<Array<f64>>;
+  @readonly sensorPhysicalSize: Optional<Array<f64>>;
+  @readonly sensorPixelArraySize: Optional<Array<i32>>;
+  @readonly sensorColorFilterArrangement: Optional<SensorColorFilterArrangement>;
 }
 
 struct ZoomPointInfo {
@@ -623,6 +639,8 @@ interface Flash : FlashQuery {
   EnableLcdFlash(enabled: bool): void;
   SetFlashMode(flashMode: FlashMode): void;
   GetFlashMode(): FlashMode;
+  OnFlashStateChange(callback:(data: FlashState)=> void): void;
+  OffFlashStateChange(callback: Optional<(data: FlashState)=> void>): void;
 }
 
 enum SmoothZoomMode : i32 {
@@ -633,6 +651,7 @@ interface ZoomQuery {
   GetZoomRatioRange(): Array<f64>;
   GetZoomPointInfos(): Array<ZoomPointInfo>;
   IsZoomCenterPointSupported(): bool;
+  GetRAWCaptureZoomRatioRange(): Array<f64>;
 }
 
 interface Zoom : ZoomQuery {
@@ -739,11 +758,11 @@ enum SystemPressureLevel: i32 {
 
 enum FlashState: i32 {
   FLASH_STATE_UNAVAILABLE = 0,
-  FLASH_STATE_READY = 2,
-  FLASH_STATE_FLASHING = 3,
+  FLASH_STATE_READY = 1,
+  FLASH_STATE_FLASHING = 2,
 }
 
-interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ManualIso, ManualFocus, ManualExposure {
+interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ManualIso, ManualFocus, ManualExposure, Aperture {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
@@ -848,11 +867,11 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
 
   GetSpecificImplPtr(): i64;
 
+  OnIsoInfoChange(callback:(data: IsoInfo)=> void): void;
+  OffIsoInfoChange(callback: Optional<(data: IsoInfo)=> void>): void;
+
   OnExposureInfoChange(callback:(data: ExposureInfo)=> void): void;
   OffExposureInfoChange(callback: Optional<(data: ExposureInfo)=> void>): void;
-
-  OnFlashStateChange(callback:(data: FlashState)=> void): void;
-  OffFlashStateChange(callback: Optional<(data: FlashState)=> void>): void;
 }
 
 interface PhotoConflictFunctions : ZoomQuery, MacroQuery {
@@ -2439,7 +2458,6 @@ interface Stabilization : StabilizationQuery {
 
 interface ManualExposureQuery {
   GetSupportedExposureRange(): Array<i32>;
-  GetExposureDuration(): i32;
   GetSupportedExposureDurationRange(): Array<i32>;
   GetExposureBiasStep(): f64;
 }
@@ -2448,12 +2466,16 @@ interface ManualExposure : ManualExposureQuery{
   GetExposure(): i32;
   SetExposure(exposure: i32): void;
   SetExposureDuration(exposure: i32): void;
+  GetExposureDuration(): i32;
 }
 
-interface ManualFocus {
+interface ManualFocus : ManualFocusQuery{
   GetFocusDistance(): f64;
   SetFocusDistance(distance: f64): void;
-  IsManualFocusSupported(): bool;
+}
+
+interface ManualFocusQuery {
+  IsFocusDistanceSupported(): bool;
 }
 
 interface WhiteBalanceQuery {
@@ -2471,7 +2493,7 @@ interface WhiteBalance : WhiteBalanceQuery {
 interface ManualIsoQuery {
   GetIsoRange(): Array<i32>;
   IsManualIsoSupported(): bool;
-  GetSupportedISORange(): Array<i32>;
+  GetSupportedIsoRange(): Array<i32>;
 }
 
 interface ManualIso : ManualIsoQuery {

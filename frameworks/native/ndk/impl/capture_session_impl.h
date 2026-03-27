@@ -250,9 +250,9 @@ public:
 
     Camera_ErrorCode GetRAWCaptureZoomRatioRange(float* minZoom, float* maxZoom) const;
 
-    Camera_ErrorCode GetPhysicalAperturesSize(uint32_t* size) const;
+    Camera_ErrorCode GetSupportedPhysicalApertures(OH_Camera_PhysicalAperture** apertures, uint32_t* size) const;
 
-    Camera_ErrorCode GetSupportedPhysicalApertures(OH_Camera_PhysicalAperture* apertures, uint32_t size) const;
+    Camera_ErrorCode DeletePhysicalApertures(OH_Camera_PhysicalAperture* apertures, uint32_t size) const;
 
     Camera_ErrorCode GetPhysicalAperture(float* aperture) const;
 

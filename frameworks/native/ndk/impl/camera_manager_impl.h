@@ -125,9 +125,12 @@ public:
          Camera_SceneMode** sceneModes, uint32_t* size);
     static Camera_ErrorCode IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera);
 
-    static Camera_ErrorCode GetConstituentCamerasSize(const Camera_Device* logicalCamera, uint32_t* size);
     static Camera_ErrorCode GetLogicalCameraConstituentCameraDevices(
-        const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size);
+        const Camera_Device* logicalCamera, Camera_Device** constituentCameras, uint32_t* size);
+
+    static Camera_ErrorCode DeleteConstituentCameras(
+         const Camera_Device* logicalCamera, Camera_Device* constituentCameras, uint32_t size);
+    
     static Camera_ErrorCode GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength);
     static Camera_ErrorCode GetMinimumFocusDistance(const Camera_Device* camera, float* minimumFocusDistance);
     static Camera_ErrorCode GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size);

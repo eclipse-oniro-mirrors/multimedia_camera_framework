@@ -1962,7 +1962,8 @@ bool HCameraDevice::CanOpenCamera()
         return ret;
     }
     std::vector<sptr<HCameraDevice>> cameraNeedEvict;
-    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(cameraNeedEvict, this, cameraConcurrentType_);
+    bool ret = HCameraDeviceManager::GetInstance()->GetConflictDevices(
+        cameraNeedEvict, this, cameraConcurrentType_);
     if (cameraNeedEvict.size() != 0) {
         MEDIA_DEBUG_LOG("HCameraDevice::CanOpenCamera open current device need to close other devices");
         for (auto deviceItem : cameraNeedEvict) {
@@ -2106,9 +2107,6 @@ int32_t HCameraDevice::Open(int32_t concurrentType)
         "HCameraDevice::Open Camera width concurrent:[%{public}s, %{public}d]", cameraID_.c_str(), concurrentType);
     SetCameraConcurrentType(concurrentType);
     EnableDeviceOpenedByConcurrent(true);
-    bool canOpen = HCameraDeviceManager::GetInstance()->CheckCameraCombination(cameraID_, GetDeviceAbility());
-    CHECK_RETURN_RET_ELOG(
-        !canOpen, CAMERA_UNSUPPORTED_COMBINATION, "HCameraDevice::open CheckCameraCombination failed.");
     int32_t result = OpenDevice();
     return result;
 }

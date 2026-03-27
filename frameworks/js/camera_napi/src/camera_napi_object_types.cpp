@@ -88,16 +88,49 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
     auto hostDeviceType = Hold<uint32_t>(cameraDevice_.GetDeviceType());
     auto cameraOrientation = Hold<int32_t>(cameraDevice_.GetStaticCameraOrientation());
     auto isRetractable = Hold<bool>(cameraDevice_.GetisRetractable());
-    auto lensEquivalentFocalLength = Hold<std::vector<int32_t>>(cameraDevice_.GetLensEquivalentFocalLength());
-    auto isLogicalCamera = Hold<bool>(cameraDevice_.IsLogicalCamera());
-    auto lensFocalLength = Hold<double>(cameraDevice_.GetLensFocalLength());
-    auto minimumFocusDistance = Hold<double>(cameraDevice_.GetMinimumFocusDistance());
-    auto lensDistortion = Hold<std::vector<double>>(cameraDevice_.GetLensDistortion());
-    auto lensIntrinsicCalibration = Hold<std::vector<double>>(cameraDevice_.GetLensIntrinsicCalibration());
-    auto sensorPhysicalSize = Hold<std::vector<double>>(cameraDevice_.GetSensorPhysicalSize());
-    auto sensorPixelArraySize = Hold<std::vector<int32_t>>(cameraDevice_.GetSensorPixelArraySize());
-    auto sensorColorFilterArrangement = Hold<int32_t>(cameraDevice_.GetSensorColorFilterArrangement());
+    auto lensEquivalentFocalLengthOpt = cameraDevice_.GetLensEquivalentFocalLength();
+    auto lensEquivalentFocalLength = lensEquivalentFocalLengthOpt.has_value() ?
+        Hold<std::vector<int32_t>>(lensEquivalentFocalLengthOpt.value()) : nullptr;
+    auto isLogicalCameraOpt = cameraDevice_.IsLogicalCamera();
+    auto isLogicalCamera = isLogicalCameraOpt.has_value() ?
+        Hold<bool>(isLogicalCameraOpt.value()) : nullptr;
+    auto lensFocalLengthOpt = cameraDevice_.GetLensFocalLength();
+    auto lensFocalLength = lensFocalLengthOpt.has_value() ?
+        Hold<double>(lensFocalLengthOpt.value()) : nullptr;
+    auto minimumFocusDistanceOpt = cameraDevice_.GetMinimumFocusDistance();
+    auto minimumFocusDistance = minimumFocusDistanceOpt.has_value() ?
+        Hold<double>(minimumFocusDistanceOpt.value()) : nullptr; 
+    auto lensDistortionOpt = cameraDevice_.GetLensDistortion();
+    auto lensDistortion = lensDistortionOpt.has_value() ?
+        Hold<std::vector<double>>(lensDistortionOpt.value()) : nullptr;
+    auto lensIntrinsicCalibrationOpt = cameraDevice_.GetLensIntrinsicCalibration();
+    auto lensIntrinsicCalibration = lensIntrinsicCalibrationOpt.has_value() ?
+        Hold<std::vector<double>>(lensIntrinsicCalibrationOpt.value()) : nullptr;  
+    auto sensorPhysicalSizeOpt = cameraDevice_.GetSensorPhysicalSize();
+    auto sensorPhysicalSize = sensorPhysicalSizeOpt.has_value() ?
+        Hold<std::vector<double>>(sensorPhysicalSizeOpt.value()) : nullptr;
+    auto sensorPixelArraySizeOpt = cameraDevice_.GetSensorPixelArraySize();
+    auto sensorPixelArraySize = sensorPixelArraySizeOpt.has_value() ?
+        Hold<std::vector<int32_t>>(sensorPixelArraySizeOpt.value()) : nullptr;
+    auto sensorColorFilterArrangementOpt = cameraDevice_.GetSensorColorFilterArrangement();
+    auto sensorColorFilterArrangement = sensorColorFilterArrangementOpt.has_value() ?
+        Hold<int32_t>(static_cast<int32_t>(sensorColorFilterArrangementOpt.value())) : nullptr;
     auto automotiveCameraPosition = Hold<int32_t>(cameraDevice_.GetAutomotivePosition());
+    auto constituentCameraDevices = cameraDevice_.GetConstituentCameraDevices();
+    auto napiDevice = Hold<std::list<CameraNapiObject>>();
+    if (constituentCameraDevices.has_value() && !constituentCameraDevices.value().empty()) {
+        for (size_t j = 0; j < constituentCameraDevices.value().size(); j++) {
+            auto constituentCameraDeviceId = "device/" + constituentCameraDevices.value()[j];
+            sptr<CameraDevice> device =
+                CameraManager::GetInstance()->GetCameraDeviceFromId(constituentCameraDeviceId);
+            if (device && !device->GetConstituentCameraDevices().has_value()) {
+                napiDevice->emplace_back(std::move(Hold<CameraNapiObjCameraDevice>(*device)->GetCameraNapiObject()));
+            }
+        }
+    } else {
+        // is physical camera
+        napiDevice = nullptr;
+    }
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
         { "cameraId", cameraId },
         { "cameraPosition", cameraPosition },
@@ -116,7 +149,8 @@ CameraNapiObject& CameraNapiObjCameraDevice::GetCameraNapiObject()
         { "lensIntrinsicCalibration", lensIntrinsicCalibration },
         { "sensorPhysicalSize", sensorPhysicalSize },
         { "sensorPixelArraySize", sensorPixelArraySize },
-        { "sensorColorFilterArrangement", sensorColorFilterArrangement }});
+        { "sensorColorFilterArrangement", sensorColorFilterArrangement },
+        { "constituentCameraDevices", napiDevice}});
 }
 
 CameraNapiObject& CameraNapiBoundingBox::GetCameraNapiObject()

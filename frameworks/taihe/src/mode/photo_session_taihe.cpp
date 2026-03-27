@@ -57,6 +57,53 @@ bool PhotoSessionImpl::IsExposureMeteringModeSupported(ExposureMeteringMode aeMe
     return supported;
 }
 
+array<PhysicalAperture> PhotoSessionImpl::GetSupportedPhysicalApertures()
+{
+    std::vector<std::vector<float>> physicalApertures = {};
+    CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, array<PhysicalAperture>(nullptr, 0),
+        "GetSupportedPhysicalApertures photoSession_ is null");
+    int32_t retCode = photoSession_->GetSupportedPhysicalApertures(physicalApertures);
+    MEDIA_INFO_LOG("GetSupportedPhysicalApertures len = %{public}zu", physicalApertures.size());
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<PhysicalAperture>(nullptr, 0));
+    return CameraUtilsTaihe::ToTaiheArrayPhysicalAperture(physicalApertures);
+}
+
+void PhotoSessionImpl::SetPhysicalAperture(double aperture)
+{
+    MEDIA_DEBUG_LOG("SetPhysicalAperture is called");
+    CHECK_RETURN_ELOG(photoSession_ == nullptr, "SetPhysicalAperture photoSession_ is null");
+    photoSession_->LockForControl();
+    int32_t retCode = photoSession_->SetPhysicalAperture(static_cast<float>(aperture));
+    MEDIA_INFO_LOG(
+        "SetPhysicalAperture set physicalAperture %{public}f!", OHOS::CameraStandard::ConfusingNumber(aperture));
+    photoSession_->UnlockForControl();
+    CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
+}
+
+double PhotoSessionImpl::GetPhysicalAperture()
+{
+    float physicalAperture = -1.0;
+    MEDIA_DEBUG_LOG("GetPhysicalAperture is called");
+    CHECK_RETURN_RET_ELOG(
+        photoSession_ == nullptr, physicalAperture, "GetPhysicalAperture captureSessionForSys_ is null");
+    int32_t retCode = photoSession_->GetPhysicalAperture(physicalAperture);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), physicalAperture);
+    return static_cast<double>(physicalAperture);
+}
+
+array<double> PhotoSessionImpl::GetRAWCaptureZoomRatioRange()
+{
+    std::vector<float> vecZoomRatioList;
+    int32_t retCode = photoSession_->GetRAWZoomRatioRange(vecZoomRatioList);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<double>(nullptr, 0));
+    MEDIA_INFO_LOG("PhotoSessionImpl::GetRAWCaptureZoomRatioRange len = %{public}zu", vecZoomRatioList.size());
+    if (!vecZoomRatioList.empty()) {
+        std::vector<double> doubleVec(vecZoomRatioList.begin(), vecZoomRatioList.end());
+        return array<double>(doubleVec);
+    }
+    return array<double>(nullptr, 0);
+}
+
 array<PhotoFunctions> CreateFunctionsPhotoFunctionsArray(
     std::vector<sptr<OHOS::CameraStandard::CameraAbility>> functionsList)
 {
@@ -98,14 +145,14 @@ taihe::array<PhotoFunctions> PhotoSessionImpl::GetSessionFunctions(CameraOutputC
     return result;
 }
 
-array<int32_t> PhotoSessionImpl::GetSupportedISORange()
+array<int32_t> PhotoSessionImpl::GetSupportedIsoRange()
 {
     CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, array<int32_t>(nullptr, 0),
         "GetIsoRange failed, photoSession_ is nullptr!");
     std::vector<int32_t> vecIsoList;
     int32_t retCode = photoSession_->GetSensorSensitivityRange(vecIsoList);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<int32_t>(nullptr, 0));
-    MEDIA_INFO_LOG("PhotoSessionImpl::getSupportedISORange len = %{public}zu", vecIsoList.size());
+    MEDIA_INFO_LOG("PhotoSessionImpl::GetSupportedIsoRange len = %{public}zu", vecIsoList.size());
     return array<int32_t>(vecIsoList);
 }
 
@@ -167,17 +214,13 @@ void PhotoSessionImpl::SetFocusDistance(double distance)
     photoSession_->UnlockForControl();
 }
 
-bool PhotoSessionImpl::IsManualFocusSupported()
+bool PhotoSessionImpl::IsFocusDistanceSupported()
 {
-    CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, false,"IsManualFocusSupported failed, photoSession is nullptr!");
+    CHECK_RETURN_RET_ELOG(photoSession_ == nullptr, false, "IsFocusDistanceSupported failed, photoSession is nullptr!");
     bool isSupported = false;
-    OHOS::CameraStandard::FocusMode focusMode =
-        static_cast<OHOS::CameraStandard::FocusMode>(FocusMode::key_t::FOCUS_MODE_MANUAL);
-    int32_t retCode = photoSession_->IsFocusModeSupported(focusMode, isSupported);
-    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
-        false,
-        "%{public}s: IsManualFocusSupported() Failed",
-        __FUNCTION__);
+    int32_t retCode = photoSession_->IsFocusDistanceSupported(isSupported);
+    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS, false,
+        "%{public}s: IsFocusDistanceSupported() Failed", __FUNCTION__);
     return isSupported;
 }
 
@@ -306,6 +349,25 @@ void PhotoSessionImpl::UnregisterFlashStateCallbackListener(const std::string& e
 {
     CHECK_RETURN_ELOG(flashStateCallback_ == nullptr, "flashStateCallback is null");
     flashStateCallback_->RemoveCallbackRef(eventName, callback);
+}
+
+void PhotoSessionImpl::RegisterIsoInfoCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CHECK_RETURN_ELOG(photoSession_ == nullptr, "photoSession_ is null!");
+    if (isoInfoCallback_ == nullptr) {
+        ani_env *env = get_env();
+        isoInfoCallback_ = std::make_shared<IsoInfoSyncCallbackListener>(env);
+        photoSession_->SetIsoInfoCallback(isoInfoCallback_);
+    }
+    isoInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void PhotoSessionImpl::UnregisterIsoInfoCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback)
+{
+    CHECK_RETURN_ELOG(isoInfoCallback_ == nullptr, "isoInfoCallback is null");
+    isoInfoCallback_->RemoveCallbackRef(eventName, callback);
 }
 } // namespace Camera
 } // namespace Ani

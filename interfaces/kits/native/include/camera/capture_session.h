@@ -1301,32 +1301,20 @@ Camera_ErrorCode OH_CaptureSession_GetRAWCaptureZoomRatioRange(const Camera_Capt
     float* minZoom, float* maxZoom);
 
 /**
- * @brief Gets the array size of the physical apertures.
- *
- * @param session the {@link Camera_CaptureSession} instance.
- * @param size returned the array size of the physical apertures.
- * @return {@link #CAMERA_OK} if the method call succeeds.
- *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
- * @since 24
- */
-Camera_ErrorCode OH_CaptureSession_GetPhysicalAperturesSize(const Camera_CaptureSession* session,
-    uint32_t* size);
-
-/**
  * @brief Gets the supported physical apertures list. 
- * Gets the array size of the physical apertures by calling {@link OH_CaptureSession_GetPhysicalAperturesSize}.
+ * Release the physical apertures memory by calling {@link OH_CaptureSession_DeletePhysicalApertures}.
  *
  * @param session the {@link Camera_CaptureSession} instance
  * @param apertures pointer to an array for storing physical aperture values
- * @param size the size of physical apertures by calling {@link OH_CaptureSession_GetPhysicalAperturesSize}
+ * @param size the size of physical apertures.
  * @return {@link #CAMERA_OK} success 
  *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  *         {@link #CAMERA_OPERATION_NOT_ALLOWED} if operation not allowed, session or inputdevice maybe abnormal.
- *         {@link #CAMERA_SESSION_NOT_CONFIG} if session config locked.
+ *         {@link #CAMERA_SESSION_NOT_CONFIG} if the capture session not config.
  * @since 24
  */
 Camera_ErrorCode OH_CaptureSession_GetSupportedPhysicalApertures(const Camera_CaptureSession* session,
-    OH_Camera_PhysicalAperture* apertures, uint32_t size);
+    OH_Camera_PhysicalAperture** apertures, uint32_t* size);
 
 /**
  * @brief Get current physical aperture value
@@ -1340,6 +1328,19 @@ Camera_ErrorCode OH_CaptureSession_GetSupportedPhysicalApertures(const Camera_Ca
  * @since 24
  */
 Camera_ErrorCode OH_CaptureSession_GetPhysicalAperture(const Camera_CaptureSession* session, double* aperture);
+
+/**
+ * @brief Delete the physical apertures.
+ *
+ * @param session the {@link Camera_CaptureSession} instance.
+ * @param apertures pointer to an array for storing physical aperture values
+ * @param size the array size of the physical apertures.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 24
+ */
+Camera_ErrorCode OH_CaptureSession_DeletePhysicalApertures(const Camera_CaptureSession* session,
+    OH_Camera_PhysicalAperture* apertures, uint32_t size);
 
 /**
  * @brief Set physical aperture value

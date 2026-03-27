@@ -1604,8 +1604,6 @@ public:
      */
     float GetMinimumFocusDistance();
 
-    int32_t GetMinimumFocusDistance(float& minimumFocusDistance);
-
     /**
      * @brief Check current status is support macro or not.
      */
@@ -2637,7 +2635,7 @@ protected:
     void ParseSupportedOISBiasRangeAndStep(const SceneMode modeName, const camera_metadata_item_t& item,
         std::vector<float>& supportBias);
     void ProcessOISModeChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
-    OISMode oisMode_ = OIS_MODE_OFF;
+    OISMode oisMode_ = OIS_MODE_AUTO;
 };
 } // namespace CameraStandard
 } // namespace OHOS

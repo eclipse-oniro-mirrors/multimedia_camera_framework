@@ -27,6 +27,8 @@ using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
 namespace {
+constexpr uint32_t ZOOM_RANGE_COUNT = 2;
+constexpr uint32_t APERTURE_SIZE_MAX_FOR_SAFETY = 10;
 const std::unordered_map<Camera_SceneMode, SceneMode> g_ndkToFwMode_ = {
     {Camera_SceneMode::NORMAL_PHOTO, SceneMode::CAPTURE},
     {Camera_SceneMode::NORMAL_VIDEO, SceneMode::VIDEO},
@@ -39,8 +41,6 @@ const std::unordered_map<FlashState, OH_Camera_FlashState> g_FwToNdkFlashState_ 
 };
 
 const std::unordered_map<MeteringMode, OH_Camera_ExposureMeteringMode> g_FwToNdkExposureMeteringMode_ = {
-    { MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED,
-        OH_Camera_ExposureMeteringMode::OH_CAMERA_CENTER_HIGHLIGHT_WEIGH },
     { MeteringMode::METERING_MODE_CENTER_WEIGHTED,
         OH_Camera_ExposureMeteringMode::OH_CAMERA_EXPOSURE_METERING_MODE_CENTER },
     { MeteringMode::METERING_MODE_SPOT, OH_Camera_ExposureMeteringMode::OH_CAMERA_EXPOSURE_METERING_MODE_SPOT },
@@ -48,8 +48,6 @@ const std::unordered_map<MeteringMode, OH_Camera_ExposureMeteringMode> g_FwToNdk
 };
 
 const std::unordered_map<OH_Camera_ExposureMeteringMode, MeteringMode> g_NdkToFwExposureMeteringMode_ = {
-    { OH_Camera_ExposureMeteringMode::OH_CAMERA_CENTER_HIGHLIGHT_WEIGH,
-        MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED },
     { OH_Camera_ExposureMeteringMode::OH_CAMERA_EXPOSURE_METERING_MODE_CENTER,
         MeteringMode::METERING_MODE_CENTER_WEIGHTED },
     { OH_Camera_ExposureMeteringMode::OH_CAMERA_EXPOSURE_METERING_MODE_SPOT, MeteringMode::METERING_MODE_SPOT },
@@ -1447,49 +1445,63 @@ Camera_ErrorCode Camera_CaptureSession::GetRAWCaptureZoomRatioRange(float* minZo
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_CaptureSession::GetPhysicalAperturesSize(uint32_t* size) const
+Camera_ErrorCode Camera_CaptureSession::GetSupportedPhysicalApertures(
+    OH_Camera_PhysicalAperture** apertures, uint32_t* size) const
 {
     vector<vector<float>> physicalApertures = {};
+    *size = 0;
     int32_t retCode = innerCaptureSession_->GetSupportedPhysicalApertures(physicalApertures);
     if (retCode != CAMERA_OK || physicalApertures.empty()) {
         MEDIA_ERR_LOG("GetSupportedPhysicalApertures failed, retCode: %{public}d", retCode);
         return FrameworkToNdkCameraError(retCode);
     }
+    OH_Camera_PhysicalAperture* newApertures = new (nothrow) OH_Camera_PhysicalAperture[physicalApertures.size()];
+    CHECK_RETURN_RET_ELOG(newApertures == nullptr, CAMERA_OK, "Failed to allocate memory for apertures!");
+    for (size_t i = 0; i < physicalApertures.size(); ++i) {
+        if (physicalApertures[i].size() < ZOOM_RANGE_COUNT) {
+            MEDIA_ERR_LOG("Invalid physical aperture configuration at index %{public}zu", i);
+            DeletePhysicalApertures(newApertures, physicalApertures.size());
+            return CAMERA_OK;
+        }
+        int32_t offset = 1;
+        newApertures[i].zoomRange.minZoom = physicalApertures[i][0];
+        newApertures[i].zoomRange.maxZoom = physicalApertures[i][offset];
+        size_t apertureCount = physicalApertures[i].size() - ZOOM_RANGE_COUNT;
+        newApertures[i].apertureCount = 0;
+        if (apertureCount == 0) {
+            newApertures[i].apertures = nullptr;
+            continue;
+        }
+        newApertures[i].apertures = new (nothrow) float[apertureCount];
+        CHECK_CONTINUE_ELOG(
+            newApertures[i].apertures == nullptr, "Failed to allocate memory for apertures array at index %zu!", i);
+        auto ret = memcpy_s(newApertures[i].apertures, apertureCount * sizeof(float),
+            &physicalApertures[i][ZOOM_RANGE_COUNT], apertureCount * sizeof(float));
+        if (ret != 0) {
+            MEDIA_ERR_LOG("Camera_CaptureSession::GetSupportedPhysicalApertures memcpy_s err:%{public}d", ret);
+            delete[] newApertures[i].apertures;
+            newApertures[i].apertures = nullptr;
+            continue;
+        }
+        newApertures[i].apertureCount = apertureCount;
+    }
     *size = physicalApertures.size();
+    *apertures = newApertures;
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_CaptureSession::GetSupportedPhysicalApertures(
+Camera_ErrorCode Camera_CaptureSession::DeletePhysicalApertures(
     OH_Camera_PhysicalAperture* apertures, uint32_t size) const
 {
-    vector<vector<float>> physicalApertures = {};
-    int32_t retCode = innerCaptureSession_->GetSupportedPhysicalApertures(physicalApertures);
-    if (retCode != CAMERA_OK || physicalApertures.empty()) {
-        MEDIA_ERR_LOG("GetSupportedPhysicalApertures failed, retCode: %{public}d", retCode);
-        return FrameworkToNdkCameraError(retCode);
-    }
-    auto realSize = std::min(size, static_cast<uint32_t>(physicalApertures.size()));
-    for (size_t i = 0; i < realSize; ++i) {
-        if (physicalApertures[i].size() < 2) {
-            MEDIA_ERR_LOG("Invalid physical aperture configuration at index %{pubic}zu", i);
-            return CAMERA_INVALID_ARGUMENT;
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::DeletePhysicalApertures");
+    uint32_t safeSize = min(size, APERTURE_SIZE_MAX_FOR_SAFETY);
+    for (size_t index = 0; index < safeSize; index++) {
+        if (apertures[index].apertures != nullptr) {
+            delete[] apertures[index].apertures;
+            apertures[index].apertures = nullptr;
         }
-        int32_t offset = 1;
-        apertures[i].zoomRange.minZoom = physicalApertures[i][0];
-        apertures[i].zoomRange.maxZoom = physicalApertures[i][offset];
-        size_t apertureCount = physicalApertures[i].size() - 2;
-        if (apertureCount == 0) {
-            apertures[i].apertures = nullptr;
-            continue;
-        }
-        apertures[i].apertures = new float[apertureCount];
-        CHECK_RETURN_RET_ELOG(apertures[i].apertures == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "Failed to allocate memory for apertures array at index %zu!", i);
-        auto ret = memcpy_s(apertures[i].apertures, apertureCount * sizeof(float), &physicalApertures[i][2],
-            apertureCount * sizeof(float));
-        CHECK_PRINT_ELOG(ret != 0, "Camera_CaptureSession::GetSupportedPhysicalApertures err:%{public}d", ret);
-        apertures[i].apertureCount = apertureCount;
     }
+    delete[] apertures;
     return CAMERA_OK;
 }
 
