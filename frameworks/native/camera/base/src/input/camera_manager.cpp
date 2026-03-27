@@ -2850,7 +2850,8 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
     std::vector<Profile> curPhotoProfiles = camera->modePhotoProfiles_[modeName];
 #ifdef CAMERA_CAPTURE_YUV
-    CHECK_EXECUTE(!IsSystemApp(), RemoveExtendedSupportPhotoFormats(curPhotoProfiles));
+    CHECK_EXECUTE(!IsSystemApp() && camera->GetConnectionType() != ConnectionType::CAMERA_CONNECTION_USB_PLUGIN,
+        RemoveExtendedSupportPhotoFormats(curPhotoProfiles));
 #endif
     cameraOutputCapability->SetPhotoProfiles(curPhotoProfiles);
     std::vector<Profile> curPreviewProfiles = camera->modePreviewProfiles_[modeName];
