@@ -149,7 +149,8 @@ public:
 
     Camera_ErrorCode UnregisterFoldStatusCallback(OH_CameraManager_OnFoldStatusInfoChange foldStatusCallback);
 
-    Camera_ErrorCode CreateDeferredPreviewOutput(const Camera_Profile* profile, Camera_PreviewOutput** previewOutput);
+    Camera_ErrorCode CreateDeferredPreviewOutput(
+        const Camera_Profile* profile, Camera_PreviewOutput** previewOutput) const;
 
 private:
     Camera_ErrorCode GetSupportedPreviewProfiles(Camera_OutputCapability* outCapability,

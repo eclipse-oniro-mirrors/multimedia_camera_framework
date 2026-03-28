@@ -588,17 +588,18 @@ Camera_ErrorCode OH_CameraManager_GetCameraConcurrentInfos(Camera_Manager *camer
                                                            uint32_t *infoSize);
 
 /**
- * @brief Create a deferred preview output instance.
+ * @brief Create a defer preview output instance.The caller must call {@link OH_PreviewOutput_Release}
+ *     to free the memory of the output.
  *
  * @param cameraManager the {@link Camera_Manager} instance.
  * @param profile the {@link Camera_Profile} to create {@link Camera_PreviewOutput}.
  * @param previewOutput the {@link Camera_PreviewOutput} will be created if the method call succeeds.
  * @return {@link #CAMERA_OK} if the method call succeeds.
- *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 24
  */
-Camera_ErrorCode OH_CameraManager_CreateDeferredPreviewOutput(Camera_Manager* cameraManager,
+Camera_ErrorCode OH_CameraManager_CreateDeferredPreviewOutput(const Camera_Manager* cameraManager,
     const Camera_Profile* profile, Camera_PreviewOutput** previewOutput);
 #ifdef __cplusplus
 }

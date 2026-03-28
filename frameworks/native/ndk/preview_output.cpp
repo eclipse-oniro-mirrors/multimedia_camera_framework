@@ -241,7 +241,7 @@ Camera_ErrorCode OH_PreviewOutput_EnableBandwidthCompression(Camera_PreviewOutpu
     return previewOutput->EnableBandwidthCompression(enabled);
 }
 
-Camera_ErrorCode OH_PreviewOutput_AddDeferredSurface(Camera_PreviewOutput* previewOutput, const char* surfaceId)
+Camera_ErrorCode OH_PreviewOutput_AddDeferredSurface(const Camera_PreviewOutput* previewOutput, const char* surfaceId)
 {
     MEDIA_DEBUG_LOG("OH_PreviewOutput_AddDeferredSurface is called.");
     CHECK_RETURN_RET_ELOG(surfaceId == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, surfaceId is null!");

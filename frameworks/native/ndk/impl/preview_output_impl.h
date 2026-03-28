@@ -65,7 +65,7 @@ public:
 
     Camera_ErrorCode EnableBandwidthCompression(bool enabled);
 
-    Camera_ErrorCode AddDeferredSurface(const char* surfaceId);
+    Camera_ErrorCode AddDeferredSurface(const char* surfaceId) const;
 
 private:
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;

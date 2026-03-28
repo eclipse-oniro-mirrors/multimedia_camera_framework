@@ -1515,7 +1515,7 @@ Camera_ErrorCode Camera_Manager::UnregisterFoldStatusCallback(
 }
 
 Camera_ErrorCode Camera_Manager::CreateDeferredPreviewOutput(
-    const Camera_Profile* profile, Camera_PreviewOutput** previewOutput)
+    const Camera_Profile* profile, Camera_PreviewOutput** previewOutput) const
 {
     sptr<PreviewOutput> innerPreviewOutput = nullptr;
     Size size;

@@ -260,7 +260,7 @@ Camera_ErrorCode Camera_PreviewOutput::EnableBandwidthCompression(bool enabled)
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_PreviewOutput::AddDeferredSurface(const char* surfaceId)
+Camera_ErrorCode Camera_PreviewOutput::AddDeferredSurface(const char* surfaceId) const
 {
     uint64_t iSurfaceId;
     const char* begin = surfaceId;
