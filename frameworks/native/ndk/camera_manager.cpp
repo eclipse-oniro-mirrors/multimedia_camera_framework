@@ -607,7 +607,7 @@ Camera_ErrorCode OH_CameraManager_GetCameraConcurrentInfos(Camera_Manager *camer
     return cameraManager->GetCameraConcurrentInfos(camera, deviceSize, cameraConcurrentInfo, infoSize);
 }
 
-Camera_ErrorCode OH_CameraManager_CreateDeferredPreviewOutput(Camera_Manager* cameraManager,
+Camera_ErrorCode OH_CameraManager_CreateDeferredPreviewOutput(const Camera_Manager* cameraManager,
     const Camera_Profile* profile,  Camera_PreviewOutput** previewOutput)
 {
     CHECK_RETURN_RET_ELOG(
