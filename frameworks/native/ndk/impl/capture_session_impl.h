@@ -271,6 +271,8 @@ public:
     Camera_ErrorCode GetCurrentCustomOISBias(float* pitchBias, float* yawBias) const;
 
     Camera_ErrorCode SetOISModeCustom(float pitchBias, float yawBias) const;
+
+    Camera_ErrorCode GetZoomPointInfos(std::vector<OHOS::CameraStandard::ZoomPointInfo>& zoomPointInfoList) const;
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };

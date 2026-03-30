@@ -1597,3 +1597,12 @@ Camera_ErrorCode Camera_CaptureSession::SetOISModeCustom(float pitchBias, float 
     MEDIA_DEBUG_LOG("SetOISModeCustom ret:[%{public}d]", ret);
     return FrameworkToNdkCameraError(ret);
 }
+
+Camera_ErrorCode Camera_CaptureSession::GetZoomPointInfos(
+    std::vector<OHOS::CameraStandard::ZoomPointInfo>& zoomPointInfoList) const
+{
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetZoomPointInfos is called");
+    int32_t ret = innerCaptureSession_->GetZoomPointInfos(zoomPointInfoList);
+    MEDIA_DEBUG_LOG("GetZoomPointInfos ret:[%{public}d]", ret);
+    return FrameworkToNdkCameraError(ret);
+}

@@ -1444,6 +1444,35 @@ Camera_ErrorCode OH_CaptureSession_GetCurrentCustomOISBias(const Camera_CaptureS
  */
 Camera_ErrorCode OH_CaptureSession_SetOISModeCustom(const Camera_CaptureSession* session,
     float pitchBias, float yawBias);
+
+/**
+ * @brief Gets the zoom point infos.
+ * Release the zoom point infos memory by calling {@link OH_CaptureSession_DeleteZoomPointInfos}.
+ *
+ * @param session Pointer to the {@link Camera_CaptureSession} instance.
+ * @param size Pointer to the size of queried zoom point info.
+ * @param zoomPointInfo Double pointer to the queried zoom point info.
+ * @return {@link #CAMERA_OK} is returned if the function is called successfully.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameters are invalid.
+ *         {@link #CAMERA_OPERATION_NOT_ALLOWED} if operation is not allowed.
+ *         {@link #CAMERA_SESSION_NOT_CONFIG} if the capture session not config.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_CaptureSession_GetZoomPointInfos(const Camera_CaptureSession* session, uint32_t* size,
+    OH_Camera_ZoomPointInfo** zoomPointInfo);
+
+/**
+ * @brief Delete the zoom point infos.
+ *
+ * @param session Pointer to the {@link Camera_CaptureSession} instance.
+ * @param zoomPointInfo the target {@link Camera_ZoomPointInfo} list to be deleted if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_CaptureSession_DeleteZoomPointInfos(const Camera_CaptureSession* session,
+    OH_Camera_ZoomPointInfo* zoomPointInfo);
+
 #ifdef __cplusplus
 }
 #endif

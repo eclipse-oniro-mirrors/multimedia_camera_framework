@@ -3224,7 +3224,6 @@ function getCameraManager(context: Context): CameraManager;
    *
    * @typedef ZoomPointInfo
    * @syscap SystemCapability.Multimedia.Camera.Core
-   * @systemapi
    * @since 12
    */
   interface ZoomPointInfo {
@@ -3234,7 +3233,6 @@ function getCameraManager(context: Context): CameraManager;
      * @type { number }
      * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
      * @since 12
      */
     readonly zoomRatio: number;
@@ -3245,7 +3243,6 @@ function getCameraManager(context: Context): CameraManager;
      * @type { number }
      * @readonly
      * @syscap SystemCapability.Multimedia.Camera.Core
-     * @systemapi
      * @since 12
      */
     readonly equivalentFocalLength: number;
@@ -3286,7 +3283,17 @@ function getCameraManager(context: Context): CameraManager;
      * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
      * @syscap SystemCapability.Multimedia.Camera.Core
      * @systemapi
-     * @since 12
+     * @since 12 dynamic
+     * @since 23 static
+     */
+    /**
+     * Gets all important zoom ratio infos.
+     *
+     * @returns { Array<ZoomPointInfo> } The zoom point infos.
+     * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @atomicservice
+     * @since 26.0.0 dynamic&static
      */
     getZoomPointInfos(): Array<ZoomPointInfo>;
   }

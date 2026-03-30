@@ -157,12 +157,10 @@ array<double> ZoomQueryImpl::GetZoomRatioRange()
 
 array<ZoomPointInfo> ZoomQueryImpl::GetZoomPointInfos()
 {
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        array<ZoomPointInfo>(nullptr, 0), "SystemApi GetZoomPointInfos is called!");
-    CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr,
-        array<ZoomPointInfo>(nullptr, 0), "GetZoomPointInfos captureSessionForSys_ is null");
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr,
+        array<ZoomPointInfo>(nullptr, 0), "GetZoomPointInfos captureSession_ is null");
     std::vector<OHOS::CameraStandard::ZoomPointInfo> vecZoomPointInfoList;
-    int32_t retCode = captureSessionForSys_->GetZoomPointInfos(vecZoomPointInfoList);
+    int32_t retCode = captureSession_->GetZoomPointInfos(vecZoomPointInfoList);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), array<ZoomPointInfo>(nullptr, 0));
     return CameraUtilsTaihe::ToTaiheArrayZoomPointInfo(vecZoomPointInfoList);
 }
