@@ -88,6 +88,7 @@ static int64_t g_lastDeviceDropTime = 0;
 CallerInfo caller_;
 constexpr int32_t BASE_DEGREE = 360;
 static bool g_isPenglaiMode = system::GetParameter("ohos.boot.minisys.mode", "normal") == "penglai";
+constexpr int32_t DISTRIBUTED_CAMERA_ID_LENGTH = 10;
 
 const std::vector<std::tuple<uint32_t, std::string, std::string>> HCameraDevice::reportTagInfos_ = {
     {OHOS_CONTROL_FLASH_MODE, "OHOS_CONTROL_FLASH_MODE", DFX_UB_SET_FLASHMODE},
@@ -890,16 +891,18 @@ void HCameraDevice::HandleFoldableDevice()
 
 void HCameraDevice::HandleScanScene(std::string clientName)
 {
+    std::string cameraId = GetCameraId();
+    CHECK_RETURN(cameraId.empty() || cameraId.size() > DISTRIBUTED_CAMERA_ID_LENGTH);
     MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene clientName:%s", clientName.c_str());
     std::string scanScanBundle = HCameraDeviceManager::GetInstance()->GetScanSceneBundle();
     MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene scanScanBundle:%s", scanScanBundle.c_str());
-    if (clientName != scanScanBundle) {
+    if (scanScanBundle.empty() || clientName != scanScanBundle) {
         MEDIA_DEBUG_LOG("HCameraDevice::HandleScanScene not allowed app");
         return;
     }
-    uint32_t previewQuality = OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_SPEED;
     if (clientName != SYSTEM_CAMERA) {
         bool isScanSceneSupport = GetScanScene();
+        uint32_t previewQuality = OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_SPEED;
         CHECK_EXECUTE(isScanSceneSupport, UpdateScanSceneMetadata(previewQuality));
     }
 }
@@ -926,8 +929,11 @@ int32_t HCameraDevice::CloseDevice()
     bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     CHECK_EXECUTE(isFoldable, UnregisterDisplayModeListener());
-    UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
-    HCameraDeviceManager::GetInstance()->SetScanSceneBundle("");
+    std::string cameraId = GetCameraId();
+    if (GetScanScene() && !(cameraId.empty() || cameraId.size() > DISTRIBUTED_CAMERA_ID_LENGTH)) {
+        UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
+        HCameraDeviceManager::GetInstance()->SetScanSceneBundle("");
+    }
     {
         std::lock_guard<std::mutex> lock(opMutex_);
         CHECK_RETURN_RET_ELOG(!isOpenedCameraDevice_.load(), CAMERA_OK, "CloseDevice device has benn closed");
