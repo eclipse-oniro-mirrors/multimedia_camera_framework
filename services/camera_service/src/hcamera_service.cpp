@@ -609,9 +609,7 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             MEDIA_INFO_LOG("OnAddSystemAbility RES_SCHED_SYS_ABILITY_ID");
             RegisterSuspendObserver();
             RefreshRssCameraStatus();
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
             RegisterEventListenerToRss();
-#endif
             break;
         default:
             MEDIA_INFO_LOG("OnAddSystemAbility unhandled sysabilityId:%{public}d", systemAbilityId);
@@ -631,9 +629,7 @@ void HCameraService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::s
             MEDIA_INFO_LOG("OnRemoveSystemAbility RES_SCHED_SYS_ABILITY_ID");
             ClearFreezedPidList();
             UnregisterSuspendObserver();
-#ifdef CAMERA_LIVE_SCENE_RECOGNITION
             UnRegisterEventListenerToRss();
-#endif
             break;
         default:
             break;
