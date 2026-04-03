@@ -48,7 +48,8 @@ public:
     ~PhotoJobRepository();
 
     int32_t Initialize() override;
-    void AddDeferredJob(const std::string& imageId, bool discardable, DpsMetadata& metadata);
+    void AddDeferredJob(const std::string& imageId, bool discardable, DpsMetadata& metadata,
+        const std::string& bundleName);
     void RemoveDeferredJob(const std::string& imageId, bool restorable);
     bool RequestJob(const std::string& imageId);
     void CancelJob(const std::string& imageId);

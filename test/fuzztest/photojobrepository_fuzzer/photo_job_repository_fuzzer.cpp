@@ -78,7 +78,9 @@ void PhotoJobRepositoryFuzzer::PhotoJobRepositoryFuzzTest()
     metadata.Set(key, value);
     metadata.Get(key, value);
     bool discardable = GetData<bool>();
-    fuzz_->AddDeferredJob(imageId, discardable, metadata);
+    std::vector<std::string> testBundlename = {"", "com.huawei.hmos.camera"};
+    std::string bundleName(testBundlename[randomNum % testBundlename.size()]);
+    fuzz_->AddDeferredJob(imageId, discardable, metadata, bundleName);
     fuzz_->RemoveDeferredJob(imageId, discardable);
     fuzz_->RequestJob(imageId);
     fuzz_->CancelJob(imageId);
