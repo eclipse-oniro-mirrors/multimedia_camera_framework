@@ -78,6 +78,7 @@ bool AudioCapturerSession::CreateAudioCapturer()
     capturerOptions.streamInfo = deferredInputOptions_;
     capturerOptions.capturerInfo.sourceType = SourceType::SOURCE_TYPE_UNPROCESSED;
     capturerOptions.capturerInfo.capturerFlags = 0;
+    capturerOptions.mixWithWakeUp = true;
 
     std::shared_ptr<AudioCapturer> audioCapturer = AudioCapturer::Create(capturerOptions);
     CHECK_RETURN_RET_ELOG(audioCapturer == nullptr, false, "AudioCapturerSession::Create AudioCapturer failed");
