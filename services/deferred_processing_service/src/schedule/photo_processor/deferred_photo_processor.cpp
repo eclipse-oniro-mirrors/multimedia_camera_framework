@@ -132,11 +132,12 @@ void DeferredPhotoProcessor::OnProcessSuccess(const int32_t userId, const std::s
 #ifdef CAMERA_CAPTURE_YUV
     CallbackType imageType = imageInfo->GetType();
     auto deferredPhotoJob = repository_->GetJobUnLocked(imageId);
-    DP_CHECK_ERROR_PRINT_LOG(!deferredPhotoJob, "deferredPhotoJob is null.");
-    DP_INFO_LOG("DPS_PHOTO: bundleName: %{public}s", deferredPhotoJob->GetBundleName().c_str());
-    if (deferredPhotoJob->IsSystem() && imageType == CallbackType::IMAGE_PROCESS_YUV_DONE) {
-        auto picture = imageInfo->GetPicture();
-        DP_CHECK_EXECUTE(picture, picture->RotatePicture());
+    if (deferredPhotoJob != nullptr) {
+        DP_INFO_LOG("DPS_PHOTO: bundleName: %{public}s", deferredPhotoJob->GetBundleName().c_str());
+        if (deferredPhotoJob->IsSystem() && imageType == CallbackType::IMAGE_PROCESS_YUV_DONE) {
+            auto picture = imageInfo->GetPicture();
+            DP_CHECK_EXECUTE(picture, picture->RotatePicture());
+        }
     }
 #endif
     HandleSuccess(userId, imageId, std::move(imageInfo));
