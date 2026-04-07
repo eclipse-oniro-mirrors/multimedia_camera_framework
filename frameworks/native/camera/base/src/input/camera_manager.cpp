@@ -204,6 +204,7 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
     // LCOV_EXCL_START
     if (status == static_cast<int32_t>(CameraStatus::CAMERA_STATUS_APPEAR)) {
         cameraManager->ClearCameraDeviceListCache();
+        cameraManager->ClearCameraPhysicalDeviceListCache();
         cameraManager->ClearCameraDeviceAbilitySupportMap();
     }
     sptr<CameraDevice> cameraInfo = cameraManager->GetCameraDeviceFromId(cameraId);
@@ -216,6 +217,7 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
         status != static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR) && cameraManager->ShouldClearCache() &&
         !cameraInfo) {
         cameraManager->ClearCameraDeviceListCache();
+        cameraManager->ClearCameraPhysicalDeviceListCache();
         cameraManager->ClearCameraDeviceAbilitySupportMap();
         cameraInfo = cameraManager->GetCameraDeviceFromId(cameraId);
     }
@@ -231,6 +233,7 @@ int32_t CameraStatusListenerManager::OnCameraStatusChanged(
         listenerManager->CacheCameraStatus(cameraId, std::make_shared<CameraStatusInfo>(cameraStatusInfo));
         if (status == static_cast<int32_t>(CameraStatus::CAMERA_STATUS_DISAPPEAR)) {
             cameraManager->RemoveCameraDeviceFromCache(cameraId);
+            cameraManager->RemoveCameraPhysicalDeviceFromCache(cameraId);
         }
     }
     return CAMERA_OK;
@@ -2441,7 +2444,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetSupportedFullCamerasList()
     std::vector<sptr<CameraDevice>> cameraDeviceList;
     // LCOV_EXCL_START
     cameraDeviceList = GetSupportedCamerasList();
-    std::vector<sptr<CameraDevice>> cameraPhysicalDeviceList = GetCameraPhysicalDeviceListFromServer();
+    std::vector<sptr<CameraDevice>> cameraPhysicalDeviceList = GetPhysicalCameraDeviceList();
     cameraDeviceList.insert(cameraDeviceList.end(), cameraPhysicalDeviceList.begin(), cameraPhysicalDeviceList.end());
     std::unordered_set<string> seenIds;
     auto it = cameraDeviceList.begin();

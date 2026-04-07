@@ -541,6 +541,95 @@ void StabilizationImpl::SetVideoStabilizationMode(VideoStabilizationMode mode)
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "SetVideoStabilizationMode call Failed!");
 }
 
+bool OISQueryImpl::IsOISModeSupported(int32_t oisMode)
+{
+    MEDIA_DEBUG_LOG("OISQueryImpl::IsOISModeSupported is called");
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, false,
+        "IsOISModeSupported captureSession_ is null");
+    bool isSupported = false;
+    int32_t retCode = captureSession_->IsOISModeSupported(
+        static_cast<OHOS::CameraStandard::OISMode>(oisMode), isSupported);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), false);
+    return isSupported;
+}
+
+OISMode OISQueryImpl::GetCurrentOISMode()
+{
+    MEDIA_DEBUG_LOG("OISQueryImpl::GetCurrentOISMode is called");
+    OHOS::CameraStandard::OISMode oisMode = OHOS::CameraStandard::OISMode::OIS_MODE_AUTO;
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, OISMode::from_value(oisMode),
+        "GetCurrentOISMode captureSession_ is null");
+    int32_t retCode = captureSession_->GetCurrentOISMode(oisMode);
+    CHECK_RETURN_RET_ELOG(!CameraUtilsTaihe::CheckError(retCode), OISMode::from_value(oisMode),
+        "GetCurrentOISMode failed %{public}d", retCode);
+    return OISMode::from_value(oisMode);
+}
+
+array<double> OISQueryImpl::GetSupportedOISBiasRange(int32_t oisAxis)
+{
+    MEDIA_DEBUG_LOG("OISQueryImpl::GetSupportedOISBiasRange is called");
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, array<double>(0.0),
+        "GetSupportedOISBiasRange captureSession_ is null");
+    std::vector<float> biasRange;
+    float step = 0.0f;
+    int32_t retCode = captureSession_->GetSupportedOISBiasRangeAndStep(
+        static_cast<OHOS::CameraStandard::OISAxes>(oisAxis), biasRange, step);
+    CHECK_RETURN_RET_ELOG(!CameraUtilsTaihe::CheckError(retCode), array<double>(0.0),
+        "GetSupportedOISBiasRange failed %{public}d", retCode);
+    std::vector<double> doubleBiasRange(biasRange.begin(), biasRange.end());
+    if (doubleBiasRange.empty()) {
+        return array<double>(0.0);
+    }
+    return array<double>(doubleBiasRange);
+}
+
+double OISQueryImpl::GetSupportedOISBiasStep(int32_t oisAxis)
+{
+    MEDIA_DEBUG_LOG("OISQueryImpl::GetSupportedOISBiasStep is called");
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, -1.0,
+        "GetSupportedOISBiasStep captureSession_ is null");
+    std::vector<float> biasRange;
+    float step = 0.0f;
+    int32_t retCode = captureSession_->GetSupportedOISBiasRangeAndStep(
+        static_cast<OHOS::CameraStandard::OISAxes>(oisAxis), biasRange, step);
+    CHECK_RETURN_RET_ELOG(!CameraUtilsTaihe::CheckError(retCode), -1.0,
+        "GetSupportedOISBiasStep failed %{public}d", retCode);
+    return static_cast<double>(step);
+}
+
+double OISQueryImpl::GetCurrentCustomOISBias(int32_t oisAxis)
+{
+    MEDIA_DEBUG_LOG("OISQueryImpl::GetCurrentCustomOISBias is called");
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, -1.0,
+        "GetCurrentCustomOISBias captureSession_ is null");
+    float bias = 0.0f;
+    int32_t retCode = captureSession_->GetCurrentCustomOISBias(
+        static_cast<OHOS::CameraStandard::OISAxes>(oisAxis), bias);
+    CHECK_RETURN_RET_ELOG(!CameraUtilsTaihe::CheckError(retCode), -1.0,
+        "GetCurrentCustomOISBias failed %{public}d", retCode);
+    return static_cast<double>(bias);
+}
+
+void OISImpl::SetOISMode(int32_t mode)
+{
+    MEDIA_DEBUG_LOG("OISImpl::SetOISMode is called");
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetOISMode captureSession_ is null");
+    int32_t retCode = captureSession_->SetOISMode(
+        static_cast<OHOS::CameraStandard::OISMode>(mode));
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
+        "SetOISMode failed %{public}d", retCode);
+}
+
+void OISImpl::SetOISModeCustom(double pitchBias, double yawBias, double rollBias)
+{
+    MEDIA_DEBUG_LOG("OISImpl::SetOISModeCustom is called");
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetOISModeCustom captureSession_ is null");
+    int32_t retCode = captureSession_->SetOISModeCustom(
+        static_cast<float>(pitchBias), static_cast<float>(yawBias), static_cast<float>(rollBias));
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
+        "SetOISModeCustom failed %{public}d", retCode);
+}
+
 array<PortraitThemeType> BeautyQueryImpl::GetSupportedPortraitThemeTypes()
 {
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),

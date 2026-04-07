@@ -361,14 +361,6 @@ struct ExposureInfo {
     float exposureBias = 0.0f;
 };
 
-enum HalFlashState {
-    OHOS_CAMERA_FLASH_STATE_UNAVAILABLE,
-    OHOS_CAMERA_FLASH_STATE_CHARGING,
-    OHOS_CAMERA_FLASH_STATE_READY,
-    OHOS_CAMERA_FLASH_STATE_FLASHING,
-    OHOS_CAMERA_FLASH_STATE_UNKNOWN
-};
-
 enum FlashState {
     FLASH_STATE_UNAVAILABLE = 0,
     FLASH_STATE_READY = 1,
@@ -2340,7 +2332,7 @@ public:
     bool IsManualIsoSupported();
 
 protected:
-    static const std::unordered_map<HalFlashState, FlashState> metaFlashStateMap_;
+    static const std::unordered_map<camera_flash_state_enum_t, FlashState> metaFlashStateMap_;
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
     static const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> fwkWhiteBalanceModeMap_;
 

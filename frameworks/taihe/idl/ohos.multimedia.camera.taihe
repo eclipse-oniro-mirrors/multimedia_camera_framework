@@ -379,6 +379,18 @@ enum VideoStabilizationMode : i32 {
   AUTO = 4
 }
 
+enum OISMode: i32 {
+  OFF = 0,
+  AUTO = 1,
+  CUSTOM = 2,
+}
+
+enum OISAxes: i32 {
+  PITCH = 0,
+  YAW = 1,
+  ROLL = 2,
+}
+
 struct Location {
   latitude: f64;
   longitude: f64;
@@ -762,7 +774,7 @@ enum FlashState: i32 {
   FLASH_STATE_FLASHING = 2,
 }
 
-interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ManualIso, ManualFocus, ManualExposure, Aperture {
+interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, ColorManagement, Focus, Macro, WhiteBalance, ManualIso, ManualFocus, ManualExposure, Aperture, OIS {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>)=> void): void;")
@@ -2454,6 +2466,19 @@ interface StabilizationQuery {
 interface Stabilization : StabilizationQuery {
   GetActiveVideoStabilizationMode(): VideoStabilizationMode;
   SetVideoStabilizationMode(mode: VideoStabilizationMode): void;
+}
+
+interface OISQuery {
+  IsOISModeSupported(oisMode: OISMode): bool;
+  GetCurrentOISMode(): OISMode;
+  GetSupportedOISBiasRange(oisAxis: OISAxes): Array<f64>;
+  GetSupportedOISBiasStep(oisAxis: OISAxes): f64;
+  GetCurrentCustomOISBias(oisAxis: OISAxes): f64;
+}
+
+interface OIS : OISQuery {
+  SetOISMode(mode: OISMode): void;
+  SetOISModeCustom(pitch: f64, yaw: f64, roll: f64): void;
 }
 
 interface ManualExposureQuery {

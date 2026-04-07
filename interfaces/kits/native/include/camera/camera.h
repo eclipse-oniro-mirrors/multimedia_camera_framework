@@ -476,7 +476,12 @@ typedef enum Camera_ExposureMode {
     /**
      * Continuous automatic exposure.
      */
-    EXPOSURE_MODE_CONTINUOUS_AUTO = 2
+    EXPOSURE_MODE_CONTINUOUS_AUTO = 2,
+
+    /**
+     * Manual exposure mode.
+     */
+    EXPOSURE_MODE_MANUAL = 3,
 } Camera_ExposureMode;
 
 /**

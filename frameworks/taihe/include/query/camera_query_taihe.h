@@ -144,6 +144,25 @@ public:
     void SetVideoStabilizationMode(VideoStabilizationMode mode);
 };
 
+class OISQueryImpl : virtual public SessionBase, virtual public FunctionBase {
+public:
+    explicit OISQueryImpl() {}
+    virtual ~OISQueryImpl() = default;
+    virtual bool IsOISModeSupported(int32_t oisMode);
+    virtual OISMode GetCurrentOISMode();
+    virtual array<double> GetSupportedOISBiasRange(int32_t oisAxis);
+    virtual double GetSupportedOISBiasStep(int32_t oisAxis);
+    virtual double GetCurrentCustomOISBias(int32_t oisAxis);
+};
+
+class OISImpl : public OISQueryImpl {
+public:
+    explicit OISImpl() {}
+    virtual ~OISImpl() = default;
+    virtual void SetOISMode(int32_t mode);
+    virtual void SetOISModeCustom(double pitchBias, double yawBias, double rollBias);
+};
+
 class BeautyQueryImpl : virtual public SessionBase, virtual public FunctionBase {
 public:
     explicit BeautyQueryImpl() {}

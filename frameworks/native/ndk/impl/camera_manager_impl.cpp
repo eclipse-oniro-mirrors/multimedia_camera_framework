@@ -1130,7 +1130,7 @@ Camera_ErrorCode Camera_Manager::GetIntrinsicCalibration(
     auto calibration = device->GetLensIntrinsicCalibration();
     if (calibration.has_value() && !calibration.value().empty()) {
         auto newIntrinsicCalibration = new float[calibration.value().size()];
-        CHECK_RETURN_RET_ELOG(*intrinsicCalibration == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        CHECK_RETURN_RET_ELOG(newIntrinsicCalibration == nullptr, CAMERA_SERVICE_FATAL_ERROR,
             "Camera_Manager::GetIntrinsicCalibration allocate memory for intrinsicCalibration fail!");
         for (uint32_t i = 0; i < calibration.value().size(); i++) {
             newIntrinsicCalibration[i] = static_cast<float>(calibration.value()[i]);
