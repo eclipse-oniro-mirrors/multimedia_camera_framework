@@ -569,6 +569,7 @@ int32_t HCameraDevice::Close()
 #endif
     }
     int32_t result = CloseDevice();
+    SetConcurrentCaptureTag(false);
     return result;
 }
 
@@ -930,9 +931,12 @@ int32_t HCameraDevice::CloseDevice()
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     CHECK_EXECUTE(isFoldable, UnregisterDisplayModeListener());
     std::string cameraId = GetCameraId();
-    if (GetScanScene() && !(cameraId.empty() || cameraId.size() > DISTRIBUTED_CAMERA_ID_LENGTH)) {
-        UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
-        HCameraDeviceManager::GetInstance()->SetScanSceneBundle("");
+    if ((!cameraId.empty()) && (cameraId.size() < DISTRIBUTED_CAMERA_ID_LENGTH)) {
+        SetConcurrentCaptureTag(false);
+        if (GetScanScene()) {
+            UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
+            HCameraDeviceManager::GetInstance()->SetScanSceneBundle("");
+        }
     }
     {
         std::lock_guard<std::mutex> lock(opMutex_);
@@ -2114,6 +2118,10 @@ int32_t HCameraDevice::Open(int32_t concurrentType)
     SetCameraConcurrentType(concurrentType);
     EnableDeviceOpenedByConcurrent(true);
     int32_t result = OpenDevice();
+    std::string cameraId = GetCameraId();
+    if (result == CAMERA_OK && ((!cameraId.empty()) && (cameraId.size() < DISTRIBUTED_CAMERA_ID_LENGTH))) {
+        SetConcurrentCaptureTag(true);
+    }
     return result;
 }
 
@@ -2290,6 +2298,23 @@ void HCameraDevice::UpdateScanSceneMetadata(uint32_t previewQuality)
 int32_t HCameraDevice::GetPid()
 {
     return cameraPid_;
+}
+
+void HCameraDevice::SetConcurrentCaptureTag(bool flag)   // ture 开启多摄同开拍照，false关闭
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::SetConcurrentCaptureTag ENTER");
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    int32_t count = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    CHECK_RETURN_ELOG(changedMetadata == nullptr, "changedMetadata is nullptr");
+    bool status = AddOrUpdateMetadata(
+        changedMetadata, OHOS_CONTROL_CAMERA_CONCURRENT_CAPTURE, &flag, count);
+    CHECK_RETURN_ELOG(!status, "AddOrUpdateMetadata camera concurrent capture Failed");
+    int32_t ret = UpdateSetting(changedMetadata);
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "UpdateSetting camera concurrent capture Failed");
+    return;
 }
 } // namespace CameraStandard
 } // namespace OHOS
