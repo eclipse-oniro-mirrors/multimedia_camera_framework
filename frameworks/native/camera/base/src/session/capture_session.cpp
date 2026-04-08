@@ -199,10 +199,12 @@ const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> CaptureSession::me
 };
 
 //flashstate
-const std::unordered_map<HalFlashState, FlashState> CaptureSession::metaFlashStateMap_ = {
+const std::unordered_map<camera_flash_state_enum_t, FlashState> CaptureSession::metaFlashStateMap_ = {
     { OHOS_CAMERA_FLASH_STATE_UNAVAILABLE, FLASH_STATE_UNAVAILABLE },
+    { OHOS_CAMERA_FLASH_STATE_CHARGING, FLASH_STATE_UNAVAILABLE },
     { OHOS_CAMERA_FLASH_STATE_READY, FLASH_STATE_READY },
     { OHOS_CAMERA_FLASH_STATE_FLASHING, FLASH_STATE_FLASHING },
+    { OHOS_CAMERA_FLASH_STATE_UNKNOWN, FLASH_STATE_UNAVAILABLE },
 };
 
 const std::unordered_map<WhiteBalanceMode, camera_awb_mode_t> CaptureSession::fwkWhiteBalanceModeMap_ = {
@@ -2218,8 +2220,12 @@ int32_t CaptureSession::GetSupportedStabilizationMode(std::vector<VideoStabiliza
 
 int32_t CaptureSession::IsOISModeSupported(OISMode oisMode, bool &isSupported)
 {
-    MEDIA_INFO_LOG("Enter CaptureSession::IsOISModeSupported oisMode:%{public}d", oisMode);
+    MEDIA_INFO_LOG("Enter IsOISModeSupported oisMode:%{public}d", oisMode);
     isSupported = false;
+    if (oisMode < OIS_MODE_OFF || oisMode > OIS_MODE_CUSTOM) {
+        MEDIA_ERR_LOG("IsOISModeSupported with invalid oisMode: %{public}d", oisMode);
+        return CameraErrorCode::SUCCESS;
+    }
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::IsOISModeSupported Session is not Commited");
     auto inputDevice = GetInputDevice();
@@ -2323,7 +2329,11 @@ int32_t CaptureSession::GetCurrentOISMode(OISMode &oisMode)
 
 int32_t CaptureSession::SetOISMode(OISMode oisMode)
 {
-    MEDIA_INFO_LOG("Enter CaptureSession::SetOISMode mode:%{public}d", oisMode);
+    MEDIA_INFO_LOG("Enter SetOISMode mode:%{public}d", oisMode);
+    if (oisMode < OIS_MODE_OFF || oisMode > OIS_MODE_CUSTOM) {
+        MEDIA_ERR_LOG("SetOISMode with invalid oisMode: %{public}d, set with default", oisMode);
+        oisMode = OIS_MODE_AUTO;
+    }
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "SetOISMode Session is not Commited");
     auto inputDevice = GetInputDevice();
@@ -2337,13 +2347,13 @@ int32_t CaptureSession::SetOISMode(OISMode oisMode)
     bool isSupported = false;
     IsOISModeSupported(oisMode, isSupported);
     CHECK_RETURN_RET_ELOG(!isSupported,  CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "CaptureSession::SetOISMode, mode %{public}d is not suppported", oisMode);
+        "SetOISMode, mode %{public}d is not suppported", oisMode);
     bool status = false;
     uint32_t count = 1;
     camera_metadata_item_t item;
     int32_t stabilizationModes = static_cast<int32_t>(oisMode);
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
-        "CaptureSession::SetOISMode Need to call LockForControl() before setting camera properties");
+        "SetOISMode Need to call LockForControl() before setting camera properties");
     int32_t ret =
         Camera::FindCameraMetadataItem(changedMetadata_->get(), OHOS_CONTROL_OPTICAL_IMAGE_STABILIZATION_MODE, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
@@ -2361,6 +2371,10 @@ int32_t CaptureSession::GetSupportedOISBiasRangeAndStep(
     OISAxes oisAxis, std::vector<float> &biasRange, float &step)
 {
     MEDIA_INFO_LOG("GetSupportedOISBiasRangeAndStep enter, oisAxis:%{public}d", oisAxis);
+    if (oisAxis < OIS_AXES_PITCH || oisAxis >= OIS_AXES_ROLL) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedOISBiasRangeAndStep invalid oisAxis: %{public}d", oisAxis);
+        oisAxis = OIS_AXES_PITCH;
+    }
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "GetSupportedOISBiasRangeAndStep Session is not Commited");
     auto inputDevice = GetInputDevice();
@@ -2439,7 +2453,11 @@ void CaptureSession::ParseSupportedOISBiasRangeAndStep(const SceneMode modeName,
 
 int32_t CaptureSession::GetCurrentCustomOISBias(OISAxes oisAxis, float &bias)
 {
-    MEDIA_DEBUG_LOG("CaptureSession::GetCurrentCustomOISBias is called");
+    MEDIA_DEBUG_LOG("CaptureSession::GetCurrentCustomOISBias is called, oisAxis%{public}d", oisAxis);
+    if (oisAxis < OIS_AXES_PITCH || oisAxis >= OIS_AXES_ROLL) {
+        MEDIA_ERR_LOG("CameraSessionNapi::GetCurrentCustomOISBias invalid oisAxis: %{public}d", oisAxis);
+        oisAxis = OIS_AXES_PITCH;
+    }
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "GetCurrentCustomOISBias Session is not Commited");
     auto inputDevice = GetInputDevice();
@@ -2488,7 +2506,15 @@ int32_t CaptureSession::SetOISModeCustom(float pitchBias, float yawBias, float r
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetOISModeCustom Need to call LockForControl() before setting camera properties");
     // check if custom mode
-    CHECK_RETURN_RET_ELOG(oisMode_ != OIS_MODE_CUSTOM, CameraErrorCode::OPERATION_NOT_ALLOWED,
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "SetOISModeCustom camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_OPTICAL_IMAGE_STABILIZATION_MODE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "SetOISModeCustom find meta faild");
+    OISMode oisMode = static_cast<OISMode>(item.data.i32[0]);
+    CHECK_RETURN_RET_ELOG(oisMode != OIS_MODE_CUSTOM, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "SetOISModeCustom not in custom ois mode");
     // clamp bias value
     float step = 0.0f;
@@ -2503,12 +2529,11 @@ int32_t CaptureSession::SetOISModeCustom(float pitchBias, float yawBias, float r
     yawBias = ClampValue(yawBias, yawBiasRange[0], yawBiasRange[1]);
     // update value
     bool status = false;
-    camera_metadata_item_t item;
     std::vector<float> bias;
     bias.push_back(pitchBias);
     bias.push_back(yawBias);
     bias.push_back(rollBias);
-    int32_t ret = Camera::FindCameraMetadataItem(
+    ret = Camera::FindCameraMetadataItem(
         changedMetadata_->get(), OHOS_CONTROL_SET_CUSTOM_OPTICAL_IMAGE_STABILIZATION_BIAS, &item);
     if (ret == CAM_META_ITEM_NOT_FOUND) {
         status = changedMetadata_->addEntry(
@@ -2588,13 +2613,19 @@ int32_t CaptureSession::GetSupportedExposureModes(std::vector<ExposureMode>& sup
 
 int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
 {
+    MEDIA_DEBUG_LOG("CaptureSession::SetExposureMode is called exposureMode:%{public}d", exposureMode);
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::SetExposureMode Session is not Commited");
 
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetExposureMode Need to call LockForControl() before setting camera properties");
-    CHECK_RETURN_RET(!IsExposureModeSupported(exposureMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    bool isManual = (exposureMode == EXPOSURE_MODE_MANUAL);
+    // manual support wait for hal
+    if (!isManual) {
+        CHECK_RETURN_RET_ELOG(!IsExposureModeSupported(exposureMode), CameraErrorCode::OPERATION_NOT_ALLOWED,
+            "SetExposureMode mode not supported");
+    }
     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
     auto itr = g_fwkExposureModeMap_.find(exposureMode);
     if (itr == g_fwkExposureModeMap_.end()) {
@@ -3343,11 +3374,15 @@ void CaptureSession::ProcessFlashStateChange(const std::shared_ptr<OHOS::Camera:
     CHECK_RETURN(ret != CAM_META_SUCCESS);
     FlashState info = FLASH_STATE_UNAVAILABLE;
     uint8_t value = item.data.u8[0];
-    auto itr = metaFlashStateMap_.find(static_cast<HalFlashState>(value));
+    MEDIA_ERR_LOG("ProcessFlashStateChange value:%{public}d", value);
+    camera_flash_state_enum_t halValue = static_cast<camera_flash_state_enum_t>(value);
+    auto itr = metaFlashStateMap_.find(halValue);
     CHECK_RETURN(itr == metaFlashStateMap_.end());
     info = itr->second;
+    MEDIA_ERR_LOG("ProcessFlashStateChange info:%{public}d", info);
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-    bool isUpdateFlashState = flashStateCallback_ != nullptr && (value != flashStateValue_);
+    MEDIA_ERR_LOG("ProcessFlashStateChange flashStateValue_:%{public}d", flashStateValue_.load());
+    bool isUpdateFlashState = flashStateCallback_ != nullptr && (info != flashStateValue_);
     CHECK_RETURN(!isUpdateFlashState);
     flashStateCallback_->OnFlashStateChangedSync(info);
     flashStateValue_.store(info);
@@ -4930,6 +4965,9 @@ int32_t CaptureSession::SetSensorExposureTime(uint32_t exposureTime)
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "CaptureSession::SetSensorExposureTime camera device is null");
+    ExposureMode curMode = GetExposureMode();
+    CHECK_RETURN_RET_ELOG(!CameraSecurity::CheckSystemApp() && curMode != ExposureMode::EXPOSURE_MODE_MANUAL,
+        CameraErrorCode::OPERATION_NOT_ALLOWED, "Camera_CaptureSession::SetSensorExposureTime mode not in manul");
     std::vector<uint32_t> sensorExposureTimeRange;
     CHECK_RETURN_RET_ELOG((GetSensorExposureTimeRange(sensorExposureTimeRange) != CameraErrorCode::SUCCESS) ||
             sensorExposureTimeRange.empty(),
@@ -7419,7 +7457,7 @@ int32_t CaptureSession::SetExposureMeteringMode(MeteringMode mode)
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetExposureMeteringMode Need to call LockForControl() before setting camera properties");
     // LCOV_EXCL_START
-    camera_meter_mode_t meteringMode = OHOS_CAMERA_SPOT_METERING;
+    camera_meter_mode_t meteringMode = OHOS_CAMERA_REGION_METERING;
     auto itr = fwkMeteringModeMap_.find(mode);
     if (itr == fwkMeteringModeMap_.end()) {
         MEDIA_ERR_LOG("CaptureSession::SetExposureMeteringMode Unknown exposure mode");

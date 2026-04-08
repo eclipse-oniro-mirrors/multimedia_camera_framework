@@ -442,7 +442,7 @@ Camera_ErrorCode OH_CaptureSession_IsExposureModeSupported(Camera_CaptureSession
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
     CHECK_RETURN_RET_ELOG(exposureMode != EXPOSURE_MODE_LOCKED && exposureMode != EXPOSURE_MODE_AUTO &&
-            exposureMode != EXPOSURE_MODE_CONTINUOUS_AUTO,
+            exposureMode != EXPOSURE_MODE_CONTINUOUS_AUTO && exposureMode != EXPOSURE_MODE_MANUAL,
         CAMERA_INVALID_ARGUMENT, "Invalid argument, exposureMode is invalid!");
     return session->IsExposureModeSupported(exposureMode, isSupported);
 }
@@ -460,7 +460,7 @@ Camera_ErrorCode OH_CaptureSession_SetExposureMode(Camera_CaptureSession* sessio
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetExposureMode is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
     CHECK_RETURN_RET_ELOG(exposureMode != EXPOSURE_MODE_LOCKED && exposureMode != EXPOSURE_MODE_AUTO &&
-            exposureMode != EXPOSURE_MODE_CONTINUOUS_AUTO,
+            exposureMode != EXPOSURE_MODE_CONTINUOUS_AUTO && exposureMode != EXPOSURE_MODE_MANUAL,
         CAMERA_INVALID_ARGUMENT, "Invalid argument, exposureMode is invalid!");
     return session->SetExposureMode(exposureMode);
 }

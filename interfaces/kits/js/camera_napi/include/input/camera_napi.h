@@ -573,6 +573,12 @@ static const std::unordered_map<std::string, int32_t> mapSensorColorFilterArrang
     {"RGGB", 3},
 };
 
+static const std::unordered_map<std::string, int32_t> mapFlashState = {
+    {"FLASH_STATE_UNAVAILABLE", 0},
+    {"FLASH_STATE_READY", 1},
+    {"FLASH_STATE_FLASHING", 2},
+};
+
 enum CreateAsyncCallbackModes {
     CREATE_CAMERA_MANAGER_ASYNC_CALLBACK = 10,
 };

@@ -614,7 +614,6 @@ Camera_ErrorCode Camera_CaptureSession::GetFocusDistance(float* focusDistance) c
     float cameraFocusDistance;
     int32_t ret = innerCaptureSession_->GetFocusDistance(cameraFocusDistance);
     *focusDistance = cameraFocusDistance;
-    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
     return FrameworkToNdkCameraError(ret);
 }
 
@@ -1286,6 +1285,8 @@ Camera_ErrorCode Camera_CaptureSession::GetIsoRange(int32_t* minIsoValue, int32_
 Camera_ErrorCode Camera_CaptureSession::SetExposureDuration(int32_t exposureDuration) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetExposureDuration is called");
+    CHECK_RETURN_RET_ELOG(!innerCaptureSession_->IsSessionCommited(), CAMERA_SESSION_NOT_CONFIG,
+        "Camera_CaptureSession::SetExposureDuration session not config!");
     SceneMode mode = innerCaptureSession_->GetMode();
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
     innerCaptureSession_->LockForControl();
@@ -1313,8 +1314,9 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureDurationRange(
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
     std::vector<uint32_t> sensorExposureTimeRange;
     int32_t ret = innerCaptureSession_->GetSensorExposureTimeRange(sensorExposureTimeRange);
-    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS || sensorExposureTimeRange.size() < 2,
-        Camera_ErrorCode::CAMERA_SERVICE_FATAL_ERROR);
+    CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, FrameworkToNdkCameraError(ret));
+    int32_t sizeCount = 2;
+    CHECK_RETURN_RET(sensorExposureTimeRange.size() < sizeCount, Camera_ErrorCode::CAMERA_OPERATION_NOT_ALLOWED);
     *minExposureDuration = sensorExposureTimeRange.front();
     *maxExposureDuration = sensorExposureTimeRange.back();
     return FrameworkToNdkCameraError(ret);
@@ -1323,6 +1325,8 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureDurationRange(
 Camera_ErrorCode Camera_CaptureSession::SetFocusDistance(float focusDistance) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetFocusDistance is called");
+    CHECK_RETURN_RET_ELOG(!innerCaptureSession_->IsSessionCommited(), CAMERA_SESSION_NOT_CONFIG,
+        "Camera_CaptureSession::SetFocusDistance session not config!");
     SceneMode mode = innerCaptureSession_->GetMode();
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
     innerCaptureSession_->LockForControl();

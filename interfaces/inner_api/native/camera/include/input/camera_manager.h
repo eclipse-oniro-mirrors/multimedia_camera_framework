@@ -1017,6 +1017,12 @@ public:
         cameraDeviceList_.clear();
     }
 
+    inline void ClearCameraPhysicalDeviceListCache()
+    {
+        std::lock_guard<std::mutex> lock(cameraPhysicalDeviceListMutex_);
+        cameraPhysicalDeviceList_.clear();
+    }
+
     inline void ClearCameraDeviceAbilitySupportMap()
     {
         std::lock_guard<std::mutex> lock(cameraDeviceAbilitySupportMapMutex_);
@@ -1034,6 +1040,15 @@ public:
     inline float GetTorchLevel() const
     {
         return level_.load();
+    }
+
+    inline void RemoveCameraPhysicalDeviceFromCache(const std::string& cameraId)
+    {
+        std::lock_guard<std::mutex> lock(cameraPhysicalDeviceListMutex_);
+        cameraPhysicalDeviceList_.erase(
+            std::remove_if(cameraPhysicalDeviceList_.begin(), cameraPhysicalDeviceList_.end(),
+                [&cameraId](const auto& cameraDevice) { return cameraDevice->GetID() == cameraId; }),
+            cameraPhysicalDeviceList_.end());
     }
 
     void GetCameraOutputStatus(int32_t pid, int32_t &status);
@@ -1081,10 +1096,18 @@ public:
         }
         return cameraDeviceList_;
     }
+    inline std::vector<sptr<CameraDevice>> GetPhysicalCameraDeviceList()
+    {
+        std::lock_guard<std::mutex> lock(cameraPhysicalDeviceListMutex_);
+        if (cameraPhysicalDeviceList_.empty()) {
+            cameraPhysicalDeviceList_ = GetCameraPhysicalDeviceListFromServer();
+        }
+        return cameraPhysicalDeviceList_;
+    }
     inline std::vector<sptr<CameraDevice>> GetFullCameraDeviceList()
     {
         std::vector<sptr<CameraDevice>> cameraDeviceList = GetCameraDeviceList();
-        std::vector<sptr<CameraDevice>> cameraPhysicalDeviceList = GetCameraPhysicalDeviceListFromServer();
+        std::vector<sptr<CameraDevice>> cameraPhysicalDeviceList = GetPhysicalCameraDeviceList();
         cameraDeviceList.insert(
             cameraDeviceList.end(), cameraPhysicalDeviceList.begin(), cameraPhysicalDeviceList.end());
         return cameraDeviceList;
@@ -1262,8 +1285,10 @@ private:
     std::vector<sptr<CameraDevice>> FilterDeviceList(
         FoldStatus curFoldStatus, std::vector<sptr<CameraDevice>> cameraDeviceList);
     std::mutex cameraDeviceListMutex_;
+    std::mutex cameraPhysicalDeviceListMutex_;
     std::mutex innerCameraMutex_;
     std::vector<sptr<CameraDevice>> cameraDeviceList_ = {};
+    std::vector<sptr<CameraDevice>> cameraPhysicalDeviceList_ = {};
 
     std::mutex cameraDeviceAbilitySupportMapMutex_;
     std::unordered_map<CameraAbilitySupportCacheKey, bool> cameraDeviceAbilitySupportMap_;

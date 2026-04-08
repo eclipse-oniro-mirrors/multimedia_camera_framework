@@ -36,7 +36,8 @@ const std::unordered_map<camera_flash_mode_enum_t, FlashMode> g_metaFlashModeMap
 const std::unordered_map<camera_exposure_mode_enum_t, ExposureMode> g_metaExposureModeMap_ = {
     {OHOS_CAMERA_EXPOSURE_MODE_LOCKED, EXPOSURE_MODE_LOCKED},
     {OHOS_CAMERA_EXPOSURE_MODE_AUTO, EXPOSURE_MODE_AUTO},
-    {OHOS_CAMERA_EXPOSURE_MODE_CONTINUOUS_AUTO, EXPOSURE_MODE_CONTINUOUS_AUTO}
+    {OHOS_CAMERA_EXPOSURE_MODE_CONTINUOUS_AUTO, EXPOSURE_MODE_CONTINUOUS_AUTO},
+    {OHOS_CAMERA_EXPOSURE_MODE_MANUAL, EXPOSURE_MODE_MANUAL}
 };
 
 const std::unordered_map<camera_focus_mode_enum_t, FocusMode> g_metaFocusModeMap_ = {
@@ -114,7 +115,8 @@ const std::unordered_map<VideoStabilizationMode, CameraVideoStabilizationMode> g
 const std::unordered_map<ExposureMode, camera_exposure_mode_enum_t> g_fwkExposureModeMap_ = {
     {EXPOSURE_MODE_LOCKED, OHOS_CAMERA_EXPOSURE_MODE_LOCKED},
     {EXPOSURE_MODE_AUTO, OHOS_CAMERA_EXPOSURE_MODE_AUTO},
-    {EXPOSURE_MODE_CONTINUOUS_AUTO, OHOS_CAMERA_EXPOSURE_MODE_CONTINUOUS_AUTO}
+    {EXPOSURE_MODE_CONTINUOUS_AUTO, OHOS_CAMERA_EXPOSURE_MODE_CONTINUOUS_AUTO},
+    {EXPOSURE_MODE_MANUAL, OHOS_CAMERA_EXPOSURE_MODE_MANUAL}
 };
 
 const std::map<CM_ColorSpaceType_V2_1, ColorSpace> g_metaColorSpaceMap_ = {

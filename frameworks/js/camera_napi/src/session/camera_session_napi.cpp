@@ -130,6 +130,7 @@ const std::unordered_map<CameraSessionNapi::ExposureMeteringModeofSdk, MeteringM
         { ExposureMeteringModeofSdk::CENTER, MeteringMode::METERING_MODE_CENTER_WEIGHTED },
         { ExposureMeteringModeofSdk::MATRIX, MeteringMode::METERING_MODE_REGION },
         { ExposureMeteringModeofSdk::SPOT, MeteringMode::METERING_MODE_SPOT },
+        { ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED, MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED },
     };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_process_sys_props = {
@@ -5182,12 +5183,9 @@ void FlashStateCallbackListener::OnFlashStateChangedCallbackOneArg(FlashState in
         "flashStateChange",
         [&]() {
             napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
-            napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
-            napi_create_object(env_, &callbackObj);
             napi_value flashState;
             napi_create_uint32(env_, info, &flashState);
-            napi_set_named_property(env_, callbackObj, "flashState", flashState);
-            return ExecuteCallbackData(env_, errCode, callbackObj);
+            return ExecuteCallbackData(env_, errCode, flashState);
         },
         false);
 }
@@ -5210,15 +5208,23 @@ napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callbac
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         int32_t value = 0;
         napi_get_value_int32(env, argv[PARAM0], &value);
-        if (value == static_cast<int32_t>(CameraSessionNapi::ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED)) {
-            CHECK_RETURN_RET(!CameraNapiSecurity::CheckSystemApp(env, false), result);
-            value = static_cast<int32_t>(MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED);
+        MeteringMode mode = MeteringMode::METERING_MODE_REGION;
+        auto itr = JsToFwkMeteringModeMap_.find(static_cast<ExposureMeteringModeofSdk>(value));
+        if (itr != JsToFwkMeteringModeMap_.end()) {
+            // CENTER_HIGHLIGHT_WEIGHTED is for sys
+            if (itr->second != MeteringMode::METERING_MODE_CENTER_HIGHLIGHT_WEIGHTED ||
+                CameraNapiSecurity::CheckSystemApp(env, false)) {
+                mode = itr->second;
+            }
         }
-        MeteringMode mode = static_cast<MeteringMode>(value);
         cameraSessionNapi->cameraSession_->LockForControl();
-        cameraSessionNapi->cameraSession_->SetExposureMeteringMode(static_cast<MeteringMode>(mode));
-        MEDIA_INFO_LOG("SetExposureMeteringMode SetExposureMeteringMode set meteringMode %{public}d!", mode);
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetExposureMeteringMode(mode);
+        MEDIA_INFO_LOG("SetExposureMeteringMode set meteringMode %{public}d!", mode);
         cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            MEDIA_ERR_LOG("SetExposureMeteringMode call Failed!");
+            return result;
+        }
     } else {
         MEDIA_ERR_LOG("SetExposureMeteringMode call Failed!");
     }
@@ -5228,22 +5234,28 @@ napi_value CameraSessionNapi::SetExposureMeteringMode(napi_env env, napi_callbac
 napi_value CameraSessionNapi::IsMeteringModeSupported(napi_env env, napi_callback_info info)
 {
     napi_value result = nullptr;
-    int32_t value;
+    int32_t value = -1;
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, value);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
-        "CameraSessionNapi::IsMeteringModeSupported parse parameter occur error");
+    // CENTER_HIGHLIGHT_WEIGHTED is for sys
+    if (value == static_cast<int32_t>(CameraSessionNapi::ExposureMeteringModeofSdk::CENTER_HIGHLIGHT_WEIGHTED) &&
+        !CameraNapiSecurity::CheckSystemApp(env, false)) {
+        napi_get_boolean(env, false, &result);
+        return result;
+    }
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         auto itr = JsToFwkMeteringModeMap_.find(static_cast<ExposureMeteringModeofSdk>(value));
         if (itr == JsToFwkMeteringModeMap_.end()) {
-            return nullptr;
+            napi_get_boolean(env, false, &result);
+            return result;
         }
         MeteringMode mode = itr->second;
         bool isSupported;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsMeteringModeSupported(mode, isSupported);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return nullptr;
+            napi_get_boolean(env, false, &result);
+            return result;
         }
         napi_get_boolean(env, isSupported, &result);
     } else {
@@ -5296,6 +5308,7 @@ napi_value CameraSessionNapi::GetExposureDurationRange(napi_env env, napi_callba
             return nullptr;
         }
         if (vecExposureList.empty() || napi_create_array(env, &result) != napi_ok) {
+            napi_create_array(env, &result);
             return result;
         }
         for (size_t i = 0; i < vecExposureList.size(); i++) {
@@ -5475,8 +5488,10 @@ napi_value CameraSessionNapi::IsOISModeSupported(napi_env env, napi_callback_inf
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisMode;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisMode);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
-        "CameraSessionNapi::IsOISModeSupported parse parameter occur error");
+    if (!jsParamParser.IsStatusOk()) {
+        oisMode = -1;  // use default value
+        MEDIA_ERR_LOG("CameraSessionNapi::IsOISModeSupported get oisMode fail");
+    }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported = false;
@@ -5487,7 +5502,7 @@ napi_value CameraSessionNapi::IsOISModeSupported(napi_env env, napi_callback_inf
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::IsOISModeSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "get native object fail");
         return nullptr;
     }
     return result;
@@ -5509,7 +5524,7 @@ napi_value CameraSessionNapi::GetCurrentOISMode(napi_env env, napi_callback_info
         napi_create_int32(env, static_cast<int32_t>(oisMode), &result);
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::GetCurrentOISMode get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "get native object fail");
         return nullptr;
     }
     return result;
@@ -5521,9 +5536,9 @@ napi_value CameraSessionNapi::SetOISMode(napi_env env, napi_callback_info info)
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisMode;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisMode);
-    if (!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error")) {
-        MEDIA_ERR_LOG("CameraSessionNapi::SetOISMode parse parameter occur error");
-        return nullptr;
+    if (!jsParamParser.IsStatusOk()) {
+        oisMode = 1; // use default value
+        MEDIA_ERR_LOG("CameraSessionNapi::SetOISMode get oisMode fail");
     }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
@@ -5535,7 +5550,7 @@ napi_value CameraSessionNapi::SetOISMode(napi_env env, napi_callback_info info)
             "CameraSessionNapi::SetOISMode execute failed.");
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::SetOISMode get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "get native object fail");
         return nullptr;
     }
     return result;
@@ -5545,16 +5560,18 @@ napi_value CameraSessionNapi::GetSupportedOISBiasRange(napi_env env, napi_callba
 {
     MEDIA_INFO_LOG("GetSupportedOISBiasRange is called");
     CameraSessionNapi* cameraSessionNapi = nullptr;
-    int32_t oisAxes;
-    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxes);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
-        "CameraSessionNapi::GetSupportedOISBiasRange parse parameter occur error");
+    int32_t oisAxis;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
+    if (!jsParamParser.IsStatusOk()) {
+        oisAxis = 0; // use default value
+        MEDIA_ERR_LOG("GetSupportedOISBiasRange get oisAxis fail");
+    }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<float> biasRange;
         float step = 0.0f;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedOISBiasRangeAndStep(
-            static_cast<OISAxes>(oisAxes), biasRange, step);
+            static_cast<OISAxes>(oisAxis), biasRange, step);
         CHECK_RETURN_RET_ELOG(!CameraNapiUtils::CheckError(env, retCode), nullptr,
             "CameraSessionNapi::GetSupportedOISBiasRange execute failed.");
         if (!biasRange.empty() && napi_create_array(env, &result) == napi_ok) {
@@ -5569,7 +5586,7 @@ napi_value CameraSessionNapi::GetSupportedOISBiasRange(napi_env env, napi_callba
         }
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedOISBiasRange get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "get native object fail");
     }
     return result;
 }
@@ -5580,8 +5597,10 @@ napi_value CameraSessionNapi::GetSupportedOISBiasStep(napi_env env, napi_callbac
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisAxis;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
-        "CameraSessionNapi::GetSupportedOISBiasStep parse parameter occur error");
+    if (!jsParamParser.IsStatusOk()) {
+        oisAxis = 0; // use default value
+        MEDIA_ERR_LOG("GetSupportedOISBiasRange get oisAxis fail");
+    }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<float> biasRange;
@@ -5593,7 +5612,7 @@ napi_value CameraSessionNapi::GetSupportedOISBiasStep(napi_env env, napi_callbac
         napi_create_double(env, CameraNapiUtils::FloatToDouble(step), &result);
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::GetSupportedOISBiasStep get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "get native object fail");
         return nullptr;
     }
     return result;
@@ -5605,8 +5624,10 @@ napi_value CameraSessionNapi::GetCurrentCustomOISBias(napi_env env, napi_callbac
     CameraSessionNapi* cameraSessionNapi = nullptr;
     int32_t oisAxis;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, oisAxis);
-    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
-        "CameraSessionNapi::GetCurrentCustomOISBias parse parameter occur error");
+    if (!jsParamParser.IsStatusOk()) {
+        oisAxis = 0; // use default value
+        MEDIA_ERR_LOG("GetSupportedOISBiasRange get oisAxis fail");
+    }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         float biasValue = 0.0f;
@@ -5617,7 +5638,7 @@ napi_value CameraSessionNapi::GetCurrentCustomOISBias(napi_env env, napi_callbac
         napi_create_double(env, CameraNapiUtils::FloatToDouble(biasValue), &result);
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::GetCurrentCustomOISBias get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "get native object fail");
         return nullptr;
     }
     return result;
@@ -5655,7 +5676,7 @@ napi_value CameraSessionNapi::SetOISModeCustom(napi_env env, napi_callback_info 
         }
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::SetOISModeCustom get native object fail");
-        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        CameraNapiUtils::ThrowError(env, OPERATION_NOT_ALLOWED, "get native object fail");
         return nullptr;
     }
     return result;
