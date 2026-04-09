@@ -48,7 +48,7 @@ napi_value PhotoSessionNapi::Init(napi_env env, napi_value exports)
         flash_props, flash_sys_props, auto_exposure_props, focus_props, focus_sys_props, zoom_props, zoom_sys_props,
         filter_props, preconfig_props, color_management_props, auto_switch_props, macro_props, white_balance_props,
         iso_props, manual_iso_props, manual_exposure_props, manual_focus_props, exposure_cb_props, flash_cb_props,
-        raw_props, physical_aperture_props};
+        raw_props, physical_aperture_props, optical_image_stabilization_props};
     std::vector<napi_property_descriptor> photo_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, PHOTO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                PhotoSessionNapiConstructor, nullptr,
