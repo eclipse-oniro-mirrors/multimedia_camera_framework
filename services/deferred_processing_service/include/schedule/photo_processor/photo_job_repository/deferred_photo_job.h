@@ -88,7 +88,7 @@ private:
 class DeferredPhotoJob : public StateMachine {
 public:
     DeferredPhotoJob(const std::string& imageId, const PhotoJobType photoJobType, const bool discardable,
-        const std::weak_ptr<IJobStateChangeListener>& jobChangeListener);
+        const std::weak_ptr<IJobStateChangeListener>& jobChangeListener, const std::string& bundleName);
     ~DeferredPhotoJob() = default;
 
     bool Prepare();
@@ -189,6 +189,17 @@ public:
         timerId_ = INVALID_TIMERID;
     }
 
+#ifdef CAMERA_CAPTURE_YUV
+    inline bool IsSystem()
+    {
+        return bundleName_ == "com.huawei.hmos.camera";
+    }
+
+    inline std::string GetBundleName()
+    {
+        return bundleName_;
+    }
+#endif
 private:
     void UpdateTime();
     void RecordJobRunningPriority();
@@ -196,6 +207,7 @@ private:
     const std::string imageId_;
     const PhotoJobType photoJobType_;
     const bool discardable_;
+    const std::string bundleName_;
     SteadyTimePoint createTime_;
     std::weak_ptr<IJobStateChangeListener> jobChangeListener_;
     uint32_t timerId_ {INVALID_TIMERID};

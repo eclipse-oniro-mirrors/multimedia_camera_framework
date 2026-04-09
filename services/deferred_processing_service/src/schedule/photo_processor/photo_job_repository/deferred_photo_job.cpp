@@ -69,9 +69,9 @@ void DeleteState::OnStateEntered()
 }
 
 DeferredPhotoJob::DeferredPhotoJob(const std::string& imageId, const PhotoJobType photoJobType, const bool discardable,
-    const std::weak_ptr<IJobStateChangeListener>& jobChangeListener)
+    const std::weak_ptr<IJobStateChangeListener>& jobChangeListener, const std::string& bundleName)
     : imageId_(imageId), photoJobType_(photoJobType), discardable_(discardable),
-      createTime_(GetSteadyNow()), jobChangeListener_(jobChangeListener)
+      bundleName_(bundleName), createTime_(GetSteadyNow()), jobChangeListener_(jobChangeListener)
 {
     DP_DEBUG_LOG("entered.");
     add_ = std::make_shared<AddState>(imageId, jobChangeListener_);

@@ -58,12 +58,9 @@ int32_t DeferredPhotoProcessor::Initialize()
 void DeferredPhotoProcessor::AddImage(const std::string& imageId, bool discardable, DpsMetadata& metadata,
     const std::string& bundleName)
 {
-#ifdef CAMERA_CAPTURE_YUV
-    DP_CHECK_EXECUTE(postProcessor_, postProcessor_->SetProcessBundleNameResult(bundleName));
-#endif
     bool isProcess = ProcessCatchResults(imageId);
     DP_CHECK_RETURN(isProcess);
-    repository_->AddDeferredJob(imageId, discardable, metadata);
+    repository_->AddDeferredJob(imageId, discardable, metadata, bundleName);
 }
 
 void DeferredPhotoProcessor::RemoveImage(const std::string& imageId, bool restorable)
@@ -131,6 +128,18 @@ void DeferredPhotoProcessor::OnProcessSuccess(const int32_t userId, const std::s
     DP_CHECK_ERROR_RETURN_LOG(!initialized_, "Not initialized.");
     DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s, bufferQuality: %{public}d",
         userId, imageId.c_str(), imageInfo->IsHighQuality());
+
+#ifdef CAMERA_CAPTURE_YUV
+    CallbackType imageType = imageInfo->GetType();
+    auto deferredPhotoJob = repository_->GetJobUnLocked(imageId);
+    if (deferredPhotoJob != nullptr) {
+        DP_INFO_LOG("DPS_PHOTO: bundleName: %{public}s", deferredPhotoJob->GetBundleName().c_str());
+        if (deferredPhotoJob->IsSystem() && imageType == CallbackType::IMAGE_PROCESS_YUV_DONE) {
+            auto picture = imageInfo->GetPicture();
+            DP_CHECK_EXECUTE(picture, picture->RotatePicture());
+        }
+    }
+#endif
     HandleSuccess(userId, imageId, std::move(imageInfo));
 }
 

@@ -36,9 +36,6 @@ struct MetadataKeys {
     static constexpr auto ROTATION_IN_IPS = "rotationInIps";
     static constexpr auto CPATURE_FLAG = "captureEnhancementFlag";
 };
-#ifdef CAMERA_CAPTURE_YUV
-static const std::string SYSTEM_CAMERA = "com.huawei.hmos.camera";
-#endif
 
 enum class PhotoFormat : int32_t {
     RGBA = 0,
@@ -111,9 +108,6 @@ public:
     void OnPhotoSessionDied();
     int32_t ProcessPictureInfoV1_3(const std::string& imageId, const HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
     int32_t ProcessPictureInfoV1_4(const std::string& imageId, const HDI::Camera::V1_5::ImageBufferInfo_V1_4& buffer);
-#ifdef CAMERA_CAPTURE_YUV
-    void SetBundleName(const std::string& bundleName);
-#endif
 
     template <typename BufferType>
     int32_t ProcessBufferInfo(const std::string& imageId, const BufferType& buffer)
