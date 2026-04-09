@@ -1471,6 +1471,8 @@ int32_t HCaptureSession::CreateRecorder(const sptr<IRemoteObject>& remoteObj, sp
 {
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     MEDIA_INFO_LOG("HCameraService::CreateRecorder start");
+    CHECK_RETURN_RET_ELOG(
+        remoteObj && remoteObj->IsProxyObject(), CAMERA_INVALID_ARG, "Please use remoteObject created by service");
     sptr<IStreamCommon> stream = iface_cast<IStreamRepeat>(remoteObj);
     CHECK_RETURN_RET_ELOG(stream == nullptr, CAMERA_INVALID_ARG, "stream is null");
     constexpr int32_t cinematicVideoMode = 24;
