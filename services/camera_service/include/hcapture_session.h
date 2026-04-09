@@ -183,9 +183,6 @@ public:
     int32_t SetPreviewRotation(const std::string &deviceClass) override;
     int32_t SetCommitConfigFlag(bool isNeedCommitting) override;
     int32_t CreateRecorder(const sptr<IRemoteObject>& stream, sptr<ICameraRecorder>& recorder) override;
-#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
-    int32_t CreateRecorder4CinematicVideo(sptr<IStreamCommon> stream, sptr<ICameraRecorder> &movieRecorder);
-#endif
     int32_t SetXtStyleStatus(bool status) override;
 #ifdef CAMERA_USE_SENSOR
     int32_t GetSensorRotationOnce(int32_t& sensorRotation) override;
@@ -281,6 +278,9 @@ public:
     }
 
 private:
+#ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
+    int32_t CreateRecorder4CinematicVideo(sptr<IStreamCommon> stream, sptr<ICameraRecorder> &movieRecorder);
+#endif
     CallbackFunction callback_;
     void InitDefaultColortSpace(SceneMode opMode);
     explicit HCaptureSession(const uint32_t callingTokenId, int32_t opMode);
