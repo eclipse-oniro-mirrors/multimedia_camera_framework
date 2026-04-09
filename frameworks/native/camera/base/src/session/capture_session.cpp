@@ -7593,5 +7593,101 @@ int32_t CaptureSession::GetMeteringMode(MeteringMode& meteringMode)
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
 }
+
+int32_t CaptureSession::GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointInfoList)
+{
+    MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfos is Called");
+    zoomPointInfoList.clear();
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetZoomPointInfos Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
+                          CameraErrorCode::OPERATION_NOT_ALLOWED,
+                          "CaptureSession::GetZoomPointInfos camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "CaptureSession::GetZoomPointInfos camera device info is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+                          "GetZoomPointInfos camera metadata is null");
+
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(),
+                                             OHOS_ABILITY_TYPICAL_SCENE_ZOOM_POINTS, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "GetZoomPointInfos Failed with return code:%{public}d, item.count:%{public}d", ret, item.count);
+
+    SceneMode currentMode = GetMode();
+    MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfos current mode:%{public}d", currentMode);
+
+    // HDI数据格式: mode,len(0-4),zoom1,equivalent1,zoom2,equivalent2...
+    // 遍历数据,匹配当前模式
+    std::vector<ZoomPointInfo> zoomPointInfoList_Default;
+    const float zoomScaleFloat = 100.f;
+    const float zoomScaleInt = 100;
+    for (uint32_t i = 0; i < item.count;) {
+        // mode
+        SceneMode sceneMode = static_cast<SceneMode>(item.data.i32[i++]);
+        MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfos scene mode:%{public}d", sceneMode);
+        // len (0-4)
+        if (i >= item.count) {
+            MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfos invalid data format, missing len");
+            break;
+        }
+        int32_t len = item.data.i32[i++];
+        MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfos len:%{public}d", len);
+        // 验证len的有效性
+        const int32_t maxLen = 4;
+        const int32_t minLen = 0;
+        if (len < minLen || len > maxLen) {
+            MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfos invalid len:%{public}d, must be 0-4", len);
+            break;
+        }
+        // 检查是否有足够的数据
+        const int32_t skipLen = 2;
+        if (i + len * skipLen > item.count) {
+            MEDIA_ERR_LOG("CaptureSession::GetZoomPointInfos insufficient "
+                          "data, need:%{public}u, have:%{public}u",
+                          i + len * skipLen, item.count);
+            break;
+        }
+        if (sceneMode == SceneMode::NORMAL) {
+            int k = i;
+            for (int32_t j = 0; j < len; j++) {
+                ZoomPointInfo zoomPointInfo;
+                zoomPointInfo.zoomRatio = item.data.i32[k++] / zoomScaleFloat;
+                zoomPointInfo.equivalentFocalLength = item.data.i32[k++] / zoomScaleInt;
+                zoomPointInfoList_Default.emplace_back(zoomPointInfo);
+                MEDIA_DEBUG_LOG(
+                    "CaptureSession::GetZoomPointInfos Default "
+                    "zoomRatio:%{public}f, equivalentFocalLength:%{public}u",
+                    zoomPointInfo.zoomRatio,
+                    zoomPointInfo.equivalentFocalLength);
+            }
+        }
+        // 如果匹配当前模式,解析数据
+        if (sceneMode == currentMode) {
+            for (int32_t j = 0; j < len; j++) {
+                ZoomPointInfo zoomPointInfo;
+                zoomPointInfo.zoomRatio = item.data.i32[i++] / zoomScaleFloat;
+                zoomPointInfo.equivalentFocalLength = item.data.i32[i++] / zoomScaleInt;
+                zoomPointInfoList.emplace_back(zoomPointInfo);
+                MEDIA_DEBUG_LOG(
+                    "CaptureSession::GetZoomPointInfos zoomRatio:%{public}f, "
+                    "equivalentFocalLength:%{public}u",
+                    zoomPointInfo.zoomRatio,
+                    zoomPointInfo.equivalentFocalLength);
+            }
+            break;
+        } else {
+            // 跳过不匹配模式的数据
+            i += len * skipLen;
+        }
+    }
+    MEDIA_INFO_LOG("CaptureSession::GetZoomPointInfos found %{public}zu zoom points for mode:%{public}d",
+        zoomPointInfoList.size(), currentMode);
+    zoomPointInfoList = zoomPointInfoList.size() == 0 ? zoomPointInfoList_Default : zoomPointInfoList;
+    return CameraErrorCode::SUCCESS;
+}
 } // namespace CameraStandard
 } // namespace OHOS

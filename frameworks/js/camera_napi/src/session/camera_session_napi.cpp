@@ -2908,10 +2908,45 @@ napi_value CameraSessionNapi::SetSmoothZoom(napi_env env, napi_callback_info inf
 
 napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info info)
 {
-    MEDIA_ERR_LOG("SystemApi GetZoomPointInfos is called!");
-    CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
-        "System api can be invoked only by system applications");
-    return nullptr;
+    MEDIA_DEBUG_LOG("GetZoomPointInfos is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_undefined(env, &result);
+
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr) {
+        std::vector<ZoomPointInfo> vecZoomPointInfoList;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomPointInfos(vecZoomPointInfoList);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        MEDIA_INFO_LOG("CameraSessionNapi::GetZoomPointInfos len = %{public}zu",
+            vecZoomPointInfoList.size());
+
+        if (!vecZoomPointInfoList.empty() && napi_create_array(env, &result) == napi_ok) {
+            for (size_t i = 0; i < vecZoomPointInfoList.size(); i++) {
+                ZoomPointInfo zoomPointInfo = vecZoomPointInfoList[i];
+                napi_value value;
+                napi_value zoomRatio;
+                napi_value equivalentFocus;
+                napi_create_object(env, &value);
+                napi_create_double(env, CameraNapiUtils::FloatToDouble(zoomPointInfo.zoomRatio), &zoomRatio);
+                napi_set_named_property(env, value, "zoomRatio", zoomRatio);
+                napi_create_double(env, zoomPointInfo.equivalentFocalLength, &equivalentFocus);
+                napi_set_named_property(env, value, "equivalentFocalLength", equivalentFocus);
+                napi_set_element(env, result, i, value);
+            }
+        } else {
+            MEDIA_ERR_LOG("vecZoomPointInfoList is empty or failed to create array!");
+        }
+    } else {
+        MEDIA_ERR_LOG("GetZoomPointInfos call Failed!");
+    }
+    return result;
 }
 
 napi_value CameraSessionNapi::IsZoomCenterPointSupported(napi_env env, napi_callback_info info)

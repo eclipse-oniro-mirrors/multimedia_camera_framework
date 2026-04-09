@@ -1119,7 +1119,53 @@ Camera_ErrorCode OH_CaptureSession_SetOISModeCustom(const Camera_CaptureSession*
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_SetOISModeCustom is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    return session->SetOISModeCustom(pitchBias, yawBias);   
+    return session->SetOISModeCustom(pitchBias, yawBias);
+}
+
+Camera_ErrorCode OH_CaptureSession_GetZoomPointInfos(const Camera_CaptureSession* session,
+    uint32_t* size, OH_Camera_ZoomPointInfo** cameraZoomPointInfo)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetZoomPointInfos is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+                          "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT,
+                          "Invalid argument, size is null!");
+    CHECK_RETURN_RET_ELOG(cameraZoomPointInfo == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, cameraZoomPointInfo is null!");
+
+    std::vector<OHOS::CameraStandard::ZoomPointInfo> zoomPointInfoList;
+    Camera_ErrorCode ret = session->GetZoomPointInfos(zoomPointInfoList);
+    CHECK_RETURN_RET(ret != CAMERA_OK, ret);
+    *size = static_cast<int32_t>(zoomPointInfoList.size());
+    CHECK_EXECUTE(*size == 0,
+                  *cameraZoomPointInfo = nullptr; return CAMERA_OK);
+
+    // 分配内存
+    *cameraZoomPointInfo = new (std::nothrow) OH_Camera_ZoomPointInfo[*size];
+    CHECK_RETURN_RET_ELOG(*cameraZoomPointInfo == nullptr, CAMERA_OPERATION_NOT_ALLOWED,
+        "Failed to allocate memory for zoom point info!");
+
+    // 填充数据
+    for (int32_t i = 0; i < *size; i++) {
+        (*cameraZoomPointInfo)[i].zoomRatio = zoomPointInfoList[i].zoomRatio;
+        (*cameraZoomPointInfo)[i].equivalentFocalLength =
+            static_cast<uint32_t>(zoomPointInfoList[i].equivalentFocalLength);
+    }
+
+    MEDIA_DEBUG_LOG("OH_CaptureSession_GetZoomPointInfos success, size: %{public}d", *size);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_DeleteZoomPointInfo(const Camera_CaptureSession* session,
+    OH_Camera_ZoomPointInfo* zoomPointInfo)
+{
+    MEDIA_DEBUG_LOG("OH_CaptureSession_DeleteZoomPointInfo is called");
+    CHECK_RETURN_RET_ELOG(zoomPointInfo == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, zoomPointInfo is null!");
+
+    delete[] zoomPointInfo;
+    MEDIA_DEBUG_LOG("OH_CaptureSession_DeleteZoomPointInfo success");
+    return CAMERA_OK;
 }
 
 #ifdef __cplusplus

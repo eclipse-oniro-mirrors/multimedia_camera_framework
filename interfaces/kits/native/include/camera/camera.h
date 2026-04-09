@@ -1730,6 +1730,26 @@ typedef enum OH_Camera_OISAxes {
      */
     OH_CAMERA_OIS_AXES_YAW = 1
 } OH_Camera_OISAxes;
+
+/**
+ * @brief Describes the zoom point info.
+ *
+ * @since 26.0.0
+ */
+typedef struct OH_Camera_ZoomPointInfo {
+    /**
+     * Zoom ratio.
+     * @since 26.0.0
+     */
+    float zoomRatio;
+
+    /**
+     * Equivalent focal length.
+     * @since 26.0.0
+     */
+    uint32_t equivalentFocalLength;
+} OH_Camera_ZoomPointInfo;
+
 #ifdef __cplusplus
 }
 #endif

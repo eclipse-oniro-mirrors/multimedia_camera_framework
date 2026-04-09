@@ -1393,6 +1393,15 @@ public:
     int32_t UnPrepareZoom();
 
     /**
+     * @brief Gets the zoom point infos.
+     *
+     * @param zoomPointInfoList returned the zoom point infos list.
+     * @return errCode CAMERA_SUCCESS if the method call succeeds.
+     * @since 12
+     */
+    int32_t GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointInfoList);
+
+    /**
      * @brief Set Smooth Zoom.
      *
      * @param Target smooth zoom ratio.
