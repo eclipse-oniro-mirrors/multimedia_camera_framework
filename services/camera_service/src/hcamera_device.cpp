@@ -1572,7 +1572,8 @@ void HCameraDevice::DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::Cam
     // debug log for af regions
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+    const int32_t EXPECT_COUNT = 2;
+    if (ret != CAM_META_SUCCESS || item.count != EXPECT_COUNT || item.data_type != META_TYPE_FLOAT) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AF_REGIONS tag");
     } else {
         std::stringstream ss;
@@ -1588,7 +1589,8 @@ void HCameraDevice::DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::Cam
     // debug log for ae regions
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
-    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+    const int32_t EXPECT_COUNT = 2;
+    if (ret != CAM_META_SUCCESS || item.count != EXPECT_COUNT || item.data_type != META_TYPE_FLOAT) {
         MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_AE_REGIONS tag");
     } else {
         std::stringstream ss;
