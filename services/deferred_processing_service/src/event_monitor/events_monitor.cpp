@@ -135,7 +135,13 @@ void EventsMonitor::NotifyEventToObervers(EventType event, int32_t value)
 {
     DP_DEBUG_LOG("EventType: %{public}d, value: %{public}d", event, value);
     int32_t userId = EventsInfo::GetInstance().GetCurrentUser();
+    DP_DEBUG_LOG("NotifyEventToObervers userId: %{public}d", userId);
     auto eventListeners = userIdToeventListeners_.find(userId);
+    if (eventListeners == userIdToeventListeners_.end()) {
+        DP_DEBUG_LOG("Not find user[%{private}d] listener", userId);
+    } else {
+        DP_DEBUG_LOG("Find user[%{private}d] listener", userId);
+    }
     DP_CHECK_ERROR_RETURN_LOG(eventListeners == userIdToeventListeners_.end(),
         "Not find user[%{private}d] listener", userId);
     auto iter = eventListeners->second.find(event);
@@ -144,12 +150,15 @@ void EventsMonitor::NotifyEventToObervers(EventType event, int32_t value)
         return;
     }
     auto& observers = iter->second;
+    DP_DEBUG_LOG("Find event[%{public}d] listener, num: %{public}zu", event, observers.size());
     for (auto it = observers.begin(); it != observers.end();) {
         auto observer = it->lock();
         if (observer) {
+            DP_DEBUG_LOG("Observer is valid, notify event[%{public}d] to observer", event);
             observer->OnEventChange(event, value);
             ++it;
         } else {
+            DP_DEBUG_LOG("Observer is expired, remove it from listener list");
             it = observers.erase(it);
         }
     }
