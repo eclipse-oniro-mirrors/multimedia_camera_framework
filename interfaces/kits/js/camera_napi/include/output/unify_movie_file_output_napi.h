@@ -108,6 +108,8 @@ public:
     sptr<UnifyMovieFileOutput> GetMovieFileOutput();
     const EmitterFunctions& GetEmitterFunctions() override;
 
+    sptr<UnifyMovieFileOutput> unifyMovieFileOutput_;
+
 private:
     static bool ParseOutputSettings(napi_env env, napi_callback_info info,
         UnifyMovieFileOutputAsyncContext* asyncContext, std::shared_ptr<CameraNapiAsyncFunction>& asyncFunction);
@@ -136,7 +138,6 @@ private:
     void UnregisterErrorCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     napi_env env_;
-    sptr<UnifyMovieFileOutput> unifyMovieFileOutput_;
     static thread_local napi_ref constructor_;
     static thread_local sptr<UnifyMovieFileOutput> sUnifyMovieFileOutput_;
     static thread_local uint32_t movieFileOutputTaskId;
