@@ -2712,6 +2712,21 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
         }
     }
     // LCOV_EXCL_STOP
+    std::string cameraId = "";
+    auto serviceProxy = GetServiceProxy();
+    if (serviceProxy != nullptr) {
+        int32_t ret = serviceProxy->GetCameraIdByDisPlugin(static_cast<int32_t>(camera->GetPosition()),
+            static_cast<int32_t>(camera->GetCameraType()), cameraId);
+        if (ret != CameraErrorCode::SUCCESS) {
+            MEDIA_DEBUG_LOG("CameraManager::CreateCameraInput GetCameraIdByDisPlugin failed");
+        }
+    }
+    if (!cameraId.empty()) {
+        auto cameraObj = GetCameraDeviceFromId(cameraId);
+        if (cameraObj != nullptr) {
+            camera = cameraObj;
+        }
+    }
     sptr<ICameraDeviceService> deviceObj = nullptr;
     camera->SetUsePhysicalCameraOrientation(false);
     int32_t retCode = CreateCameraDevice(camera->GetID(), &deviceObj);
