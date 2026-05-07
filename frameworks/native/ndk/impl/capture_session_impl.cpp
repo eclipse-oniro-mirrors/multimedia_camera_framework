@@ -786,21 +786,28 @@ Camera_ErrorCode Camera_CaptureSession::IsExposureMeteringModeSupported(
     OH_Camera_ExposureMeteringMode exposureMeteringMode, bool* isSupported) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsExposureMeteringModeSupported is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::IsExposureMeteringModeSupported is called");
     auto itr = g_NdkToFwExposureMeteringMode_.find(exposureMeteringMode);
     if (itr == g_NdkToFwExposureMeteringMode_.end()) {
         return CAMERA_INVALID_ARGUMENT;
     }
-    MeteringMode mode = itr->second;
-    int32_t ret = innerCaptureSession_->IsMeteringModeSupported(mode, *isSupported);
+    MeteringMode meteringMode = itr->second;
+    int32_t ret = innerCaptureSession_->IsMeteringModeSupported(meteringMode, *isSupported);
     return FrameworkToNdkCameraError(ret);
 }
 
 Camera_ErrorCode Camera_CaptureSession::GetMeteringMode(OH_Camera_ExposureMeteringMode* exposureMeteringMode) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetMeteringMode is called");
-    MeteringMode mode;
-    int32_t ret = innerCaptureSession_->GetMeteringMode(mode);
-    auto itr = g_FwToNdkExposureMeteringMode_.find(mode);
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    MeteringMode meteringMode;
+    int32_t ret = innerCaptureSession_->GetMeteringMode(meteringMode);
+    auto itr = g_FwToNdkExposureMeteringMode_.find(meteringMode);
     if (itr == g_FwToNdkExposureMeteringMode_.end()) {
         return CAMERA_SERVICE_FATAL_ERROR;
     }
@@ -811,8 +818,9 @@ Camera_ErrorCode Camera_CaptureSession::GetMeteringMode(OH_Camera_ExposureMeteri
 Camera_ErrorCode Camera_CaptureSession::SetMeteringMode(OH_Camera_ExposureMeteringMode exposureMeteringMode) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetMeteringMode is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     auto itr = g_NdkToFwExposureMeteringMode_.find(exposureMeteringMode);
     if (itr == g_NdkToFwExposureMeteringMode_.end()) {
         return CAMERA_SERVICE_FATAL_ERROR;
@@ -949,6 +957,9 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureValue(float* exposureValue)
 Camera_ErrorCode Camera_CaptureSession::GetExposureBiasStep(float* exposureBiasStep)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureBiasStep is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     int32_t ret = innerCaptureSession_->GetExposureBiasStep(*exposureBiasStep);
     return FrameworkToNdkCameraError(ret);
 }
@@ -1302,6 +1313,9 @@ Camera_ErrorCode Camera_CaptureSession::SetColorTint(int32_t colorTintValue) con
 Camera_ErrorCode Camera_CaptureSession::SetIso(int32_t iso) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetIso is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetISO(iso);
     innerCaptureSession_->UnlockForControl();
@@ -1311,6 +1325,9 @@ Camera_ErrorCode Camera_CaptureSession::SetIso(int32_t iso) const
 Camera_ErrorCode Camera_CaptureSession::GetIso(int32_t* isoValue) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetISO is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     int32_t ret = innerCaptureSession_->GetISO(*isoValue);
     return FrameworkToNdkCameraError(ret);
 }
@@ -1318,8 +1335,9 @@ Camera_ErrorCode Camera_CaptureSession::GetIso(int32_t* isoValue) const
 Camera_ErrorCode Camera_CaptureSession::GetIsoRange(int32_t* minIsoValue, int32_t* maxIsoValue) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetIsoRange is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     *minIsoValue = 0;
     *maxIsoValue = 0;
     std::vector<int32_t> isoVec;
@@ -1336,10 +1354,11 @@ Camera_ErrorCode Camera_CaptureSession::GetIsoRange(int32_t* minIsoValue, int32_
 Camera_ErrorCode Camera_CaptureSession::SetExposureDuration(int32_t exposureDuration) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetExposureDuration is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET_ELOG(!innerCaptureSession_->IsSessionCommited(), CAMERA_SESSION_NOT_CONFIG,
         "Camera_CaptureSession::SetExposureDuration session not config!");
-    SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
     innerCaptureSession_->LockForControl();
     innerCaptureSession_->SetSensorExposureTime(exposureDuration);
     innerCaptureSession_->UnlockForControl();
@@ -1349,8 +1368,9 @@ Camera_ErrorCode Camera_CaptureSession::SetExposureDuration(int32_t exposureDura
 Camera_ErrorCode Camera_CaptureSession::GetExposureDuration(int32_t* exposureDuration) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureDuration is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     uint32_t exposureDurationValue;
     int32_t ret = innerCaptureSession_->GetSensorExposureTime(exposureDurationValue);
     *exposureDuration = static_cast<int32_t>(exposureDurationValue);
@@ -1361,8 +1381,9 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureDurationRange(
     int32_t* minExposureDuration, int32_t* maxExposureDuration) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureDurationRange is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     std::vector<uint32_t> sensorExposureTimeRange;
     int32_t ret = innerCaptureSession_->GetSensorExposureTimeRange(sensorExposureTimeRange);
     CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, FrameworkToNdkCameraError(ret));
@@ -1376,10 +1397,11 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureDurationRange(
 Camera_ErrorCode Camera_CaptureSession::SetFocusDistance(float focusDistance) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetFocusDistance is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET_ELOG(!innerCaptureSession_->IsSessionCommited(), CAMERA_SESSION_NOT_CONFIG,
         "Camera_CaptureSession::SetFocusDistance session not config!");
-    SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
     innerCaptureSession_->LockForControl();
     innerCaptureSession_->SetFocusDistance(focusDistance);
     innerCaptureSession_->UnlockForControl();
@@ -1417,9 +1439,10 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterMacroStatusCallback(
 Camera_ErrorCode Camera_CaptureSession::RegisterIsoInfoCallback(
     OH_CaptureSession_OnIsoChange isoInfoChange)
 {
-    CHECK_RETURN_RET_ELOG(
-        innerCaptureSession_->GetMode() != VIDEO && innerCaptureSession_->GetMode() != CAPTURE,
-        CAMERA_OPERATION_NOT_ALLOWED, "IsoInfo listening is only available for video mode");
+    MEDIA_INFO_LOG("Camera_CaptureSession::RegisterIsoInfoCallback");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     shared_ptr<InnerCaptureSessionIsoInfoCallback> innerIsoInfoCallback =
         make_shared<InnerCaptureSessionIsoInfoCallback>(this, isoInfoChange);
     CHECK_RETURN_RET_ELOG(
@@ -1433,9 +1456,8 @@ Camera_ErrorCode Camera_CaptureSession::RegisterIsoInfoCallback(
 Camera_ErrorCode Camera_CaptureSession::UnregisterIsoInfoCallback(
     OH_CaptureSession_OnIsoChange isoInfoChange)
 {
-    CHECK_RETURN_RET_ELOG(innerCaptureSession_->GetMode() != VIDEO, CAMERA_OPERATION_NOT_ALLOWED,
-                          "IsoInfo listening is only available for video mode");
     MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterIsoInfoCallback");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->SetIsoInfoCallback(nullptr);
@@ -1446,8 +1468,9 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterIsoInfoCallback(
 Camera_ErrorCode Camera_CaptureSession::RegisterFlashStateCallback(
     OH_CaptureSession_OnFlashStateChange flashStateChange) const
 {
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     shared_ptr<InnerCaptureSessionFlashStateCallback> innerFlashStateCallback =
         make_shared<InnerCaptureSessionFlashStateCallback>(this, flashStateChange);
     CHECK_RETURN_RET_ELOG(
@@ -1460,7 +1483,9 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterFlashStateCallback(
     OH_CaptureSession_OnFlashStateChange flashStateChange) const
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterFlashStateCallback");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->SetFlashStateCallback(nullptr);
     return CAMERA_OK;
@@ -1469,8 +1494,9 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterFlashStateCallback(
 Camera_ErrorCode Camera_CaptureSession::RegisterExposureDurationCallback(
     OH_CaptureSession_OnExposureDurationChange ExposureDurationChange) const
 {
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     shared_ptr<InnerCaptureSessionExposureDurationCallback> innerExposureDurationCallback =
         make_shared<InnerCaptureSessionExposureDurationCallback>(this, ExposureDurationChange);
     CHECK_RETURN_RET_ELOG(
@@ -1483,8 +1509,9 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterExposureDurationCallback(
     OH_CaptureSession_OnExposureDurationChange ExposureDurationChange) const
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterExposureDurationCallback");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->SetExposureInfoCallback(nullptr);
     return CAMERA_OK;
 }
@@ -1492,9 +1519,17 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterExposureDurationCallback(
 Camera_ErrorCode Camera_CaptureSession::GetRAWCaptureZoomRatioRange(float* minZoom, float* maxZoom) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetRAWCaptureZoomRatioRange");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     std::vector<float> vecZoomRatioList;
-    innerCaptureSession_->GetRAWZoomRatioRange(vecZoomRatioList);
-    CHECK_RETURN_RET(vecZoomRatioList.size() < 2, CAMERA_SERVICE_FATAL_ERROR);
+    int32_t retCode = innerCaptureSession_->GetRAWZoomRatioRange(vecZoomRatioList);
+    if (retCode != CAMERA_OK || vecZoomRatioList.empty()) {
+        MEDIA_ERR_LOG("GetRAWCaptureZoomRatioRange failed, retCode: %{public}d", retCode);
+        return FrameworkToNdkCameraError(retCode);
+    }
+    int32_t minSize = 2;
+    CHECK_RETURN_RET(vecZoomRatioList.size() < minSize, CAMERA_OPERATION_NOT_ALLOWED);
     *minZoom = vecZoomRatioList.front();
     *maxZoom = vecZoomRatioList.back();
     return CAMERA_OK;
@@ -1503,6 +1538,10 @@ Camera_ErrorCode Camera_CaptureSession::GetRAWCaptureZoomRatioRange(float* minZo
 Camera_ErrorCode Camera_CaptureSession::GetSupportedPhysicalApertures(
     OH_Camera_PhysicalAperture** apertures, uint32_t* size) const
 {
+    MEDIA_DEBUG_LOG("Camera_CaptureSession::GetSupportedPhysicalApertures");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     vector<vector<float>> physicalApertures = {};
     *size = 0;
     int32_t retCode = innerCaptureSession_->GetSupportedPhysicalApertures(physicalApertures);
@@ -1549,6 +1588,9 @@ Camera_ErrorCode Camera_CaptureSession::DeletePhysicalApertures(
     OH_Camera_PhysicalAperture* apertures, uint32_t size) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::DeletePhysicalApertures");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     uint32_t safeSize = min(size, APERTURE_SIZE_MAX_FOR_SAFETY);
     for (size_t index = 0; index < safeSize; index++) {
         if (apertures[index].apertures != nullptr) {
@@ -1564,6 +1606,8 @@ Camera_ErrorCode Camera_CaptureSession::GetPhysicalAperture(float* aperture) con
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetPhysicalAperture");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET(aperture == nullptr, CAMERA_INVALID_ARGUMENT);
     int32_t ret = innerCaptureSession_->GetPhysicalAperture(*aperture);
     return FrameworkToNdkCameraError(ret);
@@ -1573,6 +1617,8 @@ Camera_ErrorCode Camera_CaptureSession::SetPhysicalAperture(float aperture) cons
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetPhysicalAperture, aperture: %lf", aperture);
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET(aperture <= 0, CAMERA_INVALID_ARGUMENT);
     innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetPhysicalAperture(aperture);
@@ -1583,6 +1629,9 @@ Camera_ErrorCode Camera_CaptureSession::SetPhysicalAperture(float aperture) cons
 Camera_ErrorCode Camera_CaptureSession::IsOISModeSupported(OH_Camera_OISMode oisMode, bool* isSupported) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsOISModeSupported is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     auto itr = g_ndkToFwkOisMode_.find(oisMode);
     CHECK_RETURN_RET_ELOG(itr == g_ndkToFwkOisMode_.end(), CAMERA_INVALID_ARGUMENT,
         "oisMode[%{public}d] is invalid", oisMode);
@@ -1594,9 +1643,12 @@ Camera_ErrorCode Camera_CaptureSession::IsOISModeSupported(OH_Camera_OISMode ois
 Camera_ErrorCode Camera_CaptureSession::GetCurrentOISMode(OH_Camera_OISMode* oisMode) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetCurrentOISMode is called");
-    OISMode mode;
-    int32_t ret = innerCaptureSession_->GetCurrentOISMode(mode);
-    *oisMode = static_cast<OH_Camera_OISMode>(mode);
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    OISMode currentOisMode;
+    int32_t ret = innerCaptureSession_->GetCurrentOISMode(currentOisMode);
+    *oisMode = static_cast<OH_Camera_OISMode>(currentOisMode);
     MEDIA_DEBUG_LOG("GetCurrentOISMode ret:[%{public}d] oisMode:[%{public}d]", ret, *oisMode);
     return FrameworkToNdkCameraError(ret);
 }
@@ -1604,6 +1656,9 @@ Camera_ErrorCode Camera_CaptureSession::GetCurrentOISMode(OH_Camera_OISMode* ois
 Camera_ErrorCode Camera_CaptureSession::SetOISMode(OH_Camera_OISMode oisMode) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetOISMode is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     auto itr = g_ndkToFwkOisMode_.find(oisMode);
     CHECK_RETURN_RET_ELOG(itr == g_ndkToFwkOisMode_.end(), CAMERA_INVALID_ARGUMENT,
         "oisMode[%{public}d] is invalid", oisMode);
@@ -1618,6 +1673,9 @@ Camera_ErrorCode Camera_CaptureSession::GetSupportedOISBiasRange(OH_Camera_OISAx
     float* minBias, float* maxBias, float* step) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetSupportedOISBiasRange is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     auto itr = g_ndkToFwkOisAxes_.find(oisAxis);
     CHECK_RETURN_RET_ELOG(itr == g_ndkToFwkOisAxes_.end(), CAMERA_INVALID_ARGUMENT,
         "oisAxis[%{public}d] is invalid", oisAxis);
@@ -1634,6 +1692,9 @@ Camera_ErrorCode Camera_CaptureSession::GetSupportedOISBiasRange(OH_Camera_OISAx
 Camera_ErrorCode Camera_CaptureSession::GetCurrentCustomOISBias(float* pitchBias, float* yawBias) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetCurrentCustomOISBias is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     int32_t ret = CameraErrorCode::SUCCESS;
     ret = innerCaptureSession_->GetCurrentCustomOISBias(OIS_AXES_PITCH, *pitchBias);
     ret = innerCaptureSession_->GetCurrentCustomOISBias(OIS_AXES_YAW, *yawBias);
@@ -1644,6 +1705,9 @@ Camera_ErrorCode Camera_CaptureSession::GetCurrentCustomOISBias(float* pitchBias
 Camera_ErrorCode Camera_CaptureSession::SetOISModeCustom(float pitchBias, float yawBias) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetOISModeCustom is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
+    SceneMode mode = innerCaptureSession_->GetMode();
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     int32_t ret = CameraErrorCode::SUCCESS;
     float rollBias = 0.0f; // set roll not support yet
     innerCaptureSession_->LockForControl();

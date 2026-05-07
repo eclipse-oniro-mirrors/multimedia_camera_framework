@@ -2622,13 +2622,8 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
 
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetExposureMode Need to call LockForControl() before setting camera properties");
-    bool isManual = (exposureMode == EXPOSURE_MODE_MANUAL);
-    // manual support wait for hal
-    if (!isManual) {
-        CHECK_RETURN_RET_ELOG(!IsExposureModeSupported(exposureMode),
-                              CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE,
-                              "SetExposureMode mode not supported");
-    }
+    CHECK_RETURN_RET_ELOG(!IsExposureModeSupported(exposureMode),
+        CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE, "SetExposureMode mode not supported");
     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
     auto itr = g_fwkExposureModeMap_.find(exposureMode);
     if (itr == g_fwkExposureModeMap_.end()) {
@@ -2637,6 +2632,12 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
         exposure = itr->second;
     }
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_EXPOSURE_MODE, &exposure, 1);
+    if ((exposureMode == EXPOSURE_MODE_AUTO || exposureMode == EXPOSURE_MODE_CONTINUOUS_AUTO) &&
+        !CameraSecurity::CheckSystemApp()) {
+        camera_rational_t value = {.numerator = 0, .denominator = 0};
+        bool res = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_SENSOR_EXPOSURE_TIME, &value, 1);
+        MEDIA_DEBUG_LOG("CaptureSession::SetExposureMode update exposure time res:%{public}d", res);
+    }
     wptr<CaptureSession> weakThis(this);
     CHECK_EXECUTE(status, AddFunctionToMap(std::to_string(OHOS_CONTROL_EXPOSURE_MODE), [weakThis, exposureMode]() {
         auto sharedThis = weakThis.promote();
@@ -2907,9 +2908,6 @@ int32_t CaptureSession::GetExposureValue(float& exposureValue)
 int32_t CaptureSession::GetExposureBiasStep(float& exposureBiasStep)
 {
     exposureBiasStep = 0.0f;
-    SceneMode sceneMode = GetMode();
-    MEDIA_INFO_LOG("GetExposureBiasStep sceneMode:%{public}d", sceneMode);
-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::GetExposureBiasStep Session is not Commited");
     auto inputDevice = GetInputDevice();
@@ -3377,14 +3375,14 @@ void CaptureSession::ProcessFlashStateChange(const std::shared_ptr<OHOS::Camera:
     CHECK_RETURN(ret != CAM_META_SUCCESS);
     FlashState info = FLASH_STATE_UNAVAILABLE;
     uint8_t value = item.data.u8[0];
-    MEDIA_ERR_LOG("ProcessFlashStateChange value:%{public}d", value);
+    MEDIA_DEBUG_LOG("ProcessFlashStateChange value:%{public}d", value);
     camera_flash_state_enum_t halValue = static_cast<camera_flash_state_enum_t>(value);
     auto itr = metaFlashStateMap_.find(halValue);
     CHECK_RETURN(itr == metaFlashStateMap_.end());
     info = itr->second;
-    MEDIA_ERR_LOG("ProcessFlashStateChange info:%{public}d", info);
+    MEDIA_DEBUG_LOG("ProcessFlashStateChange info:%{public}d", info);
     std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
-    MEDIA_ERR_LOG("ProcessFlashStateChange flashStateValue_:%{public}d", flashStateValue_.load());
+    MEDIA_DEBUG_LOG("ProcessFlashStateChange flashStateValue_:%{public}d", flashStateValue_.load());
     bool isUpdateFlashState = flashStateCallback_ != nullptr && (info != flashStateValue_);
     CHECK_RETURN(!isUpdateFlashState);
     flashStateCallback_->OnFlashStateChangedSync(info);
@@ -3544,10 +3542,8 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
 
 int32_t CaptureSession::SetISO(int32_t iso)
 {
-    CHECK_RETURN_RET_ELOG(
-        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "CaptureSession::SetISO Session is not Commited");
-    SceneMode sceneMode = GetMode();
-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetISO Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "CaptureSession::SetISO Need to call LockForControl() before setting camera properties");
     // LCOV_EXCL_START
@@ -3555,6 +3551,9 @@ int32_t CaptureSession::SetISO(int32_t iso)
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(), CameraErrorCode::OPERATION_NOT_ALLOWED,
         "CaptureSession::SetISO camera device is null");
+    ExposureMode exposureMode = GetExposureMode();
+    CHECK_RETURN_RET_ELOG(exposureMode == ExposureMode::EXPOSURE_MODE_LOCKED,
+        CameraErrorCode::SUCCESS, "CaptureSession::SetISO exposureMode not support");
     std::vector<int32_t> isoRange;
     CHECK_RETURN_RET_ELOG((GetSensorSensitivityRange(isoRange) != CameraErrorCode::SUCCESS) || isoRange.empty(),
         CameraErrorCode::OPERATION_NOT_ALLOWED, "CaptureSession::SetISO range is empty");
@@ -3575,8 +3574,6 @@ int32_t CaptureSession::SetISO(int32_t iso)
 
 int32_t CaptureSession::GetISO(int32_t &iso)
 {
-    SceneMode sceneMode = GetMode();
-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
     CHECK_RETURN_RET_ELOG(
         !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "CaptureSession::GetISO Session is not Commited");
     auto inputDevice = GetInputDevice();
@@ -4522,8 +4519,6 @@ void CaptureSession::ProcessFocusDistanceUpdates(const std::shared_ptr<Camera::C
 int32_t CaptureSession::GetFocusDistance(float& focusDistance)
 {
     // LCOV_EXCL_START
-    SceneMode sceneMode = GetMode();
-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
     focusDistance = 0.0;
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::GetFocusDistance Session is not Commited");
@@ -7633,8 +7628,6 @@ void CaptureSession::ProcessOISModeChange(
 // metering mode
 int32_t CaptureSession::GetSupportedMeteringModes(std::vector<MeteringMode> &supportedMeteringModes)
 {
-    SceneMode sceneMode = GetMode();
-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
     supportedMeteringModes.clear();
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::GetSupportedMeteringModes Session is not Commited");
@@ -7663,8 +7656,6 @@ int32_t CaptureSession::GetSupportedMeteringModes(std::vector<MeteringMode> &sup
 int32_t CaptureSession::IsMeteringModeSupported(MeteringMode meteringMode, bool &isSupported)
 {
     isSupported = false;
-    SceneMode sceneMode = GetMode();
-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::SUCCESS);
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::IsMeteringModeSupported Session is not Commited");
     std::vector<MeteringMode> vecSupportedMeteringModeList;
@@ -7680,8 +7671,6 @@ int32_t CaptureSession::IsMeteringModeSupported(MeteringMode meteringMode, bool 
 int32_t CaptureSession::GetMeteringMode(MeteringMode& meteringMode)
 {
     meteringMode = METERING_MODE_REGION;
-    SceneMode sceneMode = GetMode();
-    CHECK_RETURN_RET(sceneMode != CAPTURE, CameraErrorCode::OPERATION_NOT_ALLOWED);
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::GetMeteringMode Session is not Commited");
     auto inputDevice = GetInputDevice();

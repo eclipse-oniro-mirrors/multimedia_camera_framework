@@ -989,7 +989,7 @@ struct ControlCenterStatusInfo {
   @readonly isActive: bool;
 }
 
-interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter {
+interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter, ManualIso, ManualFocus, ManualExposure, Aperture, OIS {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
   @!sts_inject_into_interface("on(type: string, callback: (data: object)=> void): void;")
@@ -1086,6 +1086,16 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
   GetSessionConflictFunctions(): Array<VideoConflictFunctions>;
 
   GetSpecificImplPtr(): i64;
+
+  @rename("onIsoInfoChange")
+  OnIsoInfoChangeWithoutErr(callback:(data: IsoInfo)=> void): void;
+  @rename("offIsoInfoChange")
+  OffIsoInfoChangeWithoutErr(callback: Optional<(data: IsoInfo)=> void>): void;
+
+  @rename("onExposureInfoChange")
+  OnExposureInfoChangeWithoutErr(callback:(data: ExposureInfo)=> void): void;
+  @rename("offExposureInfoChange")
+  OffExposureInfoChangeWithoutErr(callback: Optional<(data: ExposureInfo)=> void>): void;
 }
 
 interface VideoConflictFunctions : ZoomQuery, MacroQuery {
@@ -1094,7 +1104,7 @@ interface VideoConflictFunctions : ZoomQuery, MacroQuery {
 interface VideoFunctions : FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, StabilizationQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery {
 }
 
-interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagement, Macro, Aperture, ColorReservation, EffectSuggestion {
+interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagement, Macro, ColorReservation, EffectSuggestion {
   @!sts_inject_into_class("""on(type: string, callback: object): void {
             if (type === "error") {
               this.onError(callback as (err: BusinessError<void>)=> void);

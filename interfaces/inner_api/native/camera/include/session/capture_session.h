@@ -2309,6 +2309,7 @@ public:
     int32_t GetParameters(const std::string& key, std::vector<std::string>& values);
     int32_t GetSupportedKeys(std::vector<std::string>& keys);
     int32_t GetActiveParameter(const std::string& key, std::string& value);
+    void ProcessOISModeChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
     /**
      * @brief Query whether given meteringMode mode supported.
@@ -2641,7 +2642,6 @@ protected:
         std::vector<OISMode>& supportModes);
     void ParseSupportedOISBiasRangeAndStep(const SceneMode modeName, const camera_metadata_item_t& item,
         std::vector<float>& supportBias);
-    void ProcessOISModeChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
     OISMode oisMode_ = OIS_MODE_AUTO;
 };
 } // namespace CameraStandard

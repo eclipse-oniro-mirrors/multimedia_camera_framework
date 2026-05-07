@@ -318,6 +318,10 @@ void VideoSession::VideoSessionMetadataResultProcessor::ProcessCallbacks(const u
     session->ProcessLcdFlashStatusUpdates(result);
     session->ProcessIsoChange(result);
     session->ProcessEffectSuggestionTypeUpdates(result);
+    session->ProcessSensorExposureTimeChange(result);
+    session->ProcessFlashStateChange(result);
+    session->ProcessIsoChange(result);
+    session->ProcessOISModeChange(result);
     // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard

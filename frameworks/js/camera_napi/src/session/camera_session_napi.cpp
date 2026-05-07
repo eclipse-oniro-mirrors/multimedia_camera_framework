@@ -2500,8 +2500,10 @@ napi_value CameraSessionNapi::GetFocusDistance(napi_env env, napi_callback_info 
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         float distance;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusDistance(distance);
+        double SCALE_3 = 1000.0;
+        double out = std::round((static_cast<double>(distance)) * SCALE_3) / SCALE_3;
         CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
-        napi_create_double(env, distance, &result);
+        napi_create_double(env, out, &result);
     } else {
         MEDIA_ERR_LOG("GetFocusDistance call Failed!");
     }
@@ -2520,7 +2522,8 @@ napi_value CameraSessionNapi::SetFocusDistance(napi_env env, napi_callback_info 
     CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(OPERATION_NOT_ALLOWED, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::SetFocusDistance parse parameter occur error");
     if (cameraSessionNapi->cameraSession_ != nullptr) {
-        float distance = static_cast<float>(value);
+        double SCALE_3 = 1000.0;
+        float distance = roundf(value * SCALE_3) / SCALE_3;
         cameraSessionNapi->cameraSession_->LockForControl();
         cameraSessionNapi->cameraSession_->SetFocusDistance(distance);
         MEDIA_INFO_LOG("CameraSessionNapi::SetFocusDistance set focusDistance:%{public}f!", distance);
