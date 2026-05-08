@@ -42,12 +42,12 @@ enum CameraPosition {
 };
 
 enum AutomotiveCameraPosition {
-    CAMERA_POSITION_EXTERIOR_UNSPECIFIED = 0,
+    CAMERA_POSITION_EXTERIOR_OTHER = 0,
     CAMERA_POSITION_EXTERIOR_FRONT,
     CAMERA_POSITION_EXTERIOR_REAR,
     CAMERA_POSITION_EXTERIOR_LEFT,
     CAMERA_POSITION_EXTERIOR_RIGHT,
-    CAMERA_POSITION_INTERIOR_UNSPECIFIED,
+    CAMERA_POSITION_INTERIOR_OTHER,
     CAMERA_POSITION_INTERIOR_ROW_1_LEFT,
     CAMERA_POSITION_INTERIOR_ROW_1_CENTER,
     CAMERA_POSITION_INTERIOR_ROW_1_RIGHT,
@@ -481,7 +481,7 @@ private:
     std::mutex usePhysicalCameraOrientationMutex_;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedMetadata_;
     CameraPosition cameraPosition_ = CAMERA_POSITION_UNSPECIFIED;
-    AutomotiveCameraPosition cameraAutomotivePosition_ = CAMERA_POSITION_EXTERIOR_UNSPECIFIED;
+    AutomotiveCameraPosition cameraAutomotivePosition_ = CAMERA_POSITION_EXTERIOR_OTHER;
     CameraType cameraType_ = CAMERA_TYPE_DEFAULT;
     ConnectionType connectionType_ = CAMERA_CONNECTION_BUILT_IN;
     CameraFoldScreenType foldScreenType_ = CAMERA_FOLDSCREEN_UNSPECIFIED;

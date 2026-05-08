@@ -214,6 +214,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             mapSensorColorFilterArrangement, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("FlashState",
             CreateObjectWithMap(env, "FlashState", mapFlashState, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("AutomotiveCameraPosition",
+            CreateObjectWithMap(env, "AutomotiveCameraPosition", mapAutomotiveCameraPosition, g_ignoreRef_)),
     };
 
     status = napi_define_class(env, CAMERA_LIB_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, CameraNapiConstructor,

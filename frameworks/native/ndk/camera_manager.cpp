@@ -358,11 +358,13 @@ Camera_ErrorCode OH_CameraDevice_GetHostDeviceType(Camera_Device* camera, Camera
     return Camera_Manager::GetHostDeviceType(camera, hostDeviceType);
 }
 
-Camera_ErrorCode OH_CameraDevice_GetAutomotiveCameraPosition(Camera_Device* camera, Camera_AutomotivePosition* position)
+Camera_ErrorCode OH_CameraDevice_GetAutomotiveCameraPosition(const Camera_Device* camera,
+    OH_Camera_AutomotiveCameraPosition* automotiveCameraPosition)
 {
     CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
-    CHECK_RETURN_RET_ELOG(position == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, position is null!");
-    return Camera_Manager::GetAutomotiveCameraPosition(camera, position);
+    CHECK_RETURN_RET_ELOG(automotiveCameraPosition == nullptr,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, automotiveCameraPosition is null!");
+    return Camera_Manager::GetAutomotiveCameraPosition(camera, automotiveCameraPosition);
 }
 
 Camera_ErrorCode OH_CameraDevice_GetLensEquivalentFocalLengths(
