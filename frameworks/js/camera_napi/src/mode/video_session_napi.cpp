@@ -50,7 +50,9 @@ napi_value VideoSessionNapi::Init(napi_env env, napi_value exports)
     std::vector<std::vector<napi_property_descriptor>> descriptors = { camera_process_props, camera_process_sys_props,
         flash_props, flash_sys_props, auto_exposure_props, focus_props, focus_sys_props, zoom_props, zoom_sys_props,
         filter_props, stabilization_props, preconfig_props, color_management_props, auto_switch_props,
-        quality_prioritization_props, macro_props, white_balance_props, control_center_props, iso_props };
+        quality_prioritization_props, macro_props, white_balance_props, control_center_props, iso_props,
+        manual_iso_props, manual_exposure_props, manual_focus_props, exposure_cb_props, flash_cb_props, raw_props,
+        physical_aperture_props, optical_image_stabilization_props };
     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                VideoSessionNapiConstructor, nullptr,
@@ -235,6 +237,40 @@ void VideoSessionNapi::UnregisterCameraSwitchRequestCallbackListener(
         cameraSession_->UnSetCameraSwitchRequestCallback();
         cameraSwitchSessionNapiCallback_ = nullptr;
     }
+}
+
+void VideoSessionNapi::RegisterExposureInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (exposureInfoCallback_ == nullptr) {
+        exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListener>(env);
+        cameraSession_->SetExposureInfoCallback(exposureInfoCallback_);
+    }
+    exposureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+ 
+void VideoSessionNapi::UnregisterExposureInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CHECK_RETURN_ELOG(exposureInfoCallback_ == nullptr, "%{public}s exposureInfoCallback is null", __func__);
+    exposureInfoCallback_->RemoveCallbackRef(eventName, callback);
+}
+ 
+void VideoSessionNapi::RegisterFlashStateChangeCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+{
+    if (flashStateCallback_ == nullptr) {
+        flashStateCallback_ = std::make_shared<FlashStateCallbackListener>(env);
+        cameraSession_->SetFlashStateCallback(flashStateCallback_);
+    }
+    flashStateCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+ 
+void VideoSessionNapi::UnregisterFlashStateChangeCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CHECK_RETURN_ELOG(flashStateCallback_ == nullptr, "%{public}s flashStateChangeCallback is null", __func__);
+    flashStateCallback_->RemoveCallbackRef(eventName, callback);
 }
 
 extern "C" {
