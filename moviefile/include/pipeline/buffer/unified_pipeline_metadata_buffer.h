@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2025 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,28 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_UNIFIED_PIPELINE_BUFFER_TYPES_H
-#define OHOS_UNIFIED_PIPELINE_BUFFER_TYPES_H
+#ifndef OHOS_UNIFIED_PIPELINE_METADATA_BUFFER_H
+#define OHOS_UNIFIED_PIPELINE_METADATA_BUFFER_H
 
 #include <cstdint>
+#include <vector>
+#include "unified_pipeline_buffer.h"
+#include "unified_pipeline_buffer_wrapper.h"
 
 namespace OHOS {
 namespace CameraStandard {
-enum class BufferType : int32_t {
-    VOID = 0,
-    CAMERA_AUDIO_RAW_BUFFER,
+struct PipelineMetadataBufferData {
+    int64_t timestamp = 0;
+    int32_t type = 0;
+    std::vector<uint8_t> metaData {};
+};
 
-    CAMERA_AUDIO_PACKAGED_RAW_BUFFER,
-    CAMERA_AUDIO_PACKAGED_ENCODED_RAW_BUFFER,
-
-    CAMERA_AUDIO_PACKAGED_BUFFER,
-    CAMERA_AUDIO_PACKAGED_ENCODED_BUFFER,
-
-    CAMERA_VIDEO_SURFACE_BUFFER,
-    CAMERA_VIDEO_ENCODED_BUFFER,
-    CAMERA_VIDEO_PACKAGED_ENCODED_BUFFER,
-    CAMERA_VIDEO_META,
-    CAMERA_AUDIO_4_2_METADATA,
+class UnifiedPipelineMetadataBuffer : public UnifiedPipelineBuffer,
+                                      public UnifiedPipelineBufferWrapper<PipelineMetadataBufferData> {
+public:
+    explicit UnifiedPipelineMetadataBuffer(BufferType type) : UnifiedPipelineBuffer(type) {}
 };
 } // namespace CameraStandard
 } // namespace OHOS

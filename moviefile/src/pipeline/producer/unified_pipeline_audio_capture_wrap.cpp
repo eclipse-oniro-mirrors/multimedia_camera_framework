@@ -15,6 +15,7 @@
 
 #include "unified_pipeline_audio_capture_wrap.h"
 
+#include "audio_errors.h"
 #include "audio_session_manager.h"
 #include "camera_log.h"
 #include "datetime_ex.h"
@@ -30,6 +31,8 @@ static constexpr int64_t ONE_FRAME_OFFSET = MOVIE_FILE_AUDIO_DURATION_EACH_AUDIO
 static constexpr int32_t BLUETOOTH_DELAY_FRAME = 30;
 static constexpr uint32_t BUFFERSIZE_MAX = 10000000;
 static constexpr int64_t MOVIE_FILE_AUDIO_MILLION = 1000000;
+static constexpr int64_t SEC_TO_MICROSEC = 1000000LL;
+static constexpr int64_t MICROSEC_TO_NANOSEC = 1000LL;
 
 UnifiedPipelineAudioCaptureWrap::UnifiedPipelineAudioCaptureWrap(AudioStandard::AudioCapturerOptions capturerOptions)
 {
@@ -90,6 +93,17 @@ void UnifiedPipelineAudioCaptureWrap::ReleaseCapture()
     MEDIA_INFO_LOG("UnifiedPipelineAudioCaptureWrap Audio capture Release enter");
     isCaptureAlive_ = false;
     UnsetPreferredInputDeviceChangeCallback();
+
+    {
+        std::lock_guard<std::mutex> lock(superListeningMutex_);
+        superListeningCond_.notify_all();
+    }
+    {
+        std::lock_guard<std::mutex> lock(superListeningDataMutex_);
+        std::queue<SuperListeningBufferData> emptyQueue;
+        superListeningDataQueue_.swap(emptyQueue);
+        superListeningDataCond_.notify_all();
+    }
 
     auto audioCapture = GetAudioCapture();
     if (audioCapture != nullptr) {
@@ -204,8 +218,6 @@ void UnifiedPipelineAudioCaptureWrap::OnReadBufferEnd()
 
 void UnifiedPipelineAudioCaptureWrap::ProcessAudioBuffer()
 {
-    static constexpr int64_t SEC_TO_MICROSEC = 1000000LL;
-    static constexpr int64_t MICROSEC_TO_NANOSEC = 1000LL;
     auto audioCapture = GetAudioCapture();
     CHECK_RETURN_ELOG(audioCapture == nullptr, "AudioCapturer_ is not init");
     auto bufferLen = captureBufferSize_;
@@ -230,18 +242,7 @@ void UnifiedPipelineAudioCaptureWrap::ProcessAudioBuffer()
                 std::this_thread::sleep_for(std::chrono::milliseconds(MOVIE_FILE_AUDIO_READ_WAIT_TIME));
             }
         } while (bytesRead < bufferLen);
-        AudioStandard::Timestamp timestamp;
-        audioCapture->GetTimeStampInfo(timestamp, AudioStandard::Timestamp::Timestampbase::MONOTONIC);
-        int64_t microTimestamp =
-            (timestamp.time.tv_sec * SEC_TO_MICROSEC + timestamp.time.tv_nsec / MICROSEC_TO_NANOSEC);
-        int64_t nowTime = GetMicroTickCount() - ONE_FRAME_OFFSET;
-        int64_t diff = abs(nowTime - microTimestamp);
-        if (diff > MOVIE_FILE_AUDIO_MILLION) { // 时间戳出错兜底方案
-            MEDIA_ERR_LOG("audioCapture::GetTimeStampInfo error: microTimestamp:%{public} " PRIi64
-                          "nowtime:%{public}" PRIi64 "Difference:%{public}" PRIi64,
-                microTimestamp, nowTime, diff);
-            microTimestamp = nowTime;
-        }
+        int64_t microTimestamp = GetMicroTimestamp();
         if (!isReadFirstFrame_) {
             FillEmptyBuffer(bufferLen, microTimestamp,
                 BLUETOOTH_DELAY_FRAME); // 蓝牙场景音频延迟可能有1s，这里进行对应处理，避免音频时长短导致视频播放加速
@@ -279,5 +280,159 @@ AudioStandard::AudioChannel UnifiedPipelineAudioCaptureWrap::GetMicNum()
     // odd channel should + 1
     return static_cast<AudioStandard::AudioChannel>(micNum + oddFlag);
 }
+
+void UnifiedPipelineAudioCaptureWrap::NotifySuperListeningDataReady()
+{
+    std::lock_guard<std::mutex> lock(superListeningMutex_);
+    isSuperListeningDataReady_ = true;
+    superListeningCond_.notify_one();
+}
+
+void UnifiedPipelineAudioCaptureWrap::InitSuperListeningThread()
+{
+    std::shared_ptr<UnifiedPipelineAudioCaptureWrap> thisPtr = shared_from_this();
+    std::thread workThread([thisPtr]() { thisPtr->ProcessSuperListeningBuffer(); });
+    workThread.detach();
+    std::thread dispatchThread([thisPtr]() { thisPtr->ProcessSuperListeningDataDispatch(); });
+    dispatchThread.detach();
+}
+
+void UnifiedPipelineAudioCaptureWrap::PushSuperListeningBufferData(SuperListeningBufferData&& bufferData)
+{
+    CHECK_RETURN_WLOG(!isCaptureAlive_, "Super listening capture is released, drop buffer");
+    {
+        std::lock_guard<std::mutex> lock(superListeningDataMutex_);
+        if (superListeningDataQueue_.size() >= SUPER_LISTENING_QUEUE_MAX_SIZE) {
+            MEDIA_WARNING_LOG("Super listening dispatch queue is full, drop oldest buffer");
+            superListeningDataQueue_.pop();
+        }
+        superListeningDataQueue_.push(std::move(bufferData));
+    }
+    superListeningDataCond_.notify_one();
+}
+
+void UnifiedPipelineAudioCaptureWrap::ProcessSuperListeningDataDispatch()
+{
+    while (true) {
+        SuperListeningBufferData bufferData;
+        {
+            std::unique_lock<std::mutex> lock(superListeningDataMutex_);
+            superListeningDataCond_.wait(lock, [this] {
+                return !superListeningDataQueue_.empty() || !isCaptureAlive_;
+            });
+            if (!isCaptureAlive_) {
+                MEDIA_INFO_LOG("Super listening dispatch done, return");
+                return;
+            }
+            bufferData = std::move(superListeningDataQueue_.front());
+            superListeningDataQueue_.pop();
+        }
+
+        if (superListeningDataCallback_) {
+            superListeningDataCallback_(bufferData.timestamp, bufferData.processBuffer.data(),
+                bufferData.processBuffer.size(), bufferData.micInBuffer.data(), bufferData.micInBuffer.size());
+        }
+    }
+}
+
+bool UnifiedPipelineAudioCaptureWrap::BuildSuperListeningBufferData(
+    const std::shared_ptr<AudioStandard::AudioCapturer>& audioCapture, AudioStandard::BufferDesc& bufDesc,
+    SuperListeningBufferData& bufferData)
+{
+    size_t processBufSize = 0;
+    size_t micInBufSize = 0;
+    size_t ecBufSize = 0;
+    int32_t ret = audioCapture->GetMicInBufferSize(bufDesc, processBufSize, micInBufSize, ecBufSize);
+    if (ret != AudioStandard::SUCCESS) {
+        MEDIA_ERR_LOG("GetMicInBufferSize failed, ret:%{public}d", ret);
+        return false;
+    }
+
+    bufferData.processBuffer.assign(processBufSize, 0);
+    bufferData.micInBuffer.assign(micInBufSize, 0);
+    AudioStandard::BufferDesc processBufDesc = {
+        .buffer = bufferData.processBuffer.data(),
+        .bufLength = processBufSize,
+    };
+    AudioStandard::BufferDesc micInBufDesc = {
+        .buffer = bufferData.micInBuffer.data(),
+        .bufLength = micInBufSize,
+    };
+    AudioStandard::BufferDesc ecBufDesc = {
+        .buffer = nullptr,
+        .bufLength = 0,
+    };
+    ret = audioCapture->DeinterleaveBuffer(bufDesc, processBufDesc, micInBufDesc, ecBufDesc);
+    if (ret != AudioStandard::SUCCESS) {
+        MEDIA_ERR_LOG("DeinterleaveBuffer failed, ret:%{public}d", ret);
+        return false;
+    }
+
+    bufferData.timestamp = GetMicroTimestamp();
+    return true;
+}
+
+void UnifiedPipelineAudioCaptureWrap::ProcessSuperListeningBuffer()
+{
+    auto audioCapture = GetAudioCapture();
+    CHECK_RETURN_ELOG(audioCapture == nullptr, "AudioCapturer_ is not init");
+
+    while (true) {
+        CHECK_RETURN_WLOG(!isCaptureAlive_, "Super listening process done, return");
+
+        {
+            std::unique_lock<std::mutex> lock(superListeningMutex_);
+            superListeningCond_.wait(lock, [this] {
+                return isSuperListeningDataReady_.load() || !isCaptureAlive_;
+            });
+            isSuperListeningDataReady_ = false;
+        }
+
+        AudioStandard::BufferDesc bufDesc;
+        int32_t ret = audioCapture->GetBufferDesc(bufDesc);
+        if (ret != AudioStandard::SUCCESS) {
+            MEDIA_ERR_LOG("GetBufferDesc failed, ret:%{public}d", ret);
+            continue;
+        }
+
+        if (runningState_ != State::STARTED) {
+            audioCapture->Enqueue(bufDesc);
+            continue;
+        }
+
+        SuperListeningBufferData bufferData;
+        if (!BuildSuperListeningBufferData(audioCapture, bufDesc, bufferData)) {
+            audioCapture->Enqueue(bufDesc);
+            continue;
+        }
+        if (superListeningDataCallback_) {
+            PushSuperListeningBufferData({
+                .timestamp = GetMicroTimestamp(),
+                .processBuffer = std::move(bufferData.processBuffer),
+                .micInBuffer = std::move(bufferData.micInBuffer),
+            });
+        }
+        audioCapture->Enqueue(bufDesc);
+    }
+}
+
+int64_t UnifiedPipelineAudioCaptureWrap ::GetMicroTimestamp()
+{
+    auto audioCapture = GetAudioCapture();
+    CHECK_RETURN_RET_WLOG(audioCapture == nullptr, 0, "AudioCapturer_ is not init");
+    AudioStandard::Timestamp timestamp;
+    audioCapture->GetTimeStampInfo(timestamp, AudioStandard::Timestamp::Timestampbase::MONOTONIC);
+    int64_t microTimestamp = (timestamp.time.tv_sec * SEC_TO_MICROSEC + timestamp.time.tv_nsec / MICROSEC_TO_NANOSEC);
+    int64_t nowTime = GetMicroTickCount() - ONE_FRAME_OFFSET;
+    int64_t diff = abs(nowTime - microTimestamp);
+    if (diff > MOVIE_FILE_AUDIO_MILLION) {
+        MEDIA_ERR_LOG("audioCapture: :GetTimeStampInfo error: microTimestamp:%{public} " PRIi64
+                      "nowtime:%{public}" PRIi64 "Difference:%{public}" PRIi64,
+            microTimestamp, nowTime, diff);
+        microTimestamp = nowTime;
+    }
+    return microTimestamp;
+}
+
 } // namespace CameraStandard
 } // namespace OHOS

@@ -20,9 +20,11 @@
 #include <memory>
 #include <mutex>
 
+#include "audio_capturer.h"
 #include "camera_server_photo_proxy.h"
 #include "camera_simple_timer.h"
 #include "istream_repeat_callback.h"
+#include "movie_file_audio_metadata_buffer_producer.h"
 #include "movie_file_audio_buffer_producer.h"
 #include "movie_file_consumer.h"
 #include "movie_file_controller_base.h"
@@ -134,6 +136,7 @@ private:
     void SetupPipeline(std::shared_ptr<MovieFileConsumer> movieFileConsumer);
 
     AudioStandard::AudioStreamInfo CreateAudioStreamInfo();
+    AudioStandard::AudioStreamInfo CreateAudioStreamInfoForSuperListenering();
     void SelectTargetAudioInputDevice();
     void DeselectTargetAudioInputDevice();
     void ConfigAudioCapture();
@@ -141,6 +144,13 @@ private:
         std::shared_ptr<UnifiedPipelineAudioCaptureWrap> audioCaptureWrap);
     void ConfigRawAudioPipeline(const AudioStandard::AudioStreamInfo& streamInfo,
         std::shared_ptr<UnifiedPipelineAudioCaptureWrap> audioCaptureWrap);
+    void ConfigMicAudioPipeline(const AudioStandard::AudioStreamInfo& streamInfo,
+        std::shared_ptr<UnifiedPipelineAudioCaptureWrap> audioCaptureWrap);
+    void ConfigProcessAudioPipeline(const AudioStandard::AudioStreamInfo& streamInfo,
+        std::shared_ptr<UnifiedPipelineAudioCaptureWrap> audioCaptureWrap);
+    void OnSuperListeningDataArrival(int64_t timestamp, const uint8_t* processBuffer, size_t processBufSize,
+                                     const uint8_t* micInBuffer, size_t micInBufSize);
+    void OnMetaDataArrival(AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t>& metaData);
 
     int32_t videoWidth_ = 0;
     int32_t videoHeight_ = 0;
@@ -156,7 +166,10 @@ private:
     std::shared_ptr<MovieFileVideoEncodedBufferProducer> movieFileVideoEncodedBufferProducer_;
     SpHolder<std::shared_ptr<MovieFileAudioBufferProducer>> movieFileAudioBufferProducer_;
     SpHolder<std::shared_ptr<MovieFileAudioBufferProducer>> movieFileAudioRawBufferProducer_;
+    SpHolder<std::shared_ptr<MovieFileAudioBufferProducer>> movieFileAudioMicBufferProducer_;
+    SpHolder<std::shared_ptr<MovieFileAudioBufferProducer>> movieFileAudioProcessBufferProducer_;
     std::shared_ptr<MovieFileMetaBufferProducer> movieFileMetaBufferProducer_;
+    std::shared_ptr<MovieFileAudioMetadataBufferProducer> movieFileAudioMetadataBufferProducer_;
 
     std::shared_ptr<UnifiedPipelineManager> movieFilePipelineManager_ = std::make_shared<UnifiedPipelineManager>();
 
@@ -171,6 +184,7 @@ private:
 
     bool isEnableRawAudio_ = false;
     std::atomic<bool> isInputDeviceChanged_ = false;
+    bool isSupportSuperListenering_4_2_ = false;
 };
 
 } // namespace CameraStandard
