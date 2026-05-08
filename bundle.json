@@ -81,7 +81,8 @@
               "memmgr",
               "e2fsprogs",
               "libxml2",
-              "openssl"
+              "openssl",
+              "icu"
             ]
         },
         "build": {
