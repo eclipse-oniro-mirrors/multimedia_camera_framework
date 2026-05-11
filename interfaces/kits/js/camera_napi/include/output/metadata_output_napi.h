@@ -33,6 +33,9 @@ public:
     virtual ~MetadataOutputCallback() = default;
 
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override;
+
+    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+
 private:
     void OnMetadataObjectsAvailableCallback(const std::vector<sptr<MetadataObject>> metadataObjList) const;
     napi_value CreateMetadataObjJSArray(napi_env env, const std::vector<sptr<MetadataObject>> metadataObjList) const;
@@ -42,6 +45,8 @@ private:
     void CreateDogFaceMetaData(napi_env env, sptr<MetadataObject> metadataObj, napi_value &metadataNapiObj) const;
     void CreateHumanBodyMetaData(napi_env env, sptr<MetadataObject> metadataObj,
         napi_value &metadataNapiObj) const;
+    
+    bool isAsync_ = true;
 };
 
 class FocusTrackingMetaInfoCallbackListener :
@@ -53,9 +58,13 @@ public:
     ~FocusTrackingMetaInfoCallbackListener() = default;
     void OnFocusTrackingMetaInfoAvailable(FocusTrackingMetaInfo focusTrackingMetaInfo) const override;
 
+    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+
 private:
     void OnFocusTrackingMetaInfoAvailableCallback(FocusTrackingMetaInfo focusTrackingMetaInfo) const;
     void OnFocusTrackingMetaInfoAvailableCallbackAsync(FocusTrackingMetaInfo focusTrackingMetaInfo) const;
+
+    bool isAsync_ = true;
 };
 
 struct FocusTrackingMetaCallbackInfo {
@@ -73,9 +82,13 @@ public:
     virtual ~MetadataStateCallbackNapi() = default;
     void OnError(const int32_t errorType) const override;
 
+    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+
 private:
     void OnErrorCallback(const int32_t errorType) const;
     void OnErrorCallbackAsync(const int32_t errorType) const;
+
+    bool isAsync_ = true;
 };
 
 struct MetadataOutputCallbackInfo {
@@ -112,6 +125,13 @@ public:
     static napi_value Release(napi_env env, napi_callback_info info);
     const EmitterFunctions& GetEmitterFunctions() override;
 
+    static napi_value OnMetadataObjectsAvailable(napi_env env, napi_callback_info info);
+    static napi_value OffMetadataObjectsAvailable(napi_env env, napi_callback_info info);
+    static napi_value OnFocusTrackingMetaInfoAvailable(napi_env env, napi_callback_info info);
+    static napi_value OffFocusTrackingMetaInfoAvailable(napi_env env, napi_callback_info info);
+    static napi_value OnError(napi_env env, napi_callback_info info);
+    static napi_value OffError(napi_env env, napi_callback_info info);
+
     sptr<MetadataOutput> metadataOutput_;
 
 private:
@@ -119,15 +139,15 @@ private:
     static napi_value MetadataOutputNapiConstructor(napi_env env, napi_callback_info info);
 
     void RegisterMetadataObjectsAvailableCallbackListener(const std::string& eventName, napi_env env,
-        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterMetadataObjectsAvailableCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterErrorCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFocusTrackingMetaInfoAvailableCallbackListener(const std::string& eventName, napi_env env,
-        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterFocusTrackingMetaInfoAvailableCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 

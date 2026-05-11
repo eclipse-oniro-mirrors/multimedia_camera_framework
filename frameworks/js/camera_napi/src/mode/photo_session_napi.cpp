@@ -157,14 +157,15 @@ napi_value PhotoSessionNapi::PhotoSessionNapiConstructor(napi_env env, napi_call
     return result;
 }
 
-void PhotoSessionNapi::RegisterPressureStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoSessionNapi::RegisterPressureStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("PhotoSessionNapi::RegisterPressureStatusCallbackListener");
     if (pressureCallback_ == nullptr) {
         pressureCallback_ = std::make_shared<PressureCallbackListener>(env);
         cameraSession_->SetPressureCallback(pressureCallback_);
     }
+    pressureCallback_->SetIsAsync(isAsync);
     pressureCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
@@ -180,8 +181,8 @@ void PhotoSessionNapi::UnregisterPressureStatusCallbackListener(
     }
 }
 
-void PhotoSessionNapi::RegisterExposureInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoSessionNapi::RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (exposureInfoCallback_ == nullptr) {
         exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListener>(env);
@@ -197,8 +198,8 @@ void PhotoSessionNapi::UnregisterExposureInfoCallbackListener(
     exposureInfoCallback_->RemoveCallbackRef(eventName, callback);
 }
 
-void PhotoSessionNapi::RegisterFlashStateChangeCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoSessionNapi::RegisterFlashStateChangeCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (flashStateCallback_ == nullptr) {
         flashStateCallback_ = std::make_shared<FlashStateCallbackListener>(env);
@@ -214,8 +215,8 @@ void PhotoSessionNapi::UnregisterFlashStateChangeCallbackListener(
     flashStateCallback_->RemoveCallbackRef(eventName, callback);
 }
 
-void PhotoSessionNapi::RegisterCameraSwitchRequestCallbackListener(
-    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args, bool isOnce)
+void PhotoSessionNapi::RegisterCameraSwitchRequestCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("PhotoSessionNapi::RegisterCameraSwitchRequestCallbackListener is enter");
     if (cameraSwitchSessionNapiCallback_ == nullptr) {

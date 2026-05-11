@@ -237,6 +237,20 @@ void MetadataOutputCallback::CreateDogFaceMetaData(napi_env env, sptr<MetadataOb
 void MetadataOutputCallback::OnMetadataObjectsAvailableCallback(
     const std::vector<sptr<MetadataObject>> metadataObjList) const
 {
+    if (!isAsync_) {
+        napi_value result[ARGS_ONE];
+        napi_value retVal;
+        napi_get_undefined(env_, &result[PARAM0]);
+        result[PARAM0] = CreateMetadataObjJSArray(env_, metadataObjList);
+        MEDIA_DEBUG_LOG("OnMetadataObjectsAvailableCallback metadataObjList size = %{public}zu",
+            metadataObjList.size());
+        CHECK_RETURN_ELOG(result[PARAM0] == nullptr, "invoke CreateMetadataObjJSArray failed");
+        ExecuteCallbackNapiPara callbackNapiPara {
+            .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+        ExecuteCallback("metadataObjectsAvailable", callbackNapiPara);
+        return;
+    }
+
     napi_value result[ARGS_TWO];
     napi_value retVal;
 
@@ -635,13 +649,14 @@ napi_value MetadataOutputNapi::Release(napi_env env, napi_callback_info info)
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
-void MetadataOutputNapi::RegisterMetadataObjectsAvailableCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void MetadataOutputNapi::RegisterMetadataObjectsAvailableCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (metadataOutputCallback_ == nullptr) {
         metadataOutputCallback_ = make_shared<MetadataOutputCallback>(env);
         metadataOutput_->SetCallback(metadataOutputCallback_);
     }
+    metadataOutputCallback_->SetIsAsync(isAsync);
     metadataOutputCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
@@ -655,13 +670,14 @@ void MetadataOutputNapi::UnregisterMetadataObjectsAvailableCallbackListener(
     }
 }
 
-void MetadataOutputNapi::RegisterErrorCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void MetadataOutputNapi::RegisterErrorCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (metadataStateCallback_ == nullptr) {
         metadataStateCallback_ = make_shared<MetadataStateCallbackNapi>(env);
         metadataOutput_->SetCallback(metadataStateCallback_);
     }
+    metadataStateCallback_->SetIsAsync(isAsync);
     metadataStateCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
@@ -675,8 +691,8 @@ void MetadataOutputNapi::UnregisterErrorCallbackListener(
     }
 }
 
-void MetadataOutputNapi::RegisterFocusTrackingMetaInfoAvailableCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void MetadataOutputNapi::RegisterFocusTrackingMetaInfoAvailableCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_DEBUG_LOG("MetadataOutputNapi::RegisterFocusTrackingMetaInfoAvailableCallbackListener is called");
     if (metadataOutputCallback_ == nullptr) {
@@ -687,6 +703,7 @@ void MetadataOutputNapi::RegisterFocusTrackingMetaInfoAvailableCallbackListener(
         focusTrackingMetaInfoCallbackListener_ = make_shared<FocusTrackingMetaInfoCallbackListener>(env);
         metadataOutput_->SetFocusTrackingMetaInfoCallback(focusTrackingMetaInfoCallbackListener_);
     }
+    focusTrackingMetaInfoCallbackListener_->SetIsAsync(isAsync);
     focusTrackingMetaInfoCallbackListener_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
@@ -739,6 +756,18 @@ void FocusTrackingMetaInfoCallbackListener::OnFocusTrackingMetaInfoAvailableCall
                     "trackingObjectId_:%{public}d, detectedObjects_ size: %{public}zu",
                     focusTrackingMetaInfo.GetTrackingMode(), focusTrackingMetaInfo.GetTrackingObjectId(),
                     focusTrackingMetaInfo.GetDetectedObjects().size());
+    
+    if (!isAsync_) {
+        napi_value result[ARGS_ONE] = {nullptr};
+        napi_value retVal;
+        napi_get_undefined(env_, &result[PARAM0]);
+        result[PARAM0] = CameraNapiFocusTrackingMetaInfo(focusTrackingMetaInfo).GenerateNapiValue(env_);
+        ExecuteCallbackNapiPara callbackNapiPara {
+            .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+        ExecuteCallback("focusTrackingMetaInfoAvailable", callbackNapiPara);
+        return;
+    }
+
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value retVal;
     napi_get_undefined(env_, &result[PARAM0]);
@@ -750,7 +779,7 @@ void FocusTrackingMetaInfoCallbackListener::OnFocusTrackingMetaInfoAvailableCall
 
 const MetadataOutputNapi::EmitterFunctions& MetadataOutputNapi::GetEmitterFunctions()
 {
-    const static EmitterFunctions funMap = {
+    static const EmitterFunctions funMap = {
         { "metadataObjectsAvailable", {
             &MetadataOutputNapi::RegisterMetadataObjectsAvailableCallbackListener,
             &MetadataOutputNapi::UnregisterMetadataObjectsAvailableCallbackListener } },
@@ -776,6 +805,48 @@ napi_value MetadataOutputNapi::Once(napi_env env, napi_callback_info info)
 napi_value MetadataOutputNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<MetadataOutputNapi>::Off(env, info);
+}
+
+napi_value MetadataOutputNapi::OnMetadataObjectsAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("MetadataOutputNapi::OnMetadataObjectsAvailable");
+    const std::string eventName = "metadataObjectsAvailable";
+    return ListenerTemplate<MetadataOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value MetadataOutputNapi::OffMetadataObjectsAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("MetadataOutputNapi::OffMetadataObjectsAvailable");
+    const std::string eventName = "metadataObjectsAvailable";
+    return ListenerTemplate<MetadataOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value MetadataOutputNapi::OnFocusTrackingMetaInfoAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("MetadataOutputNapi::OnFocusTrackingMetaInfoAvailable");
+    const std::string eventName = "focusTrackingMetaInfoAvailable";
+    return ListenerTemplate<MetadataOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value MetadataOutputNapi::OffFocusTrackingMetaInfoAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("MetadataOutputNapi::OffFocusTrackingMetaInfoAvailable");
+    const std::string eventName = "focusTrackingMetaInfoAvailable";
+    return ListenerTemplate<MetadataOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value MetadataOutputNapi::OnError(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("MetadataOutputNapi::OnError");
+    const std::string eventName = "error";
+    return ListenerTemplate<MetadataOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value MetadataOutputNapi::OffError(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("MetadataOutputNapi::OffError");
+    const std::string eventName = "error";
+    return ListenerTemplate<MetadataOutputNapi>::Off(env, info, eventName);
 }
 
 extern "C" {

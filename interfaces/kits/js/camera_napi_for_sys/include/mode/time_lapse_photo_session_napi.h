@@ -118,20 +118,20 @@ private:
     shared_ptr<TryAEInfoCallbackListener> tryAEInfoCallback_ = nullptr;
 
 protected:
-    void RegisterIsoInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterIsoInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterExposureInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterExposureInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterLuminationInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterLuminationInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterTryAEInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterTryAEInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterTryAEInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };

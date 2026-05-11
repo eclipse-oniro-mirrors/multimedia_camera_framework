@@ -24,6 +24,8 @@
 #include "js_native_api.h"
 #include "napi/native_api.h"
 
+#include "camera_log.h"
+
 namespace OHOS {
 namespace CameraStandard {
 

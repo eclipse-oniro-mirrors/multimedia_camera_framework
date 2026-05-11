@@ -194,65 +194,65 @@ public:
     std::shared_ptr<FeatureDetectionStatusCallbackListener> featureDetectionStatusCallback_ = nullptr;
 
 protected:
-    void RegisterLcdFlashStatusCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterLcdFlashStatusCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterLcdFlashStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterEffectSuggestionCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterEffectSuggestionCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterEffectSuggestionCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterFeatureDetectionStatusListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterFeatureDetectionStatusListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterFeatureDetectionStatusListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 
-    void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterSlowMotionStateCb(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterExposureInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterExposureInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterIsoInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterIsoInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterApertureInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterApertureInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterLuminationInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterLuminationInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterTryAEInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterTryAEInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterTryAEInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterLightStatusCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterLightStatusCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterLightStatusCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterStitchingTargetInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterStitchingTargetInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterStitchingTargetInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterStitchingCaptureInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterStitchingCaptureInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterStitchingCaptureInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterStitchingHintInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterStitchingHintInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterStitchingHintInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
-    void RegisterStitchingCaptureStateCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterStitchingCaptureStateCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterStitchingCaptureStateCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };

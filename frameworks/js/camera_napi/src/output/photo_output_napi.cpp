@@ -1599,8 +1599,8 @@ napi_value PhotoOutputNapi::GetActiveProfile(napi_env env, napi_callback_info in
     return CameraNapiObjProfile(*profile).GenerateNapiValue(env);
 }
 
-void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env), "SystemApi!");
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterQuickThumbnailCallbackListener!");
@@ -1636,8 +1636,8 @@ void PhotoOutputNapi::UnregisterQuickThumbnailCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_QUICK_THUMBNAIL, callback);
 }
 
-void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterPhotoAvailableCallbackListener!");
     CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
@@ -1662,8 +1662,8 @@ void PhotoOutputNapi::UnregisterPhotoAvailableCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_AVAILABLE, callback);
 }
 
-void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterDeferredPhotoProxyAvailableCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterDeferredPhotoProxyAvailableCallbackListener!");
     CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
@@ -1675,8 +1675,8 @@ void PhotoOutputNapi::UnregisterDeferredPhotoProxyAvailableCallbackListener(
 
 }
 
-void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("PhotoOutputNapi RegisterPhotoAssetAvailableCallbackListener!");
     CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
@@ -1702,8 +1702,8 @@ void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback);
 }
 
-void PhotoOutputNapi::RegisterCaptureStartCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterCaptureStartCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1722,8 +1722,8 @@ void PhotoOutputNapi::UnregisterCaptureStartCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_START, callback);
 }
 
-void PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1742,8 +1742,8 @@ void PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_START_WITH_INFO, callback);
 }
 
-void PhotoOutputNapi::RegisterCaptureEndCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterCaptureEndCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1762,8 +1762,8 @@ void PhotoOutputNapi::UnregisterCaptureEndCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_END, callback);
 }
 
-void PhotoOutputNapi::RegisterFrameShutterCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterFrameShutterCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1782,8 +1782,8 @@ void PhotoOutputNapi::UnregisterFrameShutterCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_FRAME_SHUTTER, callback);
 }
 
-void PhotoOutputNapi::RegisterErrorCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterErrorCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1802,8 +1802,8 @@ void PhotoOutputNapi::UnregisterErrorCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_ERROR, callback);
 }
 
-void PhotoOutputNapi::RegisterFrameShutterEndCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterFrameShutterEndCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1822,8 +1822,8 @@ void PhotoOutputNapi::UnregisterFrameShutterEndCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_FRAME_SHUTTER_END, callback);
 }
 
-void PhotoOutputNapi::RegisterReadyCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterReadyCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1842,8 +1842,8 @@ void PhotoOutputNapi::UnregisterReadyCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_READY, callback);
 }
 
-void PhotoOutputNapi::RegisterEstimatedCaptureDurationCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterEstimatedCaptureDurationCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1862,8 +1862,8 @@ void PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, callback);
 }
 
-void PhotoOutputNapi::RegisterConstellationDrawingStateChangeCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterConstellationDrawingStateChangeCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
@@ -1882,8 +1882,8 @@ void PhotoOutputNapi::UnregisterConstellationDrawingStateChangeCallbackListener(
     photoOutputCallback_->RemoveCallbackRef(CONST_CAPTURE_CONSTELLATION_DRAWING_STATE_CHANGE, callback);
 }
 
-void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env),
         "PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener:SystemApi is called");
@@ -2428,6 +2428,202 @@ napi_value PhotoOutputNapi::SetPhotoQualityPrioritization(napi_env env, napi_cal
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
     }
     return result;
+}
+
+napi_value PhotoOutputNapi::OnQuickThumbnail(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnQuickThumbnail is called");
+    const std::string eventName = "quickThumbnail";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffQuickThumbnail(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffQuickThumbnail is called");
+    const std::string eventName = "quickThumbnail";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnPhotoAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnPhotoAvailable is called");
+    const std::string eventName = "photoAvailable";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffPhotoAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffPhotoAvailable is called");
+    const std::string eventName = "photoAvailable";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnDeferredPhotoProxyAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnDeferredPhotoProxyAvailable is called");
+    const std::string eventName = "deferredPhotoProxyAvailable";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffDeferredPhotoProxyAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffDeferredPhotoProxyAvailable is called");
+    const std::string eventName = "deferredPhotoProxyAvailable";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnPhotoAssetAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnPhotoAssetAvailable is called");
+    const std::string eventName = "photoAssetAvailable";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffPhotoAssetAvailable(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffPhotoAssetAvailable is called");
+    const std::string eventName = "photoAssetAvailable";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnCaptureStart(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnCaptureStart is called");
+    const std::string eventName = "captureStart";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffCaptureStart(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffCaptureStart is called");
+    const std::string eventName = "captureStart";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnCaptureEnd(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnCaptureEnd is called");
+    const std::string eventName = "captureEnd";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffCaptureEnd(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffCaptureEnd is called");
+    const std::string eventName = "captureEnd";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnFrameShutter(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnFrameShutter is called");
+    const std::string eventName = "frameShutter";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffFrameShutter(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffFrameShutter is called");
+    const std::string eventName = "frameShutter";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnError(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnError is called");
+    const std::string eventName = "error";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffError(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffError is called");
+    const std::string eventName = "error";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnFrameShutterEnd(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnFrameShutterEnd is called");
+    const std::string eventName = "frameShutterEnd";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffFrameShutterEnd(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffFrameShutterEnd is called");
+    const std::string eventName = "frameShutterEnd";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnCaptureReady(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnCaptureReady is called");
+    const std::string eventName = "captureReady";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffCaptureReady(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffCaptureReady is called");
+    const std::string eventName = "captureReady";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnEstimatedCaptureDuration(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnEstimatedCaptureDuration is called");
+    const std::string eventName = "estimatedCaptureDuration";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffEstimatedCaptureDuration(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffEstimatedCaptureDuration is called");
+    const std::string eventName = "estimatedCaptureDuration";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnCaptureStartWithInfo(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnCaptureStartWithInfo is called");
+    const std::string eventName = "captureStartWithInfo";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffCaptureStartWithInfo(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffCaptureStartWithInfo is called");
+    const std::string eventName = "captureStartWithInfo";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnOfflineDeliveryFinished(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnOfflineDeliveryFinished is called");
+    const std::string eventName = "offlineDeliveryFinished";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffOfflineDeliveryFinished(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffOfflineDeliveryFinished is called");
+    const std::string eventName = "offlineDeliveryFinished";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OnConstellationDrawingStateChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OnConstellationDrawingStateChange is called");
+    const std::string eventName = "constellationDrawingStateChange";
+    return ListenerTemplate<PhotoOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::OffConstellationDrawingStateChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::OffConstellationDrawingStateChange is called");
+    const std::string eventName = "constellationDrawingStateChange";
+    return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
 }
 
 extern "C" {

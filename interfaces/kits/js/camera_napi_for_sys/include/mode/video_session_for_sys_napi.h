@@ -109,24 +109,24 @@ public:
     std::shared_ptr<HighFrameRateZoomInfoListener> zoomInfoListener_;
 
 protected:
-    void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
-        napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+    void RegisterFocusTrackingInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterFocusTrackingInfoCallbackListener(const std::string& eventName,
         napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterLightStatusCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value> &args, bool isOnce) override;
+        const std::vector<napi_value> &args, bool isOnce, bool isAsync = true) override;
     void UnregisterLightStatusCallbackListener(
         const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
     void RegisterZoomInfoCbListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterZoomInfoCbListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterPressureStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterPressureStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterCameraSwitchRequestCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value> &args, bool isOnce) override;
+        const std::vector<napi_value> &args, bool isOnce, bool isAsync = true) override;
     void UnregisterCameraSwitchRequestCallbackListener(
         const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
 };

@@ -238,6 +238,35 @@ public:
     static napi_value IsPhotoQualityPrioritizationSupported(napi_env env, napi_callback_info info);
     static napi_value SetPhotoQualityPrioritization(napi_env env, napi_callback_info info);
 
+    static napi_value OnQuickThumbnail(napi_env env, napi_callback_info info);
+    static napi_value OffQuickThumbnail(napi_env env, napi_callback_info info);
+    static napi_value OnPhotoAvailable(napi_env env, napi_callback_info info);
+    static napi_value OffPhotoAvailable(napi_env env, napi_callback_info info);
+    static napi_value OnDeferredPhotoProxyAvailable(napi_env env, napi_callback_info info);
+    static napi_value OffDeferredPhotoProxyAvailable(napi_env env, napi_callback_info info);
+    static napi_value OnPhotoAssetAvailable(napi_env env, napi_callback_info info);
+    static napi_value OffPhotoAssetAvailable(napi_env env, napi_callback_info info);
+    static napi_value OnCaptureStart(napi_env env, napi_callback_info info);
+    static napi_value OffCaptureStart(napi_env env, napi_callback_info info);
+    static napi_value OnCaptureEnd(napi_env env, napi_callback_info info);
+    static napi_value OffCaptureEnd(napi_env env, napi_callback_info info);
+    static napi_value OnFrameShutter(napi_env env, napi_callback_info info);
+    static napi_value OffFrameShutter(napi_env env, napi_callback_info info);
+    static napi_value OnError(napi_env env, napi_callback_info info);
+    static napi_value OffError(napi_env env, napi_callback_info info);
+    static napi_value OnFrameShutterEnd(napi_env env, napi_callback_info info);
+    static napi_value OffFrameShutterEnd(napi_env env, napi_callback_info info);
+    static napi_value OnCaptureReady(napi_env env, napi_callback_info info);
+    static napi_value OffCaptureReady(napi_env env, napi_callback_info info);
+    static napi_value OnEstimatedCaptureDuration(napi_env env, napi_callback_info info);
+    static napi_value OffEstimatedCaptureDuration(napi_env env, napi_callback_info info);
+    static napi_value OnCaptureStartWithInfo(napi_env env, napi_callback_info info);
+    static napi_value OffCaptureStartWithInfo(napi_env env, napi_callback_info info);
+    static napi_value OnOfflineDeliveryFinished(napi_env env, napi_callback_info info);
+    static napi_value OffOfflineDeliveryFinished(napi_env env, napi_callback_info info);
+    static napi_value OnConstellationDrawingStateChange(napi_env env, napi_callback_info info);
+    static napi_value OffConstellationDrawingStateChange(napi_env env, napi_callback_info info);
+
     PhotoOutputNapi();
     ~PhotoOutputNapi() override;
 
@@ -254,60 +283,59 @@ private:
     void CreateMultiChannelPictureLisenter(napi_env env);
     void CreateSingleChannelPhotoLisenter(napi_env env);
     void RegisterQuickThumbnailCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterQuickThumbnailCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterPhotoAvailableCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterPhotoAvailableCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterDeferredPhotoProxyAvailableCallbackListener(const std::string& eventName, napi_env env,
-        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterDeferredPhotoProxyAvailableCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterPhotoAssetAvailableCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterPhotoAssetAvailableCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterCaptureStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterCaptureStartCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterCaptureEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterCaptureEndCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFrameShutterCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterFrameShutterCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterErrorCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFrameShutterEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterFrameShutterEndCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterReadyCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterReadyCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterEstimatedCaptureDurationCallbackListener(const std::string& eventName, napi_env env,
-        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterEstimatedCaptureDurationCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterCaptureStartWithInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterCaptureStartWithInfoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
-    void RegisterOfflineDeliveryFinishedCallbackListener(
-        const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+    void RegisterOfflineDeliveryFinishedCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterOfflineDeliveryFinishedCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterConstellationDrawingStateChangeCallbackListener(const std::string& eventName, napi_env env,
-        napi_value callback, const std::vector<napi_value>& args, bool isOnce);
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterConstellationDrawingStateChangeCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 

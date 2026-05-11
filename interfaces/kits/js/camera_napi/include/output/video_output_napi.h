@@ -67,10 +67,14 @@ public:
     void OnError(const int32_t errorCode) const override;
     void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override;
 
+    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+
 private:
     void UpdateJSCallback(VideoOutputEventType eventType, const VideoCallbackInfo& info) const;
     void UpdateJSCallbackAsync(VideoOutputEventType eventType, const VideoCallbackInfo& info) const;
     void ExecuteOnDeferredVideoCb(const VideoCallbackInfo& info) const;
+
+    bool isAsync_ = true;
 };
 
 struct VideoOutputCallbackInfo {
@@ -111,11 +115,23 @@ public:
     static napi_value Start(napi_env env, napi_callback_info info);
     static napi_value Stop(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
+
+    static napi_value OnFrameStart(napi_env env, napi_callback_info info);
+    static napi_value OffFrameStart(napi_env env, napi_callback_info info);
+    static napi_value OnFrameEnd(napi_env env, napi_callback_info info);
+    static napi_value OffFrameEnd(napi_env env, napi_callback_info info);
+    static napi_value OnError(napi_env env, napi_callback_info info);
+    static napi_value OffError(napi_env env, napi_callback_info info);
+    static napi_value OnDeferredVideoEnhancementInfo(napi_env env, napi_callback_info info);
+    static napi_value OffDeferredVideoEnhancementInfo(napi_env env, napi_callback_info info);
+
     VideoOutputNapi();
     ~VideoOutputNapi() override;
     sptr<VideoOutput> GetVideoOutput();
     const EmitterFunctions& GetEmitterFunctions() override;
     static napi_value GetVideoRotation(napi_env env, napi_callback_info info);
+
+    napi_env env_;
     sptr<VideoOutput> videoOutput_;
 
 private:
@@ -123,26 +139,25 @@ private:
     static napi_value VideoOutputNapiConstructor(napi_env env, napi_callback_info info);
 
     void RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterFrameStartCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFrameEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterFrameEndCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterErrorCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterDeferredVideoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterDeferredVideoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<VideoOutput> sVideoOutput_;
 
-    napi_env env_;
     std::shared_ptr<VideoCallbackListener> videoCallback_;
     static thread_local uint32_t videoOutputTaskId;
 };

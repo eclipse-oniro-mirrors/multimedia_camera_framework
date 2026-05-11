@@ -1711,8 +1711,8 @@ napi_value CameraSessionForSysNapi::SetImagingMode(napi_env env, napi_callback_i
     return result;
 }
 
-void CameraSessionForSysNapi::RegisterSlowMotionStateCb(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterSlowMotionStateCb(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be unregistered in current session!");
@@ -1725,8 +1725,8 @@ void CameraSessionForSysNapi::UnregisterSlowMotionStateCb(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterExposureInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (exposureInfoCallback_ == nullptr) {
         exposureInfoCallback_ = std::make_shared<ExposureInfoCallbackListener>(env);
@@ -1745,8 +1745,8 @@ void CameraSessionForSysNapi::UnregisterExposureInfoCallbackListener(
     }
 }
 
-void CameraSessionForSysNapi::RegisterIsoInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be registered in current session!");
@@ -1759,8 +1759,8 @@ void CameraSessionForSysNapi::UnregisterIsoInfoCallbackListener(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterApertureInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be registered in current session!");
@@ -1773,8 +1773,8 @@ void CameraSessionForSysNapi::UnregisterApertureInfoCallbackListener(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterLuminationInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be registered in current session!");
@@ -1787,8 +1787,8 @@ void CameraSessionForSysNapi::UnregisterLuminationInfoCallbackListener(
         env, CameraErrorCode::OPERATION_NOT_ALLOWED, "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterTryAEInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterTryAEInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -1801,8 +1801,8 @@ void CameraSessionForSysNapi::UnregisterTryAEInfoCallbackListener(
         "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterLightStatusCallbackListener(const std::string& eventName,
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterLightStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -1815,8 +1815,8 @@ void CameraSessionForSysNapi::UnregisterLightStatusCallbackListener(const std::s
         "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterFocusTrackingInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -1829,8 +1829,8 @@ void CameraSessionForSysNapi::UnregisterFocusTrackingInfoCallbackListener(const 
         "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterStitchingTargetInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterStitchingTargetInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -1843,8 +1843,8 @@ void CameraSessionForSysNapi::UnregisterStitchingTargetInfoCallbackListener(
         "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterStitchingCaptureInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterStitchingCaptureInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -1857,8 +1857,8 @@ void CameraSessionForSysNapi::UnregisterStitchingCaptureInfoCallbackListener(
         "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterStitchingHintInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterStitchingHintInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -1871,8 +1871,8 @@ void CameraSessionForSysNapi::UnregisterStitchingHintInfoCallbackListener(
         "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterStitchingCaptureStateCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterStitchingCaptureStateCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CameraNapiUtils::ThrowError(env, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "this type callback can not be registered in current session!");
@@ -1885,8 +1885,8 @@ void CameraSessionForSysNapi::UnregisterStitchingCaptureStateCallbackListener(
         "this type callback can not be unregistered in current session!");
 }
 
-void CameraSessionForSysNapi::RegisterLcdFlashStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterLcdFlashStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     CHECK_RETURN_ELOG(cameraSessionForSys_ == nullptr, "cameraSession is null!");
     if (lcdFlashStatusCallback_ == nullptr) {
@@ -1911,8 +1911,8 @@ void CameraSessionForSysNapi::UnregisterLcdFlashStatusCallbackListener(
     }
 }
 
-void CameraSessionForSysNapi::RegisterEffectSuggestionCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterEffectSuggestionCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (effectSuggestionCallback_ == nullptr) {
         auto effectSuggestionCallback = std::make_shared<EffectSuggestionCallbackListener>(env);
@@ -1932,8 +1932,8 @@ void CameraSessionForSysNapi::UnregisterEffectSuggestionCallbackListener(
     }
 }
 
-void CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     int32_t featureType = SceneFeature::FEATURE_ENUM_MAX;
     CameraNapiParamParser jsParamParser(env, args, featureType);

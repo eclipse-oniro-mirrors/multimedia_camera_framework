@@ -393,9 +393,8 @@ const MovieFileOutputNapi::EmitterFunctions& MovieFileOutputNapi::GetEmitterFunc
     return funMap;
 }
 
-void MovieFileOutputNapi::RegisterRecordingStartCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback,
-    const std::vector<napi_value>& args, bool isOnce)
+void MovieFileOutputNapi::RegisterRecordingStartCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (movieFileOutputCallback_ == nullptr) {
         movieFileOutputCallback_ = make_shared<MovieFileOutputCallbackListener>(env);
@@ -416,7 +415,7 @@ void MovieFileOutputNapi::UnregisterRecordingStartCallbackListener(
 
 void MovieFileOutputNapi::RegisterRecordingPauseCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback,
-    const std::vector<napi_value>& args, bool isOnce)
+    const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (movieFileOutputCallback_ == nullptr) {
         movieFileOutputCallback_ = make_shared<MovieFileOutputCallbackListener>(env);
@@ -437,7 +436,7 @@ void MovieFileOutputNapi::UnregisterRecordingPauseCallbackListener(
 
 void MovieFileOutputNapi::RegisterRecordingResumeCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback,
-    const std::vector<napi_value>& args, bool isOnce)
+    const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (movieFileOutputCallback_ == nullptr) {
         movieFileOutputCallback_ = make_shared<MovieFileOutputCallbackListener>(env);
@@ -458,7 +457,7 @@ void MovieFileOutputNapi::UnregisterRecordingResumeCallbackListener(
 
 void MovieFileOutputNapi::RegisterRecordingStopCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback,
-    const std::vector<napi_value>& args, bool isOnce)
+    const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (movieFileOutputCallback_ == nullptr) {
         movieFileOutputCallback_ = make_shared<MovieFileOutputCallbackListener>(env);
@@ -479,7 +478,7 @@ void MovieFileOutputNapi::UnregisterRecordingStopCallbackListener(
 
 void MovieFileOutputNapi::RegisterPhotoAssetAvailableCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback,
-    const std::vector<napi_value>& args, bool isOnce)
+    const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("RegisterPhotoAssetAvailableCallbackListener is called");
     if (movieFileOutputCallback_ == nullptr) {
@@ -501,7 +500,7 @@ void MovieFileOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
 }
 
 void MovieFileOutputNapi::RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-    const std::vector<napi_value>& args, bool isOnce)
+    const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (movieFileOutputCallback_ == nullptr) {
         movieFileOutputCallback_ = make_shared<MovieFileOutputCallbackListener>(env);

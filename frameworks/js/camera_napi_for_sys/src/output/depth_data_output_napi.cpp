@@ -604,8 +604,8 @@ napi_value DepthDataOutputNapi::Stop(napi_env env, napi_callback_info info)
     return result;
 }
 
-void DepthDataOutputNapi::RegisterDepthDataAvailableCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void DepthDataOutputNapi::RegisterDepthDataAvailableCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (sDepthDataSurface_ == nullptr) {
         MEDIA_ERR_LOG("sDepthDataSurface_ is null!");
@@ -638,8 +638,8 @@ void DepthDataOutputNapi::UnregisterDepthDataAvailableCallbackListener(
     }
 }
 
-void DepthDataOutputNapi::RegisterErrorCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void DepthDataOutputNapi::RegisterErrorCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (depthDataCallback_ == nullptr) {
         depthDataCallback_ = std::make_shared<DepthDataOutputCallback>(env);

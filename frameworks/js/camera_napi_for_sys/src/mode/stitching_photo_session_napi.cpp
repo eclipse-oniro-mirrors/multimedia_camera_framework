@@ -296,8 +296,8 @@ napi_value StitchingPhotoSessionNapi::GetStitchingDirection(napi_env env, napi_c
     return result;
 }
 
-void StitchingPhotoSessionNapi::RegisterStitchingTargetInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void StitchingPhotoSessionNapi::RegisterStitchingTargetInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("%{public}s enter", __PRETTY_FUNCTION__);
     Adaptor::RegCallback(eventName, env, callback, args, isOnce, stitchingTargetInfoCallbackListener_,
@@ -311,8 +311,8 @@ void StitchingPhotoSessionNapi::UnregisterStitchingTargetInfoCallbackListener(
     Adaptor::UnregCallback(eventName, env, callback, args, stitchingTargetInfoCallbackListener_);
 }
 
-void StitchingPhotoSessionNapi::RegisterStitchingCaptureInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void StitchingPhotoSessionNapi::RegisterStitchingCaptureInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("%{public}s enter", __PRETTY_FUNCTION__);
     Adaptor::RegCallback(eventName, env, callback, args, isOnce, stitchingCaptureInfoCallbackListener_,
@@ -326,8 +326,8 @@ void StitchingPhotoSessionNapi::UnregisterStitchingCaptureInfoCallbackListener(
     Adaptor::UnregCallback(eventName, env, callback, args, stitchingCaptureInfoCallbackListener_);
 }
 
-void StitchingPhotoSessionNapi::RegisterStitchingHintInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void StitchingPhotoSessionNapi::RegisterStitchingHintInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("%{public}s enter", __PRETTY_FUNCTION__);
     Adaptor::RegCallback(eventName, env, callback, args, isOnce, stitchingHintInfoCallbackListener_,
@@ -341,8 +341,8 @@ void StitchingPhotoSessionNapi::UnregisterStitchingHintInfoCallbackListener(
     Adaptor::UnregCallback(eventName, env, callback, args, stitchingHintInfoCallbackListener_);
 }
 
-void StitchingPhotoSessionNapi::RegisterStitchingCaptureStateCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void StitchingPhotoSessionNapi::RegisterStitchingCaptureStateCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("%{public}s enter", __PRETTY_FUNCTION__);
     Adaptor::RegCallback(eventName, env, callback, args, isOnce, stitchingCaptureStateCallbackListener_,

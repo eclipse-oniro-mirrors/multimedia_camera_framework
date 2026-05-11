@@ -978,7 +978,7 @@ void TimeLapsePhotoSessionNapi::Destructor(napi_env env, void* nativeObject, voi
 }
 
 void TimeLapsePhotoSessionNapi::RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env,
-    napi_value callback, const vector<napi_value>& args, bool isOnce)
+    napi_value callback, const vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
     if (isoInfoCallback_ == nullptr) {
@@ -1000,7 +1000,7 @@ void TimeLapsePhotoSessionNapi::UnregisterIsoInfoCallbackListener(const std::str
 }
 
 void TimeLapsePhotoSessionNapi::RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env,
-    napi_value callback, const vector<napi_value>& args, bool isOnce)
+    napi_value callback, const vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
     if (exposureInfoCallback_ == nullptr) {
@@ -1022,7 +1022,7 @@ void TimeLapsePhotoSessionNapi::UnregisterExposureInfoCallbackListener(const std
 }
 
 void TimeLapsePhotoSessionNapi::RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env,
-    napi_value callback, const vector<napi_value>& args, bool isOnce)
+    napi_value callback, const vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
     if (luminationInfoCallback_ == nullptr) {
@@ -1054,7 +1054,7 @@ void TimeLapsePhotoSessionNapi::UnregisterLuminationInfoCallbackListener(const s
 }
 
 void TimeLapsePhotoSessionNapi::RegisterTryAEInfoCallbackListener(const std::string& eventName, napi_env env,
-    napi_value callback, const vector<napi_value>& args, bool isOnce)
+    napi_value callback, const vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_DEBUG_LOG("%{public}s: Enter", __FUNCTION__);
     if (tryAEInfoCallback_ == nullptr) {

@@ -44,9 +44,16 @@ public:
     void OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const override;
     void OnFlashlightStatusChanged(const std::string &cameraID, const FlashStatus flashStatus) const override;
 
+    inline void SetIsAsync(bool isAsync)
+    {
+        isAsync_ = isAsync;
+    }
+
 private:
     void OnCameraStatusCallback(const CameraStatusInfo &cameraStatusInfo) const;
     void OnCameraStatusCallbackAsync(const CameraStatusInfo &cameraStatusInfo) const;
+
+    bool isAsync_ = true;
 };
 
 struct CameraStatusCallbackInfo {
@@ -66,9 +73,17 @@ public:
     explicit CameraMuteListenerNapi(napi_env env);
     virtual ~CameraMuteListenerNapi();
     void OnCameraMute(bool muteMode) const override;
+
+    inline void SetIsAsync(bool isAsync)
+    {
+        isAsync_ = isAsync;
+    }
+
 private:
     void OnCameraMuteCallback(bool muteMode) const;
     void OnCameraMuteCallbackAsync(bool muteMode) const;
+
+    bool isAsync_ = true;
 };
 
 class ControlCenterStatusListenerNapi : public ControlCenterStatusListener, public ListenerBase,
@@ -77,9 +92,17 @@ public:
     explicit ControlCenterStatusListenerNapi(napi_env env);
     virtual ~ControlCenterStatusListenerNapi();
     void OnControlCenterStatusChanged(bool status) const override;
+
+    inline void SetIsAsync(bool isAsync)
+    {
+        isAsync_ = isAsync;
+    }
+
 private:
     void OnControlCenterStatusCallback(bool status) const;
     void OnControlCenterStatusCallbackAsync(bool status) const;
+
+    bool isAsync_ = true;
 };
 
 struct ControlCenterStatusCallbackInfo {
@@ -96,9 +119,17 @@ public:
     explicit CameraSharedStatusListenerNapi(napi_env env);
     virtual ~CameraSharedStatusListenerNapi();
     void OnCameraSharedStatusChanged(CameraSharedStatus status) const override;
+
+    inline void SetIsAsync(bool isAsync)
+    {
+        isAsync_ = isAsync;
+    }
+
 private:
     void OnCameraSharedStatusCallback(CameraSharedStatus status) const;
     void OnCameraSharedStatusCallbackAsync(CameraSharedStatus status) const;
+
+    bool isAsync_ = true;
 };
 
 struct CameraSharedStatusCallbackInfo {
@@ -126,9 +157,17 @@ public:
     explicit TorchListenerNapi(napi_env env);
     virtual ~TorchListenerNapi();
     void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const override;
+
+    inline void SetIsAsync(bool isAsync)
+    {
+        isAsync_ = isAsync;
+    }
+
 private:
     void OnTorchStatusChangeCallback(const TorchStatusInfo &torchStatusInfo) const;
     void OnTorchStatusChangeCallbackAsync(const TorchStatusInfo &torchStatusInfo) const;
+
+    bool isAsync_ = true;
 };
 
 struct TorchStatusChangeCallbackInfo {
@@ -148,9 +187,17 @@ public:
     explicit FoldListenerNapi(napi_env env);
     virtual ~FoldListenerNapi();
     void OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const override;
+
+    inline void SetIsAsync(bool isAsync)
+    {
+        isAsync_ = isAsync;
+    }
+
 private:
     void OnFoldStatusChangedCallback(const FoldStatusInfo &foldStatusInfo) const;
     void OnFoldStatusChangedCallbackAsync(const FoldStatusInfo &foldStatusInfo) const;
+
+    bool isAsync_ = true;
 };
 
 struct FoldStatusChangeCallbackInfo {
@@ -214,6 +261,19 @@ public:
     static napi_value GetCameraConcurrentInfos(napi_env env, napi_callback_info info);
     static napi_value GetCameraStorageSize(napi_env env, napi_callback_info info);
 
+    static napi_value OnCameraStatus(napi_env env, napi_callback_info info);
+    static napi_value OffCameraStatus(napi_env env, napi_callback_info info);
+    static napi_value OnCameraMute(napi_env env, napi_callback_info info);
+    static napi_value OffCameraMute(napi_env env, napi_callback_info info);
+    static napi_value OnTorchStatusChange(napi_env env, napi_callback_info info);
+    static napi_value OffTorchStatusChange(napi_env env, napi_callback_info info);
+    static napi_value OnFoldStatusChange(napi_env env, napi_callback_info info);
+    static napi_value OffFoldStatusChange(napi_env env, napi_callback_info info);
+    static napi_value OnControlCenterStatusChange(napi_env env, napi_callback_info info);
+    static napi_value OffControlCenterStatusChange(napi_env env, napi_callback_info info);
+    static napi_value OnCameraSharedStatus(napi_env env, napi_callback_info info);
+    static napi_value OffCameraSharedStatus(napi_env env, napi_callback_info info);
+
     CameraManagerNapi(napi_env env);
     ~CameraManagerNapi() override;
 
@@ -248,27 +308,27 @@ private:
     void ParseGetCameraIds(napi_env env, napi_value arrayParam, std::vector<std::string>& cameraIds);
 
     void RegisterCameraStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterCameraStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterCameraMuteCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterCameraMuteCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterTorchStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterTorchStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFoldStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterFoldStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterControlCenterStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterControlCenterStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterCameraSharedStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterCameraSharedStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
 
