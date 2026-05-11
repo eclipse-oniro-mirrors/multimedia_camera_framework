@@ -420,6 +420,7 @@ ohos_shared_library("camera_dynamic_notification") {
     "ipc:ipc_single",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",
+    "icu:shared_icuuc",
   ]
 
   cflags_cc = cflags
