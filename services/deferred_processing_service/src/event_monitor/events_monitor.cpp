@@ -167,20 +167,27 @@ void EventsMonitor::NotifyEventToObervers(EventType event, int32_t value)
 void CommonEventListener::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     std::lock_guard<std::mutex> lock(eventSubscriberMutex_);
-    DP_CHECK_RETURN(eventSubscriber_ != nullptr);
+    DP_CHECK_RETURN(commonEventSubscriber_ != nullptr && cameraEventSubscriber_ != nullptr);
     DP_DEBUG_LOG("saId: %{public}d", systemAbilityId);
-    eventSubscriber_ = EventSubscriber::Create();
-    DP_CHECK_ERROR_RETURN_LOG(eventSubscriber_ == nullptr, "RegisterEventStatus failed, eventSubscriber is nullptr");
-    eventSubscriber_->Subcribe();
+    EventSubscriber::InitializeStrategies();
+    commonEventSubscriber_ = EventSubscriber::CreateCommonSubscriber();
+    DP_CHECK_ERROR_RETURN_LOG(commonEventSubscriber_ == nullptr,
+        "RegisterCommonEvent failed, commonEventSubscriber is nullptr");
+    commonEventSubscriber_->Subcribe();
+    cameraEventSubscriber_ = EventSubscriber::CreateCameraSubscriber();
+    DP_CHECK_ERROR_RETURN_LOG(cameraEventSubscriber_ == nullptr,
+        "RegisterCameraEvent failed, cameraEventSubscriber is nullptr");
+    cameraEventSubscriber_->Subcribe();
 }
 
 void CommonEventListener::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     std::lock_guard<std::mutex> lock(eventSubscriberMutex_);
-    DP_CHECK_RETURN(eventSubscriber_ == nullptr);
     DP_DEBUG_LOG("saId: %{public}d", systemAbilityId);
-    DP_CHECK_ERROR_RETURN_LOG(eventSubscriber_ == nullptr, "UnregisterEventStatus failed, eventSubscriber is nullptr");
-    eventSubscriber_->UnSubscribe();
+    DP_CHECK_EXECUTE(commonEventSubscriber_ != nullptr, commonEventSubscriber_->UnSubscribe());
+    commonEventSubscriber_ = nullptr;
+    DP_CHECK_EXECUTE(cameraEventSubscriber_ != nullptr, cameraEventSubscriber_->UnSubscribe());
+    cameraEventSubscriber_ = nullptr;
 }
 
 int32_t EventsMonitor::SubscribeSystemAbility()

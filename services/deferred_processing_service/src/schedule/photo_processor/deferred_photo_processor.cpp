@@ -68,7 +68,6 @@ void DeferredPhotoProcessor::RemoveImage(const std::string& imageId, bool restor
     result_->DeRecordHigh(imageId);
     repository_->RemoveDeferredJob(imageId, restorable);
     DP_CHECK_RETURN(restorable);
-    DP_CHECK_EXECUTE(repository_->IsRunningJob(imageId), postProcessor_->Interrupt());
     postProcessor_->RemoveImage(imageId);
     result_->ResetCrashCount(imageId);
     result_->DeRecordResult(imageId);

@@ -32,9 +32,13 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
     constexpr char COMMON_EVENT_CAMERA_STATUS[] = "usual.event.CAMERA_STATUS";
+    constexpr char OHOS_PERMISSION_MANAGE_CAMERA_CONFIG[] = "ohos.permission.MANAGE_CAMERA_CONFIG";
 }
 
-const std::vector<std::string> EventSubscriber::events_ = {
+std::mutex EventSubscriber::mutex_;
+std::unordered_map<std::string, std::shared_ptr<EventStrategy>> EventSubscriber::eventStrategy_;
+
+const std::vector<std::string> EventSubscriber::commonEvents_ = {
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF,
@@ -44,36 +48,54 @@ const std::vector<std::string> EventSubscriber::events_ = {
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_LOW,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_BATTERY_CHANGED,
     OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_USER_SWITCHED,
-    COMMON_EVENT_CAMERA_STATUS,
 };
 
 EventSubscriber::EventSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo& subscriberInfo)
     : CommonEventSubscriber(subscriberInfo)
 {
     DP_DEBUG_LOG("entered.");
-    Initialize();
 }
 
 EventSubscriber::~EventSubscriber()
 {
     DP_DEBUG_LOG("entered.");
-    eventStrategy_.clear();
 }
 
-std::shared_ptr<EventSubscriber> EventSubscriber::Create()
+std::shared_ptr<EventSubscriber> EventSubscriber::CreateCommonSubscriber()
 {
     DP_DEBUG_LOG("entered.");
     OHOS::EventFwk::MatchingSkills matchingSkills;
-    for (auto event : events_) {
+    for (const auto& event : commonEvents_) {
         matchingSkills.AddEvent(event);
     }
     EventFwk::CommonEventSubscribeInfo subscriberInfo(matchingSkills);
     return CreateShared<EventSubscriber>(subscriberInfo);
 }
 
-void EventSubscriber::Initialize()
+std::shared_ptr<EventSubscriber> EventSubscriber::CreatePermissionSubscriber(
+    const std::string& event, const std::string& permission)
 {
     DP_DEBUG_LOG("entered.");
+    OHOS::EventFwk::MatchingSkills matchingSkills;
+    matchingSkills.AddEvent(event);
+    EventFwk::CommonEventSubscribeInfo subscriberInfo(matchingSkills);
+    subscriberInfo.SetPermission(permission);
+    return CreateShared<EventSubscriber>(subscriberInfo);
+}
+
+std::shared_ptr<EventSubscriber> EventSubscriber::CreateCameraSubscriber()
+{
+    DP_DEBUG_LOG("entered.");
+    return CreatePermissionSubscriber(COMMON_EVENT_CAMERA_STATUS, OHOS_PERMISSION_MANAGE_CAMERA_CONFIG);
+}
+
+void EventSubscriber::InitializeStrategies()
+{
+    DP_DEBUG_LOG("entered.");
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!eventStrategy_.empty()) {
+        return;
+    }
     eventStrategy_[OHOS::EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED]
         = std::make_shared<ThermalStrategy>();
     auto screen = std::make_shared<ScreenStrategy>();
