@@ -71,19 +71,19 @@ public:
 
 protected:
     void RegisterStitchingTargetInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterStitchingTargetInfoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterStitchingCaptureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterStitchingCaptureInfoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterStitchingHintInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterStitchingHintInfoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterStitchingCaptureStateCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterStitchingCaptureStateCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 

@@ -29,7 +29,7 @@ template<typename T>
 class CameraNapiEventEmitter {
 public:
     typedef void (T::*RegisterFun)(
-        const std::string& eventName, napi_env, napi_value, const std::vector<napi_value>&, bool);
+        const std::string& eventName, napi_env, napi_value, const std::vector<napi_value>&, bool, bool);
     typedef void (T::*UnregisterFun)(
         const std::string& eventName, napi_env, napi_value, const std::vector<napi_value>&);
     typedef std::unordered_map<std::string, std::pair<RegisterFun, UnregisterFun>> EmitterFunctions;
@@ -38,7 +38,8 @@ public:
 
     virtual const EmitterFunctions& GetEmitterFunctions() = 0;
 
-    virtual napi_value RegisterCallback(napi_env env, CameraNapiCallbackParamParser& jsCbParser, bool isOnce) final
+    virtual napi_value RegisterCallback(
+        napi_env env, CameraNapiCallbackParamParser& jsCbParser, bool isOnce, bool isAsync) final
     {
         auto& callbackName = jsCbParser.GetCallbackName();
         MEDIA_DEBUG_LOG("CameraNapiEventEmitter::RegisterCallback:%{public}s", callbackName.c_str());
@@ -46,7 +47,7 @@ public:
         auto it = emitterFunctions.find(callbackName);
         if (it != emitterFunctions.end()) {
             ((T*)this->*((RegisterFun)it->second.first))(
-                callbackName, env, jsCbParser.GetCallbackFunction(), jsCbParser.GetCallbackArgs(), isOnce);
+                callbackName, env, jsCbParser.GetCallbackFunction(), jsCbParser.GetCallbackArgs(), isOnce, isAsync);
         } else {
             MEDIA_ERR_LOG("Failed to Register Callback: Invalid event type");
             CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "Failed to Register Callback: Invalid event type");

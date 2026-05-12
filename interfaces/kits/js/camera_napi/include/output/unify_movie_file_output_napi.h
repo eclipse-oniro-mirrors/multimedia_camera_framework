@@ -52,9 +52,13 @@ public:
     void OnMovieInfoAvailable(int32_t captureId, std::string uri) override;
     void OnError(const int32_t errorCode) override;
 
+    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+
 private:
     void UpdateJSCallback(UnifyMovieFileOutputCallbackInfo callbackInfo) const;
     void UpdateJSCallbackAsync(UnifyMovieFileOutputCallbackInfo callbackInfo) const;
+
+    bool isAsync_ = true;
 };
 
 struct UnifyMovieFileOutputCallbackInfo {
@@ -105,6 +109,19 @@ public:
     static napi_value On(napi_env env, napi_callback_info info);
     static napi_value Off(napi_env env, napi_callback_info info);
 
+    static napi_value OnRecordingStart(napi_env env, napi_callback_info info);
+    static napi_value OffRecordingStart(napi_env env, napi_callback_info info);
+    static napi_value OnRecordingPause(napi_env env, napi_callback_info info);
+    static napi_value OffRecordingPause(napi_env env, napi_callback_info info);
+    static napi_value OnRecordingResume(napi_env env, napi_callback_info info);
+    static napi_value OffRecordingResume(napi_env env, napi_callback_info info);
+    static napi_value OnRecordingStop(napi_env env, napi_callback_info info);
+    static napi_value OffRecordingStop(napi_env env, napi_callback_info info);
+    static napi_value OnMovieInfoAvailable(napi_env env, napi_callback_info info);
+    static napi_value OffMovieInfoAvailable(napi_env env, napi_callback_info info);
+    static napi_value OnError(napi_env env, napi_callback_info info);
+    static napi_value OffError(napi_env env, napi_callback_info info);
+
     sptr<UnifyMovieFileOutput> GetMovieFileOutput();
     const EmitterFunctions& GetEmitterFunctions() override;
 
@@ -114,27 +131,27 @@ private:
     static bool ParseOutputSettings(napi_env env, napi_callback_info info,
         UnifyMovieFileOutputAsyncContext* asyncContext, std::shared_ptr<CameraNapiAsyncFunction>& asyncFunction);
     void RegisterRecordingStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterRecordingStartCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterRecordingPauseCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterRecordingPauseCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterRecordingResumeCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterRecordingResumeCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterRecordingStopCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterRecordingStopCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterMovieInfoAvailableCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterMovieInfoAvailableCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterErrorCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     napi_env env_;

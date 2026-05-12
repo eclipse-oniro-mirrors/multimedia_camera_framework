@@ -25,12 +25,10 @@
    OHOS::CameraStandard::PhotoOutputNapi*;
    OHOS::CameraStandard::VideoOutputNapi*;
    OHOS::CameraStandard::PreviewOutputNapi*;
-   OHOS::CameraStandard::VideoOutputNapi::CreateVideoOutput*;
-   OHOS::CameraStandard::MetadataOutputNapi*;
    OHOS::CameraStandard::CameraManagerNapi*;
    OHOS::CameraStandard::CameraNapi*;
-   OHOS::CameraStandard::UnifyMovieFileOutputNapi::GetEmitterFunctions*;
-   OHOS::CameraStandard::UnifyMovieFileOutputNapi::GetMovieFileOutput*;
+   OHOS::CameraStandard::UnifyMovieFileOutputNapi*;
+   OHOS::CameraStandard::MetadataOutputNapi*;
 
    OHOS::CameraStandard::CameraInputNapi::Init*;
    OHOS::CameraStandard::PreviewOutputNapi::Init*;

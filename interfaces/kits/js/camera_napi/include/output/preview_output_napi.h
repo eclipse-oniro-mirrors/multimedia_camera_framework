@@ -68,11 +68,16 @@ public:
     void OnSketchStatusDataChanged(const SketchStatusData& sketchStatusData) const override;
     void OnFramePaused() const override;
     void OnFrameResumed() const override;
+
+    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+    
 private:
     void UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const;
     void UpdateJSCallbackAsync(PreviewOutputEventType eventType, const int32_t value) const;
     void OnSketchStatusDataChangedAsync(SketchStatusData sketchStatusData) const;
     void OnSketchStatusDataChangedCall(SketchStatusData sketchStatusData) const;
+
+    bool isAsync_ = true;
 };
 
 struct PreviewOutputCallbackInfo {
@@ -127,7 +132,21 @@ public:
     static napi_value IsBandwidthCompressionSupported(napi_env env, napi_callback_info info);
     static napi_value EnableBandwidthCompression(napi_env env, napi_callback_info info);
 
+    static napi_value OnFrameStart(napi_env env, napi_callback_info info);
+    static napi_value OffFrameStart(napi_env env, napi_callback_info info);
+    static napi_value OnFrameEnd(napi_env env, napi_callback_info info);
+    static napi_value OffFrameEnd(napi_env env, napi_callback_info info);
+    static napi_value OnError(napi_env env, napi_callback_info info);
+    static napi_value OffError(napi_env env, napi_callback_info info);
+    static napi_value OnSketchStatusChanged(napi_env env, napi_callback_info info);
+    static napi_value OffSketchStatusChanged(napi_env env, napi_callback_info info);
+    static napi_value OnFramePause(napi_env env, napi_callback_info info);
+    static napi_value OffFramePause(napi_env env, napi_callback_info info);
+    static napi_value OnFrameResume(napi_env env, napi_callback_info info);
+    static napi_value OffFrameResume(napi_env env, napi_callback_info info);
+
     const EmitterFunctions& GetEmitterFunctions() override;
+    napi_env env_;
     sptr<PreviewOutput> previewOutput_;
     PreviewOutputNapi();
     ~PreviewOutputNapi() override;
@@ -137,27 +156,25 @@ private:
     static napi_value PreviewOutputNapiConstructor(napi_env env, napi_callback_info info);
 
     void RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void RegisterFrameEndCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterCommonCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterSketchStatusChangedCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterSketchStatusChangedCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFramePauseCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterFramePauseCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterFrameResumeChangedCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterFrameResumeChangedCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
-
-    napi_env env_;
 
     static thread_local napi_ref sConstructor_;
     static thread_local sptr<PreviewOutput> sPreviewOutput_;

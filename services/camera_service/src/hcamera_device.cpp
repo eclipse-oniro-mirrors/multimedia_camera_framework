@@ -1295,7 +1295,8 @@ bool HCameraDevice::IsPhysicalCameraOrientationVariable()
     auto ability = GetDeviceAbility();
     CHECK_RETURN_RET(ability == nullptr, false);
     int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
+    CHECK_RETURN_RET_ILOG(ret != CAM_META_SUCCESS, 0,
+        "HCameraDevice::IsPhysicalCameraOrientationVariable not support variable orientation");
     isVariable =  item.count > 0 && item.data.u8[0];
     bool isNaturalDirectionCorrect = false;
     GetNaturalDirectionCorrect(isNaturalDirectionCorrect);

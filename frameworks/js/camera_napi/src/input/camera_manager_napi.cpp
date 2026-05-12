@@ -286,12 +286,13 @@ void CameraManagerCallbackNapi::OnCameraStatusCallback(const CameraStatusInfo& c
             cameraStatusInfo.cameraStatus);
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, isAsync_);
 }
 
 void CameraManagerCallbackNapi::OnCameraStatusChanged(const CameraStatusInfo &cameraStatusInfo) const
 {
-    MEDIA_DEBUG_LOG("OnCameraStatusChanged is called, CameraStatus: %{public}d", cameraStatusInfo.cameraStatus);
+    MEDIA_DEBUG_LOG("OnCameraStatusChanged is called, CameraStatus: %{public}d, isAsync: %{public}d",
+        cameraStatusInfo.cameraStatus, isAsync_);
     OnCameraStatusCallbackAsync(cameraStatusInfo);
 }
 
@@ -341,14 +342,25 @@ void CameraMuteListenerNapi::OnCameraMuteCallbackAsync(bool muteMode) const
 void CameraMuteListenerNapi::OnCameraMuteCallback(bool muteMode) const
 {
     MEDIA_DEBUG_LOG("OnCameraMuteCallback is called, muteMode: %{public}d", muteMode);
-    napi_value result[ARGS_TWO];
     napi_value retVal;
-    napi_get_undefined(env_, &result[PARAM0]);
-    napi_get_undefined(env_, &result[PARAM1]);
-    napi_get_boolean(env_, muteMode, &result[PARAM1]);
+    if (isAsync_) {
+        napi_value result[ARGS_TWO];
+        napi_get_undefined(env_, &result[PARAM0]);
+        napi_get_undefined(env_, &result[PARAM1]);
+        napi_get_boolean(env_, muteMode, &result[PARAM1]);
 
-    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
-    ExecuteCallback("cameraMute", callbackNapiPara);
+        ExecuteCallbackNapiPara callbackNapiPara {
+            .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+        ExecuteCallback("cameraMute", callbackNapiPara);
+    } else {
+        napi_value result[ARGS_ONE];
+        napi_get_undefined(env_, &result[PARAM0]);
+        napi_get_boolean(env_, muteMode, &result[PARAM0]);
+
+        ExecuteCallbackNapiPara callbackNapiPara {
+            .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+        ExecuteCallback("cameraMute", callbackNapiPara);
+    }
 }
 
 void CameraMuteListenerNapi::OnCameraMute(bool muteMode) const
@@ -403,7 +415,7 @@ void ControlCenterStatusListenerNapi::OnControlCenterStatusCallback(bool status)
         napi_value result;
         napi_create_int32(env_, static_cast<int32_t>(status), &result);
         return ExecuteCallbackData(env_, errCode, result);
-    });
+    }, isAsync_);
 }
 
 void ControlCenterStatusListenerNapi::OnControlCenterStatusChanged(bool status) const
@@ -458,7 +470,7 @@ void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallback(CameraSharedSt
         napi_value result;
         napi_create_int32(env_, static_cast<int32_t>(status), &result);
         return ExecuteCallbackData(env_, errCode, result);
-    });
+    }, isAsync_);
 }
 
 void CameraSharedStatusListenerNapi::OnCameraSharedStatusChanged(CameraSharedStatus status) const
@@ -520,7 +532,7 @@ void TorchListenerNapi::OnTorchStatusChangeCallback(const TorchStatusInfo& torch
         }};
         callbackObj = torchStateObj.CreateNapiObjFromMap(env_);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, isAsync_);
 }
 
 void TorchListenerNapi::OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const
@@ -601,7 +613,7 @@ void FoldListenerNapi::OnFoldStatusChangedCallback(const FoldStatusInfo& foldSta
         napi_set_named_property(env_, errCode, "code", jsErrCode);
         napi_set_named_property(env_, resultObj, "supportedCameras", camerasArray);
         return ExecuteCallbackData(env_, errCode, resultObj);
-    });
+    }, isAsync_);
 }
 
 void FoldListenerNapi::OnFoldStatusChanged(const FoldStatusInfo &foldStatusInfo) const
@@ -1995,12 +2007,14 @@ void CameraManagerNapi::ProcessCameraDevices(sptr<CameraManager>& cameraManager,
     MEDIA_DEBUG_LOG("GetCameraDevices matched size is %{public}zu", outDevices.size());
 }
 
-void CameraManagerNapi::RegisterCameraStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraManagerNapi::RegisterCameraStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    MEDIA_DEBUG_LOG("CameraManagerNapi::RegisterCameraStatusCallbackListener is called");
     auto listener = CameraNapiEventListener<CameraManagerCallbackNapi>::RegisterCallbackListener(
         eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "CameraManagerNapi::RegisterCameraStatusCallbackListener listener is null");
+    listener->SetIsAsync(isAsync);
     cameraManager_->RegisterCameraStatusCallback(listener);
 }
 
@@ -2015,8 +2029,8 @@ void CameraManagerNapi::UnregisterCameraStatusCallbackListener(
     }
 }
 
-void CameraManagerNapi::RegisterCameraMuteCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraManagerNapi::RegisterCameraMuteCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi On cameraMute is called!");
@@ -2025,6 +2039,7 @@ void CameraManagerNapi::RegisterCameraMuteCallbackListener(
     auto listener = CameraNapiEventListener<CameraMuteListenerNapi>::RegisterCallbackListener(
         eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "CameraManagerNapi::RegisterCameraMuteCallbackListener listener is null");
+    listener->SetIsAsync(isAsync);
     cameraManager_->RegisterCameraMuteListener(listener);
 }
 
@@ -2043,12 +2058,13 @@ void CameraManagerNapi::UnregisterCameraMuteCallbackListener(
     }
 }
 
-void CameraManagerNapi::RegisterTorchStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraManagerNapi::RegisterTorchStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     auto listener =
         CameraNapiEventListener<TorchListenerNapi>::RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "CameraManagerNapi::RegisterTorchStatusCallbackListener listener is null");
+    listener->SetIsAsync(isAsync);
     cameraManager_->RegisterTorchListener(listener);
 }
 
@@ -2063,12 +2079,13 @@ void CameraManagerNapi::UnregisterTorchStatusCallbackListener(
     }
 }
 
-void CameraManagerNapi::RegisterFoldStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraManagerNapi::RegisterFoldStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     auto listener =
         CameraNapiEventListener<FoldListenerNapi>::RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "CameraManagerNapi::RegisterTorchStatusCallbackListener listener is null");
+    listener->SetIsAsync(isAsync);
     cameraManager_->RegisterFoldListener(listener);
 }
 
@@ -2083,8 +2100,8 @@ void CameraManagerNapi::UnregisterFoldStatusCallbackListener(
     }
 }
 
-void CameraManagerNapi::RegisterControlCenterStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraManagerNapi::RegisterControlCenterStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("CameraManagerNapi::RegisterControlCenterStatusCallbackListener is called.");
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
@@ -2095,6 +2112,7 @@ void CameraManagerNapi::RegisterControlCenterStatusCallbackListener(
         eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "CameraManagerNapi::RegisterControlCenterStatusCallbackListener listener is null");
+    listener->SetIsAsync(isAsync);
     cameraManager_->RegisterControlCenterStatusListener(listener);
 }
 
@@ -2114,8 +2132,8 @@ void CameraManagerNapi::UnregisterControlCenterStatusCallbackListener(
     }
 }
 
-void CameraManagerNapi::RegisterCameraSharedStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void CameraManagerNapi::RegisterCameraSharedStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("CameraManagerNapi::RegisterCameraSharedStatusCallbackListener is called.");
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
@@ -2126,6 +2144,7 @@ void CameraManagerNapi::RegisterCameraSharedStatusCallbackListener(
         eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "CameraManagerNapi::RegisterCameraSharedStatusCallbackListener listener is null");
+    listener->SetIsAsync(isAsync);
     cameraManager_->RegisterCameraSharedStatusListener(listener);
 }
 
@@ -2529,6 +2548,90 @@ napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callbac
 napi_value CameraManagerNapi::On(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<CameraManagerNapi>::On(env, info);
+}
+
+napi_value CameraManagerNapi::OnCameraStatus(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OnCameraStatus is called");
+    const std::string eventName = "cameraStatus";
+    return ListenerTemplate<CameraManagerNapi>::OnSync(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OffCameraStatus(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OffCameraStatus is called");
+    const std::string eventName = "cameraStatus";
+    return ListenerTemplate<CameraManagerNapi>::Off(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OnCameraMute(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OnCameraMute is called");
+    const std::string eventName = "cameraMute";
+    return ListenerTemplate<CameraManagerNapi>::OnSync(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OffCameraMute(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OffCameraMute is called");
+    const std::string eventName = "cameraMute";
+    return ListenerTemplate<CameraManagerNapi>::Off(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OnTorchStatusChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OnTorchStatusChange is called");
+    const std::string eventName = "torchStatusChange";
+    return ListenerTemplate<CameraManagerNapi>::OnSync(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OffTorchStatusChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OffTorchStatusChange is called");
+    const std::string eventName = "torchStatusChange";
+    return ListenerTemplate<CameraManagerNapi>::Off(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OnFoldStatusChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OnFoldStatusChange is called");
+    const std::string eventName = "foldStatusChange";
+    return ListenerTemplate<CameraManagerNapi>::OnSync(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OffFoldStatusChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OffFoldStatusChange is called");
+    const std::string eventName = "foldStatusChange";
+    return ListenerTemplate<CameraManagerNapi>::Off(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OnControlCenterStatusChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OnControlCenterStatusChange is called");
+    const std::string eventName = "controlCenterStatusChange";
+    return ListenerTemplate<CameraManagerNapi>::OnSync(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OffControlCenterStatusChange(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OffControlCenterStatusChange is called");
+    const std::string eventName = "controlCenterStatusChange";
+    return ListenerTemplate<CameraManagerNapi>::Off(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OnCameraSharedStatus(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OnCameraSharedStatus is called");
+    const std::string eventName = "cameraSharedStatus";
+    return ListenerTemplate<CameraManagerNapi>::OnSync(env, info, eventName);
+}
+
+napi_value CameraManagerNapi::OffCameraSharedStatus(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("CameraManagerNapi::OffCameraSharedStatus is called");
+    const std::string eventName = "cameraSharedStatus";
+    return ListenerTemplate<CameraManagerNapi>::Off(env, info, eventName);
 }
 
 napi_value CameraManagerNapi::Once(napi_env env, napi_callback_info info)
