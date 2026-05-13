@@ -106,6 +106,7 @@ public:
     float GetZoomRatio();
     int32_t GetFocusMode();
     int32_t GetVideoStabilizationMode();
+    void SetConcurrentCaptureTag(bool flag);
 #ifdef CAMERA_MOVING_PHOTO
     void EnableMovingPhoto(bool isMovingPhotoEnabled);
     bool CheckMovingPhotoSupported(int32_t mode);
