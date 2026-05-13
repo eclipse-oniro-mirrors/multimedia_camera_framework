@@ -33,6 +33,7 @@ static constexpr int64_t MOVIE_FILE_AUDIO_MILLION = 1000000;
 
 UnifiedPipelineAudioCaptureWrap::UnifiedPipelineAudioCaptureWrap(AudioStandard::AudioCapturerOptions capturerOptions)
 {
+    capturerInfo_ = capturerOptions.capturerInfo;
     captureBufferSize_ = static_cast<size_t>(AUDIO_PRODUCER_SAMPLING_RATE / MOVIE_FILE_AUDIO_ONE_THOUSAND *
                                              capturerOptions.streamInfo.channels *
                                              MOVIE_FILE_AUDIO_DURATION_EACH_AUDIO_FRAME * sizeof(short));
@@ -88,6 +89,7 @@ void UnifiedPipelineAudioCaptureWrap::ReleaseCapture()
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("UnifiedPipelineAudioCaptureWrap Audio capture Release enter");
     isCaptureAlive_ = false;
+    UnsetPreferredInputDeviceChangeCallback();
 
     auto audioCapture = GetAudioCapture();
     if (audioCapture != nullptr) {
@@ -108,6 +110,40 @@ void UnifiedPipelineAudioCaptureWrap::RemoveBufferListener(std::weak_ptr<AudioCa
 {
     std::lock_guard<std::mutex> lock(bufferListenerMutex_);
     bufferListeners_.erase(bufferListener);
+}
+
+int32_t UnifiedPipelineAudioCaptureWrap::GetPreferredInputDeviceForCapturerInfo(
+    std::vector<std::shared_ptr<AudioStandard::AudioDeviceDescriptor>> &desc)
+{
+    auto audioRoutingManager = AudioStandard::AudioRoutingManager::GetInstance();
+    CHECK_RETURN_RET_ELOG(audioRoutingManager == nullptr, AudioStandard::ERR_INVALID_PARAM,
+        "GetPreferredInputDeviceForCapturerInfo audioRoutingManager is null");
+    return audioRoutingManager->GetPreferredInputDeviceForCapturerInfo(capturerInfo_, desc);
+}
+
+int32_t UnifiedPipelineAudioCaptureWrap::SetPreferredInputDeviceChangeCallback(
+    const std::shared_ptr<AudioStandard::AudioPreferredInputDeviceChangeCallback> &callback)
+{
+    auto audioRoutingManager = AudioStandard::AudioRoutingManager::GetInstance();
+    CHECK_RETURN_RET_ELOG(audioRoutingManager == nullptr, AudioStandard::ERR_INVALID_PARAM,
+        "SetPreferredInputDeviceChangeCallback audioRoutingManager is null");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, AudioStandard::ERR_INVALID_PARAM,
+        "SetPreferredInputDeviceChangeCallback callback is null");
+
+    preferredInputDeviceChangeCallback_ = callback;
+    return audioRoutingManager->SetPreferredInputDeviceChangeCallback(capturerInfo_, callback);
+}
+
+void UnifiedPipelineAudioCaptureWrap::UnsetPreferredInputDeviceChangeCallback()
+{
+    CHECK_RETURN(preferredInputDeviceChangeCallback_ == nullptr);
+    auto audioRoutingManager = AudioStandard::AudioRoutingManager::GetInstance();
+    CHECK_RETURN_ELOG(
+        audioRoutingManager == nullptr, "UnsetPreferredInputDeviceChangeCallback audioRoutingManager is null");
+    int32_t ret = audioRoutingManager->UnsetPreferredInputDeviceChangeCallback(
+        preferredInputDeviceChangeCallback_, capturerInfo_);
+    MEDIA_INFO_LOG("UnsetPreferredInputDeviceChangeCallback ret:%{public}d", ret);
+    preferredInputDeviceChangeCallback_ = nullptr;
 }
 
 void UnifiedPipelineAudioCaptureWrap::OnReadBufferStart()
