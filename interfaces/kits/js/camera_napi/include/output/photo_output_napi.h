@@ -158,6 +158,12 @@ public:
     void OnThumbnailAvailable(
         const int32_t captureId, const int64_t timestamp, unique_ptr<Media::PixelMap> pixelMap) const override;
 
+    inline void SetIsAsyncMap(const std::string& eventName, bool isAsync)
+    {
+        std::lock_guard<std::mutex> lock(isAsyncMapMutex_);
+        isAsyncMap_[eventName] = isAsync;
+    }
+
 private:
     void UpdateJSCallback(PhotoOutputEventType eventType, const CallbackInfo& info) const;
     void UpdateJSCallbackAsync(PhotoOutputEventType eventType, const CallbackInfo& info) const;
@@ -174,6 +180,10 @@ private:
     void ExecutePhotoAvailableCb(const CallbackInfo& info) const;
     void ExecutePhotoAssetAvailableCb(const CallbackInfo& info) const;
     void ExecuteThumbnailAvailableCb(const CallbackInfo& info) const;
+    bool GetIsAsync(const std::string& eventName) const;
+
+    mutable std::mutex isAsyncMapMutex_;
+    std::map<std::string, bool> isAsyncMap_ = {};
 };
 
 struct PhotoOutputCallbackInfo {

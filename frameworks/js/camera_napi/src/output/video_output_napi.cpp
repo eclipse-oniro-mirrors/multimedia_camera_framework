@@ -132,6 +132,9 @@ void VideoCallbackListener::OnDeferredVideoEnhancementInfo(const CaptureEndedInf
 void VideoCallbackListener::ExecuteOnDeferredVideoCb(const VideoCallbackInfo& info) const
 {
     MEDIA_INFO_LOG("ExecuteOnDeferredVideoCb");
+    bool isAsync = true;
+    auto it = isAsyncMap_.find(CONST_VIDEO_DEFERRED_ENHANCEMENT);
+    CHECK_EXECUTE(it != isAsyncMap_.end(), isAsync = it->second);
     ExecuteCallbackScopeSafe(CONST_VIDEO_DEFERRED_ENHANCEMENT, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
@@ -142,7 +145,7 @@ void VideoCallbackListener::ExecuteOnDeferredVideoCb(const VideoCallbackInfo& in
         napi_create_string_utf8(env_, info.videoId.c_str(), NAPI_AUTO_LENGTH, &propValue);
         napi_set_named_property(env_, callbackObj, "videoId", propValue);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    }, isAsync_);
+    }, isAsync);
 }
 
 void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, const VideoCallbackInfo& info) const
@@ -167,6 +170,9 @@ void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, con
             "VideoCallbackListener::UpdateJSCallback, event type is invalid %d", static_cast<int32_t>(eventType));
         return;
     }
+    bool isAsync = true;
+    auto it = isAsyncMap_.find(eventName);
+    CHECK_EXECUTE(it != isAsyncMap_.end(), isAsync = it->second);
 
     ExecuteCallbackScopeSafe(eventName, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
@@ -178,7 +184,7 @@ void VideoCallbackListener::UpdateJSCallback(VideoOutputEventType eventType, con
             napi_set_named_property(env_, errCode, "code", propValue);
         }
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    }, isAsync_);
+    }, isAsync);
 }
 
 VideoOutputNapi::VideoOutputNapi() : env_(nullptr) {}
@@ -806,7 +812,7 @@ void VideoOutputNapi::RegisterFrameStartCallbackListener(const std::string& even
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
     }
-    videoCallback_->SetIsAsync(isAsync);
+    videoCallback_->SetIsAsyncMap(eventName, isAsync);
     videoCallback_->SaveCallbackReference(CONST_VIDEO_FRAME_START, callback, isOnce);
 }
 
@@ -827,7 +833,7 @@ void VideoOutputNapi::RegisterFrameEndCallbackListener(const std::string& eventN
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
     }
-    videoCallback_->SetIsAsync(isAsync);
+    videoCallback_->SetIsAsyncMap(eventName, isAsync);
     videoCallback_->SaveCallbackReference(CONST_VIDEO_FRAME_END, callback, isOnce);
 }
 void VideoOutputNapi::UnregisterFrameEndCallbackListener(
@@ -847,7 +853,7 @@ void VideoOutputNapi::RegisterErrorCallbackListener(const std::string& eventName
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
     }
-    videoCallback_->SetIsAsync(isAsync);
+    videoCallback_->SetIsAsyncMap(eventName, isAsync);
     videoCallback_->SaveCallbackReference(CONST_VIDEO_FRAME_ERROR, callback, isOnce);
 }
 
@@ -870,7 +876,7 @@ void VideoOutputNapi::RegisterDeferredVideoCallbackListener(const std::string& e
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
     }
-    videoCallback_->SetIsAsync(isAsync);
+    videoCallback_->SetIsAsyncMap(eventName, isAsync);
     videoCallback_->SaveCallbackReference(CONST_VIDEO_DEFERRED_ENHANCEMENT, callback, isOnce);
 }
 

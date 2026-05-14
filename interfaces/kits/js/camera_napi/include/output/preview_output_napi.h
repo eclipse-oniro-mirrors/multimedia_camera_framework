@@ -69,7 +69,7 @@ public:
     void OnFramePaused() const override;
     void OnFrameResumed() const override;
 
-    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+    inline void SetIsAsyncMap(const std::string& eventName, bool isAsync) { isAsyncMap_[eventName] = isAsync; }
     
 private:
     void UpdateJSCallback(PreviewOutputEventType eventType, const int32_t value) const;
@@ -77,7 +77,7 @@ private:
     void OnSketchStatusDataChangedAsync(SketchStatusData sketchStatusData) const;
     void OnSketchStatusDataChangedCall(SketchStatusData sketchStatusData) const;
 
-    bool isAsync_ = true;
+    std::map<std::string, bool> isAsyncMap_ = {};
 };
 
 struct PreviewOutputCallbackInfo {

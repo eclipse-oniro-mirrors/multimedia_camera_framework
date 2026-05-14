@@ -52,13 +52,13 @@ public:
     void OnMovieInfoAvailable(int32_t captureId, std::string uri) override;
     void OnError(const int32_t errorCode) override;
 
-    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+    inline void SetIsAsyncMap(const std::string& eventName, bool isAsync) { isAsyncMap_[eventName] = isAsync; }
 
 private:
     void UpdateJSCallback(UnifyMovieFileOutputCallbackInfo callbackInfo) const;
     void UpdateJSCallbackAsync(UnifyMovieFileOutputCallbackInfo callbackInfo) const;
 
-    bool isAsync_ = true;
+    std::map<std::string, bool> isAsyncMap_ = {};
 };
 
 struct UnifyMovieFileOutputCallbackInfo {

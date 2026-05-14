@@ -67,14 +67,14 @@ public:
     void OnError(const int32_t errorCode) const override;
     void OnDeferredVideoEnhancementInfo(const CaptureEndedInfoExt info) const override;
 
-    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+    inline void SetIsAsyncMap(const std::string& eventName, bool isAsync) { isAsyncMap_[eventName] = isAsync; }
 
 private:
     void UpdateJSCallback(VideoOutputEventType eventType, const VideoCallbackInfo& info) const;
     void UpdateJSCallbackAsync(VideoOutputEventType eventType, const VideoCallbackInfo& info) const;
     void ExecuteOnDeferredVideoCb(const VideoCallbackInfo& info) const;
 
-    bool isAsync_ = true;
+    std::map<std::string, bool> isAsyncMap_ = {};
 };
 
 struct VideoOutputCallbackInfo {
