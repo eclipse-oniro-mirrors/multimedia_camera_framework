@@ -70,6 +70,9 @@ void UnifyMovieFileOutputCallback::UpdateJSCallback(UnifyMovieFileOutputCallback
     MEDIA_DEBUG_LOG("UpdateJSCallback is called");
     CHECK_RETURN_ELOG(
         callbackInfo.eventName.empty(), "UnifyMovieFileOutputCallback::UpdateJSCallback, event is empty");
+    bool isAsync = true;
+    auto it = isAsyncMap_.find(callbackInfo.eventName);
+    CHECK_EXECUTE(it != isAsyncMap_.end(), isAsync = it->second);
     ExecuteCallbackScopeSafe(callbackInfo.eventName, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
@@ -92,7 +95,7 @@ void UnifyMovieFileOutputCallback::UpdateJSCallback(UnifyMovieFileOutputCallback
             }
         }
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    }, isAsync_);
+    }, isAsync);
 }
 
 void UnifyMovieFileOutputCallback::OnStart()
@@ -323,7 +326,7 @@ void UnifyMovieFileOutputNapi::RegisterRecordingStartCallbackListener(const std:
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "UnifyMovieFileOutputNapi::RegisterRecordingStartCallbackListener listener is null");
-    listener->SetIsAsync(isAsync);
+    listener->SetIsAsyncMap(eventName, isAsync);
     unifyMovieFileOutput_->AddUnifyMovieFileOutputStateCallback(listener);
 }
 
@@ -353,7 +356,7 @@ void UnifyMovieFileOutputNapi::RegisterRecordingPauseCallbackListener(const std:
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "UnifyMovieFileOutputNapi::RegisterRecordingPauseCallbackListener listener is null");
-    listener->SetIsAsync(isAsync);
+    listener->SetIsAsyncMap(eventName, isAsync);
     unifyMovieFileOutput_->AddUnifyMovieFileOutputStateCallback(listener);
 }
 
@@ -383,7 +386,7 @@ void UnifyMovieFileOutputNapi::RegisterRecordingResumeCallbackListener(const std
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "UnifyMovieFileOutputNapi::RegisterRecordingResumeCallbackListener listener is null");
-    listener->SetIsAsync(isAsync);
+    listener->SetIsAsyncMap(eventName, isAsync);
     unifyMovieFileOutput_->AddUnifyMovieFileOutputStateCallback(listener);
 }
 
@@ -413,7 +416,7 @@ void UnifyMovieFileOutputNapi::RegisterRecordingStopCallbackListener(const std::
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "UnifyMovieFileOutputNapi::RegisterRecordingStopCallbackListener listener is null");
-    listener->SetIsAsync(isAsync);
+    listener->SetIsAsyncMap(eventName, isAsync);
     unifyMovieFileOutput_->AddUnifyMovieFileOutputStateCallback(listener);
 }
 
@@ -443,7 +446,7 @@ void UnifyMovieFileOutputNapi::RegisterMovieInfoAvailableCallbackListener(const 
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "UnifyMovieFileOutputNapi::RegisterMovieInfoAvailableCallbackListener listener is null");
-    listener->SetIsAsync(isAsync);
+    listener->SetIsAsyncMap(eventName, isAsync);
     unifyMovieFileOutput_->AddUnifyMovieFileOutputStateCallback(listener);
 }
 
@@ -473,7 +476,7 @@ void UnifyMovieFileOutputNapi::RegisterErrorCallbackListener(const std::string& 
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "UnifyMovieFileOutputNapi::RegisterErrorCallbackListener listener is null");
-    listener->SetIsAsync(isAsync);
+    listener->SetIsAsyncMap(eventName, isAsync);
     unifyMovieFileOutput_->AddUnifyMovieFileOutputStateCallback(listener);
 }
 

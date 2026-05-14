@@ -299,6 +299,16 @@ void PhotoOutputCallback::UpdateJSCallbackAsync(PhotoOutputEventType eventType, 
     }
 }
 
+bool PhotoOutputCallback::GetIsAsync(const std::string& eventName) const
+{
+    std::lock_guard<std::mutex> lock(isAsyncMapMutex_);
+    auto it = isAsyncMap_.find(eventName);
+    if (it != isAsyncMap_.end()) {
+        return it->second;
+    }
+    return true;
+}
+
 void PhotoOutputCallback::OnCaptureStarted(const int32_t captureID) const
 {
     CAMERA_SYNC_TRACE;
@@ -458,7 +468,7 @@ void PhotoOutputCallback::ExecuteCaptureStartCb(const CallbackInfo& info) const
             napi_set_named_property(env_, callbackObj, "time", propValue);
         }
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(eventName));
 }
 
 void PhotoOutputCallback::ExecuteCaptureStartWithInfoCb(const CallbackInfo& info) const
@@ -473,7 +483,7 @@ void PhotoOutputCallback::ExecuteCaptureStartWithInfoCb(const CallbackInfo& info
         napi_create_int32(env_, info.timestamp, &propValue);
         napi_set_named_property(env_, callbackObj, "time", propValue);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_START_WITH_INFO));
 }
 
 void PhotoOutputCallback::ExecuteCaptureEndCb(const CallbackInfo& info) const
@@ -488,7 +498,7 @@ void PhotoOutputCallback::ExecuteCaptureEndCb(const CallbackInfo& info) const
         napi_create_int32(env_, info.frameCount, &propValue);
         napi_set_named_property(env_, callbackObj, "frameCount", propValue);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_END));
 }
 
 void PhotoOutputCallback::ExecuteFrameShutterCb(const CallbackInfo& info) const
@@ -503,7 +513,7 @@ void PhotoOutputCallback::ExecuteFrameShutterCb(const CallbackInfo& info) const
         napi_create_int64(env_, info.timestamp, &propValue);
         napi_set_named_property(env_, callbackObj, "timestamp", propValue);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_FRAME_SHUTTER));
 }
 
 void PhotoOutputCallback::ExecuteFrameShutterEndCb(const CallbackInfo& info) const
@@ -516,7 +526,7 @@ void PhotoOutputCallback::ExecuteFrameShutterEndCb(const CallbackInfo& info) con
         napi_create_int32(env_, info.captureID, &propValue);
         napi_set_named_property(env_, callbackObj, "captureId", propValue);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_FRAME_SHUTTER_END));
 }
 
 void PhotoOutputCallback::ExecuteCaptureReadyCb(const CallbackInfo& info) const
@@ -525,7 +535,7 @@ void PhotoOutputCallback::ExecuteCaptureReadyCb(const CallbackInfo& info) const
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_READY));
 }
 
 void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo& info) const
@@ -538,7 +548,7 @@ void PhotoOutputCallback::ExecuteCaptureErrorCb(const CallbackInfo& info) const
         napi_create_int32(env_, info.errorCode, &propValue);
         napi_set_named_property(env_, errCode, "code", propValue);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_ERROR));
 }
 
 void PhotoOutputCallback::ExecuteEstimatedCaptureDurationCb(const CallbackInfo& info) const
@@ -548,11 +558,21 @@ void PhotoOutputCallback::ExecuteEstimatedCaptureDurationCb(const CallbackInfo& 
         napi_value callbackObj;
         napi_create_int32(env_, info.duration, &callbackObj);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION));
 }
 
 void PhotoOutputCallback::ExecuteConstellationDrawingStateChangedCb(const CallbackInfo& info) const
 {
+    if (!GetIsAsync(CONST_CAPTURE_CONSTELLATION_DRAWING_STATE_CHANGE)) {
+        napi_value result[ARGS_ONE] = { nullptr };
+        napi_value retVal;
+        napi_create_int32(env_, info.drawingState, &result[PARAM0]);
+        ExecuteCallbackNapiPara callbackNapiPara {
+            .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+        ExecuteCallback(CONST_CAPTURE_CONSTELLATION_DRAWING_STATE_CHANGE, callbackNapiPara);
+        return;
+    }
+
     napi_value result[ARGS_TWO] = { nullptr, nullptr };
     napi_value retVal;
     napi_get_undefined(env_, &result[PARAM0]);
@@ -567,7 +587,7 @@ void PhotoOutputCallback::ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& i
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED));
 }
 
 void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) const
@@ -624,7 +644,7 @@ void PhotoOutputCallback::ExecutePhotoAssetAvailableCb(const CallbackInfo& info)
         FillNapiObjectWithCaptureId(env_, info.captureID, photoAsset);
         callbackObj = photoAsset;
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, GetIsAsync(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE));
 }
 
 void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int64_t timestamp, napi_value pixelMapNapi)
@@ -652,6 +672,26 @@ void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int6
 void PhotoOutputCallback::ExecuteThumbnailAvailableCb(const CallbackInfo& info) const
 {
     MEDIA_INFO_LOG("ExecuteThumbnailAvailableCb E");
+    if (!GetIsAsync(CONST_CAPTURE_QUICK_THUMBNAIL)) {
+        napi_value result[ARGS_ONE] = { nullptr };
+        napi_get_undefined(env_, &result[PARAM0]);
+        napi_value retVal;
+        MEDIA_INFO_LOG("enter ImageNapi::Create start");
+        napi_value valueParam = Media::PixelMapNapi::CreatePixelMap(env_, info.pixelMap);
+        if (valueParam == nullptr) {
+            MEDIA_ERR_LOG("ImageNapi Create failed");
+            napi_get_undefined(env_, &valueParam);
+        }
+        FillPixelMapWithCaptureIdAndTimestamp(env_, info.captureID, info.timestamp, valueParam);
+        MEDIA_INFO_LOG("enter ImageNapi::Create end");
+        result[PARAM0] = valueParam;
+        ExecuteCallbackNapiPara callbackNapiPara {
+            .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+        ExecuteCallback(CONST_CAPTURE_QUICK_THUMBNAIL, callbackNapiPara);
+        MEDIA_INFO_LOG("ExecuteThumbnailAvailableCb X");
+        return;
+    }
+
     napi_value result[ARGS_TWO] = { 0 };
     napi_get_undefined(env_, &result[0]);
     napi_get_undefined(env_, &result[1]);
@@ -1616,6 +1656,7 @@ void PhotoOutputNapi::RegisterQuickThumbnailCallbackListener(const std::string& 
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     photoOutput_->SetThumbnailCallback(photoOutputCallback_);
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_QUICK_THUMBNAIL, callback, isOnce);
 }
 
@@ -1646,6 +1687,7 @@ void PhotoOutputNapi::RegisterPhotoAvailableCallbackListener(const std::string& 
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     photoOutput_->SetPhotoAvailableCallback(photoOutputCallback_);
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_PHOTO_AVAILABLE, callback, isOnce);
     callbackFlag_ |= CAPTURE_PHOTO;
     photoOutput_->SetCallbackFlag(callbackFlag_);
@@ -1685,6 +1727,7 @@ void PhotoOutputNapi::RegisterPhotoAssetAvailableCallbackListener(const std::str
         photoOutput_->SetCallback(photoOutputCallback_);
     }
     photoOutput_->SetPhotoAssetAvailableCallback(photoOutputCallback_);
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, callback, isOnce);
     callbackFlag_ |= CAPTURE_PHOTO_ASSET;
     photoOutput_->SetCallbackFlag(callbackFlag_);
@@ -1709,6 +1752,7 @@ void PhotoOutputNapi::RegisterCaptureStartCallbackListener(const std::string& ev
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_START, callback, isOnce);
 }
 
@@ -1729,6 +1773,7 @@ void PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener(const std::st
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_START_WITH_INFO, callback, isOnce);
 }
 
@@ -1749,6 +1794,7 @@ void PhotoOutputNapi::RegisterCaptureEndCallbackListener(const std::string& even
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_END, callback, isOnce);
 }
 
@@ -1769,6 +1815,7 @@ void PhotoOutputNapi::RegisterFrameShutterCallbackListener(const std::string& ev
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_FRAME_SHUTTER, callback, isOnce);
 }
 
@@ -1789,6 +1836,7 @@ void PhotoOutputNapi::RegisterErrorCallbackListener(const std::string& eventName
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_ERROR, callback, isOnce);
 }
 
@@ -1809,6 +1857,7 @@ void PhotoOutputNapi::RegisterFrameShutterEndCallbackListener(const std::string&
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_FRAME_SHUTTER_END, callback, isOnce);
 }
 
@@ -1829,6 +1878,7 @@ void PhotoOutputNapi::RegisterReadyCallbackListener(const std::string& eventName
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_READY, callback, isOnce);
 }
 
@@ -1849,6 +1899,7 @@ void PhotoOutputNapi::RegisterEstimatedCaptureDurationCallbackListener(const std
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_ESTIMATED_CAPTURE_DURATION, callback, isOnce);
 }
 
@@ -1869,6 +1920,7 @@ void PhotoOutputNapi::RegisterConstellationDrawingStateChangeCallbackListener(co
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_CONSTELLATION_DRAWING_STATE_CHANGE, callback, isOnce);
 }
 
@@ -1891,6 +1943,7 @@ void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(const std:
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
     }
+    photoOutputCallback_->SetIsAsyncMap(eventName, isAsync);
     photoOutputCallback_->SaveCallbackReference(CONST_CAPTURE_OFFLINE_DELIVERY_FINISHED, callback, isOnce);
 }
 
