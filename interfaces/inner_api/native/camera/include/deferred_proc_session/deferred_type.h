@@ -15,7 +15,7 @@
 
 #ifndef OHOS_CAMERA_DEFERRED_TYPE_H
 #define OHOS_CAMERA_DEFERRED_TYPE_H
-
+#include "ipc_file_descriptor.h"
 namespace OHOS {
 namespace CameraStandard {
 enum DpsErrorCode {
@@ -43,6 +43,38 @@ enum DpsStatusCode {
     SESSION_STATE_RUNNING,
     SESSION_STATE_SUSPENDED,
     SESSION_STATE_PREEMPTED,
+};
+
+enum ImageType : int32_t {
+    ORIGINAL_IMAGE,
+    EFFECTIVE_IMAGE,
+};
+
+class ImageFd : public virtual Parcelable {
+public:
+    ImageFd(sptr<IPCFileDescriptor> fd, ImageType imageType, int32_t bytes)
+        : fd(fd), imageType(imageType), bytes(bytes) {};
+    sptr<IPCFileDescriptor> fd;
+    ImageType imageType;
+    int32_t bytes;
+    uint8_t* addr = nullptr;
+    bool Marshalling(Parcel& parcel) const override
+    {
+        bool isSucc = true;
+        isSucc &= parcel.WriteParcelable(fd);
+        isSucc &= parcel.WriteInt32(static_cast<int32_t>(imageType));
+        isSucc &= parcel.WriteInt32(bytes);
+        return isSucc;
+    }
+
+    static ImageFd* Unmarshalling(Parcel& parcel)
+    {
+        sptr<IPCFileDescriptor> fd = sptr<IPCFileDescriptor>(parcel.ReadParcelable<IPCFileDescriptor>());
+        ImageType imageType = static_cast<ImageType>(parcel.ReadInt32());
+        int32_t bytes = parcel.ReadInt32();
+        ImageFd* imageFd = new (std::nothrow) ImageFd(fd, imageType, bytes);
+        return imageFd;
+    }
 };
 } // namespace CameraStandard
 } // namespace OHOS
