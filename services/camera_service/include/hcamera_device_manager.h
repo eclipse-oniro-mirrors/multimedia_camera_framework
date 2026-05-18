@@ -350,7 +350,7 @@ private:
     std::shared_ptr<DisablePolicyChangeCb> policyCallbackPtr_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
-    int32_t GetCurrentCost() const;
+    int32_t GetCurrentCost();
     std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
     void GenerateEachProcessCameraState(int32_t& processState, uint32_t processTokenId);
     void PrintClientInfo(sptr<HCameraDeviceHolder> activeCameraHolder, sptr<HCameraDeviceHolder> requestCameraHolder);
