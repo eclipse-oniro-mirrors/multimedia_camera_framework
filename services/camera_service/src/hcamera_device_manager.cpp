@@ -364,7 +364,7 @@ bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceH
     {
         std::lock_guard<std::mutex> lock(mapMutex_);
         for (const auto &deviceHolder : activeCameras_) {
-          RefreshCameraDeviceHolderState(deviceHolder);
+            RefreshCameraDeviceHolderState(deviceHolder);
         }
     }
 
