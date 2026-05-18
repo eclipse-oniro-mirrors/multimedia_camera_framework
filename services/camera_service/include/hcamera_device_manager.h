@@ -333,7 +333,7 @@ private:
     sptr<CameraConcurrentSelector> concurrentSelector_;
     std::string GetACameraId();
     bool IsAllowOpen(pid_t activeClient);
-    int32_t GetCurrentCost() const;
+    int32_t GetCurrentCost();
     void DetermineHighestPriorityOwner(int32_t &highestPriorityOwner, int32_t &owner,
         sptr<CameraProcessPriority> requestPriority);
     std::vector<sptr<HCameraDeviceHolder>> WouldEvict(sptr<HCameraDeviceHolder> &cameraRequestOpen);
