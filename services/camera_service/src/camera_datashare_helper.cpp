@@ -84,7 +84,6 @@ int32_t CameraDataShareHelper::UpdateOnce(const std::string key, std::string val
             dataShareHelper->Release();
             return CAMERA_OK;
         }
-        dataShareHelper->Insert(uri, bucket);
         dataShareHelper->Release();
         MEDIA_ERR_LOG("CameraDataShareHelper Update:%{public}s failed", key.c_str());
         return CAMERA_INVALID_ARG;
