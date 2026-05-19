@@ -17,6 +17,7 @@
 
 #include <fcntl.h>
 #include <filesystem>
+#include <fstream>
 #include <regex>
 
 #include "avcodec_list.h"
@@ -24,6 +25,7 @@
 #include "dp_log.h"
 #include "dps_event_report.h"
 #include "dps_fd.h"
+#include "dp_utils.h"
 #include "image_source.h"
 #include "image_type.h"
 #include "pixel_map.h"
@@ -113,34 +115,72 @@ MpegManager::MpegManager()
 MpegManager::~MpegManager()
 {
     DP_INFO_LOG("entered.");
-    remove(tempPath_.c_str());
     if (result_ == MediaResult::PAUSE) {
-        int ret = rename(outPath_.c_str(), tempPath_.c_str());
-        if (ret != 0) {
-            DP_ERR_LOG("Rename %{public}s to %{public}s failde, ret: %{public}d",
-                outPath_.c_str(), tempPath_.c_str(), ret);
-        } else {
-            DP_INFO_LOG("Rename %{public}s to %{public}s success.", outPath_.c_str(), tempPath_.c_str());
-        }
+        RenameTempFiles();
     } else {
-        remove(outPath_.c_str());
-        DP_INFO_LOG("Reremove %{public}s success.", outPath_.c_str());
+        RemoveTempFiles();
     }
-    DPSEventReport::GetInstance().ReportPartitionUsage();
+    std::string tempPath = GetTempDirPath();
+    uint64_t size = GetFolderSize(tempPath);
+    DP_DEBUG_LOG("temp files totalSize: %{public}llu", size);
+    DPSEventReport::GetInstance().ReportPartitionUsage(tempPath, size);
 }
 
-MediaManagerError MpegManager::Init(const std::string& requestId, const DpsFdPtr& inputFd,
-    int32_t width, int32_t height)
+void MpegManager::RenameTempFiles()
+{
+    DP_INFO_LOG("entered.");
+    int ret = -1;
+    if (std::filesystem::exists(tempPath_)) {
+        std::ofstream(tempPath_, std::ofstream::out | std::ofstream::trunc).close();
+        ret = rename(tempPath_.c_str(), temp2Path_.c_str());
+        DP_CHECK_ERROR_PRINT_LOG(ret != 0, "Rename tempPath to temp2Path failed.");
+    }
+    ret = rename(outPath_.c_str(), tempPath_.c_str());
+    DP_CHECK_ERROR_PRINT_LOG(ret != 0, "Rename outPath to tempPath failed.");
+    ret = rename(temp2Path_.c_str(), outPath_.c_str());
+    DP_CHECK_ERROR_PRINT_LOG(ret != 0, "Rename temp2Path to outPath failed.");
+}
+
+void MpegManager::RemoveTempFiles()
+{
+    remove(outPath_.c_str());
+    remove(tempPath_.c_str());
+    remove(temp2Path_.c_str());
+}
+
+void MpegManager::ResetTempFiles()
+{
+    DP_INFO_LOG("entered.");
+    if (std::filesystem::exists(tempPath_)) {
+        std::ofstream(tempPath_, std::ofstream::out | std::ofstream::trunc).close();
+        int ret = rename(tempPath_.c_str(), temp2Path_.c_str());
+        DP_CHECK_ERROR_PRINT_LOG(ret != 0, "Rename tempPath to temp2Path failed.");
+    }
+    std::ofstream(outPath_, std::ofstream::out | std::ofstream::trunc).close();
+}
+
+std::string MpegManager::GetTempDirPath()
+{
+    size_t tempPos = outPath_.find_last_of('/');
+    DP_CHECK_ERROR_RETURN_RET_LOG(tempPos == std::string::npos, "", "tempPath is invalid.");
+    std::string tempPath = outPath_.substr(0, tempPos);
+    return tempPath;
+}
+
+MediaManagerError MpegManager::Init(const std::string& requestId, const VideoTempPath& tempPath,
+    const DpsFdPtr& inputFd, int32_t width, int32_t height)
 {
     DP_INFO_LOG("Pipeline Init.");
-    outputFd_ = GetFileFd(requestId, O_CREAT | O_RDWR, OUT_TAG);
-    DP_CHECK_ERROR_RETURN_RET_LOG(outputFd_ == nullptr, ERROR_FAIL, "Output video create failde.");
+    std::string outPath = tempPath.outPath;
+    outputFd_ = GetFileFd(requestId, outPath, O_RDWR | O_TRUNC, OUT_TAG);
+    DP_CHECK_ERROR_RETURN_RET_LOG(outputFd_ == nullptr, ERROR_FAIL, "Output video create failed.");
 
-    tempFd_ = GetFileFd(requestId, O_RDONLY, TEMP_TAG);
+    std::string tmpPath = tempPath.tmpPath;
+    tempFd_ = GetFileFd(requestId, tmpPath, O_RDONLY, TEMP_TAG);
     int32_t temp = -1;
     DP_CHECK_EXECUTE(tempFd_ != nullptr, temp = tempFd_->GetFd());
     auto ret = mediaManager_->Create(inputFd->GetFd(), outputFd_->GetFd(), temp);
-    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Media manager create failde.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != OK, ERROR_FAIL, "Media manager create failed.");
 
     {
         std::lock_guard<std::mutex> lock(mediaInfoMutex_);
@@ -161,7 +201,7 @@ MediaManagerError MpegManager::UnInit(const MediaResult result)
     result_ = result;
     if (result == MediaResult::PAUSE) {
         if (mediaManager_->Pause() == PAUSE_ABNORMAL) {
-            remove(outPath_.c_str());
+            ResetTempFiles();
         }
     } else {
         mediaManager_->Stop();
@@ -207,6 +247,11 @@ MediaManagerError MpegManager::NotifyEnd()
 DpsFdPtr MpegManager::GetResultFd()
 {
     return outputFd_;
+}
+
+std::string MpegManager::GetResultPath()
+{
+    return outPath_;
 }
 
 void MpegManager::AddUserMeta(std::unique_ptr<MediaUserInfo> userInfo)
@@ -418,20 +463,25 @@ MediaManagerError MpegManager::ReleaseMakerBuffer(sptr<SurfaceBuffer>& buffer)
     return OK;
 }
 
-DpsFdPtr MpegManager::GetFileFd(const std::string& requestId, int flags, const std::string& tag)
+DpsFdPtr MpegManager::GetFileFd(const std::string& requestId, const std::string& dstPath,
+    int flags, const std::string& tag)
 {
-    const std::string path = PATH + requestId + tag;
-    DP_CHECK_RETURN_RET(!CheckFilePath(path), nullptr);
+    (void)requestId;
     int fd;
     if (tag == TEMP_TAG) {
-        tempPath_ = path;
-        fd = open(path.c_str(), flags);
+        size_t pos = dstPath.find_last_of('_');
+        DP_CHECK_RETURN_RET_LOG(pos == std::string::npos, nullptr, "dstPath is invalid.");
+        std::string tmpPath = dstPath.substr(0, pos) + tag;
+        tempPath_ = tmpPath;
+        temp2Path_ = dstPath;
+        fd = open(tempPath_.c_str(), flags);
+        DP_DEBUG_LOG("GetFileFd path: %{private}s, fd: %{public}d", tempPath_.c_str(), fd);
     } else {
-        outPath_ = path;
-        fd = open(path.c_str(), flags, S_IRUSR | S_IWUSR);
+        outPath_ = dstPath;
+        fd = open(outPath_.c_str(), flags);
+        DP_DEBUG_LOG("GetFileFd path: %{private}s, fd: %{public}d", outPath_.c_str(), fd);
     }
     DP_CHECK_RETURN_RET(fd < 0, nullptr);
-    DP_DEBUG_LOG("GetFileFd path: %{private}s, fd: %{public}d", path.c_str(), fd);
     return std::make_shared<DpsFd>(fd);
 }
 

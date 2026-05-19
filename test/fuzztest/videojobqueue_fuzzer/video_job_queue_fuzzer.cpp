@@ -32,6 +32,7 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
+const char* TEST_FILE_SRC_PATH = "/data/test/VideoJobQueueFuzzTest_test_file.mp4";
 const char* TEST_FILE_PATH_1 = "/data/test/VideoJobQueueFuzzTest_test_file1.mp4";
 const char* TEST_FILE_PATH_2 = "/data/test/VideoJobQueueFuzzTest_test_file2.mp4";
 std::shared_ptr<VideoJobQueue> VideoJobQueueFuzzer::fuzz_{nullptr};
@@ -75,12 +76,11 @@ void VideoJobQueueFuzzer::VideoJobQueueFuzzTest()
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-
-    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(sfd);
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dfd);
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, inputFd, outFd, nullptr, nullptr);
+    std::string srcPath(TEST_FILE_SRC_PATH);
+    std::string temp1Path(TEST_FILE_PATH_1);
+    std::string temp2Path(TEST_FILE_PATH_2);
+    auto info = std::make_unique<VideoInfo>(srcPath, temp1Path, temp2Path, "");
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, std::move(info));
     DeferredProcessing::VideoJobQueue::Comparator comp =
         [](DeferredVideoJobPtr a, DeferredVideoJobPtr b) {
             DP_CHECK_ERROR_RETURN_RET_LOG(!a, false, "CreateDeferredVideoJobPtr Error");
@@ -97,8 +97,6 @@ void VideoJobQueueFuzzer::VideoJobQueueFuzzTest()
     auto x = (GetData<uint32_t>());
     auto y = (GetData<uint32_t>());
     fuzz_->Swap(x, y);
-    remove(TEST_FILE_PATH_1);
-    remove(TEST_FILE_PATH_2);
 }
 
 void Test()

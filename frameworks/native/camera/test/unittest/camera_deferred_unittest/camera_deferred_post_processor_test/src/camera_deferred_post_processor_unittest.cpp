@@ -48,7 +48,8 @@ namespace CameraStandard {
 namespace {
     const std::string MEDIA_ROOT = "/data/test/media/";
     const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
-    const std::string VIDEO_TEMP_PATH = MEDIA_ROOT + "test_video_temp.mp4";
+    const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
+    const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
     const std::string VIDEO_ID = "20240101240000000";
     constexpr int32_t OK = 0;
     constexpr int32_t ERROR = -1;
@@ -66,16 +67,20 @@ void DeferredPostPorcessorUnitTest::TearDownTestCase(void) {}
 void DeferredPostPorcessorUnitTest::SetUp()
 {
     srcFd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
-    dtsFd_ = open(VIDEO_TEMP_PATH.c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    temp1fd_ = open(VIDEO_TEMP_PATH_1.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    temp2fd_ = open(VIDEO_TEMP_PATH_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
 void DeferredPostPorcessorUnitTest::TearDown()
 {
-    if (srcFd_ > 0) {
+    if (srcFd_ >= 0) {
         close(srcFd_);
     }
-    if (dtsFd_ > 0) {
-        close(dtsFd_);
+    if (temp1fd_ >= 0) {
+        close(temp1fd_);
+    }
+    if (temp2fd_ >= 0) {
+        close(temp2fd_);
     }
 }
 
@@ -238,9 +243,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_007, Te
     uint8_t randomNum = 1;
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     auto isAutoSuspend = true;
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, inputFd, outFd, nullptr, nullptr);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, "");
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, std::move(info));
     jobPtr->SetExecutionMode(LOAD_BALANCE);
     jobPtr->SetChargState(isAutoSuspend);
     EXPECT_NE(jobPtr, nullptr);
@@ -333,9 +337,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_012, Te
     auto postProcessor = VideoPostProcessor::Create(userId_);
     auto session = sptr<MockVideoProcessSession>::MakeSptr();
     postProcessor->sessionV1_3_ = session;
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, inputFd, outFd, nullptr, nullptr);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, std::move(info));
     std::vector<StreamDescription> resultDescs {
         StreamDescription {
             .streamId = 0,
@@ -370,9 +373,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_013, Te
     auto postProcessor = VideoPostProcessor::Create(userId_);
     auto session = sptr<MockVideoProcessSession>::MakeSptr();
     postProcessor->sessionV1_3_ = session;
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, inputFd, outFd, nullptr, nullptr);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, std::move(info));
     std::vector<StreamDescription> resultDescs;
     EXPECT_CALL(*session, Prepare(_, Matcher<int>(_), _))
         .WillOnce([&](const std::string& videoId, int fd,
@@ -623,14 +625,13 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_025, Te
     auto session = sptr<MockVideoProcessSession>::MakeSptr();
     postProcessor->sessionV1_3_ = session;
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    int copyFd = open(VIDEO_PATH.c_str(), O_RDONLY);
-    DpsFdPtr movieFd = std::make_shared<DpsFd>(dup(copyFd));
-    DpsFdPtr movieCopyFd = std::make_shared<DpsFd>(dup(copyFd));
-    close(copyFd);
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, inputFd, outFd, movieFd, movieCopyFd);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
+    tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, std::move(info));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(VIDEO_ID, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
+    mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
 
     std::vector<StreamDescription> resultDescs {
         StreamDescription {
@@ -660,13 +661,14 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_026, Te
     auto postProcessor = VideoPostProcessor::Create(userId_);
     auto session = sptr<MockVideoProcessSession>::MakeSptr();
     postProcessor->sessionV1_3_ = session;
-    int copyFd = open(VIDEO_PATH.c_str(), O_RDONLY);
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    close(copyFd);
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, inputFd, outFd, nullptr, nullptr);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, std::move(info));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(VIDEO_ID, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
+    tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
+    mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
 
     std::vector<StreamDescription> resultDescs {
         StreamDescription {
@@ -722,7 +724,10 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_028, Te
     auto postProcessor = VideoPostProcessor::Create(userId_);
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(VIDEO_ID, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
+    tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
+    mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
     std::vector<StreamDescription> resultDescs;
     postProcessor->ProcessRequest(VIDEO_ID, resultDescs, mediaManagerProxy);
     EXPECT_EQ(postProcessor->runningId_.size(), 0);
@@ -743,7 +748,10 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_029, Te
     postProcessor->sessionV1_3_ = session;
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(VIDEO_ID, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
+    tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
+    mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
     std::vector<StreamDescription> resultDescs;
     postProcessor->ProcessRequest(VIDEO_ID, resultDescs, mediaManagerProxy);
     EXPECT_EQ(postProcessor->runningId_.size(), 0);
@@ -765,7 +773,10 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_030, Te
     postProcessor->sessionV1_3_ = session;
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(VIDEO_ID, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
+    tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
+    mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
     std::vector<StreamDescription> resultDescs {
         StreamDescription {
             .streamId = 0,
@@ -798,7 +809,10 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_031, Te
     postProcessor->sessionV1_3_ = session;
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(VIDEO_ID, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
+    tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
+    mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
     std::vector<StreamDescription> resultDescs {
         StreamDescription {
             .streamId = 0,
@@ -831,7 +845,10 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_032, Te
     postProcessor->sessionV1_3_ = session;
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(VIDEO_ID, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
+    tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
+    mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
     std::vector<StreamDescription> resultDescs {
         StreamDescription {
             .streamId = 0,
@@ -864,7 +881,10 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_033, Te
     postProcessor->sessionV1_3_ = session;
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(VIDEO_ID, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
+    tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
+    mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
     std::vector<StreamDescription> resultDescs {
         StreamDescription {
             .streamId = 0,

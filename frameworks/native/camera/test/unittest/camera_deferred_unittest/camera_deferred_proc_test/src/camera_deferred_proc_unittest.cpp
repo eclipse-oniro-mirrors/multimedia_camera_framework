@@ -359,9 +359,10 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_007, TestSize.Level
     deferredProcSession->BeginSynchronize();
 
     std::string videoId = "testVideoId";
-    sptr<IPCFileDescriptor> srcFd;
-    const sptr<IPCFileDescriptor> dstFd;
-    deferredProcSession->AddVideo(videoId, srcFd, dstFd);
+    std::string srcPath = "testSourcePath";
+    std::string temp1Path = "testTemp1Path";
+    std::string temp2Path = "testTemp2Path";
+    deferredProcSession->AddVideo(videoId, srcPath, temp1Path, temp2Path);
 
     bool restorable = true;
     deferredProcSession->RemoveVideo(videoId, restorable);
@@ -395,9 +396,10 @@ HWTEST_F(DeferredProcUnitTest, camera_deferred_proc_unittest_008, TestSize.Level
     deferredProcSession->BeginSynchronize();
 
     std::string videoId = "testVideoId";
-    sptr<IPCFileDescriptor> srcFd;
-    const sptr<IPCFileDescriptor> dstFd;
-    deferredProcSession->AddVideo(videoId, srcFd, dstFd);
+    std::string srcPath = "testSourcePath";
+    std::string temp1Path = "testTemp1Path";
+    std::string temp2Path = "testTemp2Path";
+    deferredProcSession->AddVideo(videoId, srcPath, temp1Path, temp2Path);
 
     bool restorable = true;
     deferredProcSession->RemoveVideo(videoId, restorable);

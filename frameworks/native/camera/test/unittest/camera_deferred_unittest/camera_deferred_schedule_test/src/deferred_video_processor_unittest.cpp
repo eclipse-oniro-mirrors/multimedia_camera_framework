@@ -34,6 +34,8 @@ namespace {
     const std::string MEDIA_ROOT = "/data/test/media/";
     const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
     const std::string VIDEO_TEMP_PATH = MEDIA_ROOT + "test_video_temp.mp4";
+    const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
+    const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
 }
 
 class VideoProcessingSessionCallbackMock : public DeferredVideoProcessingSessionCallbackStub {
@@ -74,15 +76,23 @@ void DeferredVideoProcessorUnittest::SetUp()
     ASSERT_NE(process_, nullptr);
     srcFd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
     dtsFd_ = open(VIDEO_TEMP_PATH.c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    temp1fd_ = open(VIDEO_TEMP_PATH_1.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    temp2fd_ = open(VIDEO_TEMP_PATH_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
 void DeferredVideoProcessorUnittest::TearDown()
 {
-    if (srcFd_ > 0) {
+    if (srcFd_ >= 0) {
         close(srcFd_);
     }
-    if (dtsFd_ > 0) {
+    if (dtsFd_ >= 0) {
         close(dtsFd_);
+    }
+    if (temp1fd_ >= 0) {
+        close(temp1fd_);
+    }
+    if (temp2fd_ >= 0) {
+        close(temp2fd_);
     }
 }
 
@@ -96,10 +106,8 @@ void DeferredVideoProcessorUnittest::TearDown()
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_001, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 1);
     process_->RemoveVideo(VIDEO_ID_1, false);
 }
@@ -114,12 +122,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_001, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_002, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    DpsFdPtr movieFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr movieCopyFd = std::make_shared<DpsFd>(dup(srcFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd, movieFd, movieCopyFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 1);
     process_->RemoveVideo(VIDEO_ID_1, false);
 }
@@ -134,11 +138,9 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_002, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_003, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
     process_->result_->cacheMap_.emplace(VIDEO_ID_1, DpsError::DPS_NO_ERROR);
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 0);
     process_->RemoveVideo(VIDEO_ID_1, false);
 }
@@ -153,10 +155,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_003, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_004, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->RemoveVideo(VIDEO_ID_1, true);
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 1);
@@ -173,10 +173,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_004, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_005, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->RemoveVideo(VIDEO_ID_1, false);
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 0);
@@ -192,10 +190,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_005, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_006, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->RemoveVideo(VIDEO_ID_1, true);
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
@@ -215,10 +211,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_006, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_007, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->ProcessVideo(VIDEO_ID_1);
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
@@ -236,10 +230,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_007, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_008, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
     jobPtr->SetJobState(VideoJobState::FAILED);
 
@@ -258,10 +250,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_008, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_009, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->ProcessVideo(VIDEO_ID_1);
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
@@ -279,10 +269,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_009, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_010, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->ProcessVideo(VIDEO_ID_1);
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
@@ -302,10 +290,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_010, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_011, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
     process_->DoProcess(jobPtr);
     EXPECT_EQ(jobPtr->GetCurStatus(), VideoJobState::RUNNING);
@@ -322,10 +308,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_011, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_012, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
     process_->OnProcessSuccess(USER_ID, VIDEO_ID_1, nullptr);
 
@@ -344,10 +328,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_012, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_013, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
     process_->OnProcessError(USER_ID, VIDEO_ID_1, DpsError::DPS_ERROR_VIDEO_PROC_FAILED);
@@ -365,10 +347,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_013, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_014, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
     process_->HandleError(USER_ID, VIDEO_ID_1, DpsError::DPS_ERROR_VIDEO_PROC_FAILED);
@@ -386,10 +366,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_014, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_015, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
     process_->HandleError(USER_ID, VIDEO_ID_1, DpsError::DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
@@ -407,10 +385,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_015, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_016, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
     process_->HandleError(USER_ID, VIDEO_ID_1, DpsError::DPS_ERROR_VIDEO_PROC_TIMEOUT);
@@ -428,10 +404,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_016, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_017, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
     process_->HandleError(USER_ID, VIDEO_ID_1, DpsError::DPS_ERROR_VIDEO_PROC_INTERRUPTED);
@@ -449,10 +423,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_017, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_018, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     process_->repository_->SetJobRunning(VIDEO_ID_1);
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
     EXPECT_EQ(jobPtr->GetCurStatus(), VideoJobState::RUNNING);
@@ -470,10 +442,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_018, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_019, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     process_->SetDefaultExecutionMode();
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 1);
     process_->RemoveVideo(VIDEO_ID_1, false);
@@ -504,10 +474,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_020, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_021, TestSize.Level1)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    process_->AddVideo(VIDEO_ID_1, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
     process_->repository_->SetJobRunning(VIDEO_ID_1);
     auto ret = process_->HasRunningJob();
     EXPECT_EQ(ret, true);

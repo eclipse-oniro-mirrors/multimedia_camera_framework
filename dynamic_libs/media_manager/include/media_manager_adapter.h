@@ -25,10 +25,11 @@ class MediaManagerAdapter : public MediaManagerIntf {
 public:
     MediaManagerAdapter();
     ~MediaManagerAdapter() override;
-    int32_t MpegAcquire(const std::string& requestId, const DpsFdPtr& inputFd,
+    int32_t MpegAcquire(const std::string& requestId, const TempVideoPath& tempPath, const DpsFdPtr& inputFd,
         int32_t width, int32_t height) override;
     int32_t MpegUnInit(const int32_t result) override;
     DpsFdPtr MpegGetResultFd() override;
+    std::string MpegGetResultPath() override;
     void MpegAddUserMeta(std::unique_ptr<MediaUserInfo> userInfo) override;
     uint64_t MpegGetProcessTimeStamp() override;
     sptr<Surface> MpegGetSurface() override;

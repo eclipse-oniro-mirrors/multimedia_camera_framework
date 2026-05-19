@@ -50,13 +50,15 @@ public:
 
     void InitSessionInfo(int32_t userId);
 
-    std::unordered_map<std::string, std::shared_ptr<VideoInfo>> videoInfoMap_;
+    std::unordered_map<std::string, std::unique_ptr<VideoInfo>> videoInfoMap_;
     std::shared_ptr<DeferredVideoProcessor> processor_ {nullptr};
     std::shared_ptr<DeferredPhotoProcessor> photoProcessor_ {nullptr};
     sptr<VideoSessionInfo> sessionInfo_ {nullptr};
     sptr<PhotoSessionInfo> photoSessionInfo_ {nullptr};
     int32_t srcFd_ {-1};
     int32_t dtsFd_ {-1};
+    int32_t temp1fd_ {-1};
+    int32_t temp2fd_ {-1};
 };
 
 class IRemoteObjectUnitTest : public IRemoteObject {

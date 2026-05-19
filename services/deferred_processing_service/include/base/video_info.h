@@ -16,7 +16,8 @@
 #ifndef OHOS_CAMERA_DPS_VIDEO_INFO_H
 #define OHOS_CAMERA_DPS_VIDEO_INFO_H
 
-#include "dps_fd.h"
+#include <fcntl.h>
+#include <string>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -24,14 +25,32 @@ class PictureIntf;
 namespace DeferredProcessing {
 class VideoInfo {
 public:
-    VideoInfo(const DpsFdPtr& srcFd, const DpsFdPtr& dstFd,
-        const DpsFdPtr& movieFd = nullptr, const DpsFdPtr& movieCopyFd = nullptr);
-    ~VideoInfo() = default;
+VideoInfo(const std::string& srcPath, const std::string& temp1Path, const std::string& temp2Path,
+    const std::string& moviePath = "");
+~VideoInfo() = default;
 
-    std::shared_ptr<DpsFd> srcFd_ {nullptr};
-    std::shared_ptr<DpsFd> dstFd_ {nullptr};
-    std::shared_ptr<DpsFd> movieFd_ {nullptr};
-    std::shared_ptr<DpsFd> movieCopyFd_ {nullptr};
+    inline const std::string& GetSrcPath() const
+    {
+        return srcPath_;
+    }
+    inline const std::string& GetTemp1Path() const
+    {
+        return temp1Path_;
+    }
+    inline const std::string& GetTemp2Path() const
+    {
+        return temp2Path_;
+    }
+    inline const std::string& GetMoviePath() const
+    {
+        return moviePath_;
+    }
+
+private:
+    std::string srcPath_;
+    std::string temp1Path_;
+    std::string temp2Path_;
+    std::string moviePath_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

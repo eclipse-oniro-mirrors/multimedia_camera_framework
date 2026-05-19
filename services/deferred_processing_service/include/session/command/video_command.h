@@ -43,12 +43,12 @@ protected:
 class AddVideoCommand : public VideoCommand {
     DECLARE_CMD_CLASS(AddVideoCommand)
 public:
-    AddVideoCommand(const int32_t userId, const std::string& videoId, const std::shared_ptr<VideoInfo>& info);
+    AddVideoCommand(const int32_t userId, const std::string& videoId, std::unique_ptr<VideoInfo> info);
 
 protected:
     int32_t Executing() override;
 
-    std::shared_ptr<VideoInfo> info_ {nullptr};
+    std::unique_ptr<VideoInfo> info_ {nullptr};
 };
 
 class RemoveVideoCommand : public VideoCommand {

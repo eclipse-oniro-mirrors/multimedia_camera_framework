@@ -46,11 +46,12 @@ public:
     virtual ~DeferredVideoProcSession();
     void BeginSynchronize();
     void EndSynchronize();
-    void AddVideo(const std::string& videoId, const sptr<IPCFileDescriptor> srcFd,
-        const sptr<IPCFileDescriptor> dstFd);
+    void AddVideo(const std::string& videoId, const std::string& srcPath, const std::string& temp1Path,
+        const std::string& temp2Path);
     void RemoveVideo(const std::string& videoId, const bool restorable = false);
     void RestoreVideo(const std::string& videoId);
-    void AddVideo(const std::string& videoId, const std::vector<sptr<IPCFileDescriptor>>& fds);
+    void AddVideo(const std::string& videoId, const std::string& srcPath, const std::string& temp1Path,
+        const std::string& temp2Path, const std::string& editPath);
     void ProcessVideo(const std::string& appName, const std::string& videoId);
     void CancelProcessVideo(const std::string& videoId);
     std::shared_ptr<IDeferredVideoProcSessionCallback> GetCallback();

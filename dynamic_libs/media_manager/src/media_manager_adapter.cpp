@@ -31,11 +31,12 @@ MediaManagerAdapter::~MediaManagerAdapter()
     DP_DEBUG_LOG("MediaManagerAdapter destructor");
 }
 
-int32_t MediaManagerAdapter::MpegAcquire(const std::string& requestId,
+int32_t MediaManagerAdapter::MpegAcquire(const std::string& requestId, const TempVideoPath& tempPath,
     const DpsFdPtr& inputFd, int32_t width, int32_t height)
 {
     DP_DEBUG_LOG("MpegAcquire called with requestId: %{public}s", requestId.c_str());
-    mpegManager_ = MpegManagerFactory::GetInstance().Acquire(requestId, inputFd, width, height);
+    VideoTempPath videoTmpPaths { tempPath.temp1Path, tempPath.temp2Path };
+    mpegManager_ = MpegManagerFactory::GetInstance().Acquire(requestId, videoTmpPaths, inputFd, width, height);
     DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, DP_ERR, "mpeg manager is nullptr.");
     DP_DEBUG_LOG("DPS_VIDEO: Acquire MpegManager.");
     return DP_OK;
@@ -54,6 +55,13 @@ DpsFdPtr MediaManagerAdapter::MpegGetResultFd()
     DP_DEBUG_LOG("MpegGetResultFd called");
     DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, nullptr, "mpeg manager is nullptr.");
     return mpegManager_->GetResultFd();
+}
+
+std::string MediaManagerAdapter::MpegGetResultPath()
+{
+    DP_DEBUG_LOG("MpegGetResultPath called");
+    DP_CHECK_ERROR_RETURN_RET_LOG(mpegManager_ == nullptr, "", "mpeg manager is nullptr.");
+    return mpegManager_->GetResultPath();
 }
 
 void MediaManagerAdapter::MpegAddUserMeta(std::unique_ptr<MediaUserInfo> userInfo)

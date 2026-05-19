@@ -36,6 +36,8 @@ namespace DeferredProcessing {
 const std::string MEDIA_ROOT = "/data/test/media/";
 const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
 const std::string VIDEO_TEMP_PATH = MEDIA_ROOT + "test_video_temp.mp4";
+const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
+const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
 const int32_t USER_ID = 0;
 
 void DeferredSessionCommandUnitTest::SetUpTestCase(void)
@@ -49,26 +51,33 @@ void DeferredSessionCommandUnitTest::SetUp(void)
 {
     srcFd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
     dtsFd_ = open(VIDEO_TEMP_PATH.c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    temp1fd_ = open(VIDEO_TEMP_PATH_1.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    temp2fd_ = open(VIDEO_TEMP_PATH_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
 void DeferredSessionCommandUnitTest::TearDown(void)
 {
     videoInfoMap_.clear();
-    if (srcFd_ > 0) {
+    if (srcFd_ >= 0) {
         close(srcFd_);
     }
-    if (dtsFd_ > 0) {
+    if (dtsFd_ >= 0) {
         close(dtsFd_);
+    }
+    if (temp1fd_ >= 0) {
+        close(temp1fd_);
+    }
+    if (temp2fd_ >= 0) {
+        close(temp2fd_);
     }
 }
 
 void DeferredSessionCommandUnitTest::PrepareVideoInfo(const std::string& videoId)
 {
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    std::shared_ptr<VideoInfo> videoInfo = std::make_shared<VideoInfo>(inputFd, outFd);
+    std::unique_ptr<VideoInfo> videoInfo =
+        std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     ASSERT_NE(videoInfo, nullptr);
-    videoInfoMap_[videoId] = videoInfo;
+    videoInfoMap_[videoId] = std::move(videoInfo);
 }
 
 void DeferredSessionCommandUnitTest::InitProcessor(int32_t userId)
@@ -161,7 +170,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_004, 
     std::string videoId = "testVideoId";
     PrepareVideoInfo(videoId);
     std::shared_ptr<VideoSyncCommand> syncCommand =
-        std::make_shared<VideoSyncCommand>(USER_ID, videoInfoMap_);
+        std::make_shared<VideoSyncCommand>(USER_ID, std::move(videoInfoMap_));
     ASSERT_NE(syncCommand, nullptr);
     EXPECT_EQ(syncCommand->Initialize(), DP_OK);
 }
@@ -182,7 +191,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_005, 
     PrepareVideoInfo(videoId);
 
     std::shared_ptr<VideoSyncCommand> videoSyncCommand =
-        std::make_shared<VideoSyncCommand>(USER_ID, videoInfoMap_);
+        std::make_shared<VideoSyncCommand>(USER_ID, std::move(videoInfoMap_));
     ASSERT_NE(videoSyncCommand, nullptr);
 
     videoSyncCommand->initialized_.store(false);
@@ -225,10 +234,8 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_006, 
 HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_007, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, std::move(info));
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
@@ -309,7 +316,7 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, 
     PrepareVideoInfo(videoId);
 
     std::shared_ptr<VideoSyncCommand> syncCommand =
-        std::make_shared<VideoSyncCommand>(USER_ID, videoInfoMap_);
+        std::make_shared<VideoSyncCommand>(USER_ID, std::move(videoInfoMap_));
     ASSERT_NE(syncCommand, nullptr);
     int32_t ret = syncCommand->Initialize();
     EXPECT_NE(ret, DP_NULL_POINTER);
@@ -328,10 +335,8 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, 
 HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_012, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, std::move(info));
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
     InitProcessor(USER_ID);
@@ -356,8 +361,8 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_013, 
 {
     std::string photoId = "testPhotoId";
     DpsMetadata metadata;
-    std::shared_ptr<AddPhotoCommand> addPhotoCmd = std::make_shared<AddPhotoCommand>(
-        USER_ID, photoId, metadata, true, "");
+    std::shared_ptr<AddPhotoCommand> addPhotoCmd =
+        std::make_shared<AddPhotoCommand>(USER_ID, photoId, metadata, true, "");
     EXPECT_EQ(addPhotoCmd->Executing(), DP_NULL_POINTER);
     std::shared_ptr<RestorePhotoCommand> restorePhotoCmd = std::make_shared<RestorePhotoCommand>(USER_ID, photoId);
     EXPECT_EQ(restorePhotoCmd->Executing(), DP_NULL_POINTER);
