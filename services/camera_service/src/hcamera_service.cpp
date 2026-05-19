@@ -127,6 +127,7 @@ std::vector<uint32_t> restoreMetadataTag { // item.type is uint8
     OHOS_CONTROL_COLOR_RESERVATION_TYPE,
     OHOS_CONTROL_FOCUS_RANGE_TYPE,
     OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE,
+    OHOS_CONTROL_CAMERA_PREVIEW_QUALITY_PRIORITIZATION,
 };
 mutex g_dataShareHelperMutex;
 mutex g_dmDeviceInfoMutex;
