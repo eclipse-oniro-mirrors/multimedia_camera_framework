@@ -80,6 +80,10 @@ int32_t CameraDataShareHelper::UpdateOnce(const std::string key, std::string val
     bucket.Put(SETTINGS_DATA_FIELD_VALUE, valueObj);
 
     if (dataShareHelper->Update(uri, predicates, bucket) <= 0) {
+        if (dataShareHelper->Insert(uri, bucket) > 0) {
+            dataShareHelper->Release();
+            return CAMERA_OK;
+        }
         dataShareHelper->Insert(uri, bucket);
         dataShareHelper->Release();
         MEDIA_ERR_LOG("CameraDataShareHelper Update:%{public}s failed", key.c_str());

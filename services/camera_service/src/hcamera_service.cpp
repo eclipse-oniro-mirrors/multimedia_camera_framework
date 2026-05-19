@@ -942,6 +942,22 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     return CAMERA_OK;
 }
 
+void HCameraService::SetControlCenterInVideo(sptr<HCaptureSession>& captureSession)
+{
+    SetSessionForControlCenter(captureSession);
+    captureSession->SetUpdateControlCenterCallback(
+        std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
+    std::string bundleName = BmsAdapter::GetInstance().GetBundleName(IPCSkeleton::GetCallingUid());
+    captureSession->SetBundleForControlCenter(bundleName);
+    if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
+        int32_t rc = EnableControlCenter(true, true);
+        if (rc != CAMERA_OK) {
+            MEDIA_INFO_LOG("EnableControlCenter failed,retCode:%d", rc);
+        }
+    }
+    MEDIA_INFO_LOG("Save videoSession for controlCenter");
+}
+
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
@@ -962,12 +978,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     pressurePid_ = IPCSkeleton::GetCallingPid();
     session = captureSession;
     if (opMode == SceneMode::VIDEO) {
-        SetSessionForControlCenter(captureSession);
-        captureSession->SetUpdateControlCenterCallback(
-            std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
-        std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
-        captureSession->SetBundleForControlCenter(bundleName);
-        MEDIA_INFO_LOG("Save videoSession for controlCenter");
+        SetControlCenterInVideo(captureSession);
     } else {
         SetSessionForControlCenter(nullptr);
         MEDIA_INFO_LOG("Clear videoSession of controlCenter");
@@ -2023,12 +2034,31 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
     return ret;
 }
 
+int32_t HCameraService::CheckControlCenterSupportScene()
+{
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(sessionForControlCenter == nullptr, CAMERA_INVALID_STATE,
+        "CheckControlCenterSupportScene failed, not in video session.");
+
+    std::string bundleName = sessionForControlCenter->GetBundleForControlCenter();
+    std::set<std::string> blackListBundleName = {
+        "com.huawei.hmos.camera"
+    };
+    if (blackListBundleName.find(bundleName) != blackListBundleName.end()) {
+        MEDIA_INFO_LOG("Unspported Bundle Name In Control Center");
+        return CAMERA_UNSUPPORTED;
+    }
+    return CAMERA_OK;
+}
+
 int32_t HCameraService::EnableControlCenter(bool status, bool needPersistEnable)
 {
     MEDIA_INFO_LOG("HCameraService::EnableControlCenter");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition_, CAMERA_INVALID_STATE, "ControlCenterPrecondition false.");
     lock_guard<mutex> lock(controlCenterStatusMutex_);
-    auto ret = UpdateDataShareAndTag(status, needPersistEnable);
+    auto ret = CheckControlCenterSupportScene();
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CheckControlCenterSupportScene failed.");
+    ret = UpdateDataShareAndTag(status, needPersistEnable);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "UpdateDataShareAndTag failed.");
 
     MEDIA_INFO_LOG("EnableControlCenter success.");
