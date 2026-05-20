@@ -118,6 +118,18 @@ std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallback()
     // LCOV_EXCL_STOP
 }
 
+std::shared_ptr<MetadataObjectCallback> MetadataOutput::GetAppObjectCallbackExt()
+{
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    return appObjectCallbackExt_;
+}
+
+std::shared_ptr<MetadataStateCallback> MetadataOutput::GetAppStateCallbackExt()
+{
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    return appStateCallbackExt_;
+}
+
 std::shared_ptr<FocusTrackingMetaInfoCallback> MetadataOutput::GetFocusTrackingMetaInfoCallback()
 {
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
@@ -167,19 +179,23 @@ void MetadataOutput::SetCapturingMetadataObjectTypes(std::vector<MetadataObjectT
     // LCOV_EXCL_STOP
 }
 
+bool MetadataOutput::isPublicMetaTypes(const std::vector<MetadataObjectType>& objectTypes)
+{
+    MEDIA_DEBUG_LOG("public calling for metadataOutput");
+    int32_t MaxType = 14;
+    for (auto object : objectTypes) {
+        CHECK_RETURN_RET(object < MetadataObjectType::FACE ||
+                         object >= static_cast<MetadataObjectType>(MaxType), false);
+    }
+    return true;
+}
+
 int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
-    const size_t maxSize4NonSystemApp  = 2;
     // LCOV_EXCL_START
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for metadataOutput");
-        if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
-            std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE && 
-                                                     type != MetadataObjectType::HUMAN_BODY; })) {
-            return CameraErrorCode::INVALID_ARGUMENT;
-        }
-    }
+    CHECK_RETURN_RET_ELOG (!CameraSecurity::CheckSystemApp() && !isPublicMetaTypes(metadataObjectTypes),
+                           CameraErrorCode::INVALID_ARGUMENT,
+                           "metadataObjectTypes is Not Public Meta Types");
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "MetadataOutput Failed to AddMetadataObjectTypes!, session not commited");
@@ -216,17 +232,10 @@ int32_t MetadataOutput::AddMetadataObjectTypes(std::vector<MetadataObjectType> m
 
 int32_t MetadataOutput::RemoveMetadataObjectTypes(std::vector<MetadataObjectType> metadataObjectTypes)
 {
-    const size_t maxSize4NonSystemApp  = 2;
     // LCOV_EXCL_START
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for metadataOutput");
-        if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
-            std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE && 
-                                                     type != MetadataObjectType::HUMAN_BODY; })) {
-            return CameraErrorCode::INVALID_ARGUMENT;
-        }
-    }
+    CHECK_RETURN_RET_ELOG (!CameraSecurity::CheckSystemApp() && !isPublicMetaTypes(metadataObjectTypes),
+                           CameraErrorCode::INVALID_ARGUMENT,
+                           "metadataObjectTypes is Not Public Meta Types");
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "MetadataOutput Failed to RemoveMetadataObjectTypes!, session not commited");
@@ -297,6 +306,40 @@ void MetadataOutput::SetCallback(std::shared_ptr<MetadataStateCallback> metadata
     // LCOV_EXCL_STOP
 }
 
+void MetadataOutput::SetCallbackExt(std::shared_ptr<MetadataObjectCallback> metadataObjectCallback)
+{
+    // LCOV_EXCL_START
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    appObjectCallbackExt_ = metadataObjectCallback;
+    if (appObjectCallbackExt_ != nullptr) {
+        if (cameraMetadataCallback_ == nullptr) {
+            cameraMetadataCallback_ = new HStreamMetadataCallbackImpl(this);
+        }
+    }
+    auto stream = GetStream();
+    sptr<IStreamMetadata> itemStream = static_cast<IStreamMetadata*>(stream.GetRefPtr());
+    int32_t errorCode = CAMERA_OK;
+    if (itemStream) {
+        errorCode = itemStream->SetCallback(cameraMetadataCallback_);
+    } else {
+        MEDIA_ERR_LOG("MetadataOutput::SetCallback() itemStream is nullptr");
+    }
+    if (errorCode != CAMERA_OK) {
+        MEDIA_ERR_LOG("MetadataOutput::SetCallback(): Failed to register callback, errorCode: %{public}d", errorCode);
+        cameraMetadataCallback_ = nullptr;
+        appObjectCallbackExt_ = nullptr;
+    }
+    // LCOV_EXCL_STOP
+}
+
+void MetadataOutput::SetCallbackExt(std::shared_ptr<MetadataStateCallback> metadataStateCallback)
+{
+    // LCOV_EXCL_START
+    std::lock_guard<std::mutex> lock(outputCallbackMutex_);
+    appStateCallbackExt_ = metadataStateCallback;
+    // LCOV_EXCL_STOP
+}
+
 void MetadataOutput::SetFocusTrackingMetaInfoCallback(std::shared_ptr<FocusTrackingMetaInfoCallback> callback)
 {
     std::lock_guard<std::mutex> lock(outputCallbackMutex_);
@@ -334,6 +377,11 @@ void MetadataOutput::CameraServerDied(pid_t pid)
         int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
         appStateCallback_->OnError(serviceErrorType);
     }
+    if (appStateCallbackExt_ != nullptr) {
+        MEDIA_DEBUG_LOG("appStateCallbackExt_ not nullptr");
+        int32_t serviceErrorType = ServiceToCameraError(CAMERA_INVALID_STATE);
+        appStateCallbackExt_->OnError(serviceErrorType);
+    }
     // LCOV_EXCL_STOP
 }
 
@@ -357,6 +405,8 @@ int32_t MetadataOutput::Release()
         std::lock_guard<std::mutex> lock(outputCallbackMutex_);
         appObjectCallback_ = nullptr;
         appStateCallback_ = nullptr;
+        appObjectCallbackExt_ = nullptr;
+        appStateCallbackExt_ = nullptr;
         cameraMetadataCallback_ = nullptr;
     }
     auto stream = GetStream();
@@ -528,12 +578,19 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
     std::vector<sptr<MetadataObject>> metaObjects;
     metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     auto objectCallback = metadataOutput->GetAppObjectCallback();
+    auto objectCallbackExt = metadataOutput->GetAppObjectCallbackExt();
     auto focusTrackingMetaInfoCallback = metadataOutput->GetFocusTrackingMetaInfoCallback();
     if ((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallback) {
         for (auto object : metaObjects) {
             object->SetSize(session->GetPreviewSize());
         }
         objectCallback->OnMetadataObjectsAvailable(metaObjects);
+    }
+    if ((metadataOutput->reportFaceResults_ || metadataOutput->reportLastFaceResults_) && objectCallbackExt) {
+        for (auto object : metaObjects) {
+            object->SetSize(session->GetPreviewSize());
+        }
+        objectCallbackExt->OnMetadataObjectsAvailable(metaObjects);
     }
     if (focusTrackingMetaInfoCallback) {
         FocusTrackingMetaInfo focusTrackingMetaInfo;
@@ -586,6 +643,108 @@ sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectT
     }
     // LCOV_EXCL_STOP
     return metadataObject;
+}
+
+bool MetadataOutput::IsLockMetadataObjectTrackingSupported()
+{
+    // LCOV_EXCL_START
+    auto session = GetSession();
+    CHECK_RETURN_RET(session == nullptr, false);
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET(inputDevice == nullptr, false);
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET(cameraObj == nullptr, false);
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET(metadata == nullptr, false);
+
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(),
+        OHOS_ABILITY_LOCK_OBJECT_TRACKING_AVAILABLE, &item);
+    CHECK_RETURN_RET(ret != CAM_META_SUCCESS, false);
+
+    CHECK_RETURN_RET_DLOG(item.count == 0 || item.data.i32 == nullptr,
+                          false,
+                          "isLockMetadataObjectTrackingSupported: empty array or null data");
+    SceneMode currentMode = session->GetMode();
+    for (size_t i = 0; i < item.count; i++) {
+        MEDIA_DEBUG_LOG("isLockMetadataObjectTrackingSupported: supported mode[%{public}zu]: %{public}d",
+                        i, item.data.i32[i]);
+        CHECK_RETURN_RET_DLOG(currentMode == static_cast<SceneMode>(item.data.i32[i]),
+                              true,
+                              "isLockMetadataObjectTrackingSupported: currentMode: %{public}d", currentMode);
+    }
+    MEDIA_DEBUG_LOG("isLockMetadataObjectTrackingSupported: not supported, currentMode: %{public}d", currentMode);
+    return false;
+    // LCOV_EXCL_STOP
+}
+
+int32_t MetadataOutput::LockMetadataObjectTracking(Point point)
+{
+    // LCOV_EXCL_START
+    CHECK_RETURN_RET_ELOG(point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1,
+                          CameraErrorCode::PARAMETER_ERROR,
+                          "LockMetadataObjectTracking point illegal");
+    sptr<ICameraDeviceService> cameraDeviceObj = nullptr;
+    CHECK_RETURN_RET_ELOG(GetICameraDeviceService(cameraDeviceObj) != CameraErrorCode::SUCCESS,
+                          CameraErrorCode::SESSION_NOT_CONFIG,
+                          "LockMetadataObjectTracking cameraDeviceObj failed");
+    const int32_t scale = 10000;
+    int32_t trackingData[3] = {static_cast<int32_t>(point.x * scale), static_cast<int32_t>(point.y * scale), 1};
+    int32_t DEFAULT_ITEMS = 1;
+    int32_t DEFAULT_DATA_LENGTH = 100;
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    bool result = AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_LOCK_OBJECT_TRACKING, trackingData, 3);
+    CHECK_RETURN_RET_ELOG (!result,
+                           CameraErrorCode::SERVICE_FATL_ERROR,
+                           "lockMetadataObjectTracking: failed to set tracking data");
+    int32_t ret = cameraDeviceObj->UpdateSetting(changedMetadata);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK,
+                          CameraErrorCode::SERVICE_FATL_ERROR,
+                          "CaptureSession::UpdateSetting Failed to update settings, errCode = %{public}d", ret);
+    MEDIA_DEBUG_LOG("lockMetadataObjectTracking: success, point: [%{public}f, %{public}f]", point.x, point.y);
+    return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
+}
+
+int32_t MetadataOutput::UnlockMetadataObjectTracking()
+{
+    // LCOV_EXCL_START
+    sptr<ICameraDeviceService> cameraDeviceObj = nullptr;
+    CHECK_RETURN_RET_ELOG(GetICameraDeviceService(cameraDeviceObj) != CameraErrorCode::SUCCESS,
+                          CameraErrorCode::SESSION_NOT_CONFIG,
+                          "UnlockMetadataObjectTracking cameraDeviceObj failed");
+    // 0, 0, 0 indicates Unlock
+    int32_t trackingData[3] = {0, 0, 0};
+    int32_t DEFAULT_ITEMS = 1;
+    int32_t DEFAULT_DATA_LENGTH = 100;
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    bool result = AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_LOCK_OBJECT_TRACKING, trackingData, 3);
+    CHECK_RETURN_RET_ELOG (!result,
+                           CameraErrorCode::SERVICE_FATL_ERROR,
+                           "unlockMetadataObjectTracking: failed to unlock tracking");
+    int32_t ret = cameraDeviceObj->UpdateSetting(changedMetadata);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK,
+                          CameraErrorCode::SERVICE_FATL_ERROR,
+                          "CaptureSession::UpdateSetting Failed to update settings, errCode = %{public}d", ret);
+    MEDIA_DEBUG_LOG("unlockMetadataObjectTracking: success");
+    return CameraErrorCode::SUCCESS;
+    // LCOV_EXCL_STOP
+}
+
+int32_t MetadataOutput::GetICameraDeviceService(sptr<ICameraDeviceService>& cameraDeviceObj)
+{
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr,
+                          CameraErrorCode::SESSION_NOT_CONFIG,
+                          "lockMetadataObjectTracking: session is null");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG);
+    
+    cameraDeviceObj = ((sptr<CameraInput>&)inputDevice)->GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(!cameraDeviceObj,
+                          CameraErrorCode::SESSION_NOT_CONFIG,
+                          "CaptureSession::UpdateSetting Failed cameraDeviceObj is nullptr");
+    return CameraErrorCode::SUCCESS;
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

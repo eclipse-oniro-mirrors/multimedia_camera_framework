@@ -1260,6 +1260,9 @@ private:
     void GetMetadataInfos(camera_metadata_item_t item,
         std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
         shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
+
+    void GetNotSystemAppMetaTypes(std::vector<MetadataObjectType>& objectTypes);
+    bool isPublicMetaTypes(const std::vector<MetadataObjectType>& objectTypes);
     void SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability> &cameraOutputCapability,
         ProfilesWrapper &profilesWrapper, int32_t modeName,
         shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
