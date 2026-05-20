@@ -4061,10 +4061,10 @@ napi_value CameraSessionNapi::SetUsage(napi_env env, napi_callback_info info)
 
 napi_value CameraSessionNapi::SetParameters(napi_env env, napi_callback_info info)
 {
-    MEDIA_INFO_LOG("SetParameters is called");
+    MEDIA_INFO_LOG("CameraSessionNapi::SetParameters is called");
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
-        MEDIA_ERR_LOG("SystemApi SetParameters is called!");
-        return nullptr;
+        CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
+            "System api can be invoked only by system applications");
     }
     napi_status status;
     napi_value result = nullptr;
@@ -4086,21 +4086,21 @@ napi_value CameraSessionNapi::SetParameters(napi_env env, napi_callback_info inf
         napi_get_property_names(env, js_record_object, &keys_array);
         uint32_t length;
         napi_get_array_length(env, keys_array, &length);
-        std::vector<std::pair<std::string, std::string>> kvPairs;
+        std::unordered_map<std::string, std::string> kvPairs;
         for (uint32_t i = 0; i < length; i++) {
-            napi_value key_val;
-            napi_get_element(env, keys_array, i, &key_val);
+            napi_value keyVal;
+            napi_get_element(env, keys_array, i, &keyVal);
             size_t sizeofres;
             char buffer[PATH_MAX];
-            napi_get_value_string_utf8(env, key_val, buffer, PATH_MAX, &sizeofres);
+            napi_get_value_string_utf8(env, keyVal, buffer, PATH_MAX, &sizeofres);
             std::string key = std::string(buffer);
             napi_value value_val;
-            napi_get_property(env, js_record_object, key_val, &value_val);
+            napi_get_property(env, js_record_object, keyVal, &value_val);
             napi_get_value_string_utf8(env, value_val, buffer, PATH_MAX, &sizeofres);
             std::string value = std::string(buffer);
             MEDIA_INFO_LOG("CameraSessionNapi::SetParameters key:%{public}s value:%{public}s",
                 key.c_str(), value.c_str());
-            kvPairs.emplace_back(key, value);
+            kvPairs.insert(std::make_pair(key, value));
         }
         CameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode =

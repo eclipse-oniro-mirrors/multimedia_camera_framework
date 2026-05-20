@@ -269,10 +269,6 @@ const std::unordered_map<CameraApertureEffectType, ApertureEffectType>
     {OHOS_CAMERA_APERTURE_EFFECT_MACRO, ApertureEffectType::APERTURE_EFFECT_MACRO},
 };
 
-const std::unordered_map<std::string, camera_device_metadata_tag_t> CaptureSession::parametersMap_ = {
-    {"REMOVE_SENSOR_RESTRAINT", OHOS_CONTROL_REMOVE_SENSOR_RESTRAINT},
-};
-
 const std::string STREAM_TYPE_REPEAT = "RepeatStream";
 const std::string STREAM_TYPE_METADATA = "MetadataStream";
 const std::string STREAM_TYPE_CAPTURE = "CaptureStream";
@@ -7490,25 +7486,6 @@ uint32_t CaptureSession::GetIsoValue()
 {
     std::lock_guard<std::mutex> isoLock(isoValueMutex_);
     return isoValue_;
-}
-
-int32_t CaptureSession::SetParameters(std::vector<std::pair<std::string, std::string>>& kvPairs)
-{
-    for (auto const& [k, v] : kvPairs) {
-        MEDIA_INFO_LOG("CaptureSession::SetParameters key:%{public}s value:%{public}s",
-            k.c_str(), v.c_str());
-        auto itr = parametersMap_.find(k);
-        if (itr != parametersMap_.end()) {
-            MEDIA_INFO_LOG("CaptureSession::SetParameters start setParameters key:%{public}s", k.c_str());
-            CHECK_RETURN_RET_ELOG(!(v == "0" || v == "1"), CameraErrorCode::INVALID_ARGUMENT,
-                "CaptureSession::SetParameters INVALID_ARGUMENT");
-            int temp_int = std::stoi(v);
-            uint8_t value = static_cast<uint8_t>(temp_int);
-            CHECK_PRINT_ELOG(!AddOrUpdateMetadata(changedMetadata_, itr->second, &value, 1),
-                "CaptureSession::SetParameters failed");
-        }
-    }
-    return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSession::SetParameters(const std::unordered_map<std::string, std::string>& kvPairs)
