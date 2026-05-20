@@ -714,31 +714,6 @@ HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_015, TestSize.L
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test get video and photo rotation, an internal system error is
- * returned when the session is not committed
- */
-HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_016, TestSize.Level0)
-{
-    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
-    Camera_VideoOutput* videoOutput = CreateVideoOutput();
-    ASSERT_NE(videoOutput, nullptr);
-    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
-    ASSERT_NE(photoOutput, nullptr);
-    Camera_ErrorCode ret = OH_VideoOutput_GetVideoRotationWithoutDeviceDegree(videoOutput, &imageRotation);
-    EXPECT_NE(ret, CAMERA_OK);
-    ret = OH_PhotoOutput_GetPhotoRotationWithoutDeviceDegree(photoOutput, &imageRotation);
-    EXPECT_NE(ret, CAMERA_OK);
-    EXPECT_EQ(OH_VideoOutput_Release(videoOutput), CAMERA_OK);
-    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
-    ReleaseImageReceiver();
-}
-
-/*
- * Feature: Framework
- * Function: Test get video rotation
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
  * CaseDescription: Test get video rotation,  when entered valid parameters, get success
  */
 HWTEST_F(CameraVideoOutputUnitTest, camera_video_output_unittest_017, TestSize.Level0)

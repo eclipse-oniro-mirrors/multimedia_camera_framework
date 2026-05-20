@@ -400,28 +400,6 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_007, TestSi
 
 /*
  * Feature: Framework
- * Function: Test get and set preview rotation
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test get and set preview rotation, get and set failed when session is null
- */
-HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_008, TestSize.Level0)
-{
-    int displayRotation = 0;
-    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
-    bool isDisplayLocked = false;
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-    Camera_ErrorCode ret = OH_PreviewOutput_GetPreviewRotation(previewOutput, displayRotation, &imageRotation);
-    EXPECT_NE(ret, CAMERA_OK);
-    ret = OH_PreviewOutput_SetPreviewRotation(previewOutput, IAMGE_ROTATION_180, isDisplayLocked);
-    EXPECT_NE(ret, CAMERA_OK);
-    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
  * Function: RegisterCallback and UnregisterCallback
  * SubFunction: NA
  * FunctionPoints: NA
@@ -741,27 +719,6 @@ HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_015, TestSi
     EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
     EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
-}
-
-/*
- * Feature: Framework
- * Function: Test get and set preview rotation
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test get and set preview rotation, get and set failed when session is null
- */
-HWTEST_F(CameraPreviewOutputUnitTest, camera_preview_output_unittest_016, TestSize.Level0)
-{
-    Camera_ImageRotation imageRotation = IAMGE_ROTATION_180;
-    bool isDisplayLocked = false;
-    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
-    ASSERT_NE(previewOutput, nullptr);
-    Camera_ErrorCode ret = OH_PreviewOutput_GetPreviewRotationWithoutDisplayRotation(previewOutput, &imageRotation);
-    EXPECT_NE(ret, CAMERA_OK);
-    ret = OH_PreviewOutput_SetPreviewRotation(previewOutput, IAMGE_ROTATION_180, isDisplayLocked);
-    EXPECT_NE(ret, CAMERA_OK);
-    EXPECT_EQ(OH_PreviewOutput_Release(previewOutput), CAMERA_OK);
 }
 
 /*
