@@ -63,6 +63,7 @@ sptr<HCameraDeviceManager> &HCameraDeviceManager::GetInstance()
 
 size_t HCameraDeviceManager::GetActiveCamerasCount()
 {
+    std::lock_guard<std::mutex> lock(mapMutex_);
     MEDIA_INFO_LOG("HCameraDeviceManager::GetActiveCamerasCount: %{public}zu", activeCameras_.size());
     return activeCameras_.size();
 }
@@ -360,8 +361,11 @@ bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceH
 
     RefreshCameraDeviceHolderState(cameraRequestOpen);
     MEDIA_INFO_LOG("focusStateOfRequestProcess = %{public}d", cameraRequestOpen->GetFocusState());
-    for (const auto &deviceHolder : activeCameras_) {
-        RefreshCameraDeviceHolderState(deviceHolder);
+    {
+        std::lock_guard<std::mutex> lock(mapMutex_);
+        for (const auto &deviceHolder : activeCameras_) {
+            RefreshCameraDeviceHolderState(deviceHolder);
+        }
     }
 
     // Find Camera Device that would be evicted
@@ -389,6 +393,7 @@ bool HCameraDeviceManager::HandleCameraEvictions(std::vector<sptr<HCameraDeviceH
 void HCameraDeviceManager::DetermineHighestPriorityOwner(int32_t &highestPriorityOwner, int32_t &owner,
     sptr<CameraProcessPriority> requestPriority)
 {
+    std::lock_guard<std::mutex> lock(mapMutex_);
     sptr<CameraProcessPriority> highestPriority = requestPriority;
     for (const auto &x : activeCameras_) {
         sptr<CameraProcessPriority> curPriority = x->GetPriority();
@@ -419,6 +424,7 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
     DetermineHighestPriorityOwner(highestPriorityOwner, owner, requestPriority);
 
     // Build eviction list of clients to remove
+    std::lock_guard<std::mutex> lock(mapMutex_);
     for (const auto &x : activeCameras_) {
         const std::string &curCameraId = x->GetDevice()->GetCameraId();
         int32_t curCost = x->GetCost();
@@ -459,8 +465,9 @@ std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::WouldEvict(sptr<HCa
     return evictList;
 }
 
-int32_t HCameraDeviceManager::GetCurrentCost() const
+int32_t HCameraDeviceManager::GetCurrentCost()
 {
+    std::lock_guard<std::mutex> lock(mapMutex_);
     int32_t totalCost = 0;
     for (const auto &x : activeCameras_) {
         totalCost += x->GetCost();
@@ -582,6 +589,7 @@ void CameraConcurrentSelector::SetRequestCameraId(sptr<HCameraDeviceHolder> requ
 
 std::vector<sptr<HCameraDeviceHolder>> HCameraDeviceManager::SortDeviceByPriority()
 {
+    std::lock_guard<std::mutex> lock(mapMutex_);
     std::vector<sptr<HCameraDeviceHolder>> sortedList = activeCameras_;
     std::sort(sortedList.begin(), sortedList.end(),
               [](const sptr<HCameraDeviceHolder> &a, const sptr<HCameraDeviceHolder> &b) {
