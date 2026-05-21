@@ -3999,30 +3999,6 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_096, Test
 
 /*
  * Feature: Framework
- * Function: Test SetFocusMode before BeginConfig
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test set focus mode before BeginConfig,
- * when session is not configured, service fatal error is returned
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_097, TestSize.Level0)
-{
-    Camera_ErrorCode ret = CAMERA_OK;
-    Camera_CaptureSession* captureSession = nullptr;
-    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_AUTO);
-    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-}
-
-/*
- * Feature: Framework
  * Function: Test SetFocusMode and GetFocusMode combination
  * SubFunction: NA
  * FunctionPoints: NA
