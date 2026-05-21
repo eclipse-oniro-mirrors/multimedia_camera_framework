@@ -2381,6 +2381,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         UnSetPressureCallback();
         UnSetControlCenterEffectStatusCallback();
         UnSetCameraSwitchRequestCallback();
+        UnsetSpectrumCallback();
         stateMachine_.Transfer(CaptureSessionState::SESSION_RELEASED);
         isSessionStarted_ = false;
     });
@@ -3102,6 +3103,42 @@ int32_t HCaptureSession::UnSetCameraSwitchRequestCallback()
     icameraSwitchSessionCallback_ = nullptr;
     CHECK_RETURN_RET_ILOG(icameraSwitchSessionCallback_ == nullptr, CAMERA_OK, "icameraSwitchSessionCallback_ is null");
     return CAMERA_OK;
+}
+
+void HCaptureSession::SetSpectrumCallback(sptr<ICameraSpectrumInfoCallback> callback)
+{
+    if (callback != nullptr) {
+        spectrumInfoCallback_ = callback;
+        auto device = GetCameraDevice();
+        auto userId = GetUserId();
+        if (device && userId) {
+            device->SetSpectrumCallback(userId, callback);
+        }
+    }
+}
+
+void HCaptureSession::UnsetSpectrumCallback()
+{
+    auto device = GetCameraDevice();
+    if (spectrumInfoCallback_ != nullptr && device) {
+        device->UnsetSpectrumCallback();
+        spectrumInfoCallback_ = nullptr;
+    }
+}
+
+sptr<HCameraDevice> HCaptureSession::GetSessionDevice()
+{
+    return GetCameraDevice();
+}
+
+bool HCaptureSession::IsSessionConfiged()
+{
+    auto currentState = stateMachine_.GetCurrentState();
+    if (currentState == CaptureSessionState::SESSION_CONFIG_COMMITTED ||
+        currentState == CaptureSessionState::SESSION_STARTED) {
+        return true;
+    }
+    return false;
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

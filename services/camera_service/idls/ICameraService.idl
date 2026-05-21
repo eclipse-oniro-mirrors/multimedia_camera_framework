@@ -30,6 +30,7 @@ import IStreamDepthData;
 import IMechSession;
 import IMovieFileOutput;
 import ICameraSwitchSession;
+import ICameraSpectrumInfoCallback;
 
 sequenceable OHOS.IRemoteObject;
 sequenceable CameraMetadataInfo..OHOS.Camera.CameraMetadata;
@@ -121,4 +122,6 @@ interface ICameraService{
   [ipccode 106] void PrelaunchScanCamera([in] String bundleName, [in] String pageName, [in] PrelaunchScanModeOhos prelaunchScanMode);
   [ipccode 107] void RequireMemorySizeWithReason([in] String reason, [in] int requiredMemSizeKB);
   [ipccode 108] void GetPhysicalCameraIds([out] List<String> cameraIds);
+  [ipccode 109] void SetSpectrumCallback([in] SpectrumCallerInfo info, [in] ICameraSpectrumInfoCallback callbackFunc);
+  [ipccode 110] void UnsetSpectrumCallback([in] SpectrumCallerInfo info);
 }
