@@ -331,10 +331,23 @@ void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string 
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone Picture.");
 }
 
+void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string& imageId,
+    const std::vector<CameraStandard::ImageFd>& imageFds,
+    std::shared_ptr<CameraStandard::PictureIntf> lcdImage, const DpsMetadata& metadata)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnProcessImageDone with lcd.");
+}
+
 void TestDeferredPhotoProcSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
     std::shared_ptr<PictureIntf> picture)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnDeliveryLowQualityImage.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnDeliveryLowQualityLcd(const std::string &imageId,
+    std::shared_ptr<PictureIntf> picture)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnDeliveryLowQualityLcd.");
 }
 
 void TestDeferredPhotoProcSessionCallback::OnError(const std::string& imageId, const DpsErrorCode errorCode)
