@@ -943,6 +943,23 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     return CAMERA_OK;
 }
 
+void HCameraService::SetControlCenterInVideo(sptr<HCaptureSession>& captureSession)
+{
+    SetSessionForControlCenter(captureSession);
+    captureSession->SetUpdateControlCenterCallback(
+        std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
+    std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
+    captureSession->SetBundleForControlCenter(bundleName);
+    if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true"
+        && !CheckSystemApp()) {
+        int32_t rc = EnableControlCenter(true, true);
+        if (rc != CAMERA_OK) {
+            MEDIA_INFO_LOG("EnableControlCenter failed,retCode:%d", rc);
+        }
+    }
+    MEDIA_INFO_LOG("Save videoSession for controlCenter");
+}
+
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
@@ -963,12 +980,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     pressurePid_ = IPCSkeleton::GetCallingPid();
     session = captureSession;
     if (opMode == SceneMode::VIDEO) {
-        SetSessionForControlCenter(captureSession);
-        captureSession->SetUpdateControlCenterCallback(
-            std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
-        std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
-        captureSession->SetBundleForControlCenter(bundleName);
-        MEDIA_INFO_LOG("Save videoSession for controlCenter");
+        SetControlCenterInVideo(captureSession);
     } else {
         SetSessionForControlCenter(nullptr);
         MEDIA_INFO_LOG("Clear videoSession of controlCenter");

@@ -302,6 +302,7 @@ private:
     void ClientDied(pid_t pid);
     void InitParameters();
     int32_t GetSupportedAbilities(const uint32_t& tagId, const uint8_t& tagType, std::vector<std::string>& abilities);
+    void SetControlCenterInVideo(sptr<HCaptureSession>& captureSession);
     sptr<HCaptureSession> videoSessionForControlCenter_;
     bool deviceControlCenterAbility_ = false;
 

@@ -3140,7 +3140,7 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
     int32_t mode = UNSET;
     vector<int32_t> formats = {};
     vector<int32_t> modePhotoFormats = {};
- 
+
     for (uint32_t i = 0; i < item.count; i++) {
         if (item.data.i32[i] != -1) {
             if (mode == UNSET) {
@@ -3161,7 +3161,7 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
             formats.clear();
         }
     }
- 
+
     CHECK_RETURN_RET_ELOG(
         modePhotoFormats.empty(), photoFormats, "GetSupportPhotoFormat not support mode = %{public}d", modeName);
     for (auto &val : modePhotoFormats) {
@@ -3483,11 +3483,6 @@ bool CameraManager::IsControlCenterActive()
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false,
         "CameraManager::IsControlCenterActive serviceProxy is null");
     if (!GetIsControlCenterSupported()) {
-        if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
-            int32_t retCode = serviceProxy->EnableControlCenter(true, true);
-            CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "CameraManager::IsControlCenterActive failed");
-            return true;
-        }
         MEDIA_INFO_LOG("CameraManager::IsControlCenterActive control center not supported");
         return false;
     }
@@ -3925,7 +3920,7 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
         // LCOV_EXCL_START
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE && 
+                [](MetadataObjectType type) { return type != MetadataObjectType::FACE &&
                                                      type != MetadataObjectType::HUMAN_BODY; })) {
             MEDIA_INFO_LOG("MetadataObjectType not face or human_body,invalid");
             return CameraErrorCode::INVALID_ARGUMENT;
