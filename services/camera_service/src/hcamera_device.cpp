@@ -1905,6 +1905,10 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     if (callback != nullptr) {
         callback->OnResult(timestamp, cameraResult);
     }
+    auto spectrumInfoCallback = GetSpectrumCallback();
+        if (spectrumInfoCallback != nullptr) {
+            OnSpectrumInfoChange(cameraResult, timestamp);
+        }
     ReportDeviceProtectionStatus(cameraResult);
     if (IsCameraDebugOn()) {
         CheckOnResultData(cameraResult);
@@ -2337,6 +2341,50 @@ void HCameraDevice::SetConcurrentCaptureTag(bool flag)   // ture 开启多摄同
     int32_t ret = UpdateSetting(changedMetadata);
     CHECK_RETURN_ELOG(ret != CAMERA_OK, "UpdateSetting camera concurrent capture Failed");
     return;
+}
+
+void HCameraDevice::OnSpectrumInfoChange(
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability, const uint64_t timestamp)
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::SetSpectrumInfoChange ENTER");
+    camera_metadata_item_t item;
+    int32_t ret =
+        OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_SPECTRUM_INFOS, &item);
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "HCameraDevice::OnSpectrumInfoChange not find spectrum tag");
+    std::vector<float> spectrumInfo;
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
+        spectrumInfo.reserve(item.count);
+        for (uint32_t i = 0; i < item.count; i++) {
+            spectrumInfo.emplace_back(static_cast<float>(item.data.f[i]));
+        }
+        MEDIA_DEBUG_LOG("HCameraDevice::OnSpectrumInfoChange, spectrumInfo size: %{public}zu",
+            spectrumInfo.size());
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::OnSpectrumInfoChange the spectrum data is null");
+    }
+    if (spectrumInfo.size() > 0) {
+        spectrumInfoCallback_->OnCameraSpectrumInfo(userId_, spectrumInfo, timestamp);
+    }
+}
+
+void HCameraDevice::SetSpectrumCallback(int32_t userId, sptr<ICameraSpectrumInfoCallback> callback)
+{
+    if (callback && userId) {
+        spectrumInfoCallback_ = callback;
+        userId_ = userId;
+    }
+}
+
+void HCameraDevice::UnsetSpectrumCallback()
+{
+    if (spectrumInfoCallback_ != nullptr) {
+        spectrumInfoCallback_ = nullptr;
+    }
+}
+
+sptr<ICameraSpectrumInfoCallback> HCameraDevice::GetSpectrumCallback()
+{
+    return spectrumInfoCallback_;
 }
 } // namespace CameraStandard
 } // namespace OHOS
