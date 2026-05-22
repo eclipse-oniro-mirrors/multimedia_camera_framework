@@ -1535,7 +1535,7 @@ void HCameraDevice::ReportMetadataDebugLog(const std::shared_ptr<OHOS::Camera::C
         std::tie(tag, tagName, dfxUbStr) = tagInfo;
         DebugLogTag(settings, tag, tagName, dfxUbStr);
     }
-
+    DebugLogForTargetSmoothZoom(settings, OHOS_CONTROL_CAMERA_TARGET_ZOOM_RATIO);
     DebugLogForSmoothZoom(settings, OHOS_CONTROL_SMOOTH_ZOOM_RATIOS);
     DebugLogForAfRegions(settings, OHOS_CONTROL_AF_REGIONS);
     DebugLogForAeRegions(settings, OHOS_CONTROL_AE_REGIONS);
@@ -1588,6 +1588,21 @@ void HCameraDevice::DebugLogForSmoothZoom(const std::shared_ptr<OHOS::Camera::Ca
             CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_SMOOTHZOOM,
                 std::to_string(zoomRatio), caller_);
         }
+    }
+}
+
+void HCameraDevice::DebugLogForTargetSmoothZoom(
+    const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings, uint32_t tag)
+{
+    // debug log for smooth zoom
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), tag, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_DEBUG_LOG("HCameraDevice::Failed to find OHOS_CONTROL_CAMERA_TARGET_ZOOM_RATIO tag");
+    } else {
+        float zoomRatio = item.data.f[0];
+        MEDIA_DEBUG_LOG("HCameraDevice::find OHOS_CONTROL_CAMERA_TARGET_ZOOM_RATIO value = %{public}f", zoomRatio);
+        CameraReportUtils::GetInstance().ReportUserBehavior(DFX_UB_SET_SMOOTHZOOM, std::to_string(zoomRatio), caller_);
     }
 }
 

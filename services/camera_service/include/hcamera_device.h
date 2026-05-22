@@ -313,6 +313,7 @@ private:
     void HandlePrivacyWhenOpenDeviceFail();
     void HandlePrivacyAfterCloseDevice();
     void DebugLogForSmoothZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
+    void DebugLogForTargetSmoothZoom(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAfRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogForAeRegions(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings, uint32_t tag);
     void DebugLogTag(const std::shared_ptr<OHOS::Camera::CameraMetadata> &settings,
