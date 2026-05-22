@@ -111,6 +111,19 @@ void MovieFileControllerVideo::ConfigAudioCapture()
         capturerOptions.capturerInfo.sourceType, streamInfo.channels);
     capturerOptions.capturerInfo.capturerFlags = 0;
     auto audioCaptureWrap = std::make_shared<UnifiedPipelineAudioCaptureWrap>(capturerOptions);
+
+    std::vector<std::shared_ptr<AudioStandard::AudioDeviceDescriptor>> preferredInputDevices;
+    int32_t ret = audioCaptureWrap->GetPreferredInputDeviceForCapturerInfo(preferredInputDevices);
+    MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture GetPreferredInputDevice ret:%{public}d, "
+                   "device size:%{public}zu", ret, preferredInputDevices.size());
+    auto inputDeviceCallback = std::make_shared<MyPreferredInputDeviceChangeCallback>(audioCaptureWrap, [this]() {
+        isInputDeviceChanged_.store(true);
+        MEDIA_INFO_LOG("MovieFileControllerVideo input device changed");
+    });
+    ret = audioCaptureWrap->SetPreferredInputDeviceChangeCallback(inputDeviceCallback);
+    MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture SetPreferredInputDeviceChangeCallback ret:%{public}d",
+        ret);
+
     audioCaptureWrap_.Set(audioCaptureWrap);
     audioCaptureWrap->InitThread();
 
@@ -432,6 +445,7 @@ void MovieFileControllerVideo::ReleaseConsumer()
     if (consumer) {
         consumer->Stop();
         videoStreamCallback_->WaitProcessEnd();
+        consumer->SetDeviceChangeInfo(isInputDeviceChanged_.exchange(false));
         consumer->SetDeferredVideoInfo(videoStreamCallback_->GetDeferredFlag(), videoStreamCallback_->GetVideoId());
         movieFileConsumer_.Set(nullptr);
         videoStreamCallback_->SetVideoId("");     // 重置videoId

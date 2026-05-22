@@ -141,6 +141,8 @@ public:
     void SetControlCenterEffectCallbackStatus(ControlCenterStatusInfo statusInfo);
     int32_t SetCameraSwitchRequestCallback(const sptr<ICameraSwitchSessionCallback> &callback) override;
     int32_t UnSetCameraSwitchRequestCallback() override;
+    void SetSpectrumCallback(sptr<ICameraSpectrumInfoCallback> callback);
+    void UnsetSpectrumCallback();
 
     int32_t GetSessionState(CaptureSessionState& sessionState) override;
     int32_t GetActiveColorSpace(int32_t& curColorSpace) override;
@@ -166,6 +168,8 @@ public:
         std::vector<uint32_t> &zoomAndTimeArray, std::vector<float> array, float frameIntervalMs, float waitTime);
     int32_t EnableMovingPhoto(bool isEnable) override;
     int32_t EnableMovingPhotoMirror(bool isMirror, bool isConfig) override;
+    sptr<HCameraDevice> GetSessionDevice();
+    bool IsSessionConfiged();
 #ifdef CAMERA_MOVING_PHOTO
     void SetMovingPhotoStatus(bool status);
     bool GetMovingPhotoStatus();
@@ -370,6 +374,7 @@ private:
     bool controlCenterPrecondition = true;
     std::string bundleForControlCenter_;
     bool isCameraSessionStart = false;
+    sptr<ICameraSpectrumInfoCallback> spectrumInfoCallback_;
     
 #ifdef CAMERA_USE_SENSOR
     std::mutex sensorLock_;

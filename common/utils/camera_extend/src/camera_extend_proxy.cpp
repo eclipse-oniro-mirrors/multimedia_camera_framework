@@ -19,9 +19,9 @@
 namespace OHOS {
 namespace CameraStandard {
 
-CameraExtendProxy::CameraExtendProxy(std::shared_ptr<Dynamiclib> hCameraServiceHmsLib,
-    std::shared_ptr<CameraExtendIntf> hCameraServiceHmsIntf)
-    : cameraExtendLib_(hCameraServiceHmsLib), cameraExtendIntf_(hCameraServiceHmsIntf)
+CameraExtendProxy::CameraExtendProxy(std::shared_ptr<Dynamiclib> cameraExtendLib,
+    std::shared_ptr<CameraExtendIntf> cameraExtendIntf)
+    : cameraExtendLib_(cameraExtendLib), cameraExtendIntf_(cameraExtendIntf)
 {
     MEDIA_INFO_LOG("CameraExtendProxy constructor");
 }
@@ -41,10 +41,10 @@ std::shared_ptr<CameraExtendProxy> CameraExtendProxy::CreateCameraExtendProxy()
     CreateCameraExtendIntf createCameraExtendIntf =
             (CreateCameraExtendIntf)dynamiclib->GetFunction("createCameraExtendIntf");
     CHECK_RETURN_RET_ELOG(createCameraExtendIntf == nullptr, nullptr, "CreateCameraExtendIntf fail");
-    CameraExtendIntf* hCameraServiceHmsIntf = createCameraExtendIntf();
-    CHECK_RETURN_RET_ELOG(hCameraServiceHmsIntf == nullptr, nullptr, "get hCameraServiceHmsIntf fail");
+    CameraExtendIntf* cameraExtendIntf = createCameraExtendIntf();
+    CHECK_RETURN_RET_ELOG(cameraExtendIntf == nullptr, nullptr, "get cameraExtendIntf fail");
     auto cameraExtendProxy = std::make_shared<CameraExtendProxy>(dynamiclib,
-                                                    std::shared_ptr<CameraExtendIntf>(hCameraServiceHmsIntf));
+                                                    std::shared_ptr<CameraExtendIntf>(cameraExtendIntf));
     return cameraExtendProxy;
 }
 

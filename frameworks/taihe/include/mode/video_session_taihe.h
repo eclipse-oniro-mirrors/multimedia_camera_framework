@@ -25,7 +25,8 @@ using namespace ohos::multimedia::camera;
 
 class VideoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public StabilizationImpl,
                          public AutoExposureImpl, public ColorManagementImpl, public AutoDeviceSwitchImpl,
-                         public FocusImpl, public WhiteBalanceImpl, public MacroImpl {
+                         public FocusImpl, public WhiteBalanceImpl, public MacroImpl, public ManualIsoImpl,
+                         public ManualFocusImpl, public ManualExposureImpl, public ApertureImpl, public OISImpl {
 public:
     explicit VideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
@@ -47,6 +48,24 @@ public:
     {
         return videoSession_;
     }
+
+    void SetIso(int32_t iso) override;
+    int32_t GetIso() override;
+    array<int32_t> GetSupportedIsoRange() override;
+    double GetFocusDistance() override;
+    void SetFocusDistance(double distance) override;
+    bool IsFocusDistanceSupported() override;
+    int32_t GetExposureDuration() override;
+    array<int32_t> GetSupportedExposureDurationRange() override;
+    double GetExposureBiasStep() override;
+    void SetExposureDuration(int32_t exposure) override;
+    ExposureMeteringMode GetExposureMeteringMode() override;
+    void SetExposureMeteringMode(ExposureMeteringMode aeMeteringMode) override;
+    bool IsExposureMeteringModeSupported(ExposureMeteringMode aeMeteringMode) override;
+    array<PhysicalAperture> GetSupportedPhysicalApertures() override;
+    void SetPhysicalAperture(double aperture) override;
+    double GetPhysicalAperture() override;
+    array<double> GetRAWCaptureZoomRatioRange() override;
 protected:
     sptr<OHOS::CameraStandard::CaptureSession> videoSession_ = nullptr;
     std::shared_ptr<PressureCallbackListener> pressureCallback_ = nullptr;
@@ -58,6 +77,24 @@ protected:
             std::shared_ptr<uintptr_t> callback, bool isOnce) override;
     void UnregisterControlCenterEffectStatusCallbackListener(
         const std::string& eventName, std::shared_ptr<uintptr_t> callback) override;
+
+    void RegisterExposureInfoCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
+        bool isOnce) override;
+    void UnregisterExposureInfoCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback) override;
+    void RegisterFlashStateCallbackListener(const std::string& eventName, std::shared_ptr<uintptr_t> callback,
+        bool isOnce) override;
+    void UnregisterFlashStateCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback) override;
+    void RegisterIsoInfoCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback, bool isOnce) override;
+    void UnregisterIsoInfoCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback) override;
+        
+private:
+    std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;
+    std::shared_ptr<FlashStateCallbackListener> flashStateCallback_ = nullptr;
+    std::shared_ptr<IsoInfoSyncCallbackListener> isoInfoCallback_ = nullptr;
 };
 } // namespace Camera
 } // namespace Ani

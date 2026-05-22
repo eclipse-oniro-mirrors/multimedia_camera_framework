@@ -40,6 +40,7 @@ config("deferred_processing_service_idl_config") {
     "${target_gen_dir}",
     "${multimedia_camera_framework_path}/common/utils",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/deferred_proc_session",
   ]
 }
 

@@ -16,10 +16,17 @@
 #ifndef OHOS_UNIFIED_PIPELINE_AUDIO_CAPTURE_WRAP_H
 #define OHOS_UNIFIED_PIPELINE_AUDIO_CAPTURE_WRAP_H
 
+#include <atomic>
+#include <condition_variable>
+#include <functional>
 #include <memory>
 #include <mutex>
+#include <set>
+#include <vector>
 
+#include "camera_log.h"
 #include "audio_capturer.h"
+#include "audio_routing_manager.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -56,6 +63,12 @@ public:
     void AddBufferListener(std::weak_ptr<AudioCaptureBufferListener> bufferListener);
     void RemoveBufferListener(std::weak_ptr<AudioCaptureBufferListener> bufferListener);
 
+    int32_t GetPreferredInputDeviceForCapturerInfo(
+        std::vector<std::shared_ptr<AudioStandard::AudioDeviceDescriptor>> &desc);
+    int32_t SetPreferredInputDeviceChangeCallback(
+        const std::shared_ptr<AudioStandard::AudioPreferredInputDeviceChangeCallback> &callback);
+    void UnsetPreferredInputDeviceChangeCallback();
+
 private:
     enum class State : int32_t { STOPPED, STARTED };
 
@@ -83,6 +96,9 @@ private:
     std::mutex audioCapturerMutex_;
     std::shared_ptr<AudioStandard::AudioCapturer> audioCapturer_ = nullptr;
 
+    AudioStandard::AudioCapturerInfo capturerInfo_;
+    std::shared_ptr<AudioStandard::AudioPreferredInputDeviceChangeCallback> preferredInputDeviceChangeCallback_;
+
     std::atomic<bool> isCaptureAlive_ = true;
 
     std::mutex bufferListenerMutex_;
@@ -91,6 +107,35 @@ private:
 
     std::atomic<State> runningState_ = State::STOPPED;
     std::atomic<bool> isReadFirstFrame_ = false;
+};
+
+class MyPreferredInputDeviceChangeCallback : public AudioStandard::AudioPreferredInputDeviceChangeCallback {
+public:
+    explicit MyPreferredInputDeviceChangeCallback(std::shared_ptr<UnifiedPipelineAudioCaptureWrap> wrap,
+        std::function<void()> deviceChangeCallback = nullptr)
+        : wrapPtr_(wrap), deviceChangeCallback_(deviceChangeCallback)
+    {}
+
+    void OnPreferredInputDeviceUpdated(
+        const std::vector<std::shared_ptr<AudioStandard::AudioDeviceDescriptor>> &desc) override
+    {
+        auto wrap = wrapPtr_.lock();
+        CHECK_RETURN(wrap == nullptr);
+        if (deviceChangeCallback_ != nullptr) {
+            deviceChangeCallback_();
+        }
+        MEDIA_INFO_LOG("Preferred input device updated, size:%{public}zu", desc.size());
+        for (const auto &device : desc) {
+            CHECK_CONTINUE(device == nullptr);
+            MEDIA_INFO_LOG("Preferred input device type:%{public}d, role:%{public}d, networkId:%{public}s",
+                static_cast<int32_t>(device->deviceType_), static_cast<int32_t>(device->deviceRole_),
+                device->networkId_.c_str());
+        }
+    }
+
+private:
+    std::weak_ptr<UnifiedPipelineAudioCaptureWrap> wrapPtr_;
+    std::function<void()> deviceChangeCallback_;
 };
 
 } // namespace CameraStandard

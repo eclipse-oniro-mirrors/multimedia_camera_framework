@@ -44,6 +44,8 @@ public:
         NapiSendAsyncEvent(info, env_);
     };
 
+    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
+
 private:
     void NapiSendAsyncEvent(const InfoTp& info, napi_env env)
     {
@@ -61,6 +63,8 @@ private:
     }
     // need to implement
     void ToNapiFormat(const InfoTp& info) const;
+
+    bool isAsync_ = true;
 };
 
 } // namespace CameraStandard

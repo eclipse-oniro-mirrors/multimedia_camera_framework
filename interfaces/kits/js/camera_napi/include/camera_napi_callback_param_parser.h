@@ -24,6 +24,8 @@
 #include "js_native_api.h"
 #include "napi/native_api.h"
 
+#include "camera_log.h"
+
 namespace OHOS {
 namespace CameraStandard {
 
@@ -85,7 +87,7 @@ public:
                                            const std::string& eventName) : env_(env)
     {
         static const size_t CALLBACK_ARGS_MIN = 0;
-        static const size_t CALLBACK_ARGS_MAX = 1;
+        static const size_t CALLBACK_ARGS_MAX = ARGS_MAX_SIZE;
         napi_value thisVar;
         size_t paramSize = CALLBACK_ARGS_MAX;
 
@@ -103,18 +105,20 @@ public:
             return;
         }
 
-        if (paramSize == CALLBACK_ARGS_MIN) {
-            callbackName_ = eventName;
-            return;
+        if (paramSize > CALLBACK_ARGS_MIN) {
+            napi_valuetype valueNapiType = napi_undefined;
+            napi_typeof(env_, paramValue[paramSize - 1], &valueNapiType);
+            if (valueNapiType == napi_function) {
+                callbackFunction_ = paramValue[paramSize - 1];
+                if (paramSize > CALLBACK_ARGS_MIN + 1) {
+                    callbackFunctionParameters_ =
+                        std::vector<napi_value>(paramValue.begin(), paramValue.begin() + paramSize - 1);
+                }
+            } else {
+                callbackFunctionParameters_ =
+                    std::vector<napi_value>(paramValue.begin(), paramValue.begin() + paramSize);
+            }
         }
-
-        napi_valuetype valueNapiType = napi_undefined;
-        napi_typeof(env_, paramValue[ARGS_ZERO], &valueNapiType);
-        if (valueNapiType != napi_function) {
-            napiError = napi_status::napi_invalid_arg;
-            return;
-        }
-        callbackFunction_ = paramValue[ARGS_ZERO];
         callbackName_ = eventName;
     }
 

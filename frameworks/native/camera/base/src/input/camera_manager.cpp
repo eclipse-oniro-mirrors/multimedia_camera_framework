@@ -172,6 +172,7 @@ CameraManager::CameraManager()
     cameraMuteListenerManager_->SetCameraManager(this);
     foldStatusListenerManager_->SetCameraManager(this);
     controlCenterStatusListenerManager_->SetCameraManager(this);
+    cameraSpectrumListenerManager_->SetCameraManager(this);
 }
 
 CameraManager::~CameraManager()
@@ -3155,7 +3156,7 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
     int32_t mode = UNSET;
     vector<int32_t> formats = {};
     vector<int32_t> modePhotoFormats = {};
- 
+
     for (uint32_t i = 0; i < item.count; i++) {
         if (item.data.i32[i] != -1) {
             if (mode == UNSET) {
@@ -3176,7 +3177,7 @@ vector<CameraFormat> CameraManager::GetSupportPhotoFormat(const int32_t modeName
             formats.clear();
         }
     }
- 
+
     CHECK_RETURN_RET_ELOG(
         modePhotoFormats.empty(), photoFormats, "GetSupportPhotoFormat not support mode = %{public}d", modeName);
     for (auto &val : modePhotoFormats) {
@@ -3498,11 +3499,6 @@ bool CameraManager::IsControlCenterActive()
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false,
         "CameraManager::IsControlCenterActive serviceProxy is null");
     if (!GetIsControlCenterSupported()) {
-        if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
-            int32_t retCode = serviceProxy->EnableControlCenter(true, true);
-            CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false, "CameraManager::IsControlCenterActive failed");
-            return true;
-        }
         MEDIA_INFO_LOG("CameraManager::IsControlCenterActive control center not supported");
         return false;
     }
@@ -3940,7 +3936,7 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
         // LCOV_EXCL_START
         if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
             std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE && 
+                [](MetadataObjectType type) { return type != MetadataObjectType::FACE &&
                                                      type != MetadataObjectType::HUMAN_BODY; })) {
             MEDIA_INFO_LOG("MetadataObjectType not face or human_body,invalid");
             return CameraErrorCode::INVALID_ARGUMENT;
@@ -4099,6 +4095,85 @@ void CameraManager::SetPhotoFormats(const std::vector<CameraFormat>& photoFormat
 {
     std::lock_guard<std::mutex> lock(photoFormatsMutex_);
     photoFormats_ = photoFormats;
+}
+
+int32_t CameraManager::RegisterSpectrumListener(
+    SpectrumCallerInfo info, std::shared_ptr<CameraSpectrumInfoListener> listener)
+{
+    // LCOV_EXCL_START
+    MEDIA_INFO_LOG("CameraManager::RegisterSpectrumListener ENTER");
+    if ((!info.cameraId.empty()) && info.userId && listener) {
+        std::lock_guard<std::mutex> lock(spectrumMutex_);
+        bool isSuccess = cameraSpectrumListenerManager_->AddListener(listener);
+        CHECK_RETURN_RET_ELOG(
+            !isSuccess, CAMERA_UNKNOWN_ERROR, "CameraManager::RegisterSpectrumListener add listener failed");
+        if (cameraSpectrumListenerManager_->GetListenerCount() == 1) {
+            auto serviceProxy = GetServiceProxy();
+            CHECK_RETURN_RET_ELOG(serviceProxy == nullptr,
+                SERVICE_FATL_ERROR,
+                "CameraManager::RegisterSpectrumListener serviceProxy is null");
+            sptr<ICameraSpectrumInfoCallback> callback = cameraSpectrumListenerManager_;
+            auto ret = serviceProxy->SetSpectrumCallback(info, callback);
+            if (ret != CAMERA_OK) {
+                MEDIA_ERR_LOG("CameraManager::RegisterSpectrumListener server register failed");
+                return ret;
+            }
+        }
+        return CAMERA_OK;
+    }
+    MEDIA_ERR_LOG("CameraManager::RegisterSpectrumListener the parameters are invalid");
+    return CAMERA_INVALID_ARG;
+    // LCOV_EXCL_STOP
+}
+
+int32_t CameraManager::UnregisterSpectrumListener(
+    SpectrumCallerInfo info, std::shared_ptr<CameraSpectrumInfoListener> listener)
+{
+    // LCOV_EXCL_START
+    MEDIA_INFO_LOG("CameraManager::UnRegisterSpectrumListener enter");
+    if ((!info.cameraId.empty()) && info.userId && listener) {
+        std::lock_guard<std::mutex> lock(spectrumMutex_);
+        cameraSpectrumListenerManager_->RemoveListener(listener);
+        auto serviceProxy = GetServiceProxy();
+        CHECK_RETURN_RET_ELOG(serviceProxy == nullptr,
+            SERVICE_FATL_ERROR,
+            "CameraManager::UnregisterSpectrumListener serviceProxy is null");
+        auto ret = serviceProxy->UnsetSpectrumCallback(info);
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("CameraManager::UnRegisterSpectrumListener server register failed");
+            return ret;
+        } else {
+            return CAMERA_OK;
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraManager::UnRegisterSpectrumListener the parameters are invalid");
+        return CAMERA_INVALID_ARG;
+    }
+    // LCOV_EXCL_STOP
+}
+
+int32_t CameraSpectrumListenerManager::OnCameraSpectrumInfo(
+    int32_t userId, const std::vector<float> &spectrumInfos, uint64_t timestamp)
+{
+    // LCOV_EXCL_START
+    MEDIA_DEBUG_LOG("CameraSpectrumListenerManager::OnCameraSpectrumInfo enter");
+    auto cameraManager = GetCameraManager();
+    CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_OK, "CameraManager is nullptr.");
+    auto listenerManager = cameraManager->GetCameraSpectrumListenerManager();
+    CHECK_RETURN_RET_ELOG(listenerManager == nullptr,
+        CAMERA_OK,
+        "CameraSpectrumListenerManager::OnCameraSpectrumInfo listenerManager is nullptr.");
+    MEDIA_DEBUG_LOG("CameraSpectrumListener size %{public}zu", listenerManager->GetListenerCount());
+    listenerManager->TriggerListener(
+        [&](auto listener) { listener->OnCameraSpectrumInfo(userId, spectrumInfos, timestamp); });
+    return CAMERA_OK;
+    // LCOV_EXCL_STOP
+}
+
+sptr<CameraSpectrumListenerManager> CameraManager::GetCameraSpectrumListenerManager()
+{
+    std::lock_guard<std::mutex> lock(spectrumMutex_);
+    return cameraSpectrumListenerManager_;
 }
 
 } // namespace CameraStandard

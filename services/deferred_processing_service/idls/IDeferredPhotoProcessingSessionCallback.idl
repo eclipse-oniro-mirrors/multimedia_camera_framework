@@ -18,6 +18,7 @@ import DeferredProcessingTypes;
 sequenceable IpcFileDescriptor..OHOS.IPCFileDescriptor;
 sequenceable PictureInterface..OHOS.CameraStandard.PictureIntf;
 sequenceable DpsMetadataInfo..OHOS.CameraStandard.DpsMetadata;
+sequenceable DeferredType..OHOS.CameraStandard.ImageFd;
 option_parcel_hooks on;
 
 [callback] interface IDeferredPhotoProcessingSessionCallback{
@@ -26,4 +27,6 @@ option_parcel_hooks on;
   [ipccode 2, oneway] void OnStateChanged([in] StatusCode status);
   [ipccode 3] void OnDeliveryLowQualityImage([in] String imageId, [in] sharedptr<PictureIntf> picture);
   [ipccode 4, oneway] void OnProcessImageDone([in] String imageId, [in] sharedptr<PictureIntf> picture, [in] DpsMetadata dpsMetaData);
+  [ipccode 5] void OnDeliveryLowQualityLcd([in] String imageId, [in] sharedptr<PictureIntf> picture);
+  [ipccode 6, oneway] void OnProcessImageDone([in] String imageId, [in] ImageFd []imageFds, [in] sharedptr<PictureIntf> lcdImage, [in] DpsMetadata dpsMetaData);
 }

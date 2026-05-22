@@ -141,7 +141,7 @@ napi_value VideoSessionForSysNapi::VideoSessionForSysNapiConstructor(napi_env en
 }
 
 void VideoSessionForSysNapi::RegisterFocusTrackingInfoCallbackListener(const std::string& eventName,
-    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_DEBUG_LOG("%{public}s is called", __FUNCTION__);
     CHECK_RETURN_ELOG(videoSessionForSys_ == nullptr, "%{public}s videoSession is nullptr!", __FUNCTION__);
@@ -204,8 +204,8 @@ void FocusTrackingCallbackListener::OnFocusTrackingInfoCallback(FocusTrackingInf
     ExecuteCallback("focusTrackingInfoAvailable", callbackNapiPara);
 }
 
-void VideoSessionForSysNapi::RegisterLightStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void VideoSessionForSysNapi::RegisterLightStatusCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("VideoSessionForSysNapi::RegisterLightStatusCallbackListener called");
     if (lightStatusCallback_ == nullptr) {
@@ -319,8 +319,8 @@ void HighFrameRateZoomInfoListener::OnZoomInfoChange(const std::vector<float> zo
     OnHighFrameRateZoomInfoChangeAsync(zoomRatioRange);
 }
 
-void VideoSessionForSysNapi::RegisterZoomInfoCbListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void VideoSessionForSysNapi::RegisterZoomInfoCbListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("VideoSessionForSysNapi::RegisterZoomInfoCbListener is called");
     if (zoomInfoListener_ == nullptr) {
@@ -347,14 +347,15 @@ void VideoSessionForSysNapi::UnregisterZoomInfoCbListener(
     }
 }
 
-void VideoSessionForSysNapi::RegisterPressureStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void VideoSessionForSysNapi::RegisterPressureStatusCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("VideoSessionForSysNapi::RegisterPressureStatusCallbackListener");
     if (pressureCallback_ == nullptr) {
         pressureCallback_ = std::make_shared<PressureCallbackListener>(env);
         videoSessionForSys_->SetPressureCallback(pressureCallback_);
     }
+    pressureCallback_->SetIsAsync(isAsync);
     pressureCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
@@ -417,8 +418,8 @@ napi_value VideoSessionForSysNapi::EnableExternalCameraLensBoost(napi_env env, n
     return result;
 }
 
-void VideoSessionForSysNapi::RegisterCameraSwitchRequestCallbackListener(
-    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args, bool isOnce)
+void VideoSessionForSysNapi::RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
+    napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("VideoSessionForSysNapi::RegisterCameraSwitchRequestCallbackListener");
     if (cameraSwitchSessionNapiCallback_ == nullptr) {

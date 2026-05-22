@@ -215,7 +215,11 @@ public:
     int SetListenerObject(const sptr<IRemoteObject>& object) override;
     int32_t SetCameraSharedStatusCallback(const sptr<ICameraSharedServiceCallback>& callback) override;
     int32_t UnSetCameraSharedStatusCallback() override;
-
+    int32_t SetSpectrumCallback(
+        const SpectrumCallerInfo &info, const sptr<ICameraSpectrumInfoCallback> &callbackFunc) override;
+    int32_t UnsetSpectrumCallback(const SpectrumCallerInfo &info) override;
+    bool CheckSpectrumAbility(std::string cameraId);
+    sptr<HCaptureSession> GetSessionByCameraId(std::string cameraId);
     CameraServiceStatus GetServiceStatus();
     void SetServiceStatus(CameraServiceStatus);
     // HCameraHostManager::StatusCallback
@@ -304,6 +308,7 @@ private:
     void ClientDied(pid_t pid);
     void InitParameters();
     int32_t GetSupportedAbilities(const uint32_t& tagId, const uint8_t& tagType, std::vector<std::string>& abilities);
+    void SetControlCenterInVideo(sptr<HCaptureSession>& captureSession);
     sptr<HCaptureSession> videoSessionForControlCenter_;
     bool deviceControlCenterAbility_ = false;
 
@@ -425,6 +430,7 @@ private:
     mutex videoSessionMutex_;
     mutex usePhysicalCameraOrientationMutex_;
     mutex cameraSharedStatusMutex_;
+    mutex cameraSpectrumMutex_;
     recursive_mutex torchCbMutex_;
     recursive_mutex foldCbMutex_;
     TorchStatus torchStatus_ = TorchStatus::TORCH_STATUS_UNAVAILABLE;
@@ -439,6 +445,7 @@ private:
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     map<uint32_t, sptr<IControlCenterStatusCallback>> controlcenterCallbacks_;
     map<uint32_t, sptr<ICameraSharedServiceCallback>> cameraSharedServiceCallbacks_;
+    map<uint32_t, sptr<ICameraSpectrumInfoCallback>> cameraSpectrumInfoCallbacks_;
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 
     void CacheCameraStatus(const string& cameraId, std::shared_ptr<CameraStatusCallbacksInfo> info);

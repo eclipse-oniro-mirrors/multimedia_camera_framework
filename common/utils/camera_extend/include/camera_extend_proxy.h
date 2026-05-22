@@ -29,7 +29,7 @@ namespace CameraStandard {
 class CameraExtendProxy : public CameraExtendIntf {
 public:
     explicit CameraExtendProxy(
-        std::shared_ptr<Dynamiclib> hCameraServiceHmsLib, std::shared_ptr<CameraExtendIntf> hCameraServiceHmsIntf);
+        std::shared_ptr<Dynamiclib> cameraExtendLib, std::shared_ptr<CameraExtendIntf> cameraExtendIntf);
     ~CameraExtendProxy() override;
     static std::shared_ptr<CameraExtendProxy> CreateCameraExtendProxy();
     static void FreeHCameraServiceHmsDynamiclib();
@@ -43,4 +43,4 @@ private:
 };
 }
 }
-#endif  // CAMERA_EXTEND_PROXY_H
+#endif  // CAMERA_EXTEND_PROXY_H

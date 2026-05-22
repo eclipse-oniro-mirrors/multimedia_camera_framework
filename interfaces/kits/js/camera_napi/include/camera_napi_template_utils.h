@@ -90,7 +90,28 @@ public:
         }
         MEDIA_DEBUG_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
         CHECK_RETURN_RET_ELOG(targetInstance == nullptr, nullptr, "On: targetInstance is nullptr");
-        return targetInstance->RegisterCallback(env, jsCallbackParamParser, false);
+        return targetInstance->RegisterCallback(env, jsCallbackParamParser, false, true);
+    }
+
+    static napi_value OnSync(napi_env env, napi_callback_info info, const std::string& eventName)
+    {
+        MEDIA_DEBUG_LOG("OnSync is called");
+        CAMERA_SYNC_TRACE;
+
+        T* targetInstance = nullptr;
+        CameraNapiCallbackParamParser jsCallbackParamParser(env, info, targetInstance, eventName);
+        if (!jsCallbackParamParser.AssertStatus(INVALID_ARGUMENT, "invalid argument")) {
+            MEDIA_ERR_LOG("OnSync get invalid argument");
+            return nullptr;
+        }
+        if (jsCallbackParamParser.GetCallbackFunction() == nullptr) {
+            MEDIA_ERR_LOG("OnSync GetCallbackFunction failed");
+            napi_throw_error(env, std::to_string(INVALID_ARGUMENT).c_str(), "callback invalid argument");
+            return nullptr;
+        }
+        MEDIA_DEBUG_LOG("OnSync eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
+        CHECK_RETURN_RET_ELOG(targetInstance == nullptr, nullptr, "OnSync: targetInstance is nullptr");
+        return targetInstance->RegisterCallback(env, jsCallbackParamParser, false, false);
     }
 
     static napi_value On(napi_env env, napi_callback_info info, const std::string& eventName)
@@ -110,7 +131,7 @@ public:
         }
         MEDIA_DEBUG_LOG("On eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
         CHECK_RETURN_RET_ELOG(targetInstance == nullptr, nullptr, "On: targetInstance is nullptr");
-        return targetInstance->RegisterCallback(env, jsCallbackParamParser, false);
+        return targetInstance->RegisterCallback(env, jsCallbackParamParser, false, true);
     }
 
     static napi_value Once(napi_env env, napi_callback_info info)
@@ -129,7 +150,7 @@ public:
         }
         MEDIA_INFO_LOG("Once eventType: %{public}s", jsCallbackParamParser.GetCallbackName().c_str());
         CHECK_RETURN_RET_ELOG(targetInstance == nullptr, nullptr, "Once: targetInstance is nullptr");
-        return targetInstance->RegisterCallback(env, jsCallbackParamParser, true);
+        return targetInstance->RegisterCallback(env, jsCallbackParamParser, true, true);
     }
 
     static napi_value Off(napi_env env, napi_callback_info info)

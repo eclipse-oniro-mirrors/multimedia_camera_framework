@@ -83,11 +83,11 @@ private:
     static napi_value GetDoubleProperty(napi_env env, napi_value param, const std::string& propertyName,
         double& propertyValue);
     void RegisterSlowMotionStateCb(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterSlowMotionStateCb(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterZoomInfoCbListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterZoomInfoCbListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };

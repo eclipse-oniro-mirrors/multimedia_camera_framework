@@ -120,19 +120,19 @@ public:
 
 protected:
     void RegisterAbilityChangeCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterAbilityChangeCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterIsoInfoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterApertureInfoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterLuminationInfoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };

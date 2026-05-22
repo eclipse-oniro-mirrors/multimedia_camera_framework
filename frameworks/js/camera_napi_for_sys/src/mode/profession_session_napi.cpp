@@ -764,8 +764,8 @@ napi_value ProfessionSessionNapi::SetExposureHintMode(napi_env env, napi_callbac
     return result;
 }
 
-void ProfessionSessionNapi::RegisterAbilityChangeCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void ProfessionSessionNapi::RegisterAbilityChangeCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (abilityCallback_ == nullptr) {
         abilityCallback_ = std::make_shared<AbilityCallbackListener>(env);
@@ -784,8 +784,8 @@ void ProfessionSessionNapi::UnregisterAbilityChangeCallbackListener(
     }
 }
 
-void ProfessionSessionNapi::RegisterIsoInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void ProfessionSessionNapi::RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (isoInfoCallback_ == nullptr) {
         isoInfoCallback_ = std::make_shared<IsoInfoCallbackListener>(env);
@@ -804,8 +804,8 @@ void ProfessionSessionNapi::UnregisterIsoInfoCallbackListener(
     }
 }
 
-void ProfessionSessionNapi::RegisterApertureInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void ProfessionSessionNapi::RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (apertureInfoCallback_ == nullptr) {
         apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
@@ -824,8 +824,8 @@ void ProfessionSessionNapi::UnregisterApertureInfoCallbackListener(
     }
 }
 
-void ProfessionSessionNapi::RegisterLuminationInfoCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void ProfessionSessionNapi::RegisterLuminationInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (luminationInfoCallback_ == nullptr) {
         ExposureHintMode mode = EXPOSURE_HINT_MODE_ON;

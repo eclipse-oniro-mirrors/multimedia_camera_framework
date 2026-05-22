@@ -41,17 +41,25 @@ public:
     static thread_local napi_ref sConstructor_;
 protected:
     void RegisterPressureStatusCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce) override;
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterPressureStatusCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterControlCenterEffectStatusCallbackListener(const std::string& eventName, napi_env env,
-        napi_value callback, const std::vector<napi_value>& args, bool isOnce) override;
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterControlCenterEffectStatusCallbackListener(const std::string& eventName, napi_env env,
         napi_value callback, const std::vector<napi_value>& args) override;
     void RegisterCameraSwitchRequestCallbackListener(const std::string &eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value> &args, bool isOnce) override;
+        const std::vector<napi_value> &args, bool isOnce, bool isAsync = true) override;
     void UnregisterCameraSwitchRequestCallbackListener(
         const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
+    void RegisterFlashStateChangeCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
+    void UnregisterFlashStateChangeCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterExposureInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
+    void UnregisterExposureInfoCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
 }
 }

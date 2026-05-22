@@ -50,7 +50,7 @@ private:
 };
 
 class VideoSessionForSysImpl : public VideoSessionImpl, public ColorReservationImpl, public BeautyImpl,
-                               public ColorEffectImpl, public ApertureImpl, public EffectSuggestionImpl {
+                               public ColorEffectImpl, public EffectSuggestionImpl {
 public:
     explicit VideoSessionForSysImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : VideoSessionImpl(obj)
     {

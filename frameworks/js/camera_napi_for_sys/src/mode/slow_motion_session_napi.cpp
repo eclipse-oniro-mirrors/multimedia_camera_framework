@@ -293,8 +293,8 @@ napi_value SlowMotionSessionNapi::SetSlowMotionDetectionArea(napi_env env, napi_
     return result;
 }
 
-void SlowMotionSessionNapi::RegisterSlowMotionStateCb(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void SlowMotionSessionNapi::RegisterSlowMotionStateCb(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("RegisterSlowMotionStateCb is called");
     if (slowMotionStateListener_ == nullptr) {
@@ -321,8 +321,8 @@ void SlowMotionSessionNapi::UnregisterSlowMotionStateCb(
     }
 }
 
-void SlowMotionSessionNapi::RegisterZoomInfoCbListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void SlowMotionSessionNapi::RegisterZoomInfoCbListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("RegisterZoomInfoCbListener is called");
     if (zoomInfoListener_ == nullptr) {

@@ -81,7 +81,8 @@
               "memmgr",
               "e2fsprogs",
               "libxml2",
-              "openssl"
+              "openssl",
+              "icu"
             ]
         },
         "build": {
@@ -166,16 +167,6 @@
               }
             },
             {
-              "type": "none",
-              "name": "//foundation/multimedia/camera_framework/common:camera_utils",
-              "header": {
-                "header_base": "//foundation/multimedia/camera_framework/common/utils",
-                "header_files": [
-                  "camera_extend/include/camera_extend_interface.h"
-                ]
-              }
-            },
-            {
               "type": "so",
               "name": "//foundation/multimedia/camera_framework/frameworks/native/camera/extension:camera_framework_ex",
               "header": {
@@ -201,6 +192,16 @@
               "header": {
                 "header_base": "//foundation/multimedia/camera_framework/frameworks/cj/camera_picker/include",
                 "header_files": []
+              }
+            },
+            {
+              "type": "none",
+              "name": "//foundation/multimedia/camera_framework/common:camera_utils",
+              "header": {
+                "header_base": "//foundation/multimedia/camera_framework/common",
+                "header_files": [
+                  "utils/camera_extend/include/camera_extend_interface.h"
+                ]
               }
             },
             {

@@ -210,6 +210,9 @@ void PreviewOutputCallback::UpdateJSCallback(PreviewOutputEventType eventType, c
             "PreviewOutputCallback::UpdateJSCallback, event type is invalid %d", static_cast<int32_t>(eventType));
         return;
     }
+    bool isAsync = true;
+    auto it = isAsyncMap_.find(eventName);
+    CHECK_EXECUTE(it != isAsyncMap_.end(), isAsync = it->second);
     int32_t nonConstValue = value;
     ExecuteCallbackScopeSafe(eventName, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
@@ -219,7 +222,7 @@ void PreviewOutputCallback::UpdateJSCallback(PreviewOutputEventType eventType, c
             errCode = errObj.CreateNapiObjFromMap(env_);
         }
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    });
+    }, isAsync);
 }
 
 PreviewOutputNapi::PreviewOutputNapi() : env_(nullptr) {}
@@ -691,27 +694,30 @@ napi_value PreviewOutputNapi::Stop(napi_env env, napi_callback_info info)
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
-void PreviewOutputNapi::RegisterFrameStartCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PreviewOutputNapi::RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterFrameStartCallbackListener listener is null");
+    listener->SetIsAsyncMap(eventName, isAsync);
     previewOutput_->SetCallback(listener);
 }
 
-void PreviewOutputNapi::RegisterFrameEndCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PreviewOutputNapi::RegisterFrameEndCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterFrameEndCallbackListener listener is null");
+    listener->SetIsAsyncMap(eventName, isAsync);
     previewOutput_->SetCallback(listener);
 }
 
-void PreviewOutputNapi::RegisterErrorCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PreviewOutputNapi::RegisterErrorCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterErrorCallbackListener listener is null");
+    listener->SetIsAsyncMap(eventName, isAsync);
     previewOutput_->SetCallback(listener);
 }
 
@@ -726,8 +732,8 @@ void PreviewOutputNapi::UnregisterCommonCallbackListener(
     }
 }
 
-void PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
         MEDIA_ERR_LOG("SystemApi On sketchStatusChanged is called!");
@@ -736,6 +742,7 @@ void PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener(
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener listener is null");
+    listener->SetIsAsyncMap(eventName, isAsync);
     previewOutput_->SetCallback(listener);
     previewOutput_->OnNativeRegisterCallback(eventName);
 }
@@ -757,8 +764,8 @@ void PreviewOutputNapi::UnregisterSketchStatusChangedCallbackListener(
     }
 }
 
-void PreviewOutputNapi::RegisterFramePauseCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PreviewOutputNapi::RegisterFramePauseCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_DEBUG_LOG("PreviewOutputNapi::RegisterFramePauseCallbackListener is called");
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
@@ -767,6 +774,7 @@ void PreviewOutputNapi::RegisterFramePauseCallbackListener(
     }
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterFramePauseCallbackListener listener is null");
+    listener->SetIsAsyncMap(eventName, isAsync);
     previewOutput_->SetCallback(listener);
     previewOutput_->OnNativeRegisterCallback(eventName);
 }
@@ -787,8 +795,8 @@ void PreviewOutputNapi::UnregisterFramePauseCallbackListener(
     }
 }
 
-void PreviewOutputNapi::RegisterFrameResumeChangedCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PreviewOutputNapi::RegisterFrameResumeChangedCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_DEBUG_LOG("PreviewOutputNapi::RegisterFrameResumeChangedCallbackListener is called");
     if (!CameraNapiSecurity::CheckSystemApp(env)) {
@@ -798,6 +806,7 @@ void PreviewOutputNapi::RegisterFrameResumeChangedCallbackListener(
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(
         listener == nullptr, "PreviewOutputNapi::RegisterFrameResumeChangedCallbackListener listener is null");
+    listener->SetIsAsyncMap(eventName, isAsync);
     previewOutput_->SetCallback(listener);
     previewOutput_->OnNativeRegisterCallback(eventName);
 }
@@ -1190,6 +1199,90 @@ napi_value PreviewOutputNapi::Once(napi_env env, napi_callback_info info)
 napi_value PreviewOutputNapi::Off(napi_env env, napi_callback_info info)
 {
     return ListenerTemplate<PreviewOutputNapi>::Off(env, info);
+}
+
+napi_value PreviewOutputNapi::OnFrameStart(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OnFrameStart is called");
+    const std::string eventName = "frameStart";
+    return ListenerTemplate<PreviewOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OffFrameStart(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OffFrameStart is called");
+    const std::string eventName = "frameStart";
+    return ListenerTemplate<PreviewOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OnFrameEnd(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OnFrameEnd is called");
+    const std::string eventName = "frameEnd";
+    return ListenerTemplate<PreviewOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OffFrameEnd(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OffFrameEnd is called");
+    const std::string eventName = "frameEnd";
+    return ListenerTemplate<PreviewOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OnError(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OnError is called");
+    const std::string eventName = "error";
+    return ListenerTemplate<PreviewOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OffError(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OffError is called");
+    const std::string eventName = "error";
+    return ListenerTemplate<PreviewOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OnSketchStatusChanged(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OnSketchStatusChanged is called");
+    const std::string eventName = "sketchStatusChanged";
+    return ListenerTemplate<PreviewOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OffSketchStatusChanged(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OffSketchStatusChanged is called");
+    const std::string eventName = "sketchStatusChanged";
+    return ListenerTemplate<PreviewOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OnFramePause(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OnFramePause is called");
+    const std::string eventName = "framePause";
+    return ListenerTemplate<PreviewOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OffFramePause(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OffFramePause is called");
+    const std::string eventName = "framePause";
+    return ListenerTemplate<PreviewOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OnFrameResume(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OnFrameResume is called");
+    const std::string eventName = "frameResume";
+    return ListenerTemplate<PreviewOutputNapi>::OnSync(env, info, eventName);
+}
+
+napi_value PreviewOutputNapi::OffFrameResume(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("PreviewOutputNapi::OffFrameResume is called");
+    const std::string eventName = "frameResume";
+    return ListenerTemplate<PreviewOutputNapi>::Off(env, info, eventName);
 }
 
 extern "C" {

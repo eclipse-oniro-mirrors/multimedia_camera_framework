@@ -139,14 +139,15 @@ napi_value PhotoSessionForSysNapi::PhotoSessionForSysNapiConstructor(napi_env en
     return result;
 }
 
-void PhotoSessionForSysNapi::RegisterPressureStatusCallbackListener(
-    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce)
+void PhotoSessionForSysNapi::RegisterPressureStatusCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("PhotoSessionForSysNapi::RegisterPressureStatusCallbackListener");
     if (pressureCallback_ == nullptr) {
         pressureCallback_ = std::make_shared<PressureCallbackListener>(env);
         photoSessionForSys_->SetPressureCallback(pressureCallback_);
     }
+    pressureCallback_->SetIsAsync(isAsync);
     pressureCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
 
@@ -206,8 +207,8 @@ napi_value PhotoSessionForSysNapi::EnableExternalCameraLensBoost(napi_env env, n
     return result;
 }
 
-void PhotoSessionForSysNapi::RegisterCameraSwitchRequestCallbackListener(
-    const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args, bool isOnce)
+void PhotoSessionForSysNapi::RegisterCameraSwitchRequestCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("PhotoSessionForSysNapi::RegisterCameraSwitchRequestCallbackListener");
     if (cameraSwitchSessionNapiCallback_ == nullptr) {

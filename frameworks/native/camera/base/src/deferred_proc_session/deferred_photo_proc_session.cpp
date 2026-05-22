@@ -119,6 +119,32 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
     // LCOV_EXCL_STOP
 }
 
+int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string& imageId,
+    const std::vector<CameraStandard::ImageFd>& imageFds, const std::shared_ptr<CameraStandard::PictureIntf>& lcdImage,
+    const DpsMetadata& metadata)
+{
+    // wait for implementation
+    return 0;
+}
+
+int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityLcd(const std::string &imageId,
+    const std::shared_ptr<PictureIntf>& pictureIntf)
+{
+    // LCOV_EXCL_START
+    HILOG_COMM_INFO("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityLcd() is"
+        "called, status:%{public}s", imageId.c_str());
+    CHECK_PRINT_ILOG(pictureIntf != nullptr, "picture is not null");
+    bool isCallbackSet = deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr
+        && pictureIntf != nullptr;
+    if (isCallbackSet) {
+        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityLcd(imageId, pictureIntf);
+    } else {
+        HILOG_COMM_ERROR("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityLcd not set, Discard callback");
+    }
+    return 0;
+    // LCOV_EXCL_STOP
+}
+
 int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] uint32_t code,
     [[maybe_unused]] MessageParcel& data, [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
 {

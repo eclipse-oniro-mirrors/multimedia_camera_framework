@@ -63,12 +63,19 @@ public:
     ~OcclusionDetectCallbackListener() = default;
     void OnCameraOcclusionDetected(const uint8_t isCameraOcclusion,
                                    const uint8_t isCameraLensDirty) const override;
+
+    inline void SetIsAsync(bool isAsync)
+    {
+        isAsync_ = isAsync;
+    }
  
 private:
     void OnCameraOcclusionDetectedCallback(const uint8_t isCameraOcclusion,
                                            const uint8_t isCameraLensDirty) const;
     void OnCameraOcclusionDetectedCallbackAsync(const uint8_t isCameraOcclusion,
                                                 const uint8_t isCameraLensDirty) const;
+
+    bool isAsync_ = true;
 };
 
 struct CameraOcclusionDetectResult {
@@ -104,6 +111,8 @@ public:
     static napi_value IsPhysicalCameraOrientationVariable(napi_env env, napi_callback_info info);
     static napi_value GetPhysicalCameraOrientation(napi_env env, napi_callback_info info);
     static napi_value UsePhysicalCameraOrientation(napi_env env, napi_callback_info info);
+    static napi_value OnError(napi_env env, napi_callback_info info);
+    static napi_value OffError(napi_env env, napi_callback_info info);
     static napi_value OnCameraOcclusionDetection(napi_env env, napi_callback_info info);
     static napi_value OffCameraOcclusionDetection(napi_env env, napi_callback_info info);
 
@@ -117,11 +126,11 @@ private:
     static napi_value CameraInputNapiConstructor(napi_env env, napi_callback_info info);
 
     void RegisterErrorCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterErrorCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     void RegisterOcclusionDetectCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
-        const std::vector<napi_value>& args, bool isOnce);
+        const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterOcclusionDetectCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args);
     static void OpenCameraAsync(uv_work_t* work);

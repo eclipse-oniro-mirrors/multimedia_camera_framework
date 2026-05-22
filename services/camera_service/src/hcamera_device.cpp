@@ -569,6 +569,7 @@ int32_t HCameraDevice::Close()
 #endif
     }
     int32_t result = CloseDevice();
+    SetConcurrentCaptureTag(false);
     return result;
 }
 
@@ -930,9 +931,12 @@ int32_t HCameraDevice::CloseDevice()
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     CHECK_EXECUTE(isFoldable, UnregisterDisplayModeListener());
     std::string cameraId = GetCameraId();
-    if (GetScanScene() && !(cameraId.empty() || cameraId.size() > DISTRIBUTED_CAMERA_ID_LENGTH)) {
-        UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
-        HCameraDeviceManager::GetInstance()->SetScanSceneBundle("");
+    if ((!cameraId.empty()) && (cameraId.size() < DISTRIBUTED_CAMERA_ID_LENGTH)) {
+        SetConcurrentCaptureTag(false);
+        if (GetScanScene()) {
+            UpdateScanSceneMetadata(OHOS_CAMERA_PREVIEW_QUALITY_PRIORITIZATION_HIGH_QUALITY);
+            HCameraDeviceManager::GetInstance()->SetScanSceneBundle("");
+        }
     }
     {
         std::lock_guard<std::mutex> lock(opMutex_);
@@ -1295,7 +1299,8 @@ bool HCameraDevice::IsPhysicalCameraOrientationVariable()
     auto ability = GetDeviceAbility();
     CHECK_RETURN_RET(ability == nullptr, false);
     int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, 0, "HCameraDevice::GetSensorOrientation failed");
+    CHECK_RETURN_RET_ILOG(ret != CAM_META_SUCCESS, 0,
+        "HCameraDevice::IsPhysicalCameraOrientationVariable not support variable orientation");
     isVariable =  item.count > 0 && item.data.u8[0];
     bool isNaturalDirectionCorrect = false;
     GetNaturalDirectionCorrect(isNaturalDirectionCorrect);
@@ -1900,6 +1905,10 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     if (callback != nullptr) {
         callback->OnResult(timestamp, cameraResult);
     }
+    auto spectrumInfoCallback = GetSpectrumCallback();
+        if (spectrumInfoCallback != nullptr) {
+            OnSpectrumInfoChange(cameraResult, timestamp);
+        }
     ReportDeviceProtectionStatus(cameraResult);
     if (IsCameraDebugOn()) {
         CheckOnResultData(cameraResult);
@@ -2135,6 +2144,10 @@ int32_t HCameraDevice::Open(int32_t concurrentType)
     SetCameraConcurrentType(concurrentType);
     EnableDeviceOpenedByConcurrent(true);
     int32_t result = OpenDevice();
+    std::string cameraId = GetCameraId();
+    if (result == CAMERA_OK && ((!cameraId.empty()) && (cameraId.size() < DISTRIBUTED_CAMERA_ID_LENGTH))) {
+        SetConcurrentCaptureTag(true);
+    }
     return result;
 }
 
@@ -2311,6 +2324,67 @@ void HCameraDevice::UpdateScanSceneMetadata(uint32_t previewQuality)
 int32_t HCameraDevice::GetPid()
 {
     return cameraPid_;
+}
+
+void HCameraDevice::SetConcurrentCaptureTag(bool flag)   // ture 开启多摄同开拍照，false关闭
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::SetConcurrentCaptureTag ENTER");
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    int32_t count = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    CHECK_RETURN_ELOG(changedMetadata == nullptr, "changedMetadata is nullptr");
+    bool status = AddOrUpdateMetadata(
+        changedMetadata, OHOS_CONTROL_CAMERA_CONCURRENT_CAPTURE, &flag, count);
+    CHECK_RETURN_ELOG(!status, "AddOrUpdateMetadata camera concurrent capture Failed");
+    int32_t ret = UpdateSetting(changedMetadata);
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "UpdateSetting camera concurrent capture Failed");
+    return;
+}
+
+void HCameraDevice::OnSpectrumInfoChange(
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability, const uint64_t timestamp)
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::SetSpectrumInfoChange ENTER");
+    camera_metadata_item_t item;
+    int32_t ret =
+        OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_SPECTRUM_INFOS, &item);
+    CHECK_RETURN_ELOG(ret != CAM_META_SUCCESS, "HCameraDevice::OnSpectrumInfoChange not find spectrum tag");
+    std::vector<float> spectrumInfo;
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
+        spectrumInfo.reserve(item.count);
+        for (uint32_t i = 0; i < item.count; i++) {
+            spectrumInfo.emplace_back(static_cast<float>(item.data.f[i]));
+        }
+        MEDIA_DEBUG_LOG("HCameraDevice::OnSpectrumInfoChange, spectrumInfo size: %{public}zu",
+            spectrumInfo.size());
+    } else {
+        MEDIA_DEBUG_LOG("HCameraDevice::OnSpectrumInfoChange the spectrum data is null");
+    }
+    if (spectrumInfo.size() > 0) {
+        spectrumInfoCallback_->OnCameraSpectrumInfo(userId_, spectrumInfo, timestamp);
+    }
+}
+
+void HCameraDevice::SetSpectrumCallback(int32_t userId, sptr<ICameraSpectrumInfoCallback> callback)
+{
+    if (callback && userId) {
+        spectrumInfoCallback_ = callback;
+        userId_ = userId;
+    }
+}
+
+void HCameraDevice::UnsetSpectrumCallback()
+{
+    if (spectrumInfoCallback_ != nullptr) {
+        spectrumInfoCallback_ = nullptr;
+    }
+}
+
+sptr<ICameraSpectrumInfoCallback> HCameraDevice::GetSpectrumCallback()
+{
+    return spectrumInfoCallback_;
 }
 } // namespace CameraStandard
 } // namespace OHOS
