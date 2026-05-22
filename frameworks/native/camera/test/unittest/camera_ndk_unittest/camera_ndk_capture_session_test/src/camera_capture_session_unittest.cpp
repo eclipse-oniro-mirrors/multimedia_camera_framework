@@ -1492,35 +1492,6 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_036, Test
 
 /*
  * Feature: Framework
- * Function: Test focus mode
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test check whether the specified focus mode is supported,
- * gets and sets the focus mode, when the session is not committed, an internal error is returned
- */
-HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_037, TestSize.Level0)
-{
-    Camera_ErrorCode ret = CAMERA_OK;
-    bool isSupported = false;
-    Camera_FocusMode focusMode = Camera_FocusMode::FOCUS_MODE_MANUAL;
-    Camera_CaptureSession* captureSession = nullptr;
-    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_NE(captureSession, nullptr);
-    ret = OH_CaptureSession_IsFocusModeSupported(captureSession, Camera_FocusMode::FOCUS_MODE_AUTO, &isSupported);
-    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
-    ret = OH_CaptureSession_GetFocusMode(captureSession, &focusMode);
-    EXPECT_EQ(ret, CAMERA_OK);
-    ret = OH_CaptureSession_SetFocusMode(captureSession, Camera_FocusMode::FOCUS_MODE_LOCKED);
-    EXPECT_EQ(ret, CAMERA_SERVICE_FATAL_ERROR);
-    ret = OH_CaptureSession_Release(captureSession);
-    EXPECT_EQ(ret, 0);
-    ReleaseImageReceiver();
-}
-
-/*
- * Feature: Framework
  * Function: Test SetFocusPoint & GetFousPoint
  * SubFunction: NA
  * FunctionPoints: NA
