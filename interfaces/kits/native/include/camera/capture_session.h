@@ -1557,7 +1557,7 @@ bool OH_CaptureSession_IsLockFocusTrackingSupported(const Camera_CaptureSession*
  
 /**
  * @brief Lock focus tracking, can be unlocked by {@link OH_CaptureSession_UnlockFocusTracking}.
- * 
+ *
  * @param session Pointer to the {@link Camera_CaptureSession} instance.
  * @param focusPoint Pointer to the lock focus tracking point.
  * @return <ul>
