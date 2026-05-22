@@ -21,6 +21,7 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
+#include "icamera_util.h"
 #include "icapture_session_callback.h"
 
 using namespace std;
@@ -1747,4 +1748,34 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterExposureStateCallback(
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->SetExposureCallback(nullptr);
     return CAMERA_OK;
+}
+
+bool Camera_CaptureSession::IsLockFocusTrackingSupported() const
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::IsLockFocusTrackingSupported");
+    return innerCaptureSession_->IsLockFocusTrackingSupported();
+}
+ 
+Camera_ErrorCode Camera_CaptureSession::LockFocusTracking(Camera_Point focusPoint) const
+{
+    Point innerFocusPoint;
+    innerFocusPoint.x = focusPoint.x;
+    innerFocusPoint.y = focusPoint.y;
+ 
+    MEDIA_INFO_LOG("Camera_CaptureSession::LockFocusTracking");
+    int32_t ret = CameraErrorCode::SUCCESS;
+    innerCaptureSession_->LockForControl();
+    ret = innerCaptureSession_->LockFocusTracking(innerFocusPoint);
+    innerCaptureSession_->UnlockForControl();
+    return FrameworkToNdkCameraError(ret);
+}
+ 
+Camera_ErrorCode Camera_CaptureSession::UnlockFocusTracking() const
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::UnlockFocusTracking");
+    int32_t ret = CameraErrorCode::SUCCESS;
+    innerCaptureSession_->LockForControl();
+    ret = innerCaptureSession_->UnlockFocusTracking();
+    innerCaptureSession_->UnlockForControl();
+    return FrameworkToNdkCameraError(ret);
 }

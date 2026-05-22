@@ -162,11 +162,12 @@ void MechSessionCallbackImpl::PrintFocusTrackingInfo(FocusTrackingMetaInfo& info
         auto box = metadataObject->GetBoundingBox();
         int32_t objectId = metadataObject->GetObjectId();
         int32_t confidence = metadataObject->GetConfidence();
+        bool isTracking = metadataObject->IsLockFocusTracked();
         MEDIA_INFO_LOG("OnFocusTrackingInfo detectedObject type:%{public}d, "
             "boundingBox:[%{public}f, %{public}f, %{public}f, %{public}f], "
-            "objectId:%{public}d, confidence:%{public}d",
+            "objectId:%{public}d, confidence:%{public}d, isTracking: %{public}d.",
             type, box.topLeftX, box.topLeftY,
-            box.width, box.height, objectId, confidence);
+            box.width, box.height, objectId, confidence, isTracking);
     }
 }
 

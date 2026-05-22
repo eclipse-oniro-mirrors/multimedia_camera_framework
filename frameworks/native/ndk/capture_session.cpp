@@ -1221,6 +1221,39 @@ Camera_ErrorCode OH_CaptureSession_DeleteZoomPointInfo(const Camera_CaptureSessi
     return CAMERA_OK;
 }
 
+bool OH_CaptureSession_IsLockFocusTrackingSupported(const Camera_CaptureSession* session)
+{
+    MEDIA_INFO_LOG("OH_CaptureSession_IsLockFocusTrackingSupported is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, false,
+                          "Invalid argument, session is null!");
+ 
+    bool isSupported = session->IsLockFocusTrackingSupported();
+    MEDIA_DEBUG_LOG("isFocusTrackingSupported: %{public}d", isSupported);
+    return isSupported;
+}
+
+Camera_ErrorCode OH_CaptureSession_LockFocusTracking(Camera_CaptureSession* session, Camera_Point focusPoint)
+{
+    MEDIA_INFO_LOG("OH_CaptureSession_lockFocusTracking is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+                          "Invalid argument, session is null!");
+ 
+    bool isSupported = session->LockFocusTracking(focusPoint);
+    MEDIA_DEBUG_LOG("isFocusTrackingSupported: %{public}d", isSupported);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_UnlockFocusTracking(Camera_CaptureSession* session)
+{
+    MEDIA_INFO_LOG("OH_CaptureSession_unlockFocusTracking is called");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
+                          "Invalid argument, session is null!");
+ 
+    bool isSupported = session->UnlockFocusTracking();
+    MEDIA_DEBUG_LOG("isFocusTrackingSupported: %{public}d", isSupported);
+    return CAMERA_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif

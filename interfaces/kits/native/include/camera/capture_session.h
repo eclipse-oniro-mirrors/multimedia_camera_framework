@@ -1546,6 +1546,44 @@ Camera_ErrorCode OH_CaptureSession_GetZoomPointInfos(const Camera_CaptureSession
 Camera_ErrorCode OH_CaptureSession_DeleteZoomPointInfos(const Camera_CaptureSession* session,
     OH_Camera_ZoomPointInfo* zoomPointInfo);
 
+/**
+ * @brief Checks whether the lock focus tracking is supported.
+ *
+ * @param session Pointer to the {@link Camera_CaptureSession} instance.
+ * @return **true** if supported, **false** otherwise.
+ * @since 26.0.0
+ */
+bool OH_CaptureSession_IsLockFocusTrackingSupported(const Camera_CaptureSession* session);
+ 
+/**
+ * @brief Lock focus tracking, can be unlocked by {@link OH_CaptureSession_UnlockFocusTracking}.
+ * 
+ * @param session Pointer to the {@link Camera_CaptureSession} instance.
+ * @param focusPoint Pointer to the lock focus tracking point.
+ * @return <ul>
+ *         <li>{@link CAMERA_OK} The operation is successful.</li>
+ *         <li>{@link CAMERA_INVALID_ARGUMENT} A parameter is missing or the parameter type is incorrect.</li>
+ *         <li>{@link CAMERA_SESSION_NOT_CONFIG} The capture session is not configured.</li>
+ *         <li>{@link CAMERA_SERVICE_FATAL_ERROR} The camera service is abnormal.</li>
+ *         </ul>
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_CaptureSession_LockFocusTracking(Camera_CaptureSession* session, Camera_Point focusPoint);
+ 
+/**
+ * @brief Unlock focus tracking.
+ *
+ * @param session Pointer to the {@link Camera_CaptureSession} instance.
+ * @return <ul>
+ *         <li>{@link CAMERA_OK} The operation is successful.</li>
+ *         <li>{@link CAMERA_INVALID_ARGUMENT} A parameter is missing or the parameter type is incorrect.</li>
+ *         <li>{@link CAMERA_SESSION_NOT_CONFIG} The capture session is not configured.</li>
+ *         <li>{@link CAMERA_SERVICE_FATAL_ERROR} The camera service is abnormal.</li>
+ *         </ul>
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_CaptureSession_UnlockFocusTracking(Camera_CaptureSession* session);
+
 #ifdef __cplusplus
 }
 #endif

@@ -92,6 +92,8 @@ public:
     static Rect ProcessRectBox(int32_t offsetTopLeftX, int32_t offsetTopLeftY,
         int32_t offsetBottomRightX, int32_t offsetBottomRightY, bool isNeedMirror, bool isNeedFlip,
         RectBoxType type);
+    static void ProcessTrackingInfo(sptr<MetadataObjectFactory> factoryPtr, const camera_metadata_item_t &metadataItem,
+        int32_t &index, MetadataObjectType metadataType);
 };
 
 std::vector<float> ParsePhysicalApertureRangeByMode(const camera_metadata_item_t &item, const int32_t modeName);

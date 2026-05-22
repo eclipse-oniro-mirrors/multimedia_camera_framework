@@ -3092,6 +3092,78 @@ int32_t CaptureSession::GetFocusMode(FocusMode& focusMode)
     return CameraErrorCode::SUCCESS;
 }
 
+bool CaptureSession::IsLockFocusTrackingSupported()
+{
+    bool isSupported = false;
+    IsLockFocusTrackingSupported(isSupported);
+    return isSupported;
+}
+ 
+int32_t CaptureSession::IsLockFocusTrackingSupported(bool& isSupported)
+{
+    MEDIA_INFO_LOG("Enter CaptureSession::IsLockFocusTrackingSupported");
+    isSupported = false;
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::IsLockFocusTrackingSupported Session is not Commited.");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::IsLockFocusTrackingSupported camera device is null");
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::IsLockFocusTrackingSupported camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(
+        metadata == nullptr, CameraErrorCode::SUCCESS, "IsLockFocusTrackingSupported camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LOCK_OBJECT_TRACKING_AVAILABLE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
+        "CaptureSession::IsLockFocusTrackingSupported Failed with return code %{public}d", ret);
+    SceneMode currentMode = GetMode();
+    for (uint i = 0; i < item.count; i++) {
+        if (currentMode == static_cast<SceneMode>(item.data.i32[i])) {
+            isSupported = true;
+            break;
+        }
+    }
+    MEDIA_INFO_LOG("IsLockFocusTrackingSupported: %{public}d.", isSupported);
+    return CameraErrorCode::SUCCESS;
+}
+ 
+int32_t CaptureSession::LockFocusTracking(Point point)
+{
+    CHECK_RETURN_RET_ELOG((point.x < 0 || point.y < 0 || point.x > 1 || point.y > 1),
+        CameraErrorCode::PARAMETER_ERROR, "LockFocusTracking point illegal");
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::LockFocusTracking Session is not Commited");
+    CHECK_RETURN_RET_ELOG(!IsLockFocusTrackingSupported(), CameraErrorCode::SUCCESS,
+        "CaptureSession::LockFocusTracking is not supported.");
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::LockFocusTracking Need to call LockForControl before setting camera properties");
+    const int32_t scale = 10000;
+    int32_t x = point.x * scale;
+    int32_t y = point.y * scale;
+    std::vector<int32_t> focusArea = {x, y, 1};
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOCK_OBJECT_TRACKING,
+        focusArea.data(), focusArea.size());
+    CHECK_PRINT_ELOG(!status, "CaptureSession::LockFocusTracking Failed to set");
+    return CameraErrorCode::SUCCESS;
+}
+ 
+int32_t CaptureSession::UnlockFocusTracking()
+{
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::UnlockFocusTracking Session is not Commited");
+    CHECK_RETURN_RET_ELOG(!IsLockFocusTrackingSupported(), CameraErrorCode::SUCCESS,
+        "CaptureSession::UnlockFocusTracking is not supported.");
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::UnlockFocusTracking Need to call LockForControl before setting camera properties");
+    std::vector<int32_t> focusArea = {0, 0, 0};
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOCK_OBJECT_TRACKING,
+        focusArea.data(), focusArea.size());
+    CHECK_PRINT_ELOG(!status, "CaptureSession::UnlockFocusTracking Failed to set");
+    return CameraErrorCode::SUCCESS;
+}
+
 int32_t CaptureSession::SetFocusPoint(Point focusPoint)
 {
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,

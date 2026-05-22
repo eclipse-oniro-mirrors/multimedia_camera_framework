@@ -212,6 +212,12 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::focus_sys_props =
     DECLARE_NAPI_FUNCTION("setFocusDriven", CameraSessionNapi::SetFocusDriven)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::focus_tracking_normal_props = {
+    DECLARE_NAPI_FUNCTION("isLockFocusTrackingSupported", CameraSessionNapi::IsLockFocusTrackingSupported),
+    DECLARE_NAPI_FUNCTION("lockFocusTracking", CameraSessionNapi::LockFocusTracking),
+    DECLARE_NAPI_FUNCTION("unlockFocusTracking", CameraSessionNapi::UnlockFocusTracking)
+};
+
 const std::vector<napi_property_descriptor> CameraSessionNapi::quality_prioritization_props = {
     DECLARE_NAPI_FUNCTION("setQualityPrioritization", CameraSessionNapi::SetQualityPrioritization),
 };
@@ -2825,6 +2831,81 @@ napi_value CameraSessionNapi::SetFocusMode(napi_env env, napi_callback_info info
         }
     } else {
         MEDIA_ERR_LOG("SetFocusMode call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsLockFocusTrackingSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsLockFocusTrackingSupported is called.");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsLockFocusTrackingSupported parse parameter occur error");
+ 
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = false;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsLockFocusTrackingSupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+ 
+napi_value CameraSessionNapi::LockFocusTracking(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("LockFocusTracking is called.");
+ 
+    Point focusPoint;
+    CameraNapiObject pointArg = {{{ "x", &focusPoint.x }, { "y", &focusPoint.y }}};
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, pointArg);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::SetZoomCenterPoint parse parameter occur error");
+ 
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->LockFocusTracking(focusPoint);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+ 
+napi_value CameraSessionNapi::UnlockFocusTracking(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("UnlockFocusTracking is called.");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsLockFocusTrackingSupported parse parameter occur error");
+ 
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->UnlockFocusTracking();
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
     }
     return result;
 }

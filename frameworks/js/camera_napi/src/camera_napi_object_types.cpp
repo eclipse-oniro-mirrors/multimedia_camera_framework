@@ -169,12 +169,14 @@ CameraNapiObject& CameraNapiObjMetadataObject::GetCameraNapiObject()
     auto boundingBox = Hold<CameraNapiBoundingBox>(*Hold<Rect>(metadataObject_.GetBoundingBox()));
     auto objectId = Hold<int32_t>(metadataObject_.GetObjectId());
     auto confidence = Hold<int32_t>(metadataObject_.GetConfidence());
+    auto isLockFocusTracked = Hold<bool>(metadataObject_.IsLockFocusTracked());
     return *Hold<CameraNapiObject>(CameraNapiObject::CameraNapiObjFieldMap {
         { "type", type },
         { "timestamp", timestamp },
         { "boundingBox", &boundingBox->GetCameraNapiObject() },
         { "objectId", objectId },
-        { "confidence", confidence }});
+        { "confidence", confidence },
+        { "isLockFocusTracked", isLockFocusTracked }});
 }
 
 CameraNapiObject& CameraNapiObjCameraOutputCapability::GetCameraNapiObject()
