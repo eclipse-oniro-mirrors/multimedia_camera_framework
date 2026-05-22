@@ -1238,9 +1238,8 @@ Camera_ErrorCode OH_CaptureSession_LockFocusTracking(Camera_CaptureSession* sess
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
                           "Invalid argument, session is null!");
  
-    bool isSupported = session->LockFocusTracking(focusPoint);
-    MEDIA_DEBUG_LOG("isFocusTrackingSupported: %{public}d", isSupported);
-    return CAMERA_OK;
+    Camera_ErrorCode ret = session->LockFocusTracking(focusPoint);
+    return ret;
 }
 
 Camera_ErrorCode OH_CaptureSession_UnlockFocusTracking(Camera_CaptureSession* session)
@@ -1249,9 +1248,8 @@ Camera_ErrorCode OH_CaptureSession_UnlockFocusTracking(Camera_CaptureSession* se
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
                           "Invalid argument, session is null!");
  
-    bool isSupported = session->UnlockFocusTracking();
-    MEDIA_DEBUG_LOG("isFocusTrackingSupported: %{public}d", isSupported);
-    return CAMERA_OK;
+    Camera_ErrorCode ret = session->UnlockFocusTracking();
+    return ret;
 }
 
 #ifdef __cplusplus
