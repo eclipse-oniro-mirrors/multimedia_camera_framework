@@ -80,6 +80,8 @@ public:
 
     void SetDeferredVideoInfo(uint32_t flag, std::string videoId);
 
+    void SetDeviceChangeInfo(bool flag);
+
 private:
     class ConsumerTimeKeeper {
     public:
