@@ -68,7 +68,7 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, con
 {
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
-        DP_DEBUG_LOG("AddImage error, inSync!");
+        DP_DEBUG_LOG("AddImage inSync!");
         auto info = std::make_shared<PhotoInfo>(discardable, metadata);
         imageIds_.emplace(imageId, info);
     } else {
@@ -84,7 +84,7 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, con
 int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string& imageId, bool restorable)
 {
     if (inSync_.load()) {
-        DP_INFO_LOG("RemoveImage error, inSync!");
+        DP_INFO_LOG("RemoveImage inSync!");
     } else {
         auto ret = DPS_SendCommand<RemovePhotoCommand>(userId_, imageId, restorable);
         DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
@@ -98,7 +98,7 @@ int32_t DeferredPhotoProcessingSession::RemoveImage(const std::string& imageId, 
 int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string& imageId)
 {
     if (inSync_.load()) {
-        DP_INFO_LOG("RestoreImage error, inSync!");
+        DP_INFO_LOG("RestoreImage inSync!");
     } else {
         auto ret = DPS_SendCommand<RestorePhotoCommand>(userId_, imageId);
         DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
@@ -112,7 +112,7 @@ int32_t DeferredPhotoProcessingSession::RestoreImage(const std::string& imageId)
 int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string& appName, const std::string& imageId)
 {
     if (inSync_) {
-        DP_INFO_LOG("ProcessImage error, inSync!");
+        DP_INFO_LOG("ProcessImage inSync!");
     } else {
         auto ret = DPS_SendCommand<ProcessPhotoCommand>(userId_, imageId, appName);
         DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,
@@ -126,7 +126,7 @@ int32_t DeferredPhotoProcessingSession::ProcessImage(const std::string& appName,
 int32_t DeferredPhotoProcessingSession::CancelProcessImage(const std::string& imageId)
 {
     if (inSync_) {
-        DP_INFO_LOG("CancelProcessImage error, inSync!");
+        DP_INFO_LOG("CancelProcessImage inSync!");
     } else {
         auto ret = DPS_SendCommand<CancelProcessPhotoCommand>(userId_, imageId);
         DP_CHECK_ERROR_PRINT_LOG(ret != DP_OK,

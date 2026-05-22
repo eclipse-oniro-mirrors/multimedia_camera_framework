@@ -77,9 +77,10 @@ void DeferredVideoProcSessionFuzzer::DeferredVideoProcSessionFuzzTest(FuzzedData
 
     deferredVideoProcSession_->BeginSynchronize();
     deferredVideoProcSession_->EndSynchronize();
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(fdp.ConsumeIntegral<int>());
-    deferredVideoProcSession_->AddVideo(videoId, srcFd, dstFd);
+    std::string srcPath(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
+    std::string temp1Path(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
+    std::string temp2Path(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
+    deferredVideoProcSession_->AddVideo(videoId, srcPath, temp1Path, temp2Path);
     bool restorable = fdp.ConsumeBool();
     deferredVideoProcSession_->RemoveVideo(videoId, restorable);
     deferredVideoProcSession_->RestoreVideo(videoId);

@@ -38,6 +38,8 @@ namespace CameraStandard {
 const std::string MEDIA_ROOT = "/data/test/media/";
 const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
 const std::string VIDEO_TEMP_PATH = MEDIA_ROOT + "test_video_temp.mp4";
+const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
+const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
 const std::string VIDEO_ID = "videoTest";
 
 void DeferredVideoProcessorStratetyUnittest::SetUpTestCase(void)
@@ -51,15 +53,23 @@ void DeferredVideoProcessorStratetyUnittest::SetUp()
 {
     srcFd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
     dtsFd_ = open(VIDEO_TEMP_PATH.c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    temp1fd_ = open(VIDEO_TEMP_PATH_1.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    temp2fd_ = open(VIDEO_TEMP_PATH_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
 void DeferredVideoProcessorStratetyUnittest::TearDown()
 {
-    if (srcFd_ > 0) {
+    if (srcFd_ >= 0) {
         close(srcFd_);
     }
-    if (dtsFd_ > 0) {
+    if (dtsFd_ >= 0) {
         close(dtsFd_);
+    }
+    if (temp1fd_ >= 0) {
+        close(temp1fd_);
+    }
+    if (temp2fd_ >= 0) {
+        close(temp2fd_);
     }
 }
 
@@ -94,10 +104,8 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
     ASSERT_NE(repository, nullptr);
     auto strategyCenter = VideoStrategyCenter::Create(repository);
     ASSERT_NE(strategyCenter, nullptr);
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    repository->AddVideoJob(VIDEO_ID, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    repository->AddVideoJob(VIDEO_ID, std::move(info));
     strategyCenter->isNeedStop_ = false;
     strategyCenter->isCharging_ = true;
     auto job = strategyCenter->GetJob();
@@ -136,10 +144,8 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
     ASSERT_NE(repository, nullptr);
     auto strategyCenter = VideoStrategyCenter::Create(repository);
     ASSERT_NE(strategyCenter, nullptr);
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dup(dtsFd_));
-    auto info = std::make_shared<VideoInfo>(inputFd, outFd);
-    repository->AddVideoJob(VIDEO_ID, info);
+    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    repository->AddVideoJob(VIDEO_ID, std::move(info));
     auto job = strategyCenter->GetJob();
     EXPECT_EQ(job, nullptr);
 }

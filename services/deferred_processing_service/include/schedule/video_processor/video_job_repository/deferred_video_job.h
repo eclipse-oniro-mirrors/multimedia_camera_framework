@@ -19,6 +19,7 @@
 #include "basic_definitions.h"
 #include "dp_utils.h"
 #include "dps_fd.h"
+#include "video_info.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -36,9 +37,21 @@ enum class VideoJobState {
 
 class DeferredVideoJob {
 public:
-    DeferredVideoJob(const std::string& videoId, const DpsFdPtr& srcFd,
-        const DpsFdPtr& dstFd, const DpsFdPtr& movieFd, const DpsFdPtr& movieCopyFd);
+    DeferredVideoJob(const std::string& videoId, std::unique_ptr<VideoInfo> info);
     ~DeferredVideoJob() = default;
+
+    DpsFdPtr GetInputFd();
+    DpsFdPtr GetMovieFd();
+
+    inline std::string GetTemp1Path() const
+    {
+        return info_ ? info_->GetTemp1Path() : "";
+    }
+
+    inline std::string GetTemp2Path() const
+    {
+        return info_ ? info_->GetTemp2Path() : "";
+    }
 
     inline VideoJobState GetCurStatus()
     {
@@ -58,26 +71,6 @@ public:
     inline std::string GetVideoId()
     {
         return videoId_;
-    }
-
-    inline DpsFdPtr GetInputFd()
-    {
-        return srcFd_;
-    }
-
-    inline DpsFdPtr GetOutputFd()
-    {
-        return dstFd_;
-    }
-
-    inline DpsFdPtr GetMovieFd()
-    {
-        return movieFd_;
-    }
-
-    inline DpsFdPtr GetMovieCopyFd()
-    {
-        return movieCopyFd_;
     }
 
     inline ExecutionMode GetExecutionMode() const
@@ -172,10 +165,8 @@ private:
     void UpdateTime();
 
     const std::string videoId_;
-    DpsFdPtr srcFd_;
-    DpsFdPtr dstFd_;
-    DpsFdPtr movieFd_;
-    DpsFdPtr movieCopyFd_;
+    std::unique_ptr<VideoInfo> info_;
+    DpsFdPtr srcFd_ {nullptr};
     JobPriority priority_ {JobPriority::NORMAL};
     VideoJobState preStatus_ {VideoJobState::NONE};
     VideoJobState curStatus_ {VideoJobState::NONE};

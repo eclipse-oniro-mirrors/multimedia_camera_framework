@@ -60,8 +60,10 @@ void MpegManagerFuzzer::MpegManagerFuzzTest(FuzzedDataProvider& fdp)
     fuzz_->AcquireMakerBuffer(timestamp);
     int flags = 1;
     std::string requestId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
-    fuzz_->GetFileFd(requestId, flags, "_vid_temp");
-    fuzz_->GetFileFd(requestId, flags, "_vid");
+    std::string temp1Path(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
+    std::string temp2Path(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
+    fuzz_->GetFileFd(requestId, temp1Path, flags, "_vid_temp");
+    fuzz_->GetFileFd(requestId, temp2Path, flags, "_vid");
 }
 
 void Test(uint8_t* data, size_t size)

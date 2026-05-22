@@ -15,6 +15,9 @@
 
 #include "dp_utils.h"
 
+#include <dirent.h>
+#include <sys/stat.h>
+
 #include "bundle_mgr_interface.h"
 #include "dp_log.h"
 #include "ipc_skeleton.h"
@@ -91,6 +94,35 @@ std::unordered_map<std::string, std::string> ParseKeyValue(const std::string& in
     }
 
     return result;
+}
+
+uint64_t GetFolderSize(const std::string& path)
+{
+    uint64_t totalSize = 0;
+    struct stat st;
+    if (stat(path.c_str(), &st) != 0) {
+        return totalSize;
+    }
+    if (S_ISDIR(st.st_mode)) {
+        DIR* dir = opendir(path.c_str());
+        if (!dir) {
+            return totalSize;
+        }
+        struct dirent* entry;
+        while ((entry = readdir(dir)) != nullptr) {
+            std::string filePath = path + "/" + entry->d_name;
+            if ((entry->d_type == DT_DIR) &&
+                (std::string(entry->d_name) != "." && std::string(entry->d_name) != "..")) {
+                totalSize += GetFolderSize(filePath);
+            } else if (stat(filePath.c_str(), &st) == 0) {
+                totalSize += static_cast<uint64_t>(st.st_size);
+            }
+        }
+        closedir(dir);
+    } else {
+        totalSize = static_cast<uint64_t>(st.st_size);
+    }
+    return totalSize;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

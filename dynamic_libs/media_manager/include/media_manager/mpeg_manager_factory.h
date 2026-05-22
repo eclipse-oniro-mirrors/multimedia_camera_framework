@@ -26,8 +26,8 @@ class MpegManagerFactory : public Singleton<MpegManagerFactory> {
     DECLARE_SINGLETON(MpegManagerFactory)
 
 public:
-    std::shared_ptr<MpegManager> Acquire(const std::string& requestId, const DpsFdPtr& inputFd,
-        int32_t width, int32_t height);
+    std::shared_ptr<MpegManager> Acquire(const std::string& requestId, const VideoTempPath& tempPath,
+        const DpsFdPtr& inputFd, int32_t width, int32_t height);
     void Release(std::shared_ptr<MpegManager>& mpegManager);
 
 private:

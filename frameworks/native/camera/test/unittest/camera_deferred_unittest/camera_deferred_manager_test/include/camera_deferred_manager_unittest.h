@@ -36,6 +36,8 @@ public:
     void TearDown();
 
     int32_t fd_ {-1};
+    int32_t temp1fd_ {-1};
+    int32_t temp2fd_ {-1};
 };
 } // CameraStandard
 } // OHOS

@@ -30,9 +30,10 @@ public:
     
     int32_t BeginSynchronize() override;
     int32_t EndSynchronize() override;
-    int32_t AddVideo(const std::string& videoId, const sptr<IPCFileDescriptor>& srcFd,
-        const sptr<IPCFileDescriptor>& dstFd) override;
-    int32_t AddVideo(const std::string& videoId, const std::vector<sptr<IPCFileDescriptor>>& fds) override;
+    int32_t AddVideo(const std::string& videoId, const std::string& srcPath, const std::string& temp1Path,
+        const std::string& temp2Path) override;
+    int32_t AddVideo(const std::string& videoId, const std::string& srcPath, const std::string& temp1Path,
+        const std::string& temp2Path, const std::string& editPath) override;
     int32_t RemoveVideo(const std::string& videoId, bool restorable) override;
     int32_t RestoreVideo(const std::string& videoId) override;
     int32_t ProcessVideo(const std::string& appName, const std::string& videoId) override;
@@ -42,7 +43,7 @@ private:
     std::mutex mutex_;
     const int32_t userId_;
     std::atomic<bool> inSync_ {false};
-    std::unordered_map<std::string, std::shared_ptr<VideoInfo>> videoIds_ {};
+    std::unordered_map<std::string, std::unique_ptr<VideoInfo>> videoIds_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
