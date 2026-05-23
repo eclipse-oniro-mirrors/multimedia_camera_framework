@@ -42,6 +42,7 @@
 #include "listener_base.h"
 #include "media_library_comm_napi.h"
 #include "output/capture_photo_napi.h"
+#include "output/quick_thumbnail_napi.h"
 #include "output/photo_napi.h"
 #include "photo_output.h"
 #include "picture_napi.h"
@@ -632,7 +633,39 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
 
 void PhotoOutputCallback::ExecutePhotoAssetAvailableCb(const CallbackInfo& info) const
 {
-    MEDIA_INFO_LOG("ExecutePhotoAssetAvailableCb");
+    if (GetIsAsync(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE)) {
+        ExecutePhotoAssetAvailableTwoArgCb(info);
+    } else {
+        ExecutePhotoAssetAvailableOneArgCb(info);
+    }
+}
+
+// For PhotoAssetInfo
+void PhotoOutputCallback::ExecutePhotoAssetAvailableOneArgCb(const CallbackInfo& info) const
+{
+    MEDIA_INFO_LOG("ExecutePhotoAssetAvailableOneArgCb");
+    ExecuteCallbackScopeSafe(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, [&]() {
+        napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
+        napi_value photoAsset = Media::MediaLibraryCommNapi::CreatePhotoAssetNapi(
+            env_, info.uri, info.cameraShotType, info.burstKey);
+        if (photoAsset == nullptr) {
+            napi_get_undefined(env_, &photoAsset);
+        }
+        FillNapiObjectWithCaptureId(env_, info.captureID, photoAsset);
+        
+        napi_create_object(env_, &callbackObj);
+        napi_value captureIdValue = nullptr;
+        napi_create_int32(env_, info.captureID, &captureIdValue);
+        napi_set_named_property(env_, callbackObj, "captureId", captureIdValue);
+        napi_set_named_property(env_, callbackObj, "photoAsset", photoAsset);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
+    }, false);
+}
+
+void PhotoOutputCallback::ExecutePhotoAssetAvailableTwoArgCb(const CallbackInfo& info) const
+{
+    MEDIA_INFO_LOG("ExecutePhotoAssetAvailableTwoArgCb");
     ExecuteCallbackScopeSafe(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE, [&]() {
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
         napi_value callbackObj = CameraNapiUtils::GetUndefinedValue(env_);
@@ -644,7 +677,7 @@ void PhotoOutputCallback::ExecutePhotoAssetAvailableCb(const CallbackInfo& info)
         FillNapiObjectWithCaptureId(env_, info.captureID, photoAsset);
         callbackObj = photoAsset;
         return ExecuteCallbackData(env_, errCode, callbackObj);
-    }, GetIsAsync(CONST_CAPTURE_PHOTO_ASSET_AVAILABLE));
+    });
 }
 
 void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int64_t timestamp, napi_value pixelMapNapi)
@@ -672,26 +705,37 @@ void FillPixelMapWithCaptureIdAndTimestamp(napi_env env, int32_t captureId, int6
 void PhotoOutputCallback::ExecuteThumbnailAvailableCb(const CallbackInfo& info) const
 {
     MEDIA_INFO_LOG("ExecuteThumbnailAvailableCb E");
-    if (!GetIsAsync(CONST_CAPTURE_QUICK_THUMBNAIL)) {
-        napi_value result[ARGS_ONE] = { nullptr };
-        napi_get_undefined(env_, &result[PARAM0]);
-        napi_value retVal;
-        MEDIA_INFO_LOG("enter ImageNapi::Create start");
-        napi_value valueParam = Media::PixelMapNapi::CreatePixelMap(env_, info.pixelMap);
-        if (valueParam == nullptr) {
-            MEDIA_ERR_LOG("ImageNapi Create failed");
-            napi_get_undefined(env_, &valueParam);
-        }
-        FillPixelMapWithCaptureIdAndTimestamp(env_, info.captureID, info.timestamp, valueParam);
-        MEDIA_INFO_LOG("enter ImageNapi::Create end");
-        result[PARAM0] = valueParam;
-        ExecuteCallbackNapiPara callbackNapiPara {
-            .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
-        ExecuteCallback(CONST_CAPTURE_QUICK_THUMBNAIL, callbackNapiPara);
-        MEDIA_INFO_LOG("ExecuteThumbnailAvailableCb X");
-        return;
+    bool isAsync = GetIsAsync(CONST_CAPTURE_QUICK_THUMBNAIL);
+    if (isAsync) {
+        ExecuteThumbnailAvailableTwoArgCb(info);
+    } else {
+        ExecuteThumbnailAvailableOneArgCb(info);
     }
+}
 
+// For QuickThumbnail
+void PhotoOutputCallback::ExecuteThumbnailAvailableOneArgCb(const CallbackInfo& info) const
+{
+    napi_value result[ARGS_ONE] = { nullptr };
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_value retVal;
+    MEDIA_INFO_LOG("enter ImageNapi::Create start");
+    napi_value valueParam = Media::PixelMapNapi::CreatePixelMap(env_, info.pixelMap);
+    if (valueParam == nullptr) {
+        MEDIA_ERR_LOG("ImageNapi Create failed");
+        napi_get_undefined(env_, &valueParam);
+    }
+    FillPixelMapWithCaptureIdAndTimestamp(env_, info.captureID, info.timestamp, valueParam);
+    napi_value quickThumbnail = QuickThumbnailNapi::CreateQuickThumbnail(env_, info.captureID, valueParam);
+    MEDIA_INFO_LOG("enter ImageNapi::Create end");
+    result[0] = quickThumbnail;
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+    ExecuteCallback(CONST_CAPTURE_QUICK_THUMBNAIL, callbackNapiPara);
+    MEDIA_INFO_LOG("ExecuteThumbnailAvailableCb X");
+}
+
+void PhotoOutputCallback::ExecuteThumbnailAvailableTwoArgCb(const CallbackInfo& info) const
+{
     napi_value result[ARGS_TWO] = { 0 };
     napi_get_undefined(env_, &result[0]);
     napi_get_undefined(env_, &result[1]);

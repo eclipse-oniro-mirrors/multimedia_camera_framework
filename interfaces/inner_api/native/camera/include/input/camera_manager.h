@@ -60,6 +60,7 @@
 #include "session/mech_session.h"
 #include "session/cameraSwitch_session.h"
 #include "unify_movie_file_output.h"
+#include "camera_spectrum_info_callback_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -151,12 +152,22 @@ public:
     virtual void OnCameraSharedStatusChanged(const CameraSharedStatus status) const = 0;
 };
 
+class CameraSpectrumInfoListener {
+public:
+    CameraSpectrumInfoListener() = default;
+    virtual ~CameraSpectrumInfoListener() = default;
+    virtual void OnCameraSpectrumInfo(
+        const int userId, std::vector<float> spectrumInfos, const uint64_t timestamp) const = 0;
+};
+
 class TorchServiceListenerManager;
 class CameraStatusListenerManager;
 class CameraMuteListenerManager;
 class ControlCenterStatusListenerManager;
 class FoldStatusListenerManager;
 class CameraSharedStatusListenerManager;
+class CameraSpectrumListenerManager;
+
 class CameraManager : public RefBase {
 public:
     virtual ~CameraManager();
@@ -984,7 +995,9 @@ public:
      * @return Returns camera storage.
      */
     int32_t GetCameraStorageSize(int64_t& storage);
-
+    sptr<CameraSpectrumListenerManager> GetCameraSpectrumListenerManager();
+    int32_t RegisterSpectrumListener(SpectrumCallerInfo info, std::shared_ptr<CameraSpectrumInfoListener> listener);
+    int32_t UnregisterSpectrumListener(SpectrumCallerInfo info, std::shared_ptr<CameraSpectrumInfoListener> listener);
     int32_t RequireMemorySize(int32_t memSize);
     int32_t RequireMemorySizeWithReason(std::string &reason, int32_t requiredMemSizeKB);
 
@@ -1313,6 +1326,8 @@ private:
     sptr<FoldStatusListenerManager> foldStatusListenerManager_ = sptr<FoldStatusListenerManager>::MakeSptr();
     sptr<CameraSharedStatusListenerManager> cameraSharedStatusListenerManager_ =
         sptr<CameraSharedStatusListenerManager>::MakeSptr();
+    sptr<CameraSpectrumListenerManager> cameraSpectrumListenerManager_ =
+        sptr<CameraSpectrumListenerManager>::MakeSptr();
 
     std::map<std::string, dmDeviceInfo> distributedCamInfoAndId_;
 
@@ -1326,6 +1341,7 @@ private:
     TorchMode torchMode_ = TorchMode::TORCH_MODE_OFF;
     std::mutex saListenerMuxtex_;
     sptr<IRemoteBroker> saListener_ = nullptr;
+    std::mutex spectrumMutex_;
     std::string foldScreenType_;
     bool isSystemApp_ = false;
     bool isInWhiteList_ = false;
@@ -1445,6 +1461,13 @@ class CameraSharedStatusListenerManager : public CameraManagerGetter,
                                        public CameraListenerManager<CameraSharedStatusListener> {
 public:
     int32_t OnCameraSharedStatusChanged(const int32_t status) override;
+};
+
+class CameraSpectrumListenerManager : public CameraManagerGetter,
+                                       public CameraSpectrumInfoCallbackStub,
+                                       public CameraListenerManager<CameraSpectrumInfoListener> {
+public:
+    int32_t OnCameraSpectrumInfo(int32_t userId, const std::vector<float>& spectrumInfos, uint64_t timestamp) override;
 };
 } // namespace CameraStandard
 } // namespace OHOS

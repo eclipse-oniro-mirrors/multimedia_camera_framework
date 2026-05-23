@@ -95,7 +95,7 @@ public:
     void ReportImageProcessResult(const std::string& imageId, int32_t userId, uint64_t endTime = 0);
     void ReportImageModeChange(ExecutionMode executionMode, int32_t memorySize);
     void ReportImageException(const std::string& imageId, int32_t userId);
-    void ReportPartitionUsage();
+    void ReportPartitionUsage(const std::string& path, uint64_t size);
     void SetEventInfo(const std::string& imageId, int32_t userId);
     void SetEventInfo(DPSEventInfo& dpsEventInfo);
     void RemoveEventInfo(const std::string& imageId, int32_t userId);
@@ -121,7 +121,6 @@ private:
     void UpdateExecutionMode(DPSEventInfo& dpsEventInfo, DPSEventInfo& dpsEventInfoSrc);
     int GetTotalTime (uint64_t beginTime, uint64_t endTime);
     bool GetDeviceValidSize(const std::string& path, double& size);
-    uint64_t GetFolderSize(const std::string& path);
     std::mutex mutex_;
     std::map<int32_t, std::map<std::string, DPSEventInfo>> userIdToImageIdEventInfo; //userid--imageid--eventinfo
     ExecutionMode executionMode_;

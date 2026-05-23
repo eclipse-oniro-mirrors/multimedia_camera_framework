@@ -16,6 +16,7 @@
 #ifndef OHOS_CAMERA_MOVIE_FILE_CONTROLLER_VIDEO_H
 #define OHOS_CAMERA_MOVIE_FILE_CONTROLLER_VIDEO_H
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 
@@ -169,6 +170,7 @@ private:
     sptr<VideoStreamCallback> videoStreamCallback_;
 
     bool isEnableRawAudio_ = false;
+    std::atomic<bool> isInputDeviceChanged_ = false;
 };
 
 } // namespace CameraStandard

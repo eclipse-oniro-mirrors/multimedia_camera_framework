@@ -15,6 +15,8 @@
 
 #include "sync_command.h"
 
+#include <utility>
+
 #include "dps.h"
 
 namespace OHOS {
@@ -97,8 +99,8 @@ int32_t PhotoSyncCommand::Executing()
 // LCOV_EXCL_STOP
 
 VideoSyncCommand::VideoSyncCommand(const int32_t userId,
-    const std::unordered_map<std::string, std::shared_ptr<VideoInfo>>& videoIds)
-    : SyncCommand(userId), videoIds_(videoIds)
+    std::unordered_map<std::string, std::unique_ptr<VideoInfo>> videoIds)
+    : SyncCommand(userId), videoIds_(std::move(videoIds))
 {
     DP_DEBUG_LOG("VideoSyncCommand, video job num: %{public}d", static_cast<int32_t>(videoIds_.size()));
 }
@@ -120,8 +122,9 @@ int32_t VideoSyncCommand::Executing()
     std::vector<std::string> hdiVideoIds;
     bool isSuccess = processor->GetPendingVideos(hdiVideoIds);
     if (!isSuccess) {
-        for (const auto& it : videoIds_) {
-            processor->AddVideo(it.first, it.second);
+        for (auto it = videoIds_.begin(); it != videoIds_.end();) {
+            processor->AddVideo(it->first, std::move(it->second));
+            it = videoIds_.erase(it);
         }
         return DP_OK;
     }
@@ -130,7 +133,7 @@ int32_t VideoSyncCommand::Executing()
     for (const auto& videoId : hdiVideoIds) {
         auto item = videoIds_.find(videoId);
         if (item != videoIds_.end()) {
-            processor->AddVideo(videoId, item->second);
+            processor->AddVideo(videoId, std::move(item->second));
             videoIds_.erase(videoId);
         }
     }

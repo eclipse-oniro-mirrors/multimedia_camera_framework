@@ -25,10 +25,15 @@ namespace OHOS {
 class IPCFileDescriptor;
 namespace CameraStandard {
 namespace DeferredProcessing {
+
+struct TempVideoPath {
+    std::string temp1Path;
+    std::string temp2Path;
+};
 class MediaManagerIntf : public RefBase {
 public:
     virtual ~MediaManagerIntf() = default;
-    virtual int32_t MpegAcquire(const std::string& requestId, const DpsFdPtr& inputFd,
+    virtual int32_t MpegAcquire(const std::string& requestId, const TempVideoPath& tempPath, const DpsFdPtr& inputFd,
         int32_t width, int32_t height) = 0;
     virtual int32_t MpegUnInit(const int32_t result) = 0;
     virtual DpsFdPtr MpegGetResultFd() = 0;
@@ -38,6 +43,7 @@ public:
     virtual sptr<Surface> MpegGetMakerSurface() = 0;
     virtual int32_t MpegRelease() = 0;
     virtual uint32_t MpegGetDuration() = 0;
+    virtual std::string MpegGetResultPath() = 0;
     virtual int32_t MpegSetProgressNotifer(std::unique_ptr<MediaProgressNotifier> processNotifer) = 0;
 };
 } // namespace DeferredProcessing

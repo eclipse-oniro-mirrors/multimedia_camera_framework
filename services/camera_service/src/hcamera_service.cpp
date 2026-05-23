@@ -943,6 +943,23 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     return CAMERA_OK;
 }
 
+void HCameraService::SetControlCenterInVideo(sptr<HCaptureSession>& captureSession)
+{
+    SetSessionForControlCenter(captureSession);
+    captureSession->SetUpdateControlCenterCallback(
+        std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
+    std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
+    captureSession->SetBundleForControlCenter(bundleName);
+    if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true"
+        && !CheckSystemApp()) {
+        int32_t rc = EnableControlCenter(true, true);
+        if (rc != CAMERA_OK) {
+            MEDIA_INFO_LOG("EnableControlCenter failed,retCode:%d", rc);
+        }
+    }
+    MEDIA_INFO_LOG("Save videoSession for controlCenter");
+}
+
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
@@ -963,12 +980,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     pressurePid_ = IPCSkeleton::GetCallingPid();
     session = captureSession;
     if (opMode == SceneMode::VIDEO) {
-        SetSessionForControlCenter(captureSession);
-        captureSession->SetUpdateControlCenterCallback(
-            std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
-        std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
-        captureSession->SetBundleForControlCenter(bundleName);
-        MEDIA_INFO_LOG("Save videoSession for controlCenter");
+        SetControlCenterInVideo(captureSession);
     } else {
         SetSessionForControlCenter(nullptr);
         MEDIA_INFO_LOG("Clear videoSession of controlCenter");
@@ -3560,6 +3572,112 @@ void ResSchedToCameraEventListener::OnReceiveEvent(
     }
 #endif
     return;
+}
+
+int32_t HCameraService::SetSpectrumCallback(
+    const SpectrumCallerInfo &info, const sptr<ICameraSpectrumInfoCallback> &callbackFunc)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::SetSpectrumCallback CheckSystemApp fail");
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    CHECK_RETURN_RET_ELOG(CheckPermission(OHOS_PERMISSION_CAMERA, callerToken) != CAMERA_OK,
+        CAMERA_NO_PERMISSION,
+        "HCameraService::SetSpectrumCallback CheckPermission fail");
+    CHECK_RETURN_RET_ELOG(!CheckSpectrumAbility(info.cameraId),
+        CAMERA_OPERATION_NOT_ALLOWED,
+        "HCameraService::SetSpectrumCallback the device not support Spectrum");
+    auto session = GetSessionByCameraId(info.cameraId);
+    if (session) {
+        CHECK_RETURN_RET_ELOG(session->GetUserId() != info.userId,
+            CAMERA_OPERATION_NOT_ALLOWED,
+            "HCameraService::SetSpectrumCallback the userId is not right");
+        CHECK_RETURN_RET_ELOG(!session->IsSessionConfiged(),
+            CAMERA_OPERATION_NOT_ALLOWED,
+            "HCameraService::SetSpectrumCallback the session is not start");
+    } else {
+        MEDIA_ERR_LOG("HCameraService::SetSpectrumCallback no config camera");
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+    lock_guard<mutex> lock(cameraSpectrumMutex_);
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    MEDIA_DEBUG_LOG("HCameraService::SetSpectrumCallback pid = %{public}d", pid);
+    CHECK_RETURN_RET_ELOG(
+        callbackFunc == nullptr, CAMERA_INVALID_ARG, "HCameraService::SetSpectrumCallback callback is null");
+    session->SetSpectrumCallback(callbackFunc);
+    cameraSpectrumInfoCallbacks_.insert(make_pair(pid, callbackFunc));
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::UnsetSpectrumCallback(const SpectrumCallerInfo& info)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::UnsetSpectrumCallback CheckSystemApp fail");
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    CHECK_RETURN_RET_ELOG(CheckPermission(OHOS_PERMISSION_CAMERA, callerToken) != CAMERA_OK,
+        CAMERA_NO_PERMISSION,
+        "HCameraService::UnsetSpectrumCallback CheckPermission fail");
+    lock_guard<mutex> lock(cameraSpectrumMutex_);
+    MEDIA_DEBUG_LOG("HCameraService::UnsetSpectrumCallback pid = %{public}d, size = %{public}zu",
+        pid,
+        cameraSpectrumInfoCallbacks_.size());
+    if (!cameraSpectrumInfoCallbacks_.empty()) {
+        MEDIA_DEBUG_LOG("HCameraService::UnsetSpectrumCallback SpectrumCallback is not empty, reset it");
+        auto it = cameraSpectrumInfoCallbacks_.find(pid);
+        bool isErasePid = (it != cameraSpectrumInfoCallbacks_.end()) && (it->second);
+        if (isErasePid) {
+            auto session = GetSessionByCameraId(info.cameraId);
+            if (session) {
+                CHECK_RETURN_RET_ELOG(session->GetUserId() != info.userId,
+                    CAMERA_OPERATION_NOT_ALLOWED,
+                    "SetSpectrumCallback the userId is not right");
+            } else {
+                MEDIA_ERR_LOG("HCameraService::UnsetSpectrumCallback no config camera");
+                return CAMERA_OPERATION_NOT_ALLOWED;
+            }
+            session->UnsetSpectrumCallback();
+            it->second = nullptr;
+            cameraSpectrumInfoCallbacks_.erase(it);
+        }
+    }
+    MEDIA_DEBUG_LOG("HCameraService::UnsetSpectrumCallback after erase pid = %{public}d, size = %{public}zu",
+        pid, cameraSpectrumInfoCallbacks_.size());
+    return CAMERA_OK;
+}
+
+bool HCameraService::CheckSpectrumAbility(std::string cameraId)
+{
+    MEDIA_DEBUG_LOG("HCameraService::CheckSpectrumAbility enter");
+    shared_ptr<OHOS::Camera::CameraMetadata> ability;
+    camera_metadata_item_t item;
+    GetCameraAbility(cameraId, ability);
+    if (ability) {
+        int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_SPECTRUM_SUPPORTED, &item);
+        CHECK_RETURN_RET_ELOG(
+            ret != CAM_META_SUCCESS || item.count <= 0, false, "HCameraDevice::CheckSpectrumAbility failed");
+        int32_t flag = static_cast<int32_t>(item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraService::CheckSpectrumAbility the flag is %{public}d", flag);
+        return static_cast<int32_t>(item.data.u8[0]) == 1 ? true : false;
+    } else {
+        return false;
+    }
+}
+
+sptr<HCaptureSession> HCameraService::GetSessionByCameraId(std::string cameraId)
+{
+    auto sessionList = HCameraSessionManager::GetInstance().GetTotalSession();
+    sptr<HCaptureSession> session = nullptr;
+    for (auto it = sessionList.begin(); it != sessionList.end(); ++it) {
+        auto device = (*it)->GetSessionDevice();
+        if (device) {
+            std::string id = device->GetCameraId();
+            if (id == cameraId) {
+                session = *it;
+                break;
+            }
+        }
+    }
+    return session;
 }
 } // namespace CameraStandard
 } // namespace OHOS

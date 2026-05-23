@@ -220,3 +220,8 @@ struct CallerDeviceInfo {
     String deviceId;
     String deviceName;
 };
+
+struct SpectrumCallerInfo {
+    String cameraId;
+    int userId;
+};

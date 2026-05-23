@@ -178,8 +178,14 @@ private:
     void ExecuteOfflineDeliveryFinishedCb(const CallbackInfo& info) const;
     void ExecuteConstellationDrawingStateChangedCb(const CallbackInfo& info) const;
     void ExecutePhotoAvailableCb(const CallbackInfo& info) const;
+
     void ExecutePhotoAssetAvailableCb(const CallbackInfo& info) const;
+    void ExecutePhotoAssetAvailableOneArgCb(const CallbackInfo& info) const;
+    void ExecutePhotoAssetAvailableTwoArgCb(const CallbackInfo& info) const;
+
     void ExecuteThumbnailAvailableCb(const CallbackInfo& info) const;
+    void ExecuteThumbnailAvailableOneArgCb(const CallbackInfo& info) const;
+    void ExecuteThumbnailAvailableTwoArgCb(const CallbackInfo& info) const;
     bool GetIsAsync(const std::string& eventName) const;
 
     mutable std::mutex isAsyncMapMutex_;

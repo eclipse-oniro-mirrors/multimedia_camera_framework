@@ -15,6 +15,10 @@
 
 #include "deferred_video_processing_session.h"
 
+#include <utility>
+
+#include "dp_log.h"
+#include "dp_utils.h"
 #include "dps_fd.h"
 #include "dps_video_report.h"
 #include "dps.h"
@@ -49,7 +53,7 @@ int32_t DeferredVideoProcessingSession::EndSynchronize()
     std::lock_guard<std::mutex> lock(mutex_);
     if (inSync_.load()) {
         DP_INFO_LOG("DPS_VIDEO: EndSynchronize video job num: %{public}d", static_cast<int32_t>(videoIds_.size()));
-        auto ret = DPS_SendCommand<VideoSyncCommand>(userId_, videoIds_);
+        auto ret = DPS_SendCommand<VideoSyncCommand>(userId_, std::move(videoIds_));
         inSync_.store(false);
         videoIds_.clear();
         DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "video synchronize failed, ret: %{public}d", ret);
@@ -58,43 +62,34 @@ int32_t DeferredVideoProcessingSession::EndSynchronize()
 }
 
 int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId,
-    const sptr<IPCFileDescriptor>& srcFd, const sptr<IPCFileDescriptor>& dstFd)
+    const std::string& srcPath, const std::string& temp1Path, const std::string& temp2Path)
 {
-    auto infd = std::make_shared<DpsFd>(dup(srcFd->GetFd()));
-    auto outFd = std::make_shared<DpsFd>(dup(dstFd->GetFd()));
-    auto info = std::make_shared<VideoInfo>(infd, outFd);
+    auto info = std::make_unique<VideoInfo>(srcPath, temp1Path, temp2Path, "");
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
-        DP_INFO_LOG("AddVideo error, inSync!");
-        videoIds_.emplace(videoId, info);
+        DP_INFO_LOG("AddVideo inSync!");
+        videoIds_.emplace(videoId, std::move(info));
         return DP_OK;
     }
 
-    auto ret = DPS_SendCommand<AddVideoCommand>(userId_, videoId, info);
+    auto ret = DPS_SendCommand<AddVideoCommand>(userId_, videoId, std::move(info));
     DP_INFO_LOG("DPS_VIDEO: AddVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
     DfxVideoReport::GetInstance().ReportAddVideoEvent(videoId, GetDpsCallerInfo());
     return ret;
 }
 
-int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId,
-    const std::vector<sptr<IPCFileDescriptor>>& fds)
+int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId, const std::string& srcPath,
+    const std::string& temp1Path, const std::string& temp2Path, const std::string& editPath)
 {
-    DP_CHECK_RETURN_RET(static_cast<int32_t>(fds.size()) <= static_cast<int32_t>(FdType::MOVIE_COPY),
-        DP_INVALID_PARAM);
-
-    auto infd = std::make_shared<DpsFd>(dup(fds[static_cast<int32_t>(FdType::SRC)]->GetFd()));
-    auto outFd = std::make_shared<DpsFd>(dup(fds[static_cast<int32_t>(FdType::DST)]->GetFd()));
-    auto movieFd = std::make_shared<DpsFd>(dup(fds[static_cast<int32_t>(FdType::MOVIE)]->GetFd()));
-    auto copyfd = std::make_shared<DpsFd>(dup(fds[static_cast<int32_t>(FdType::MOVIE_COPY)]->GetFd()));
-    auto info = std::make_shared<VideoInfo>(infd, outFd, movieFd, copyfd);
+    auto info = std::make_unique<VideoInfo>(srcPath, temp1Path, temp2Path, editPath);
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
         DP_INFO_LOG("AddVideo error, inSync!");
-        videoIds_.emplace(videoId, info);
+        videoIds_.emplace(videoId, std::move(info));
         return DP_OK;
     }
 
-    auto ret = DPS_SendCommand<AddVideoCommand>(userId_, videoId, info);
+    auto ret = DPS_SendCommand<AddVideoCommand>(userId_, videoId, std::move(info));
     DP_INFO_LOG("DPS_VIDEO: AddVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
     DfxVideoReport::GetInstance().ReportAddVideoEvent(videoId, GetDpsCallerInfo());
     return ret;
@@ -102,7 +97,7 @@ int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId,
 
 int32_t DeferredVideoProcessingSession::RemoveVideo(const std::string& videoId, bool restorable)
 {
-    DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "RemoveVideo error, inSync!");
+    DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "RemoveVideo inSync!");
 
     auto ret = DPS_SendCommand<RemoveVideoCommand>(userId_, videoId, restorable);
     DP_INFO_LOG("DPS_VIDEO: RemoveVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
@@ -112,7 +107,7 @@ int32_t DeferredVideoProcessingSession::RemoveVideo(const std::string& videoId, 
 
 int32_t DeferredVideoProcessingSession::RestoreVideo(const std::string& videoId)
 {
-    DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "RestoreVideo error, inSync!");
+    DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "RestoreVideo inSync!");
 
     auto ret = DPS_SendCommand<RestoreVideoCommand>(userId_, videoId);
     DP_INFO_LOG("DPS_VIDEO: RestoreVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
@@ -121,7 +116,7 @@ int32_t DeferredVideoProcessingSession::RestoreVideo(const std::string& videoId)
 
 int32_t DeferredVideoProcessingSession::ProcessVideo(const std::string& appName, const std::string& videoId)
 {
-    DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "ProcessVideo error, inSync!");
+    DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "ProcessVideo inSync!");
 
     auto ret = DPS_SendCommand<ProcessVideoCommand>(userId_, videoId);
     DP_INFO_LOG("DPS_VIDEO: ProcessVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
@@ -130,7 +125,7 @@ int32_t DeferredVideoProcessingSession::ProcessVideo(const std::string& appName,
 
 int32_t DeferredVideoProcessingSession::CancelProcessVideo(const std::string& videoId)
 {
-    DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "CancelProcessVideo error, inSync!");
+    DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "CancelProcessVideo inSync!");
 
     auto ret = DPS_SendCommand<CancelProcessVideoCommand>(userId_, videoId);
     DP_INFO_LOG("DPS_VIDEO: CancelProcessVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);

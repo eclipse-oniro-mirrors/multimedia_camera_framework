@@ -19,14 +19,29 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-DeferredVideoJob::DeferredVideoJob(const std::string& videoId, const DpsFdPtr& srcFd,
-    const DpsFdPtr& dstFd, const DpsFdPtr& movieFd, const DpsFdPtr& movieCopyFd)
-    : videoId_(videoId), srcFd_(srcFd), dstFd_(dstFd), movieFd_(movieFd),
-      movieCopyFd_(movieCopyFd), createTime_(GetSteadyNow())
+DeferredVideoJob::DeferredVideoJob(const std::string& videoId, std::unique_ptr<VideoInfo> info)
+    : videoId_(videoId), info_(std::move(info)), createTime_(GetSteadyNow())
 {
-    DP_CHECK_EXECUTE(movieFd_ != nullptr && movieCopyFd_ != nullptr, type_ = VideoJobType::MOVIE);
-    DP_INFO_LOG("videoId: %{public}s, type: %{public}d, srcFd: %{public}d, dstFd: %{public}d",
-        videoId_.c_str(), type_, srcFd_->GetFd(), dstFd_->GetFd());
+    DP_CHECK_EXECUTE(!info_->GetMoviePath().empty(), type_ = VideoJobType::MOVIE);
+    DP_INFO_LOG("videoId: %{public}s, type: %{public}d", videoId_.c_str(), type_);
+}
+
+DpsFdPtr DeferredVideoJob::GetInputFd()
+{
+    DP_INFO_LOG("GetInputFd start.");
+    DP_CHECK_RETURN_RET(srcFd_ != nullptr && srcFd_->GetFd() >= 0, srcFd_);
+    int fd = open(info_->GetSrcPath().c_str(), O_RDONLY);
+    DP_CHECK_RETURN_RET_LOG(fd < 0, nullptr, "Failed to open srcPath file: %{public}s", strerror(errno));
+    srcFd_ = std::make_shared<DpsFd>(fd);
+    return srcFd_;
+}
+
+DpsFdPtr DeferredVideoJob::GetMovieFd()
+{
+    DP_INFO_LOG("GetMovieFd start.");
+    int fd = open(info_->GetMoviePath().c_str(), O_RDONLY);
+    DP_CHECK_RETURN_RET_LOG(fd < 0, nullptr, "Failed to open moviePath file: %{public}s", strerror(errno));
+    return std::make_shared<DpsFd>(fd);
 }
 
 bool DeferredVideoJob::SetJobState(VideoJobState status)

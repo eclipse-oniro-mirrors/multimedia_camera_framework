@@ -50,12 +50,12 @@ MediaManagerProxy::~MediaManagerProxy()
     DP_INFO_LOG("MediaManagerProxy destructor");
 }
 
-int32_t MediaManagerProxy::MpegAcquire(const std::string& requestId, const DpsFdPtr& inputFd,
-    int32_t width, int32_t height)
+int32_t MediaManagerProxy::MpegAcquire(const std::string& requestId, const TempVideoPath& tempPath,
+    const DpsFdPtr& inputFd, int32_t width, int32_t height)
 {
     DP_DEBUG_LOG("MpegAcquire requestId: %{public}s", requestId.c_str());
     DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerIntf_ == nullptr, DP_ERR, "MediaManagerIntf is null");
-    return mediaManagerIntf_->MpegAcquire(requestId, inputFd, width, height);
+    return mediaManagerIntf_->MpegAcquire(requestId, tempPath, inputFd, width, height);
 }
 
 int32_t MediaManagerProxy::MpegUnInit(const int32_t result)
@@ -70,6 +70,13 @@ DpsFdPtr MediaManagerProxy::MpegGetResultFd()
     DP_DEBUG_LOG("MpegGetResultFd");
     DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerIntf_ == nullptr, nullptr, "MediaManagerIntf is null");
     return mediaManagerIntf_->MpegGetResultFd();
+}
+
+std::string MediaManagerProxy::MpegGetResultPath()
+{
+    DP_DEBUG_LOG("MpegGetResultPath");
+    DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerIntf_ == nullptr, "", "MediaManagerIntf is null");
+    return mediaManagerIntf_->MpegGetResultPath();
 }
 
 void MediaManagerProxy::MpegAddUserMeta(std::unique_ptr<MediaUserInfo> userInfo)

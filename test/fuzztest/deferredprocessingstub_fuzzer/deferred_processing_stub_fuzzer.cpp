@@ -72,10 +72,11 @@ void DeferredProcessingVideoFuzzTest(uint8_t *rawData, size_t size)
         DeferredProcessingService::GetInstance().CreateDeferredVideoProcessingSession(USERID, IDPSessionCallbackFuzz);
     session->BeginSynchronize();
     session->EndSynchronize();
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(data.ReadFileDescriptor());
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(data.ReadFileDescriptor());
+    auto srcPath = data.ReadString();
+    auto temp1Path = data.ReadString();
+    auto temp2Path = data.ReadString();
     auto videoId = data.ReadString();
-    session->AddVideo(videoId, srcFd, dstFd);
+    session->AddVideo(videoId, srcPath, temp1Path, temp2Path);
     bool restorable = data.RewindRead(0);
     session->RemoveVideo(videoId, restorable);
     session->RestoreVideo(videoId);

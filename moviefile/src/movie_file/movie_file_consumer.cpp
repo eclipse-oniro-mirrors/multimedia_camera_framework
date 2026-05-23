@@ -208,6 +208,16 @@ void MovieFileConsumer::SetDeferredVideoInfo(uint32_t flag, std::string videoId)
     CHECK_RETURN_ELOG(ret != AVCS_ERR_OK, "MovieFileConsumer::SetDeferredVideoInfo failed, ret: %{public}d", ret);
 }
 
+void MovieFileConsumer::SetDeviceChangeInfo(bool flag)
+{
+    MEDIA_INFO_LOG("MovieFileConsumer::SetDeviceChangeInfo ENTER");
+    CHECK_RETURN_ELOG(muxer_ == nullptr, "MovieFileConsumer::SetDeviceChangeInfo muxer_ is null");
+    std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
+    userMeta->SetData("com.openharmony.isDeviceChange", std::string(flag ? "YES" : "NO"));
+    int32_t ret = muxer_->SetUserMeta(userMeta);
+    CHECK_RETURN_ELOG(ret != AVCS_ERR_OK, "MovieFileConsumer::SetDeviceChangeInfo failed, ret: %{public}d", ret);
+}
+
 void MovieFileConsumer::RecordTimeStamps(int64_t startTimeStamp, int64_t endTimeStamp)
 {
     if (startTimeStamp > endTimeStamp) {

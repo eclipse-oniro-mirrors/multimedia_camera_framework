@@ -36,8 +36,11 @@ public:
     virtual void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         const DpsMetadata& metadata) = 0;
     virtual void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
+    virtual void OnDeliveryLowQualityLcd(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
     virtual void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         uint32_t cloudImageEnhanceFlag) = 0;
+    virtual void OnProcessImageDone(const std::string& imageId, const std::vector<CameraStandard::ImageFd>& imageFds,
+        std::shared_ptr<CameraStandard::PictureIntf> lcdImage, const DpsMetadata& metadata) = 0;
     virtual void OnError(const std::string& imageId, const DpsErrorCode errorCode) = 0;
     virtual void OnStateChanged(const DpsStatusCode status) = 0;
 };
@@ -90,6 +93,10 @@ public:
         const DpsMetadata& metadata) override;
     int32_t OnDeliveryLowQualityImage(const std::string &imageId,
         const std::shared_ptr<PictureIntf>& picture) override;
+    int32_t OnDeliveryLowQualityLcd(const std::string &imageId,
+        const std::shared_ptr<PictureIntf>& picture) override;
+    int32_t OnProcessImageDone(const std::string& imageId, const std::vector<ImageFd>& imageFds,
+        const std::shared_ptr<CameraStandard::PictureIntf>& lcdImage, const DpsMetadata& metadata) override;
     int32_t OnError(const std::string &imageId, DeferredProcessing::ErrorCode errorCode) override;
     int32_t OnStateChanged(DeferredProcessing::StatusCode status) override;
     int32_t CallbackParcel(

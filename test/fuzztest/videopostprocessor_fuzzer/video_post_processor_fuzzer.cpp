@@ -35,6 +35,7 @@ static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
 static size_t g_dataSize = 0;
 static size_t g_pos;
+const char* TEST_FILE_SRC_PATH = "/data/test/VideoPostProcessorFuzzTest_test_file.mp4";
 const char* TEST_FILE_PATH_1 = "/data/test/VideoPostProcessorFuzzTest_test_file1.mp4";
 const char* TEST_FILE_PATH_2 = "/data/test/VideoPostProcessorFuzzTest_test_file2.mp4";
 
@@ -79,15 +80,22 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     auto isAutoSuspend = GetData<bool>();
-    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    int sfd = open(TEST_FILE_SRC_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     DpsFdPtr inputFd = std::make_shared<DpsFd>(sfd);
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dfd);
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, inputFd, outFd, nullptr, nullptr);
+    int temp1Fd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    int temp2Fd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    std::string srcPath(TEST_FILE_SRC_PATH);
+    std::string temp1Path(TEST_FILE_PATH_1);
+    std::string temp2Path(TEST_FILE_PATH_2);
+    auto info = std::make_unique<VideoInfo>(srcPath, temp1Path, temp2Path, "");
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, std::move(info));
     jobPtr->SetExecutionMode(selectedExecutionMode);
     jobPtr->SetChargState(isAutoSuspend);
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
-    mediaManagerProxy->MpegAcquire(videoId, inputFd, 1920, 1080);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = TEST_FILE_PATH_1;
+    tempinfo.temp2Path = TEST_FILE_PATH_2;
+    mediaManagerProxy->MpegAcquire(videoId, tempinfo, inputFd, 1920, 1080);
     processor_->ProcessRequest(videoId, {}, mediaManagerProxy);
     processor_->RemoveRequest(videoId);
     constexpr int32_t executionModeCount2 = static_cast<int32_t>(SchedulerType::NORMAL_TIME_STATE) + 2;
@@ -98,6 +106,13 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest1()
     processor_->OnSessionDied();
     processor_->OnStateChanged(selectedHdiStatus);
 
+    if (temp1Fd >= 0) {
+        close(temp1Fd);
+    }
+    if (temp2Fd >= 0) {
+        close(temp2Fd);
+    }
+    remove(TEST_FILE_SRC_PATH);
     remove(TEST_FILE_PATH_1);
     remove(TEST_FILE_PATH_2);
 }
@@ -109,11 +124,11 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2()
     uint8_t randomNum = GetData<uint8_t>();
     std::vector<std::string> testStrings = {"test1", "test2"};
     std::string videoId(testStrings[randomNum % testStrings.size()]);
-    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(sfd);
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dfd);
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, inputFd, outFd, nullptr, nullptr);
+    std::string srcPath(TEST_FILE_SRC_PATH);
+    std::string temp1Path(TEST_FILE_PATH_1);
+    std::string temp2Path(TEST_FILE_PATH_2);
+    auto info = std::make_unique<VideoInfo>(srcPath, temp1Path, temp2Path, "");
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, std::move(info));
     processor_->PrepareStreams(jobPtr);
     StreamDescription stream;
     sptr<BufferProducerSequenceable> producer;

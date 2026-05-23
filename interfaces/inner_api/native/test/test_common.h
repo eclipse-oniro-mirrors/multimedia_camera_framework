@@ -158,8 +158,11 @@ public:
     void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         const DpsMetadata& dpsMetadata);
     void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture);
+    void OnDeliveryLowQualityLcd(const std::string &imageId, std::shared_ptr<PictureIntf> picture);
     void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         uint32_t cloudImageEnhanceFlag);
+    void OnProcessImageDone(const std::string& imageId, const std::vector<CameraStandard::ImageFd>& imageFds,
+        std::shared_ptr<CameraStandard::PictureIntf> lcdImage, const DpsMetadata& metadata);
     void OnError(const std::string& imageId, const DpsErrorCode errorCode);
     void OnStateChanged(const DpsStatusCode status);
 };

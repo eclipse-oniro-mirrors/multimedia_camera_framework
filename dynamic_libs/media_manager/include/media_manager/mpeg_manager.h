@@ -25,6 +25,11 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+
+struct VideoTempPath {
+    std::string outPath;
+    std::string tmpPath;
+};
 class MpegManager : public std::enable_shared_from_this<MpegManager> {
 public:
     MpegManager();
@@ -34,7 +39,8 @@ public:
     MpegManager(MediaManager&&) = delete;
     MpegManager& operator=(MediaManager&&) = delete;
 
-    MediaManagerError Init(const std::string& requestId, const DpsFdPtr& inputFd, int32_t width, int32_t height);
+    MediaManagerError Init(const std::string& requestId, const VideoTempPath& tmpPaths, const DpsFdPtr& inputFd,
+        int32_t width, int32_t height);
     MediaManagerError UnInit(const MediaResult result);
     sptr<Surface> GetSurface();
     sptr<Surface> GetMakerSurface();
@@ -42,6 +48,7 @@ public:
     uint32_t GetDuration();
     MediaManagerError NotifyEnd();
     DpsFdPtr GetResultFd();
+    std::string GetResultPath();
     void AddUserMeta(std::unique_ptr<MediaUserInfo> userInfo);
     void SetProgressNotifer(std::unique_ptr<MediaProgressNotifier> processNotifer);
 
@@ -59,10 +66,14 @@ private:
     MediaManagerError ReleaseMakerBuffer(sptr<SurfaceBuffer>& buffer);
     void OnBufferAvailable(uint32_t index, const std::shared_ptr<AVBuffer>& buffer);
     void OnMakerBufferAvailable();
-    DpsFdPtr GetFileFd(const std::string& requestId, int flags, const std::string& tag);
+    DpsFdPtr GetFileFd(const std::string& requestId, const std::string& dstPath, int flags, const std::string& tag);
     bool CheckFilePath(const std::string& path);
     std::shared_ptr<AVBuffer> CreateWatermarkBuffer(const std::string& infoParam);
     void ParseWatermarkConfigFromJson(WaterMarkInfo& waterMarkInfo, const std::string& infoParam);
+    void RenameTempFiles();
+    void RemoveTempFiles();
+    void ResetTempFiles();
+    std::string GetTempDirPath();
 
     std::mutex mediaInfoMutex_;
     std::mutex makerMutex_;
@@ -75,6 +86,7 @@ private:
     std::shared_ptr<MediaInfo> mediaInfo_ {nullptr};
     std::string outPath_;
     std::string tempPath_;
+    std::string temp2Path_;
     DpsFdPtr outputFd_ {nullptr};
     DpsFdPtr tempFd_ {nullptr};
     MediaResult result_ {FAIL};

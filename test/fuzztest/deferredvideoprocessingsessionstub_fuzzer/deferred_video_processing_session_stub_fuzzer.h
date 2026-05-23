@@ -36,14 +36,18 @@ public:
     }
     int32_t AddVideo(
         const std::string& videoId,
-        const sptr<IPCFileDescriptor>& srcFd,
-        const sptr<IPCFileDescriptor>& dstFd) override
+        const std::string& srcPath,
+        const std::string& temp1Path,
+        const std::string& temp2Path) override
     {
         return 0;
     }
     int32_t AddVideo(
         const std::string& videoId,
-        const std::vector<sptr<IPCFileDescriptor>>& fds) override
+        const std::string& srcPath,
+        const std::string& temp1Path,
+        const std::string& temp2Path,
+        const std::string& editPath) override
     {
         return 0;
     }

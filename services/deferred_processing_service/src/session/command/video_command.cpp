@@ -15,6 +15,8 @@
 
 #include "video_command.h"
 
+#include <utility>
+
 #include "dps.h"
 
 namespace OHOS {
@@ -47,19 +49,17 @@ int32_t VideoCommand::Initialize()
 }
 
 // LCOV_EXCL_START
-AddVideoCommand::AddVideoCommand(const int32_t userId, const std::string& videoId,
-    const std::shared_ptr<VideoInfo>& info)
-    : VideoCommand(userId, videoId), info_(info)
+AddVideoCommand::AddVideoCommand(const int32_t userId, const std::string& videoId, std::unique_ptr<VideoInfo> info)
+    : VideoCommand(userId, videoId), info_(std::move(info))
 {
-    DP_DEBUG_LOG("AddVideoCommand, videoId: %{public}s, srcFd: %{public}d, dstFd: %{public}d",
-        videoId_.c_str(), info_->srcFd_->GetFd(), info_->dstFd_->GetFd());
+    DP_DEBUG_LOG("AddVideoCommand, videoId: %{public}s", videoId_.c_str());
 }
 
 int32_t AddVideoCommand::Executing()
 {
     int32_t ret = Initialize();
     DP_CHECK_RETURN_RET(ret != DP_OK, ret);
-    processor_->AddVideo(videoId_, info_);
+    processor_->AddVideo(videoId_, std::move(info_));
     return DP_OK;
 }
 // LCOV_EXCL_STOP

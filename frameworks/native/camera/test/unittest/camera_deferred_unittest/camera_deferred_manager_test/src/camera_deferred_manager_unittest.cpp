@@ -14,7 +14,7 @@
  */
 
 #include "camera_deferred_manager_unittest.h"
-
+#include <filesystem>
 #include <fcntl.h>
 #include "demuxer.h"
 #include "media_manager.h"
@@ -31,6 +31,8 @@ namespace OHOS {
 namespace CameraStandard {
 const std::string MEDIA_ROOT = "/data/test/media/";
 const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
+const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
+const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
 constexpr int32_t VIDEO_WIDTH = 1920;
 constexpr int32_t VIDEO_HIGHT = 1080;
 
@@ -48,13 +50,21 @@ void DeferredManagerUnitTest::SetUp()
 {
     MEDIA_DEBUG_LOG("SetUp");
     fd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
+    temp1fd_ = open(VIDEO_TEMP_PATH_1.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    temp2fd_ = open(VIDEO_TEMP_PATH_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
 void DeferredManagerUnitTest::TearDown()
 {
     MEDIA_DEBUG_LOG("DeferredManagerUnitTest::TearDown started!");
-    if (fd_ > 0) {
+    if (fd_ >= 0) {
         close(fd_);
+    }
+    if (temp1fd_ >= 0) {
+        close(temp1fd_);
+    }
+    if (temp2fd_ >= 0) {
+        close(temp2fd_);
     }
 }
 
@@ -129,7 +139,10 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_004, TestSize
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(fd_));
     ASSERT_NE(inputFd, nullptr);
-    EXPECT_NE(mpegManagerFactory->Acquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGHT), nullptr);
+    DeferredProcessing::VideoTempPath tempinfo;
+    tempinfo.outPath = VIDEO_TEMP_PATH_1;
+    tempinfo.tmpPath = VIDEO_TEMP_PATH_2;
+    EXPECT_NE(mpegManagerFactory->Acquire(requestId, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT), nullptr);
     EXPECT_EQ(mpegManagerFactory->refCount_, 1);
 }
 
@@ -149,7 +162,7 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_005, TestSize
     std::vector<std::string> testStrings = {"20250101240000000", "20250101240000001"};
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     int flags = 1;
-    EXPECT_NE(mpegManager->GetFileFd(requestId, flags, "_vid"), nullptr);
+    EXPECT_NE(mpegManager->GetFileFd(requestId, VIDEO_TEMP_PATH_1, flags, "_vid"), nullptr);
     mpegManager->isRunning_.store(false);
     mpegManager->UnInitVideoCodec();
     MediaResult result1 = MediaResult::FAIL;
@@ -267,7 +280,10 @@ HWTEST_F(DeferredManagerUnitTest, camera_deferred_manager_unittest_010, TestSize
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(fd_));
     ASSERT_NE(inputFd, nullptr);
-    EXPECT_NE(mpegManagerFactory->Acquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGHT), nullptr);
+    DeferredProcessing::VideoTempPath tempinfo;
+    tempinfo.outPath = VIDEO_TEMP_PATH_1;
+    tempinfo.tmpPath = VIDEO_TEMP_PATH_2;
+    EXPECT_NE(mpegManagerFactory->Acquire(requestId, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT), nullptr);
     EXPECT_EQ(mpegManagerFactory->refCount_, 1);
 }
 

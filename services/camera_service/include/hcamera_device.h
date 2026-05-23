@@ -107,6 +107,10 @@ public:
     int32_t GetFocusMode();
     int32_t GetVideoStabilizationMode();
     void SetConcurrentCaptureTag(bool flag);
+    void SetSpectrumCallback(int32_t userId, sptr<ICameraSpectrumInfoCallback> callback);
+    void UnsetSpectrumCallback();
+    void OnSpectrumInfoChange(std::shared_ptr<OHOS::Camera::CameraMetadata> ability, const uint64_t timestamp);
+    sptr<ICameraSpectrumInfoCallback> GetSpectrumCallback();
 #ifdef CAMERA_MOVING_PHOTO
     void EnableMovingPhoto(bool isMovingPhotoEnabled);
     bool CheckMovingPhotoSupported(int32_t mode);
@@ -376,6 +380,8 @@ private:
     uint32_t firstCallerTokenID_ {0};
     std::shared_mutex mechMetadataCallbackLock_;
     std::function<void(std::shared_ptr<OHOS::Camera::CameraMetadata>)> mechMetadataCallback_;
+    sptr<ICameraSpectrumInfoCallback> spectrumInfoCallback_;
+    int32_t userId_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -37,7 +37,10 @@ void MediaManagerProxyFuzzer::MediaManagerProxyFuzzerTest(FuzzedDataProvider& fd
     auto inputFd = std::make_shared<DeferredProcessing::DpsFd>(dup(REQUEST_FD_ID));
     int32_t width = fdp.ConsumeIntegral<int32_t>();
     int32_t height = fdp.ConsumeIntegral<int32_t>();
-    mediaManagerProxyFuzz_->MpegAcquire(requestId, inputFd, width, height);
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING);
+    tempinfo.temp2Path = fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING);
+    mediaManagerProxyFuzz_->MpegAcquire(requestId, tempinfo, inputFd, width, height);
     mediaManagerProxyFuzz_->MpegGetResultFd();
     std::unique_ptr<MediaUserInfo> userInfo = std::make_unique<MediaUserInfo>();
     mediaManagerProxyFuzz_->MpegAddUserMeta(std::move(userInfo));

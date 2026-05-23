@@ -78,8 +78,7 @@ void DeferredVideoController::HandleSuccess(const std::string& videoId, std::uni
 {
     auto job = GetJob(videoId);
     DP_CHECK_ERROR_RETURN_LOG(job == nullptr, "Video job is nullptr.");
-    DP_INFO_LOG("DPS_VIDEO: HandleSuccess videoId: %{public}s, outFd: %{public}d",
-        videoId.c_str(), job->GetOutputFd()->GetFd());
+    DP_INFO_LOG("DPS_VIDEO: HandleSuccess videoId: %{public}s", videoId.c_str());
     HandleNormalSchedule(job);
     DP_CHECK_EXECUTE(videoProcessor_, videoProcessor_->OnProcessSuccess(userId_, videoId, std::move(userInfo)));
 }

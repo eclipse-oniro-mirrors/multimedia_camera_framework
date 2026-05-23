@@ -39,6 +39,8 @@ public:
     std::shared_ptr<DeferredVideoProcessor> process_ {nullptr};
     int32_t srcFd_ {-1};
     int32_t dtsFd_ {-1};
+    int32_t temp1fd_ {-1};
+    int32_t temp2fd_ {-1};
 };
 } // DeferredProcessing
 } // CameraStandard

@@ -30,7 +30,7 @@ MpegManagerFactory::~MpegManagerFactory()
     DP_DEBUG_LOG("entered.");
 }
 
-std::shared_ptr<MpegManager> MpegManagerFactory::Acquire(const std::string& requestId,
+std::shared_ptr<MpegManager> MpegManagerFactory::Acquire(const std::string& requestId, const VideoTempPath& tempPath,
     const DpsFdPtr& inputFd, int32_t width, int32_t height)
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -45,7 +45,7 @@ std::shared_ptr<MpegManager> MpegManagerFactory::Acquire(const std::string& requ
     DP_CHECK_ERROR_RETURN_RET_LOG(inputFd == nullptr, nullptr, "inputFd is nullptr.");
 
     mpegManager_ = std::make_shared<MpegManager>();
-    if (mpegManager_->Init(requestId, inputFd, width, height) != OK) {
+    if (mpegManager_->Init(requestId, tempPath, inputFd, width, height) != OK) {
         DP_ERR_LOG("Failed to initialize MpegManager.");
         mpegManager_.reset();
         return nullptr;
