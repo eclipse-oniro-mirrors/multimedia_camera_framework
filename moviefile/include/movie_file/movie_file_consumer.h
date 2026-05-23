@@ -23,12 +23,14 @@
 #include <queue>
 
 #include "audio_info.h"
+#include "audio_capturer.h"
 #include "avmuxer.h"
 #include "unified_pipeline_audio_buffer.h"
 #include "unified_pipeline_audio_encoded_buffer.h"
 #include "unified_pipeline_data_consumer.h"
 #include "unified_pipeline_surface_buffer.h"
 #include "unified_pipeline_video_encoded_buffer.h"
+#include "unified_pipeline_metadata_buffer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -49,6 +51,7 @@ public:
         bool isVideoHdr = false;
         std::shared_ptr<AudioStandard::AudioStreamInfo> rawAudiostreamInfo = nullptr;
         std::shared_ptr<AudioStandard::AudioStreamInfo> audiostreamInfo = nullptr;
+        bool isSupportSuperListenering_4_2 = false;
         int32_t frameRate = 30;
         bool isSetWaterMark = false;
         int64_t bitrate = 30000000;
@@ -82,6 +85,8 @@ public:
 
     void SetDeviceChangeInfo(bool flag);
 
+    void AddMetadataTrackFor4_2_AUDIO();
+
 private:
     class ConsumerTimeKeeper {
     public:
@@ -103,6 +108,7 @@ private:
             firstVideoTimestamp_ = INVALID_TIMESTAMP;
             lastVideoTimestamp_ = INVALID_TIMESTAMP;
             firstMetadataTimestamp_ = INVALID_TIMESTAMP;
+            firstMetadataTimestamp4_2_ = INVALID_TIMESTAMP;
         }
 
         inline bool IsTimestampVaild(int64_t timestamp)
@@ -139,6 +145,15 @@ private:
             return videoDuration_ + timestamp - firstMetadataTimestamp_;
         }
 
+        inline int64_t GetMetadataRelativeTime4_2(int64_t timestamp)
+        {
+            std::lock_guard<std::mutex> lock(timeMutex_);
+            if (firstMetadataTimestamp4_2_ == INVALID_TIMESTAMP) {
+                firstMetadataTimestamp4_2_ = timestamp;
+            }
+            return videoDuration_ + timestamp - firstMetadataTimestamp4_2_;
+        }
+
         inline bool IsVideoStarted()
         {
             std::lock_guard<std::mutex> lock(timeMutex_);
@@ -162,6 +177,7 @@ private:
         int64_t lastVideoTimestamp_ = INVALID_TIMESTAMP;
 
         int64_t firstMetadataTimestamp_ = INVALID_TIMESTAMP;
+        int64_t firstMetadataTimestamp4_2_ = INVALID_TIMESTAMP;
 
         int64_t startTimestamp_ = INVALID_TIMESTAMP;
 
@@ -225,6 +241,10 @@ private:
     void OnMetaBufferArrival(std::unique_ptr<UnifiedPipelineSurfaceBuffer> metaBuffer);
     void WriteMetaBuffer(std::unique_ptr<UnifiedPipelineSurfaceBuffer> metaBuffer);
 
+    void OnMetaDataBufferArrivalFor4_2_AUDIO(std::unique_ptr<UnifiedPipelineMetadataBuffer> metaDataBuffer);
+    void WriteMetaDataFor4_2_AUDIO(
+       AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t>& metaData, int64_t timestamp);
+
     void RecordTimeStamps(int64_t startTimeStamp, int64_t endTimeStamp);
 
     std::string GetTimeStamps();
@@ -245,6 +265,7 @@ private:
     int32_t audioTrackId_ = INVALID_TRACKID;
     int32_t audioRawTrackId_ = INVALID_TRACKID;
     int32_t metaTrackId_ = INVALID_TRACKID;
+    int32_t metaTrackId4_2_ = INVALID_TRACKID;
 
     ConsumerTimeKeeper timeKeeper_;
     BufferQueue<UnifiedPipelineAudioPackagedEncodedBuffer> audioEncodedBufferQueue_ { BUFFER_CACHE_SIZE };

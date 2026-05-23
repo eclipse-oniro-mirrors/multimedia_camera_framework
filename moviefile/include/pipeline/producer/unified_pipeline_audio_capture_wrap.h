@@ -23,6 +23,7 @@
 #include <mutex>
 #include <set>
 #include <vector>
+#include <queue>
 
 #include "camera_log.h"
 #include "audio_capturer.h"
@@ -69,17 +70,39 @@ public:
         const std::shared_ptr<AudioStandard::AudioPreferredInputDeviceChangeCallback> &callback);
     void UnsetPreferredInputDeviceChangeCallback();
 
-private:
-    enum class State : int32_t { STOPPED, STARTED };
+    inline int32_t SetCapturerReadCallback(const std::shared_ptr<AudioStandard::AudioCapturerReadCallback> &callback)
+    {
+        return audioCapturer_->SetCapturerReadCallback(callback);
+    }
 
-    void ProcessAudioBuffer();
+    inline int32_t SetCapturerMetaDataCallback(
+        const std::shared_ptr<AudioStandard::AudioCapturerMetaDataCallback> &callback)
+    {
+        return audioCapturer_->SetCapturerMetaDataCallback(callback);
+    }
 
-    void OnReadBufferStart();
-    void OnReadBuffer(uint8_t* buffer, size_t bufferSize, int64_t timestamp);
+    inline int32_t SetCaptureMode(AudioStandard::AudioCaptureMode captureMode)
+    {
+        MEDIA_INFO_LOG("SetCaptureMode enter, audioCapturer_ is nullptr: %{public}d", audioCapturer_ == nullptr);
+        return audioCapturer_->SetCaptureMode(captureMode);
+    }
 
-    // 基于基础时间，向前填充空音频
-    void FillEmptyBuffer(size_t oneBufferSize, int64_t baseTimestamp, int32_t count);
-    void OnReadBufferEnd();
+    inline void SetMetaDataCallbackFunc(
+        std::function<void(AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t>& metaData)> callback)
+    {
+        metaDataCallback_ = callback;
+    }
+
+    inline void SetSuperListeningDataCallback(
+        std::function<void(int64_t timestamp, const uint8_t* processBuffer, size_t processBufSize,
+                           const uint8_t* micInBuffer, size_t micInBufSize)> callback)
+    {
+        superListeningDataCallback_ = callback;
+    }
+
+    void NotifySuperListeningDataReady();
+
+    void InitSuperListeningThread();
 
     inline std::shared_ptr<AudioStandard::AudioCapturer> GetAudioCapture()
     {
@@ -92,6 +115,45 @@ private:
         std::lock_guard<std::mutex> lock(audioCapturerMutex_);
         audioCapturer_ = audioCapturer;
     }
+    std::function<void(AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t> &metaData)>
+        metaDataCallback_;
+
+    std::function<void(int64_t timestamp, const uint8_t* processBuffer, size_t processBufSize,
+                       const uint8_t* micInBuffer, size_t micInBufSize)> superListeningDataCallback_;
+
+private:
+    enum class State : int32_t { STOPPED, STARTED };
+    struct SuperListeningBufferData {
+        int64_t timestamp = 0;
+        std::vector<uint8_t> processBuffer;
+        std::vector<uint8_t> micInBuffer;
+    };
+
+    void ProcessAudioBuffer();
+
+    void OnReadBufferStart();
+    void OnReadBuffer(uint8_t* buffer, size_t bufferSize, int64_t timestamp);
+
+    void FillEmptyBuffer(size_t oneBufferSize, int64_t baseTimestamp, int32_t count);
+    void OnReadBufferEnd();
+
+    void ProcessSuperListeningBuffer();
+    bool BuildSuperListeningBufferData(const std::shared_ptr<AudioStandard::AudioCapturer>& audioCapture,
+        AudioStandard::BufferDesc& bufDesc, SuperListeningBufferData& bufferData);
+
+    void ProcessSuperListeningDataDispatch();
+
+    void PushSuperListeningBufferData(SuperListeningBufferData&& bufferData);
+
+    int64_t GetMicroTimestamp();
+    std::atomic<bool> isSuperListeningDataReady_{false};
+    std::mutex superListeningMutex_;
+    std::condition_variable superListeningCond_;
+
+    static constexpr size_t SUPER_LISTENING_QUEUE_MAX_SIZE = 8;
+    std::mutex superListeningDataMutex_;
+    std::condition_variable superListeningDataCond_;
+    std::queue<SuperListeningBufferData> superListeningDataQueue_;
 
     std::mutex audioCapturerMutex_;
     std::shared_ptr<AudioStandard::AudioCapturer> audioCapturer_ = nullptr;
@@ -136,6 +198,37 @@ public:
 private:
     std::weak_ptr<UnifiedPipelineAudioCaptureWrap> wrapPtr_;
     std::function<void()> deviceChangeCallback_;
+};
+
+class MyAudioCapturerReadCallback : public AudioStandard::AudioCapturerReadCallback {
+public:
+    explicit MyAudioCapturerReadCallback(std::shared_ptr<UnifiedPipelineAudioCaptureWrap> wrap) : wrapPtr_(wrap) {}
+    void OnReadData(size_t length) override
+    {
+        MEDIA_INFO_LOG("Audio data is ready to be read. Buffer length:%{public}d", static_cast<int32_t>(length));
+        if (wrapPtr_ != nullptr) {
+            wrapPtr_->NotifySuperListeningDataReady();
+        }
+    }
+
+private:
+    std::shared_ptr<UnifiedPipelineAudioCaptureWrap> wrapPtr_;
+};
+
+class MyAudioCapturerMetaDataCallback : public AudioStandard::AudioCapturerMetaDataCallback {
+public:
+    explicit MyAudioCapturerMetaDataCallback(std::shared_ptr<UnifiedPipelineAudioCaptureWrap> wrap) : wrapPtr_(wrap) {}
+
+    void OnMetaData(AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t> &metaData) override
+    {
+        MEDIA_INFO_LOG("Received metadata, type:%{public}d, size:%{public}u", type, metaData.size());
+        if (wrapPtr_ != nullptr && wrapPtr_->metaDataCallback_) {
+            wrapPtr_->metaDataCallback_(type, metaData);
+        }
+    }
+
+private:
+    std::shared_ptr<UnifiedPipelineAudioCaptureWrap> wrapPtr_;
 };
 
 } // namespace CameraStandard

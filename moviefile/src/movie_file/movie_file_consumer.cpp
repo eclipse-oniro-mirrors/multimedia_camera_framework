@@ -65,6 +65,9 @@ void MovieFileConsumer::SetUp(MovieFileConfig config)
     }
 
     AddMetadataTrack();
+    if (config.isSupportSuperListenering_4_2) {
+        AddMetadataTrackFor4_2_AUDIO();
+    }
     MEDIA_INFO_LOG("MovieFileConsumer vId:%{public}d,aid:%{public}d,arid:%{public}d,mid:%{public}d", videoTrackId_,
         audioTrackId_, audioRawTrackId_, metaTrackId_);
     int32_t ret = muxer_->Start();
@@ -119,6 +122,23 @@ void MovieFileConsumer::AddMetadataTrack()
     formatMeta.PutIntValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_SRC_TRACK_ID, videoTrackId_);
     muxer_->AddTrack(metaTrackId_, formatMeta.GetMeta());
     if (metaTrackId_ != INVALID_TRACKID) {
+        std::shared_ptr<Meta> param = std::make_shared<Meta>();
+        param->SetData("use_timed_meta_track", 1);
+        muxer_->SetParameter(param);
+    }
+}
+
+void MovieFileConsumer::AddMetadataTrackFor4_2_AUDIO()
+{
+    CHECK_RETURN_ELOG(audioTrackId_ == INVALID_TRACKID, "MovieFileConsumer::AddMetadataTrack audioTrackId_ is invalid");
+    Format formatMeta {};
+    formatMeta.PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, "meta/timed-metadata");
+    formatMeta.PutStringValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_KEY,
+        "com.openharmony.timed_metadata.vid_maker_info_4_2");
+    formatMeta.PutIntValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_SRC_TRACK_ID, audioTrackId_);
+    int32_t ret = muxer_->AddTrack(metaTrackId4_2_, formatMeta.GetMeta());
+    MEDIA_INFO_LOG("MovieFileConsumer::AddMetadataTrackFor4_2_AUDIO retCode: %{public}d", ret);
+    if (metaTrackId4_2_ != INVALID_TRACKID) {
         std::shared_ptr<Meta> param = std::make_shared<Meta>();
         param->SetData("use_timed_meta_track", 1);
         muxer_->SetParameter(param);
@@ -280,6 +300,10 @@ void MovieFileConsumer::OnBufferArrival(std::unique_ptr<UnifiedPipelineBuffer> p
         case BufferType::CAMERA_VIDEO_META:
             OnMetaBufferArrival(
                 UnifiedPipelineBuffer::CastPtr<UnifiedPipelineSurfaceBuffer>(std::move(pipelineBuffer)));
+            break;
+        case BufferType::CAMERA_AUDIO_4_2_METADATA:
+            OnMetaDataBufferArrivalFor4_2_AUDIO(
+                UnifiedPipelineBuffer::CastPtr<UnifiedPipelineMetadataBuffer>(std::move(pipelineBuffer)));
             break;
         default:
             // do nothing.
@@ -520,6 +544,42 @@ void MovieFileConsumer::WriteMetaBuffer(std::unique_ptr<UnifiedPipelineSurfaceBu
     MEDIA_DEBUG_LOG("MovieFileConsumer::OnMetaBufferArrival metaAvBuffer->pts is %{public}" PRIi64
                     " fixed pts is %{public}" PRIi64 " bufferSize is %{public}d",
         data.timestamp, metaAvBuffer->pts_, bufferSize);
+}
+
+void MovieFileConsumer::OnMetaDataBufferArrivalFor4_2_AUDIO(
+    std::unique_ptr<UnifiedPipelineMetadataBuffer> metaDataBuffer)
+{
+    CHECK_RETURN(metaTrackId4_2_ == INVALID_TRACKID || metaDataBuffer == nullptr);
+    if (!timeKeeper_.IsVideoStarted()) {
+        return;
+    }
+    auto data = metaDataBuffer->UnwrapData();
+    WriteMetaDataFor4_2_AUDIO(
+        static_cast<AudioStandard::CaptureMetaDataType>(data.type), data.metaData, data.timestamp);
+}
+
+void MovieFileConsumer::WriteMetaDataFor4_2_AUDIO(
+    AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t>& metaData, int64_t timestamp)
+{
+    CHECK_RETURN(metaData.empty());
+
+    AVBufferConfig avBufferConfig;
+    avBufferConfig.size = static_cast<int32_t>(metaData.size());
+    avBufferConfig.memoryType = MemoryType::SHARED_MEMORY;
+    avBufferConfig.memoryFlag = MemoryFlag::MEMORY_READ_WRITE;
+
+    std::shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(avBufferConfig);
+    CHECK_RETURN_ELOG(metaAvBuffer == nullptr, "MovieFileConsumer::WriteMetaDataFor4_2_AUDIO metaAvBuffer is nullptr");
+    CHECK_RETURN_ELOG(metaAvBuffer->memory_ == nullptr,
+        "MovieFileConsumer::WriteMetaDataFor4_2_AUDIO metaAvBuffer->memory_ is nullptr.");
+
+    std::shared_ptr<AVMemory>& bufferMem = metaAvBuffer->memory_;
+    bufferMem->Write(metaData.data(), static_cast<int32_t>(metaData.size()), 0);
+    metaAvBuffer->pts_ = timeKeeper_.GetMetadataRelativeTime4_2(timestamp);
+    int32_t ret = muxer_->WriteSample(metaTrackId4_2_, metaAvBuffer);
+    MEDIA_DEBUG_LOG("MovieFileConsumer::WriteMetaDataFor4_2_AUDIO type:%{public}d ret:%{public}d origin pts:%{public}"
+                    PRIi64 " fixed pts:%{public}" PRIi64 " bufferSize:%{public}zu",
+        type, ret, timestamp, metaAvBuffer->pts_, metaData.size());
 }
 
 void MovieFileConsumer::FlushBufferQueueCache()
