@@ -14,6 +14,7 @@
  */
 
 #include "metadata_output_impl.h"
+#include "metadata_object_ext_impl.h"
 #include "camera_log.h"
 #include "camera_util.h"
 
@@ -167,9 +168,125 @@ MetadataObjectType Camera_MetadataOutput::convert(Camera_MetadataObjectType type
     unordered_map<Camera_MetadataObjectType, MetadataObjectType> convertMap = {
         {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION, MetadataObjectType::FACE},
         {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY, MetadataObjectType::HUMAN_BODY},
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_CAT_FACE, MetadataObjectType::CAT_FACE},
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_CAT_BODY, MetadataObjectType::CAT_BODY},
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_DOG_FACE, MetadataObjectType::DOG_FACE},
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_DOG_BODY, MetadataObjectType::DOG_BODY},
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_SALIENT_DETECTION,
+             MetadataObjectType::SALIENT_DETECTION},
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_BAR_CODE_DETECTION,
+             MetadataObjectType::BAR_CODE_DETECTION},
+        {Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_BASIC_FACE_DETECTION,
+             MetadataObjectType::BASE_FACE_DETECTION},
         {Camera_MetadataObjectType::FACE_DETECTION, MetadataObjectType::FACE}};
     if (convertMap.find(type) == convertMap.end()) {
         return MetadataObjectType::INVALID;
     }
     return convertMap[type];
+}
+
+class InnerMetadataOutputCallbackExt : public MetadataStateCallback {
+public:
+    InnerMetadataOutputCallbackExt(Camera_MetadataOutput* metadataOutput,
+                                   OH_MetadataOutput_OnErrorExt* callback,
+                                   void* context)
+        : metadataOutput_(metadataOutput), callback_(*callback), context_(context) {}
+    ~InnerMetadataOutputCallbackExt() = default;
+
+    void OnError(const int32_t errorCode) const override
+    {
+        MEDIA_ERR_LOG("InnerMetadataOutputCallbackExt::OnError is called!, errorCode: %{public}d", errorCode);
+        CHECK_RETURN_ELOG(metadataOutput_ == nullptr || callback_ == nullptr,
+                          "OnError : metadataOutput_ == nullptr || callback_ == nullptr");
+        callback_(context_, FrameworkToNdkCameraError(errorCode));
+    }
+
+private:
+    Camera_MetadataOutput* metadataOutput_;
+    OH_MetadataOutput_OnErrorExt callback_;
+    void* context_;
+};
+class InnerMetadataObjectCallbackExt : public MetadataObjectCallback {
+public:
+    InnerMetadataObjectCallbackExt(Camera_MetadataOutput* metadataOutput,
+                                   OH_MetadataOutput_OnMetadataObjectExtAvailable* callback,
+                                   void* context)
+        : metadataOutput_(metadataOutput), callback_(*callback), context_(context) {}
+    ~InnerMetadataObjectCallbackExt() = default;
+
+    void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override
+    {
+        MEDIA_DEBUG_LOG("InnerMetadataObjectCallbackExt::OnMetadataObjectsAvailable");
+        CHECK_RETURN_ELOG(metadataOutput_ == nullptr,
+                          "OnMetadataObjectsAvailable : metadataOutput_ is nullptr");
+        CHECK_RETURN_ELOG(metaObjects.empty(), "OnMetadataObjectsAvailable: metaObjects is empty");
+        CHECK_RETURN_ELOG(callback_ == nullptr,
+                          "OnMetadataObjectsAvailable : callback_ is nullptr");
+        size_t size = metaObjects.size();
+        OH_Camera_MetadataObjectExt** objectArray = new OH_Camera_MetadataObjectExt* [size];
+        for (size_t index = 0; index < size; index++) {
+            objectArray[index] = new OH_Camera_MetadataObjectExt(metaObjects[index]);
+        }
+        callback_(context_, objectArray, size);
+    }
+private:
+    Camera_MetadataOutput* metadataOutput_;
+    OH_MetadataOutput_OnMetadataObjectExtAvailable callback_;
+    void* context_;
+};
+
+
+Camera_ErrorCode Camera_MetadataOutput::RegisterMetadataObjectExtAvailableCallback(
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback)
+{
+    shared_ptr<InnerMetadataObjectCallbackExt> innerMetadataObjectCallbackExt =
+        make_shared<InnerMetadataObjectCallbackExt>(this, callback, context);
+    innerMetadataOutput_->SetCallbackExt(innerMetadataObjectCallbackExt);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_MetadataOutput::UnregisterMetadataObjectExtAvailableCallback(
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback)
+{
+    shared_ptr<InnerMetadataObjectCallbackExt> innerMetadataObjectCallbackExt = nullptr;
+    innerMetadataOutput_->SetCallbackExt(innerMetadataObjectCallbackExt);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_MetadataOutput::RegisterErrorCallback(void* context, OH_MetadataOutput_OnErrorExt* callback)
+{
+    shared_ptr<InnerMetadataOutputCallbackExt> innerMetadataOutputCallbackExt =
+        make_shared<InnerMetadataOutputCallbackExt>(this, callback, context);
+    innerMetadataOutput_->SetCallbackExt(innerMetadataOutputCallbackExt);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_MetadataOutput::UnregisterErrorCallback(void* context, OH_MetadataOutput_OnErrorExt* callback)
+{
+    shared_ptr<InnerMetadataOutputCallbackExt> innerMetadataOutputCallbackExt = nullptr;
+    innerMetadataOutput_->SetCallbackExt(innerMetadataOutputCallbackExt);
+    return CAMERA_OK;
+}
+
+bool Camera_MetadataOutput::IsLockMetadataObjectTrackingSupported() const
+{
+    return innerMetadataOutput_->IsLockMetadataObjectTrackingSupported();
+}
+
+Camera_ErrorCode Camera_MetadataOutput::LockMetadataObjectTracking(Camera_Point* pointOfInterest)
+{
+    if (pointOfInterest == nullptr) {
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    Point point;
+    point.x = pointOfInterest->x;
+    point.y = pointOfInterest->y;
+    int32_t ret = innerMetadataOutput_->LockMetadataObjectTracking(point);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_MetadataOutput::UnlockMetadataObjectTracking()
+{
+    int32_t ret = innerMetadataOutput_->UnlockMetadataObjectTracking();
+    return FrameworkToNdkCameraError(ret);
 }

@@ -425,6 +425,20 @@ public:
      */
     void SetCallback(std::shared_ptr<MetadataStateCallback> metadataStateCallback);
 
+    /**
+     * @brief Set the extended metadata object callback for the metadata output.
+     *
+     * @param MetadataObjectCallback pointer to be triggered.
+     */
+    void SetCallbackExt(std::shared_ptr<MetadataObjectCallback> metadataObjectCallback);
+
+    /**
+     * @brief Set the extended metadata state callback for the metadata output.
+     *
+     * @param MetadataStateCallback pointer to be triggered.
+     */
+    void SetCallbackExt(std::shared_ptr<MetadataStateCallback> metadataStateCallback);
+
     void SetFocusTrackingMetaInfoCallback(std::shared_ptr<FocusTrackingMetaInfoCallback> listener);
 
     int32_t CreateStream() override;
@@ -443,6 +457,13 @@ public:
      * @brief Releases a instance of the MetadataOutput.
      */
     int32_t Release() override;
+
+    bool IsLockMetadataObjectTrackingSupported();
+
+    int32_t LockMetadataObjectTracking(Point point);
+
+    int32_t UnlockMetadataObjectTracking();
+
     bool reportFaceResults_ = false;
     bool reportLastFaceResults_ = false;
     void ProcessMetadata(const int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,
@@ -454,10 +475,14 @@ public:
     std::shared_ptr<MetadataObjectCallback> GetAppObjectCallback();
     std::shared_ptr<MetadataStateCallback> GetAppStateCallback();
     std::shared_ptr<FocusTrackingMetaInfoCallback> GetFocusTrackingMetaInfoCallback();
+    std::shared_ptr<MetadataObjectCallback> GetAppObjectCallbackExt();
+    std::shared_ptr<MetadataStateCallback> GetAppStateCallbackExt();
 
     friend class MetadataObjectListener;
 
 private:
+    int32_t GetICameraDeviceService(sptr<ICameraDeviceService>& cameraDeviceObj);
+    bool isPublicMetaTypes(const std::vector<MetadataObjectType>& objectTypes);
     void CameraServerDied(pid_t pid) override;
     void ReleaseSurface();
     sptr<IConsumerSurface> GetSurface();
@@ -471,6 +496,8 @@ private:
     std::shared_ptr<MetadataStateCallback> appStateCallback_;
     std::shared_ptr<FocusTrackingMetaInfoCallback> focusTrackingMetaInfoCallback_;
     sptr<IStreamMetadataCallback> cameraMetadataCallback_;
+    std::shared_ptr<MetadataObjectCallback> appObjectCallbackExt_;
+    std::shared_ptr<MetadataStateCallback> appStateCallbackExt_;
 };
 
 class MetadataObjectListener : public IBufferConsumerListener {

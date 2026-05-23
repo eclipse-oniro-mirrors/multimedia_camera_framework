@@ -41,6 +41,22 @@ public:
     
     Camera_ErrorCode RemoveMetadataObjectTypes(Camera_MetadataObjectType* types, uint32_t size);
 
+    Camera_ErrorCode RegisterMetadataObjectExtAvailableCallback(void* context,
+        OH_MetadataOutput_OnMetadataObjectExtAvailable* callback);
+
+    Camera_ErrorCode UnregisterMetadataObjectExtAvailableCallback(void* context,
+        OH_MetadataOutput_OnMetadataObjectExtAvailable* callback);
+
+    Camera_ErrorCode RegisterErrorCallback(void* context, OH_MetadataOutput_OnErrorExt* callback);
+
+    Camera_ErrorCode UnregisterErrorCallback(void* context, OH_MetadataOutput_OnErrorExt* callback);
+
+    bool IsLockMetadataObjectTrackingSupported() const;
+
+    Camera_ErrorCode LockMetadataObjectTracking(Camera_Point* pointOfInterest);
+
+    Camera_ErrorCode UnlockMetadataObjectTracking();
+
 private:
     OHOS::CameraStandard::MetadataObjectType convert(Camera_MetadataObjectType type);
     OHOS::sptr<OHOS::CameraStandard::MetadataOutput> innerMetadataOutput_;

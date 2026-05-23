@@ -29,6 +29,7 @@
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 #include "napi/native_node_api.h"
+#include "camera_session_napi.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -336,6 +337,9 @@ napi_value MetadataOutputNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor metadata_output_props[] = {
         DECLARE_NAPI_FUNCTION("addMetadataObjectTypes", AddMetadataObjectTypes),
         DECLARE_NAPI_FUNCTION("removeMetadataObjectTypes", RemoveMetadataObjectTypes),
+        DECLARE_NAPI_FUNCTION("isLockMetadataObjectTrackingSupported", IsLockMetadataObjectTrackingSupported),
+        DECLARE_NAPI_FUNCTION("lockMetadataObjectTracking", LockMetadataObjectTracking),
+        DECLARE_NAPI_FUNCTION("unlockMetadataObjectTracking", UnlockMetadataObjectTracking),
         DECLARE_NAPI_FUNCTION("start", Start),
         DECLARE_NAPI_FUNCTION("stop", Stop),
         DECLARE_NAPI_FUNCTION("release", Release),
@@ -520,6 +524,117 @@ napi_value MetadataOutputNapi::RemoveMetadataObjectTypes(napi_env env, napi_call
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("RemoveMetadataObjectTypes failure!");
     }
+    return result;
+}
+
+int32_t QueryAndGetInput(napi_env env, napi_value arg, const string &propertyName, napi_value &property)
+{
+    MEDIA_DEBUG_LOG("QueryAndGetInputProperty is called");
+    bool present = false;
+    int32_t retval = 0;
+    if ((napi_has_named_property(env, arg, propertyName.c_str(), &present) != napi_ok)
+        || (!present) || (napi_get_named_property(env, arg, propertyName.c_str(), &property) != napi_ok)) {
+            MEDIA_ERR_LOG("Failed to obtain property: %{public}s", propertyName.c_str());
+            retval = -1;
+    }
+    return retval;
+}
+
+napi_value MetadataOutputNapi::IsLockMetadataObjectTrackingSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsLockMetadataObjectTrackingSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value thisVar = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_undefined(env, &result);
+    
+    MetadataOutputNapi* metadataOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataOutputNapi));
+    if (status != napi_ok || metadataOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("IsLockMetadataObjectTrackingSupported: napi_unwrap failure!");
+        return result;
+    }
+    
+    bool isSupported = metadataOutputNapi->metadataOutput_->IsLockMetadataObjectTrackingSupported();
+    napi_get_boolean(env, isSupported, &result);
+    
+    MEDIA_INFO_LOG("IsLockMetadataObjectTrackingSupported: result = %{public}d", isSupported);
+    return result;
+}
+
+napi_value MetadataOutputNapi::LockMetadataObjectTracking(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("LockMetadataObjectTracking is called");
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires 1 parameter");
+
+    napi_get_undefined(env, &result);
+    MetadataOutputNapi* metadataOutputNapi = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataOutputNapi));
+    if (status != napi_ok || metadataOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("LockMetadataObjectTracking: napi_unwrap failure!");
+        return result;
+    }
+    Point point;
+    double pointX = 0;
+    double pointY = 0;
+    napi_value propertyX = nullptr;
+    napi_value propertyY = nullptr;
+
+    if ((QueryAndGetInput(env, argv[PARAM0], "x", propertyX) == 0) &&
+        (QueryAndGetInput(env, argv[PARAM0], "y", propertyY) == 0)) {
+        if ((napi_get_value_double(env, propertyX, &pointX) != napi_ok) ||
+            (napi_get_value_double(env, propertyY, &pointY) != napi_ok)) {
+            MEDIA_ERR_LOG("LockMetadataObjectTracking: failed to parse point parameters");
+            return result;
+        } else {
+            point.x = pointX;
+            point.y = pointY;
+        }
+    } else {
+        MEDIA_ERR_LOG("LockMetadataObjectTracking: failed to get point properties");
+        return result;
+    }
+    int32_t retCode = metadataOutputNapi->metadataOutput_->LockMetadataObjectTracking(point);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("LockMetadataObjectTracking failure!");
+    }
+    MEDIA_INFO_LOG("LockMetadataObjectTracking: point = [%{public}f, %{public}f]", point.x, point.y);
+    return result;
+}
+
+napi_value MetadataOutputNapi::UnlockMetadataObjectTracking(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("UnlockMetadataObjectTracking is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_undefined(env, &result);
+
+    MetadataOutputNapi* metadataOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataOutputNapi));
+    if (status != napi_ok || metadataOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("UnlockMetadataObjectTracking: napi_unwrap failure!");
+        return result;
+    }
+
+    int32_t retCode = metadataOutputNapi->metadataOutput_->UnlockMetadataObjectTracking();
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("UnlockMetadataObjectTracking failure!");
+    }
+    MEDIA_INFO_LOG("UnlockMetadataObjectTracking: success");
     return result;
 }
 

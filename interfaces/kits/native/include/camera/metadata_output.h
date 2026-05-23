@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "camera.h"
+#include "metadata_object_ext.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -168,7 +169,7 @@ Camera_ErrorCode OH_MetadataOutput_Release(Camera_MetadataOutput* metadataOutput
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 23
  */
-Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput* metadataOutput, 
+Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput* metadataOutput,
     Camera_MetadataObjectType* types, uint32_t size);
  
 /**
@@ -182,9 +183,119 @@ Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput*
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
  * @since 23
  */
-Camera_ErrorCode OH_MetadataOutput_RemoveMetadataObjectTypes(Camera_MetadataOutput* metadataOutput, 
+Camera_ErrorCode OH_MetadataOutput_RemoveMetadataObjectTypes(Camera_MetadataOutput* metadataOutput,
     Camera_MetadataObjectType* types, uint32_t size);
  
+/**
+ * @brief Defines the callback used to listen for metadata object ext available.
+ *
+ * @param context Pointer to the context provided by user.
+ * @param metadataObjectExt Pointer to the metadata output data.
+ * @param size Size of the metadata object ext.
+ * @since 26.0.0
+ */
+typedef void (*OH_MetadataOutput_OnMetadataObjectExtAvailable)(void* context,
+    OH_Camera_MetadataObjectExt** metadataObjectExt, uint32_t size);
+
+/**
+ * @brief Defines the callback used to listen for error ext event.
+ *
+ * @param context Pointer to the context provided by user.
+ * @param errorCode Error code reported during metadata output.
+ * @see CAMERA_SERVICE_FATAL_ERROR
+ * @since 26.0.0
+ */
+typedef void (*OH_MetadataOutput_OnErrorExt)(void* context, Camera_ErrorCode errorCode);
+
+/**
+ * @brief Registers a callback to listen for {@link OH_Camera_MetadataObjectExt} events.
+ * The callback can be unregistered by {@link OH_MetadataOutput_UnregisterMetadataObjectExtAvailableCallback}.
+ *
+ * @param metadataOutput Pointer to the {@link Camera_MetadataOutput} instance.
+ * @param context Pointer to the context provided by user.
+ * @param callback Pointer to the {@link OH_MetadataOutput_OnMetadataObjectExtAvailable} callback function.
+ * @return **CAMERA_OK**: The operation is successful.
+ *     <br>**CAMERA_INVALID_ARGUMENT**: A parameter is missing or the parameter type is incorrect.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_MetadataOutput_RegisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback);
+
+/**
+ * @brief Unregisters the callback used to listen for metadata object ext events.
+ *
+ * @param metadataOutput Pointer to a MetadataOutput instance.
+ * @param context Pointer to the context provided by user.
+ * @param callback Pointer to the target callback.
+ * @return **CAMERA_OK**: The operation is successful.
+ *     <br>**CAMERA_INVALID_ARGUMENT**: A parameter is missing or the parameter type is incorrect.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_MetadataOutput_UnregisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback);
+    
+/**
+ * @brief Registers a callback to listen for error ext events.
+ * The callback can be unregistered by {@link OH_MetadataOutput_UnregisterErrorExtCallback}.
+ *
+ * @param metadataOutput Pointer to the {@link Camera_MetadataOutput} instance.
+ * @param context Pointer to the context provided by user.
+ * @param callback Pointer to the {@link OH_MetadataOutput_OnErrorExt} callback function.
+ * @return **CAMERA_OK**: The operation is successful.
+ *     <br>**CAMERA_INVALID_ARGUMENT**: A parameter is missing or the parameter type is incorrect.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_MetadataOutput_RegisterErrorExtCallback(Camera_MetadataOutput* metadataOutput, void* context,
+    OH_MetadataOutput_OnErrorExt* callback);
+
+/**
+ * @brief Unregisters the callback used to listen for error ext events.
+ *
+ * @param metadataOutput Pointer to a MetadataOutput instance.
+ * @param context Pointer to the context provided by user.
+ * @param callback Pointer to the target callback.
+ * @return **CAMERA_OK**: The operation is successful.
+ *     <br>**CAMERA_INVALID_ARGUMENT**: A parameter is missing or the parameter type is incorrect.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_MetadataOutput_UnregisterErrorExtCallback(Camera_MetadataOutput* metadataOutput, void* context,
+    OH_MetadataOutput_OnErrorExt* callback);
+
+/**
+ * @brief Checks whether the lock metadata object tracking is supported.
+ *
+ * @param metadataOutput Pointer to a MetadataOutput instance.
+ * @return **true** if supported, **false** otherwise.
+ * @since 26.0.0
+ */
+bool OH_MetadataOutput_IsLockMetadataObjectTrackingSupported(const Camera_MetadataOutput* metadataOutput);
+
+/**
+ * @brief Lock metadata object tracking, can be unlocked by {@link OH_MetadataOutput_UnlockMetadataObjectTracking}.
+ *
+ * @param metadataOutput Pointer to a MetadataOutput instance.
+ * @param pointOfInterest Pointer to the point of interest.
+ * @return **CAMERA_OK**: The operation is successful.
+ *     <br>**CAMERA_INVALID_ARGUMENT**: A parameter is missing or the parameter type is incorrect.
+ *     <br>**CAMERA_SESSION_NOT_CONFIG**: The capture session is not configured.
+ *     <br>**CAMERA_SERVICE_FATAL_ERROR**: The camera service is abnormal.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_MetadataOutput_LockMetadataObjectTracking(Camera_MetadataOutput* metadataOutput,
+    Camera_Point* pointOfInterest);
+
+/**
+ * @brief Unlock metadata object tracking.
+ *
+ * @param metadataOutput Pointer to a MetadataOutput instance.
+ * @return **CAMERA_OK**: The operation is successful.
+ *     <br>**CAMERA_INVALID_ARGUMENT**: A parameter is missing or the parameter type is incorrect.
+ *     <br>**CAMERA_SESSION_NOT_CONFIG**: The capture session is not configured.
+ *     <br>**CAMERA_SERVICE_FATAL_ERROR**: The camera service is abnormal.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_MetadataOutput_UnlockMetadataObjectTracking(Camera_MetadataOutput* metadataOutput);
+
 #ifdef __cplusplus
 }
 #endif
