@@ -1486,7 +1486,6 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterFlashStateCallback(
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->SetFlashStateCallback(nullptr);
     return CAMERA_OK;
 }
@@ -1521,7 +1520,8 @@ Camera_ErrorCode Camera_CaptureSession::GetRAWCaptureZoomRatioRange(float* minZo
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetRAWCaptureZoomRatioRange");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+    mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     std::vector<float> vecZoomRatioList;
     int32_t retCode = innerCaptureSession_->GetRAWZoomRatioRange(vecZoomRatioList);
     if (retCode != CAMERA_OK || vecZoomRatioList.empty()) {
@@ -1541,7 +1541,8 @@ Camera_ErrorCode Camera_CaptureSession::GetSupportedPhysicalApertures(
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetSupportedPhysicalApertures");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+        mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     vector<vector<float>> physicalApertures = {};
     *size = 0;
     int32_t retCode = innerCaptureSession_->GetSupportedPhysicalApertures(physicalApertures);
@@ -1590,7 +1591,8 @@ Camera_ErrorCode Camera_CaptureSession::DeletePhysicalApertures(
     MEDIA_DEBUG_LOG("Camera_CaptureSession::DeletePhysicalApertures");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+        mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     uint32_t safeSize = min(size, APERTURE_SIZE_MAX_FOR_SAFETY);
     for (size_t index = 0; index < safeSize; index++) {
         if (apertures[index].apertures != nullptr) {
@@ -1607,7 +1609,8 @@ Camera_ErrorCode Camera_CaptureSession::GetPhysicalAperture(float* aperture) con
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetPhysicalAperture");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+        mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET(aperture == nullptr, CAMERA_INVALID_ARGUMENT);
     int32_t ret = innerCaptureSession_->GetPhysicalAperture(*aperture);
     return FrameworkToNdkCameraError(ret);
@@ -1618,7 +1621,8 @@ Camera_ErrorCode Camera_CaptureSession::SetPhysicalAperture(float aperture) cons
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetPhysicalAperture, aperture: %lf", aperture);
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+        mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET(aperture <= 0, CAMERA_INVALID_ARGUMENT);
     innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetPhysicalAperture(aperture);
@@ -1631,7 +1635,8 @@ Camera_ErrorCode Camera_CaptureSession::IsOISModeSupported(OH_Camera_OISMode ois
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsOISModeSupported is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+        mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     auto itr = g_ndkToFwkOisMode_.find(oisMode);
     CHECK_RETURN_RET_ELOG(itr == g_ndkToFwkOisMode_.end(), CAMERA_INVALID_ARGUMENT,
         "oisMode[%{public}d] is invalid", oisMode);
@@ -1645,7 +1650,8 @@ Camera_ErrorCode Camera_CaptureSession::GetCurrentOISMode(OH_Camera_OISMode* ois
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetCurrentOISMode is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+        mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     OISMode currentOisMode;
     int32_t ret = innerCaptureSession_->GetCurrentOISMode(currentOisMode);
     *oisMode = static_cast<OH_Camera_OISMode>(currentOisMode);
@@ -1658,7 +1664,8 @@ Camera_ErrorCode Camera_CaptureSession::SetOISMode(OH_Camera_OISMode oisMode) co
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetOISMode is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+        mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     auto itr = g_ndkToFwkOisMode_.find(oisMode);
     CHECK_RETURN_RET_ELOG(itr == g_ndkToFwkOisMode_.end(), CAMERA_INVALID_ARGUMENT,
         "oisMode[%{public}d] is invalid", oisMode);
@@ -1675,7 +1682,8 @@ Camera_ErrorCode Camera_CaptureSession::GetSupportedOISBiasRange(OH_Camera_OISAx
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetSupportedOISBiasRange is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+    mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     auto itr = g_ndkToFwkOisAxes_.find(oisAxis);
     CHECK_RETURN_RET_ELOG(itr == g_ndkToFwkOisAxes_.end(), CAMERA_INVALID_ARGUMENT,
         "oisAxis[%{public}d] is invalid", oisAxis);
@@ -1694,7 +1702,8 @@ Camera_ErrorCode Camera_CaptureSession::GetCurrentCustomOISBias(float* pitchBias
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetCurrentCustomOISBias is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+    mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     int32_t ret = CameraErrorCode::SUCCESS;
     ret = innerCaptureSession_->GetCurrentCustomOISBias(OIS_AXES_PITCH, *pitchBias);
     ret = innerCaptureSession_->GetCurrentCustomOISBias(OIS_AXES_YAW, *yawBias);
@@ -1707,7 +1716,8 @@ Camera_ErrorCode Camera_CaptureSession::SetOISModeCustom(float pitchBias, float 
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetOISModeCustom is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE &&
+    mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     int32_t ret = CameraErrorCode::SUCCESS;
     float rollBias = 0.0f; // set roll not support yet
     innerCaptureSession_->LockForControl();
