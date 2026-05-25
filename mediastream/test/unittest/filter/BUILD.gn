@@ -92,7 +92,6 @@ ohos_unittest("cfilter_unit_test") {
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "ipc:ipc_core",
-    "memory_utils:libdmabufheap",
     "samgr:samgr_proxy",
   ]
 }
