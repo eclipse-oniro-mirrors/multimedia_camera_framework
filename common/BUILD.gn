@@ -120,8 +120,8 @@ ohos_shared_library("camera_utils") {
   ]
 
   deps = [
-    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_idl_sa_proxy",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_service_idl_interface",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_interface",
   ]
 
   external_deps = common_external_deps
@@ -145,7 +145,7 @@ ohos_shared_library("camera_utils") {
 
   public_configs = [
     ":camera_utils_config",
-    "../services/camera_service/idls:camera_sa_idl_config",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_sa_idl_config",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
   ]
   part_name = "camera_framework"
@@ -166,6 +166,10 @@ ohos_static_library("camera_utils_static") {
   ]
 
   sources = common_sources
+  deps = [
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_service_idl_interface",
+    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_interface",
+  ]
   external_deps = common_external_deps
   defines = []
   if (hicollie_enable) {
@@ -180,7 +184,7 @@ ohos_static_library("camera_utils_static") {
 
   public_configs = [
     ":camera_utils_config",
-    "../services/camera_service/idls:camera_sa_idl_config",
+    "${multimedia_camera_framework_path}/services/camera_service/idls:camera_sa_idl_config",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config",
   ]
   part_name = "camera_framework"
