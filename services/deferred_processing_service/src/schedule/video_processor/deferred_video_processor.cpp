@@ -455,7 +455,7 @@ uint64_t DeferredVideoProcessor::GetTempFolderSize(const DeferredVideoJobPtr& jo
 
 void DeferredVideoProcessor::ReportStorage(const int32_t userId, const uint64_t size)
 {
-    DP_INFO_LOG("Reported ROM current tmp size: %{public}llu", size);
+    DP_INFO_LOG("Reported ROM current tmp size: %{public}" PRIu64, size);
     sptr<ISystemAbilityManager> samgrProxy = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     DP_CHECK_ERROR_RETURN_LOG(samgrProxy == nullptr, "Failed to get samgrProxy.");
     auto remote = samgrProxy->GetSystemAbility(STORAGE_MANAGER_MANAGER_ID);
@@ -466,12 +466,12 @@ void DeferredVideoProcessor::ReportStorage(const int32_t userId, const uint64_t 
     ExtBundleStats curStats;
     curStats.businessName_ = CAMERA_BUSINESS_NAME;
     if (storageproxy->GetExtBundleStats(userId, curStats) == 0) {
-        DP_INFO_LOG("Reported ROM curApp size : %{public}llu, last report size : %{public}llu",
+        DP_INFO_LOG("Reported ROM curApp size : %{public}" PRIu64 ", last report size : %{public}" PRIu64,
             curStats.businessSize_, lastSize_);
         ExtBundleStats updateStats;
         updateStats.businessName_ = CAMERA_BUSINESS_NAME;
         updateStats.businessSize_ = curStats.businessSize_ - lastSize_ + size;
-        DP_INFO_LOG("Reported userId: %{public}d, bundleName: %{public}s, appsize: %{public}llu",
+        DP_INFO_LOG("Reported userId: %{public}d, bundleName: %{public}s, appsize: %{public}" PRIu64,
             userId, updateStats.businessName_.c_str(), updateStats.businessSize_);
         storageproxy->SetExtBundleStats(userId, updateStats);
         lastSize_ = size;
