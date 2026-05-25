@@ -709,7 +709,8 @@ void MovieFileControllerVideo::OnSuperListeningDataArrival(int64_t timestamp, co
     size_t processBufSize, const uint8_t *micInBuffer, size_t micInBufSize)
 {
     MEDIA_INFO_LOG(
-        "OnSuperListeningDataArrival: timestamp=%{public}lld, processBufSize=%{public}zu, micInBufSize=%{public}zu",
+        "OnSuperListeningDataArrival: [timestamp=%{public}" PRId64 "],
+        processBufSize=%{public}zu, micInBufSize=%{public}zu",
         timestamp, processBufSize, micInBufSize);
 
     if (movieFileAudioMicBufferProducer_.Get()) {
