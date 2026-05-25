@@ -78,6 +78,23 @@ constexpr int32_t CONTROL_CENTER_RESOLUTION_WIDTH_MAX = 1920;
 constexpr int32_t CONTROL_CENTER_RESOLUTION_HEIGHT_MAX = 1080;
 
 const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
+const std::map<FoldStatus, std::vector<OHOS::Rosen::FoldStatus>> g_foldStatusAssociations = {
+    {FoldStatus::EXPAND,
+        {
+            OHOS::Rosen::FoldStatus::FOLD_STATE_FOLDED_WITH_SECOND_EXPAND,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_HALF_FOLDED_WITH_SECOND_EXPAND
+        }
+    },
+    {FoldStatus::FOLDED,
+        {
+            OHOS::Rosen::FoldStatus::FOLDED,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_FOLDED_WITH_SECOND_HALF_FOLDED,
+            OHOS::Rosen::FoldStatus::EXPAND
+        }
+    }
+};
 
 const std::unordered_map<camera_format_t, CameraFormat> CameraManager::metaToFwCameraFormat_ = {
     {OHOS_CAMERA_FORMAT_YCRCB_420_SP, CAMERA_FORMAT_YUV_420_SP},
@@ -1800,7 +1817,15 @@ std::string CameraManager::GetFoldScreenType()
 
 FoldStatus CameraManager::GetFoldStatus()
 {
-    auto curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    auto dmFoldStatus = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '8') {
+        for (const auto& [mainStatus, subStatusList] : g_foldStatusAssociations) {
+            if (std::find(subStatusList.begin(), subStatusList.end(), dmFoldStatus) != subStatusList.end()) {
+                return mainStatus;
+            }
+        }
+    }
+    auto curFoldStatus = (FoldStatus)dmFoldStatus;
     if (curFoldStatus == FoldStatus::HALF_FOLD) {
         curFoldStatus = FoldStatus::EXPAND;
     }
