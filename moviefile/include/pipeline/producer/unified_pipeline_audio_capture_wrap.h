@@ -221,7 +221,7 @@ public:
 
     void OnMetaData(AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t> &metaData) override
     {
-        MEDIA_INFO_LOG("Received metadata, type:%{public}d, size:%{public}u", type, metaData.size());
+        MEDIA_INFO_LOG("Received metadata, type:%{public}d, size:%{public}zu", type, metaData.size());
         if (wrapPtr_ != nullptr && wrapPtr_->metaDataCallback_) {
             wrapPtr_->metaDataCallback_(type, metaData);
         }
