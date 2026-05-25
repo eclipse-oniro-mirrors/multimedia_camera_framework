@@ -122,7 +122,7 @@ MpegManager::~MpegManager()
     }
     std::string tempPath = GetTempDirPath();
     uint64_t size = GetFolderSize(tempPath);
-    DP_DEBUG_LOG("temp files totalSize: %{public}llu", size);
+    DP_DEBUG_LOG("temp files totalSize: %{public}" PRIu64, size);
     DPSEventReport::GetInstance().ReportPartitionUsage(tempPath, size);
 }
 
