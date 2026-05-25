@@ -285,6 +285,12 @@ public:
     
     Camera_ErrorCode UnregisterExposureStateCallback(
         void* context, OH_CaptureSession_OnExposureStateChange ExposureStateChange) const;
+
+    bool IsLockFocusTrackingSupported() const;
+
+    Camera_ErrorCode LockFocusTracking(Camera_Point focusPoint) const;
+
+    Camera_ErrorCode UnlockFocusTracking() const;
 private:
     OHOS::sptr<OHOS::CameraStandard::CaptureSession> innerCaptureSession_;
 };

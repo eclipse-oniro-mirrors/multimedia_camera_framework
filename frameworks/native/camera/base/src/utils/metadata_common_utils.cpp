@@ -405,10 +405,22 @@ void MetadataCommonUtils::ProcessExternInfo(sptr<MetadataObjectFactory> factoryP
         case MetadataObjectType::DOG_FACE:
             ProcessDogFaceDetectInfo(factoryPtr, metadataItem, index, isNeedMirror, isNeedFlip, type);
             break;
+        case MetadataObjectType::SALIENT_DETECTION:
+            ProcessTrackingInfo(factoryPtr, metadataItem, index, metadataType);
+            break;
         default:
             break;
     }
     // LCOV_EXCL_STOP
+}
+
+void MetadataCommonUtils::ProcessTrackingInfo(sptr<MetadataObjectFactory> factoryPtr,
+    const camera_metadata_item_t &metadataItem, int32_t &index, MetadataObjectType metadataType)
+{
+    factoryPtr->SetIsLockFocusTracked(metadataItem.data.i32[index]);
+    index++;
+    MEDIA_DEBUG_LOG("ProcessTrackingInfo, type: %{public}d, isLockFocusTracked: %{public}d", metadataType,
+                    metadataItem.data.i32[index]);
 }
 
 void MetadataCommonUtils::ProcessCatFaceDetectInfo(sptr<MetadataObjectFactory> factoryPtr,

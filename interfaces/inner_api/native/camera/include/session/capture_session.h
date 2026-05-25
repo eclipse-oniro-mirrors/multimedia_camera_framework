@@ -2347,6 +2347,28 @@ public:
      */
     bool IsManualIsoSupported();
 
+    /**
+     * @brief isLockFocusTrackingSupported.
+     * @param ask for lockFocusTracking is supported.
+     * @return Returns errCode.
+     */
+    bool IsLockFocusTrackingSupported();
+    int32_t IsLockFocusTrackingSupported(bool& isSupported);
+    
+    /**
+     * @brief Lock FocusTracking.
+     * @param focusTracking locked.
+     * @return Returns errCode.
+     */
+    int32_t LockFocusTracking(Point point);
+ 
+    /**
+     * @brief Unlock FocusTracking.
+     * @param focusTracking unlock.
+     * @return Returns errCode.
+     */
+    int32_t UnlockFocusTracking();
+
 protected:
     static const std::unordered_map<camera_flash_state_enum_t, FlashState> metaFlashStateMap_;
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

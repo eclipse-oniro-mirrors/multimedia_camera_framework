@@ -2467,6 +2467,7 @@ interface FocusQuery {
   IsFocusDrivenTypeSupported(type: FocusDrivenType): bool;
   IsFocusModeSupported(afMode: FocusMode): bool;
   IsFocusAssistSupported(): bool;
+  IsLockFocusTrackingSupported(): bool;
 }
 
 interface Focus : FocusQuery {
@@ -2481,6 +2482,8 @@ interface Focus : FocusQuery {
   SetFocusPoint(point: Point): void;
   GetFocalLength(): f64;
   GetFocusAssist(): bool;
+  LockFocusTracking(focusPoint: Point): void;
+  UnlockFocusTracking(): void;
 }
 
 interface StabilizationQuery {
@@ -2626,6 +2629,7 @@ struct MetadataObject {
   @readonly boundingBox: Rect;
   @readonly objectId: i32;
   @readonly confidence: i32;
+  @readonly isLockFocusTracked: Optional<bool>;
 }
 
 struct MetadataBarcodeObject {

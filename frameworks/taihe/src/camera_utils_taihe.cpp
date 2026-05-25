@@ -344,7 +344,8 @@ array<MetadataObject> CameraUtilsTaihe::ToTaiheMetadataObjectsAvailableData(
             .boundingBox = ohos::multimedia::camera::Rect { boundingbox.topLeftX, boundingbox.topLeftY,
                                                             boundingbox.width, boundingbox.height },
             .objectId = it->GetObjectId(),
-            .confidence = it->GetConfidence()};
+            .confidence = it->GetConfidence(),
+            .isLockFocusTracked = optional<bool>::make(it->IsLockFocusTracked())};
         vec.emplace_back(aniMetadataObject);
     }
     return array<MetadataObject>(vec);

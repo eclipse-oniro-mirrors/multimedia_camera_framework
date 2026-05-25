@@ -49,6 +49,7 @@ MetadataObject::MetadataObject(const MetaObjectParms &parms)
     box_ = parms.box;
     objectId_ = parms.objectId;
     confidence_ = parms.confidence;
+    isLockFocusTracked_ = parms.isLockFocusTracked;
 }
 
 MetadataFaceObject::MetadataFaceObject(const MetaObjectParms &parms, const Rect leftEyeBoundingBox,
@@ -576,6 +577,7 @@ int32_t HStreamMetadataCallbackImpl::OnMetadataResult(const int32_t streamId,
         }
     }
     std::vector<sptr<MetadataObject>> metaObjects;
+    MEDIA_DEBUG_LOG("OnMetadataResult is called.");
     metadataOutput->ProcessMetadata(streamId, result, metaObjects, isNeedMirror, isNeedFlip);
     auto objectCallback = metadataOutput->GetAppObjectCallback();
     auto objectCallbackExt = metadataOutput->GetAppObjectCallbackExt();
@@ -606,10 +608,10 @@ MetadataObjectFactory::MetadataObjectFactory() {}
 
 sptr<MetadataObject> MetadataObjectFactory::createMetadataObject(MetadataObjectType type)
 {
-    MetaObjectParms baseMetaParms = { type, timestamp_, box_, objectId_, confidence_ };
+    MetaObjectParms baseMetaParms = { type, timestamp_, box_, objectId_, confidence_, isLockFocusTracked_};
     MEDIA_DEBUG_LOG("MetadataObjectFactory::createMetadataObject type: %{public}d, timestamp_: %{public}" PRId64
-                    ", objectId_: %{public}d",
-        type, timestamp_, objectId_);
+                    ", objectId_: %{public}d, isLockFocusTracked: %{public}d",
+        type, timestamp_, objectId_, isLockFocusTracked_);
     sptr<MetadataObject> metadataObject;
     // LCOV_EXCL_START
     switch (type) {
