@@ -408,7 +408,9 @@ static const std::unordered_map<std::string, int32_t> mapSystemPressureLevel = {
 
 static const std::unordered_map<std::string, int32_t> mapControlCenterEffectType = {
     {"BEAUTY", 0},
-    {"PORTRAIT", 1}
+    {"PORTRAIT", 1},
+    {"AUTO_FRAMING", 2},
+    {"COLOR_EFFECT", 3}
 };
 
 static const std::unordered_map<std::string, int32_t> mapLightPaintingType = {
