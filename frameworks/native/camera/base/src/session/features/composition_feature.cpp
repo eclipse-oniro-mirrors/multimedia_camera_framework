@@ -90,9 +90,9 @@ int32_t CompositionFeature::GetSupportedRecommendedInfoLanguage(std::vector<std:
     auto ret = CheckCommonPreconditions();
     CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
         "CompositionFeature::GetSupportedRecommendedInfoLanguage preconditions failed");
-    
+
     CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
-        "CompositionFeature::GetSupportedRecommendedInfoLanguage captureSession is nullptr");
+        "CompositionFeature::GetSupportedRecommendedInfoLanguage captureSession_ is nullptr");
     auto metadata = captureSession_->GetMetadata();
     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "CompositionFeature::GetSupportedRecommendedInfoLanguage metadata is nullptr");
