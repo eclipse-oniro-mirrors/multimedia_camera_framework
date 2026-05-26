@@ -387,14 +387,19 @@ int32_t HStreamOperator::GetMovingPhotoBufferDuration()
 void HStreamOperator::GetMovingPhotoStartAndEndTime()
 {
     CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "HCaptureSession::GetMovingPhotoStartAndEndTime device is null");
-    cameraDevice_->SetMovingPhotoStartTimeCallback([this](int32_t captureId, int64_t startTimeStamp) {
+    auto thisPtr = wptr<HStreamOperator>(this);
+    cameraDevice_->SetMovingPhotoStartTimeCallback([thisPtr](int32_t captureId, int64_t startTimeStamp) {
+        auto ptr = thisPtr.promote();
+        CHECK_RETURN(ptr == nullptr);
         MEDIA_INFO_LOG("SetMovingPhotoStartTimeCallback function enter");
-        auto manager = movingPhotoManagerProxy_.Get();
+        auto manager = ptr->movingPhotoManagerProxy_.Get();
         CHECK_EXECUTE(manager, manager->InsertStartTime(captureId, startTimeStamp));
     });
 
-    cameraDevice_->SetMovingPhotoEndTimeCallback([this](int32_t captureId, int64_t endTimeStamp) {
-        auto manager = movingPhotoManagerProxy_.Get();
+    cameraDevice_->SetMovingPhotoEndTimeCallback([thisPtr](int32_t captureId, int64_t endTimeStamp) {
+        auto ptr = thisPtr.promote();
+        CHECK_RETURN(ptr == nullptr);
+        auto manager = ptr->movingPhotoManagerProxy_.Get();
         CHECK_EXECUTE(manager, manager->InsertEndTime(captureId, endTimeStamp));
     });
 }

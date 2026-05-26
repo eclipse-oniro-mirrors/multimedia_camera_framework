@@ -3847,6 +3847,7 @@ int32_t CameraManager::GetCameraStorageSize(int64_t& size)
 
 void CameraManager::SetCameraManagerNull()
 {
+    std::lock_guard<std::mutex> lock(g_instanceMutex);
     MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
     g_cameraManager = nullptr;
 }
