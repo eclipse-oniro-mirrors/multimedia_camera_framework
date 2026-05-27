@@ -231,6 +231,7 @@ ohos_shared_library("camera_framework") {
 }
 
 ohos_static_library("camera_framework_static") {
+  configs = [ "${multimedia_camera_framework_path}/common:optimize_size" ]
   branch_protector_ret = "pac_ret"
   sources = common_sources
 
@@ -242,7 +243,8 @@ ohos_static_library("camera_framework_static") {
     "-Os",
     "-fno-merge-all-constants",
     "-flto",
-    "-ffunction-sections"
+    "-ffunction-sections",
+    "-DCAMERA_DISABLE_ZOOM_RATIO_FOR_AUDIO",
   ]
 
   ldflags = [

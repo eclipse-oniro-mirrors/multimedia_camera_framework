@@ -7538,6 +7538,9 @@ void CaptureSession::SetPhotoQualityPrioritization(camera_photo_quality_prioriti
 
 void CaptureSession::SetZoomRatioForAudio(float zoomRatio)
 {
+#ifdef CAMERA_DISABLE_ZOOM_RATIO_FOR_AUDIO
+    MEDIA_INFO_LOG("SetZoomRatioForAudio disabled, zoomRatio: %{public}f", zoomRatio);
+#else
     CAMERA_SYNC_TRACE;
     // check if current mode is video related
     SceneMode currentMode = GetMode();
@@ -7552,6 +7555,7 @@ void CaptureSession::SetZoomRatioForAudio(float zoomRatio)
     MEDIA_INFO_LOG("Set zoom ratio for audio, val: %{public}f", zoomRatio);
     int32_t ret = audioSystemMgr->SetExtraParameters(key, kvpairs);
     CHECK_RETURN_ELOG(ret != 0, "SetZoomRatioForAudio failed, SetExtraParameters ret: %{public}d", ret);
+#endif
 }
 
 uint32_t CaptureSession::GetIsoValue()
