@@ -1132,6 +1132,7 @@ public:
     void GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList);
     std::vector<sptr<CameraDevice>> GetCameraDevices();
     bool ShouldClearCache();
+    void GetCameraIdByDisPlugin(sptr<CameraDevice> &camera);
 protected:
     // Only for UT
     explicit CameraManager(sptr<ICameraService> serviceProxy) : serviceProxyPrivate_(serviceProxy)
