@@ -782,15 +782,7 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
     vector<MetadataObjectType> metadataObjectTypes = {};
     for (uint32_t i = 0; i < size; ++i) {
         Camera_MetadataObjectType currentType = type[i];
-        if (currentType == Camera_MetadataObjectType::FACE_DETECTION || 
-            currentType == Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION) {
-            MEDIA_DEBUG_LOG("FACE_DETECTION");
-            metadataObjectTypes.push_back(MetadataObjectType::FACE);
-        }
-        if (currentType == Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY) {
-            MEDIA_DEBUG_LOG("CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY");
-            metadataObjectTypes.push_back(MetadataObjectType::HUMAN_BODY);
-        }
+        metadataObjectTypes.push_back(static_cast<MetadataObjectType>(currentType));
     }
     int32_t retCode = CameraManager::GetInstance()->CreateMetadataOutput(innerMetadataOutput, metadataObjectTypes);
     CHECK_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);

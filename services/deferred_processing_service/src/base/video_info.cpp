@@ -20,9 +20,9 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-VideoInfo::VideoInfo(const DpsFdPtr& srcFd, const DpsFdPtr& dstFd,
-    const DpsFdPtr& movieFd, const DpsFdPtr& movieCopyFd)
-    : srcFd_(srcFd), dstFd_(dstFd), movieFd_(movieFd), movieCopyFd_(movieCopyFd) {}
+VideoInfo::VideoInfo(const std::string& srcPath, const std::string& temp1Path, const std::string& temp2Path,
+    const std::string& moviePath)
+    : srcPath_(srcPath), temp1Path_(temp1Path), temp2Path_(temp2Path), moviePath_(moviePath) {}
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

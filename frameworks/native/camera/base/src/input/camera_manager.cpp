@@ -78,6 +78,23 @@ constexpr int32_t CONTROL_CENTER_RESOLUTION_WIDTH_MAX = 1920;
 constexpr int32_t CONTROL_CENTER_RESOLUTION_HEIGHT_MAX = 1080;
 
 const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
+const std::map<FoldStatus, std::vector<OHOS::Rosen::FoldStatus>> g_foldStatusAssociations = {
+    {FoldStatus::EXPAND,
+        {
+            OHOS::Rosen::FoldStatus::FOLD_STATE_FOLDED_WITH_SECOND_EXPAND,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_HALF_FOLDED_WITH_SECOND_EXPAND
+        }
+    },
+    {FoldStatus::FOLDED,
+        {
+            OHOS::Rosen::FoldStatus::FOLDED,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_FOLDED_WITH_SECOND_HALF_FOLDED,
+            OHOS::Rosen::FoldStatus::EXPAND
+        }
+    }
+};
 
 const std::unordered_map<camera_format_t, CameraFormat> CameraManager::metaToFwCameraFormat_ = {
     {OHOS_CAMERA_FORMAT_YCRCB_420_SP, CAMERA_FORMAT_YUV_420_SP},
@@ -1800,7 +1817,15 @@ std::string CameraManager::GetFoldScreenType()
 
 FoldStatus CameraManager::GetFoldStatus()
 {
-    auto curFoldStatus = (FoldStatus)OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    auto dmFoldStatus = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    if (!foldScreenType_.empty() && foldScreenType_[0] == '8') {
+        for (const auto& [mainStatus, subStatusList] : g_foldStatusAssociations) {
+            if (std::find(subStatusList.begin(), subStatusList.end(), dmFoldStatus) != subStatusList.end()) {
+                return mainStatus;
+            }
+        }
+    }
+    auto curFoldStatus = (FoldStatus)dmFoldStatus;
     if (curFoldStatus == FoldStatus::HALF_FOLD) {
         curFoldStatus = FoldStatus::EXPAND;
     }
@@ -2073,6 +2098,29 @@ void CameraManager::GetMetadataInfos(camera_metadata_item_t item,
     // LCOV_EXCL_STOP
 }
 
+void CameraManager::GetNotSystemAppMetaTypes(std::vector<MetadataObjectType>& objectTypes)
+{
+    MEDIA_DEBUG_LOG("public calling for GetSupportedOutputCapability");
+    std::vector<MetadataObjectType> NoSysObjectTypes;
+    int32_t MaxType = 14;
+    for (auto object : objectTypes) {
+        CHECK_EXECUTE(object != static_cast<MetadataObjectType>(MaxType),
+                      NoSysObjectTypes.push_back(object));
+    }
+    objectTypes = NoSysObjectTypes;
+}
+
+bool CameraManager::isPublicMetaTypes(const std::vector<MetadataObjectType>& objectTypes)
+{
+    MEDIA_DEBUG_LOG("public calling for metadataOutput");
+    int32_t MaxType = 14;
+    for (auto object : objectTypes) {
+        CHECK_RETURN_RET(object < MetadataObjectType::FACE ||
+                         object >= static_cast<MetadataObjectType>(MaxType), false);
+    }
+    return true;
+}
+
 void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability> &cameraOutputCapability,
     ProfilesWrapper &profilesWrapper, int32_t modeName,
     shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility)
@@ -2108,18 +2156,8 @@ void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability>
             }
         }
     }
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for GetSupportedOutputCapability");
-        std::vector<MetadataObjectType> tempObjectTypes;
-        for (auto object : objectTypes) {
-            if (object == MetadataObjectType::FACE || object == MetadataObjectType::HUMAN_BODY) {
-                tempObjectTypes.push_back(object);
-            }
-         }
-        cameraOutputCapability->SetSupportedMetadataObjectType(tempObjectTypes);
-    } else {
-        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
-    }
+    CHECK_EXECUTE(!CameraSecurity::CheckSystemApp(), GetNotSystemAppMetaTypes(objectTypes));
+    cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
     MEDIA_INFO_LOG("SetMetadataTypes size = %{public}zu",
                    cameraOutputCapability->GetSupportedMetadataObjectType().size());
     // LCOV_EXCL_STOP
@@ -3056,18 +3094,8 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 
     std::vector<MetadataObjectType> objectTypes = camera->GetObjectTypes();
 
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for GetsupportedOutputCapability");
-        std::vector<MetadataObjectType> tempObjectTypes;
-        for (auto object : objectTypes) {
-            if (object == MetadataObjectType::FACE || object == MetadataObjectType::HUMAN_BODY) {
-                tempObjectTypes.push_back(object);
-            }
-         }
-        cameraOutputCapability->SetSupportedMetadataObjectType(tempObjectTypes);
-    } else {
-        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
-    }
+    CHECK_EXECUTE(!CameraSecurity::CheckSystemApp(), GetNotSystemAppMetaTypes(objectTypes));
+    cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
     return cameraOutputCapability;
 }
 
@@ -3834,6 +3862,7 @@ int32_t CameraManager::GetCameraStorageSize(int64_t& size)
 
 void CameraManager::SetCameraManagerNull()
 {
+    std::lock_guard<std::mutex> lock(g_instanceMutex);
     MEDIA_INFO_LOG("CameraManager::SetCameraManagerNull() called");
     g_cameraManager = nullptr;
 }
@@ -3930,19 +3959,10 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
     const std::vector<MetadataObjectType>& metadataObjectTypes)
 {
     CAMERA_SYNC_TRACE;
-    const size_t maxSize4NonSystemApp = 2;
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for metadataOutput");
-        // LCOV_EXCL_START
-        if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
-            std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE &&
-                                                     type != MetadataObjectType::HUMAN_BODY; })) {
-            MEDIA_INFO_LOG("MetadataObjectType not face or human_body,invalid");
-            return CameraErrorCode::INVALID_ARGUMENT;
-        }
-        // LCOV_EXCL_STOP
-    }
+    CHECK_EXECUTE(!CameraSecurity::CheckSystemApp(),
+                  CHECK_RETURN_RET_ELOG(!isPublicMetaTypes(metadataObjectTypes),
+                                        CameraErrorCode::INVALID_ARGUMENT,
+                                        "Inpunt is Not Public MetaTypes"));
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput serviceProxy is null");

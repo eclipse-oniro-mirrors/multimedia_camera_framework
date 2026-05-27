@@ -30,7 +30,7 @@ public:
     ~VideoJobRepository();
     
     int32_t Initialize() override;
-    void AddVideoJob(const std::string& videoId, const std::shared_ptr<VideoInfo>& info);
+    void AddVideoJob(const std::string& videoId, std::unique_ptr<VideoInfo> info);
     bool RemoveVideoJob(const std::string& videoId, bool restorable);
     void RestoreVideoJob(const std::string& videoId);
     bool RequestJob(const std::string& videoId);

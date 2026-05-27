@@ -21,6 +21,7 @@
 #include "audio_session_manager.h"
 #include "camera_log.h"
 #include "camera_server_photo_proxy.h"
+#include "datetime_ex.h"
 #include "display_lite.h"
 #include "display_manager_lite.h"
 #include "ipc_skeleton.h"
@@ -62,6 +63,16 @@ AudioStandard::AudioStreamInfo MovieFileControllerVideo::CreateAudioStreamInfo()
     return audioCaptureStreamInfo;
 }
 
+AudioStandard::AudioStreamInfo MovieFileControllerVideo::CreateAudioStreamInfoForSuperListenering()
+{
+    AudioStandard::AudioStreamInfo audioStreamInfo = {};
+    audioStreamInfo.samplingRate = UnifiedPipelineAudioCaptureWrap::AUDIO_PRODUCER_SAMPLING_RATE;
+    audioStreamInfo.encoding = AudioStandard::AudioEncodingType::ENCODING_PCM;
+    audioStreamInfo.format = AudioStandard::AudioSampleFormat::SAMPLE_S16LE;
+    audioStreamInfo.channels = AudioStandard::AudioChannel::CHANNEL_4;
+    return audioStreamInfo;
+}
+
 void MovieFileControllerVideo::SelectTargetAudioInputDevice()
 {
     CHECK_RETURN_ILOG(!isEnableRawAudio_,
@@ -99,13 +110,33 @@ void MovieFileControllerVideo::ConfigAudioCapture()
     MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture isEnableAudioEdit is :%{public}d", isEnableAudioEdit);
 
     SelectTargetAudioInputDevice();
+    isSupportSuperListenering_4_2_ =
+        system::GetBoolParameter("const.photo.audio_record_4_plus_2_channel.enable", false);
+    MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture isSupportSuperListenering_4_2_ is :%{public}d",
+        isSupportSuperListenering_4_2_);
+
     sharedAudioCaptureStreamInfo_ = nullptr;
     sharedAudioEffectStreamInfo_ = nullptr;
     auto streamInfo = CreateAudioStreamInfo();
     AudioStandard::AudioCapturerOptions capturerOptions {};
     capturerOptions.streamInfo = streamInfo;
-    capturerOptions.capturerInfo.sourceType = isEnableRawAudio_ ? AudioStandard::SourceType::SOURCE_TYPE_UNPROCESSED
-                                                                : AudioStandard::SourceType::SOURCE_TYPE_CAMCORDER;
+    if (isEnableRawAudio_ && !isSupportSuperListenering_4_2_) {
+        capturerOptions.capturerInfo.sourceType = AudioStandard::SourceType::SOURCE_TYPE_UNPROCESSED;
+        MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture use UNPROCESSED sourceType");
+    } else {
+        capturerOptions.streamInfo.channels = AudioStandard::AudioChannel::STEREO;
+        capturerOptions.capturerInfo.sourceType = AudioStandard::SourceType::SOURCE_TYPE_CAMCORDER;
+        MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture use CAMCORDER sourceType, "
+                       "isEnableRawAudio_=%{public}d, isSupportSuperListenering_4_2_=%{public}d",
+            isEnableRawAudio_, isSupportSuperListenering_4_2_);
+    }
+
+    if (isSupportSuperListenering_4_2_) {
+        auto mic_inStreamInfo = CreateAudioStreamInfoForSuperListenering();
+        capturerOptions.micInStreamInfo = mic_inStreamInfo;
+        MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture micInStreamInfo.channels is:%{public}d",
+            mic_inStreamInfo.channels);
+    }
     MEDIA_INFO_LOG(
         "MovieFileControllerVideo::ConfigAudioCapture capturerInfo.sourceType is:%{public}d channels is :%{public}d",
         capturerOptions.capturerInfo.sourceType, streamInfo.channels);
@@ -124,15 +155,42 @@ void MovieFileControllerVideo::ConfigAudioCapture()
     MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture SetPreferredInputDeviceChangeCallback ret:%{public}d",
         ret);
 
-    audioCaptureWrap_.Set(audioCaptureWrap);
-    audioCaptureWrap->InitThread();
+    if (isSupportSuperListenering_4_2_) {
+        auto audioCallbackPtr = std::make_shared<MyAudioCapturerReadCallback>(audioCaptureWrap);
+        ret = audioCaptureWrap->SetCaptureMode(AudioStandard::AudioCaptureMode::CAPTURE_MODE_CALLBACK);
+        MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture SetCaptureMode ret is :%{public}d", ret);
+        ret = audioCaptureWrap->SetCapturerReadCallback(audioCallbackPtr);
+        MEDIA_INFO_LOG("MovieFileControllerVideo::ConfigAudioCapture SetCapturerReadCallback ret is :%{public}d", ret);
 
-    if (isEnableRawAudio_) {
-        // Audio raw pipeline
-        ConfigRawAudioPipeline(streamInfo, audioCaptureWrap);
+        auto metaDataCallbackPtr = std::make_shared<MyAudioCapturerMetaDataCallback>(audioCaptureWrap);
+        ret = audioCaptureWrap->SetCapturerMetaDataCallback(metaDataCallbackPtr);
+        MEDIA_INFO_LOG(
+            "MovieFileControllerVideo::ConfigAudioCapture SetCapturerMetaDataCallback ret is :%{public}d", ret);
+        audioCaptureWrap_.Set(audioCaptureWrap);
+        audioCaptureWrap->InitSuperListeningThread();
+
+        audioCaptureWrap->SetSuperListeningDataCallback(
+            [this](int64_t timestamp, const uint8_t *processBuffer, size_t processBufSize, const uint8_t *micInBuffer,
+                size_t micInBufSize) {
+                this->OnSuperListeningDataArrival(timestamp, processBuffer, processBufSize, micInBuffer, micInBufSize);
+            });
+
+        audioCaptureWrap->SetMetaDataCallbackFunc(
+            [this](AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t> &metaData) {
+                this->OnMetaDataArrival(type, metaData);
+            });
+
+        auto superStreamInfo = CreateAudioStreamInfoForSuperListenering();
+        ConfigMicAudioPipeline(superStreamInfo, audioCaptureWrap);
+        ConfigProcessAudioPipeline(superStreamInfo, audioCaptureWrap);
+    } else {
+        audioCaptureWrap_.Set(audioCaptureWrap);
+        audioCaptureWrap->InitThread();
+        if (isEnableRawAudio_) {
+            ConfigRawAudioPipeline(streamInfo, audioCaptureWrap);
+        }
+        ConfigAudioPipeline(streamInfo, audioCaptureWrap);
     }
-    // Audio pipeline
-    ConfigAudioPipeline(streamInfo, audioCaptureWrap);
 }
 
 void MovieFileControllerVideo::ConfigAudioPipeline(
@@ -188,9 +246,80 @@ void MovieFileControllerVideo::ConfigRawAudioPipeline(
         .sampleRate = streamInfo.samplingRate,
         .bitRate = MOVIE_FILE_AUDIO_HIGH_BITRATE,
     };
+    if (isSupportSuperListenering_4_2_) {
+            audioEncodeConfig.channelLayout = MovieFile::GetChannelLayoutByChannelCount(
+                AudioStandard::AudioChannel::CHANNEL_4);
+            audioEncodeConfig.channelCount = AudioStandard::AudioChannel::CHANNEL_4;
+        }
     auto audioEncoderPlugin = std::make_shared<MovieFileAudioEncoderPlugin>(audioEncodeConfig);
     audioRawPipeline->AddPlugin(1, audioEncoderPlugin);
     sharedAudioCaptureStreamInfo_ = std::make_shared<AudioStandard::AudioStreamInfo>(streamInfo);
+}
+
+void MovieFileControllerVideo::ConfigMicAudioPipeline(const AudioStandard::AudioStreamInfo &streamInfo,
+    std::shared_ptr<UnifiedPipelineAudioCaptureWrap> audioCaptureWrap)
+{
+    if (!movieFileAudioMicBufferProducer_.Get()) {
+        AudioStandard::AudioStreamInfo micStreamInfo = streamInfo;
+        micStreamInfo.channels = AudioStandard::AudioChannel::CHANNEL_4;
+
+        auto movieFileAudioMicBufferProducer =
+            std::make_shared<MovieFileAudioBufferProducer>();
+        movieFileAudioMicBufferProducer_.Set(movieFileAudioMicBufferProducer);
+        movieFileAudioMicBufferProducer->InitBufferListener();
+
+        auto audioMicPipeline = movieFilePipelineManager_->GetPipelineWithProducer(movieFileAudioMicBufferProducer);
+        auto audioMicPlugin = std::make_shared<MovieFileAudioRawPlugin>();
+        audioMicPipeline->AddPlugin(0, audioMicPlugin);
+
+        MovieFileAudioEncoderEncodeNode::EncodeConfig audioEncodeConfig {
+            .channelLayout = MovieFile::GetChannelLayoutByChannelCount(micStreamInfo.channels),
+            .channelCount = micStreamInfo.channels,
+            .sampleRate = micStreamInfo.samplingRate,
+            .bitRate = MOVIE_FILE_AUDIO_HIGH_BITRATE,
+        };
+        auto audioEncoderPlugin = std::make_shared<MovieFileAudioEncoderPlugin>(audioEncodeConfig);
+        audioMicPipeline->AddPlugin(1, audioEncoderPlugin);
+        sharedAudioCaptureStreamInfo_ = std::make_shared<AudioStandard::AudioStreamInfo>(micStreamInfo);
+    }
+    if (audioCaptureWrap != nullptr) {
+        audioCaptureWrap->AddBufferListener(movieFileAudioMicBufferProducer_.Get()->GetAudioCaptureBufferListener());
+    }
+}
+
+void MovieFileControllerVideo::ConfigProcessAudioPipeline(const AudioStandard::AudioStreamInfo &streamInfo,
+    std::shared_ptr<UnifiedPipelineAudioCaptureWrap> audioCaptureWrap)
+{
+    if (!movieFileAudioProcessBufferProducer_.Get()) {
+        AudioStandard::AudioStreamInfo processStreamInfo = streamInfo;
+        processStreamInfo.channels = AudioStandard::AudioChannel::STEREO;
+
+        auto movieFileAudioProcessBufferProducer =
+            std::make_shared<MovieFileAudioBufferProducer>();
+        movieFileAudioProcessBufferProducer_.Set(movieFileAudioProcessBufferProducer);
+        movieFileAudioProcessBufferProducer->InitBufferListener();
+
+        auto audioProcessPipeline =
+            movieFilePipelineManager_->GetPipelineWithProducer(movieFileAudioProcessBufferProducer);
+
+        auto audioPlugin = std::make_shared<MovieFileAudioPlugin>();
+        audioProcessPipeline->AddPlugin(0, audioPlugin);
+
+        MovieFileAudioEncoderEncodeNode::EncodeConfig audioEncodeConfig {
+            .channelLayout = MovieFile::GetChannelLayoutByChannelCount(processStreamInfo.channels),
+            .channelCount = processStreamInfo.channels,
+            .sampleRate = processStreamInfo.samplingRate,
+            .bitRate = MOVIE_FILE_AUDIO_HIGH_BITRATE,
+        };
+        auto audioEncoderPlugin = std::make_shared<MovieFileAudioEncoderPlugin>(audioEncodeConfig);
+
+        audioProcessPipeline->AddPlugin(1, audioEncoderPlugin);
+        sharedAudioEffectStreamInfo_ = std::make_shared<AudioStandard::AudioStreamInfo>(processStreamInfo);
+    }
+    if (audioCaptureWrap != nullptr) {
+        audioCaptureWrap->AddBufferListener(
+            movieFileAudioProcessBufferProducer_.Get()->GetAudioCaptureBufferListener());
+    }
 }
 
 MovieFileControllerVideo::MovieFileControllerVideo(
@@ -218,6 +347,11 @@ MovieFileControllerVideo::MovieFileControllerVideo(
     // Meta pipeline
     auto metaPipeline = movieFilePipelineManager_->GetPipelineWithProducer(movieFileMetaBufferProducer_);
     metaPipeline->AddPlugin(0, std::make_shared<MovieFileMetaPlugin>());
+
+    movieFileAudioMetadataBufferProducer_ = std::make_shared<MovieFileAudioMetadataBufferProducer>();
+    auto audioMetadataPipeline =
+        movieFilePipelineManager_->GetPipelineWithProducer(movieFileAudioMetadataBufferProducer_);
+    audioMetadataPipeline->AddPlugin(0, std::make_shared<MovieFileMetaPlugin>());
 }
 
 MovieFileControllerVideo::~MovieFileControllerVideo()
@@ -280,6 +414,19 @@ void MovieFileControllerVideo::SetupPipeline(std::shared_ptr<MovieFileConsumer> 
         audioRawPipeline->SetDataConsumer(movieFileConsumer);
     }
 
+    auto movieFileAudioMicBufferProducer = movieFileAudioMicBufferProducer_.Get();
+    if (movieFileAudioMicBufferProducer) {
+        auto audioMicPipeline = movieFilePipelineManager_->GetPipelineWithProducer(movieFileAudioMicBufferProducer);
+        audioMicPipeline->SetDataConsumer(movieFileConsumer);
+    }
+
+    auto movieFileAudioProcessBufferProducer = movieFileAudioProcessBufferProducer_.Get();
+    if (movieFileAudioProcessBufferProducer) {
+        auto audioProcessPipeline =
+            movieFilePipelineManager_->GetPipelineWithProducer(movieFileAudioProcessBufferProducer);
+        audioProcessPipeline->SetDataConsumer(movieFileConsumer);
+    }
+
     auto movieFileAudioBufferProducer = movieFileAudioBufferProducer_.Get();
     if (movieFileAudioBufferProducer) {
         auto audioPipeline = movieFilePipelineManager_->GetPipelineWithProducer(movieFileAudioBufferProducer);
@@ -288,6 +435,10 @@ void MovieFileControllerVideo::SetupPipeline(std::shared_ptr<MovieFileConsumer> 
 
     auto metaPipeline = movieFilePipelineManager_->GetPipelineWithProducer(movieFileMetaBufferProducer_);
     metaPipeline->SetDataConsumer(movieFileConsumer);
+
+    auto audioMetadataPipeline =
+        movieFilePipelineManager_->GetPipelineWithProducer(movieFileAudioMetadataBufferProducer_);
+    audioMetadataPipeline->SetDataConsumer(movieFileConsumer);
 }
 
 int32_t MovieFileControllerVideo::MuxMovieFileStart(
@@ -329,6 +480,7 @@ int32_t MovieFileControllerVideo::MuxMovieFileStart(
             .videoCodecMime = videoCodecMime_,
             .rawAudiostreamInfo = sharedAudioCaptureStreamInfo_,
             .audiostreamInfo = sharedAudioEffectStreamInfo_,
+            .isSupportSuperListenering_4_2 = isSupportSuperListenering_4_2_,
             .frameRate = frameRate_,
             .isSetWaterMark = !waterFilter_.empty() && !waterFilterParam_.empty(),
             // 消费端的的movieFileConfig_的videoBitrate用movieSettings传来的videoBitrate赋值
@@ -336,7 +488,7 @@ int32_t MovieFileControllerVideo::MuxMovieFileStart(
             .isBFrame = movieSettings.isBFrameEnabled,
             .deviceFoldState = static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus()),
             .deviceModel = system::GetParameter("persist.hiviewdfx.priv.sw.model", ""),
-            .cameraPosition = cameraPosition });
+            .cameraPosition = cameraPosition});
         StartConsumerAndProducer(movieFileConsumer);
         retCode = CamServiceError::CAMERA_OK;
     });
@@ -552,6 +704,49 @@ sptr<IRemoteObject> MovieFileControllerVideo::VideoStreamCallback::AsObject()
 {
     return nullptr;
 };
+
+void MovieFileControllerVideo::OnSuperListeningDataArrival(int64_t timestamp, const uint8_t *processBuffer,
+    size_t processBufSize, const uint8_t *micInBuffer, size_t micInBufSize)
+{
+    MEDIA_INFO_LOG(
+        "OnSuperListeningDataArrival: timestamp=%{public}" PRId64 ", processBufSize=%{public}zu, micInBufSize=%{public}zu",
+        timestamp, processBufSize, micInBufSize);
+
+    if (movieFileAudioMicBufferProducer_.Get()) {
+        auto listener = movieFileAudioMicBufferProducer_.Get()->GetAudioCaptureBufferListener().lock();
+        if (listener != nullptr) {
+            auto micInBufferCopy = std::make_unique<uint8_t[]>(micInBufSize);
+            auto ret = memcpy_s(micInBufferCopy.get(), micInBufSize, micInBuffer, micInBufSize);
+            if (ret != 0) {
+                MEDIA_ERR_LOG("memcpy_s failed, ret: %{public}d", ret);
+                return;
+            }
+            listener->OnBufferArrival(timestamp, std::move(micInBufferCopy), micInBufSize);
+        }
+    }
+
+    if (movieFileAudioProcessBufferProducer_.Get()) {
+        auto listener = movieFileAudioProcessBufferProducer_.Get()->GetAudioCaptureBufferListener().lock();
+        if (listener != nullptr) {
+            auto processBufferCopy = std::make_unique<uint8_t[]>(processBufSize);
+            auto ret = memcpy_s(processBufferCopy.get(), processBufSize, processBuffer, processBufSize);
+            if (ret != 0) {
+                MEDIA_ERR_LOG("memcpy_s failed, ret: %{public}d", ret);
+                return;
+            }
+            listener->OnBufferArrival(timestamp, std::move(processBufferCopy), processBufSize);
+        }
+    }
+}
+
+void MovieFileControllerVideo::OnMetaDataArrival(
+    AudioStandard::CaptureMetaDataType type, const std::vector<uint8_t> &metaData)
+{
+    MEDIA_INFO_LOG("OnMetaDataArrival: type=%{public}d, size=%{public}zu", type, metaData.size());
+    CHECK_RETURN_ELOG(movieFileAudioMetadataBufferProducer_ == nullptr,
+        "OnMetaDataArrival: movieFileAudioMetadataBufferProducer_ is null");
+    movieFileAudioMetadataBufferProducer_->OnMetaDataArrival(type, metaData, GetMicroTickCount());
+}
 
 } // namespace CameraStandard
 } // namespace OHOS

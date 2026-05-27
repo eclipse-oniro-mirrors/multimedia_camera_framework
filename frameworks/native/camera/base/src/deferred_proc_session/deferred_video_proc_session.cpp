@@ -104,12 +104,12 @@ void DeferredVideoProcSession::EndSynchronize()
     CHECK_PRINT_ELOG(ret != ERR_OK, "EndSynchronize failed errorCode: %{public}d", ret);
 }
 
-void DeferredVideoProcSession::AddVideo(const std::string& videoId, const sptr<IPCFileDescriptor> srcFd,
-    const sptr<IPCFileDescriptor> dstFd)
+void DeferredVideoProcSession::AddVideo(const std::string& videoId,
+    const std::string& srcPath, const std::string& temp1Path, const std::string& temp2Path)
 {
     CHECK_RETURN_ELOG(remoteSession_ == nullptr, "AddVideo failed due to binder died.");
     MEDIA_INFO_LOG("DeferredVideoProcSession::AddVideo() enter.");
-    auto ret = remoteSession_->AddVideo(videoId, srcFd, dstFd);
+    auto ret = remoteSession_->AddVideo(videoId, srcPath, temp1Path, temp2Path);
     CHECK_PRINT_ELOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
 }
 
@@ -129,12 +129,13 @@ void DeferredVideoProcSession::RestoreVideo(const std::string& videoId)
     CHECK_PRINT_ELOG(ret != ERR_OK, "RestoreVideo failed errorCode: %{public}d", ret);
 }
 
-void DeferredVideoProcSession::AddVideo(const std::string& videoId, const std::vector<sptr<IPCFileDescriptor>>& fds)
+void DeferredVideoProcSession::AddVideo(const std::string& videoId, const std::string& srcPath,
+    const std::string& temp1Path, const std::string& temp2Path, const std::string& editPath)
 {
-    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "AddMovieVideo failed due to binder died.");
-    MEDIA_INFO_LOG("DeferredVideoProcSession AddMovieVideo() enter.");
-    auto ret = remoteSession_->AddVideo(videoId, fds);
-    CHECK_PRINT_ELOG(ret != ERR_OK, "AddMovieVideo failed errorCode: %{public}d", ret);
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "AddVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession::AddVideo() enter.");
+    auto ret = remoteSession_->AddVideo(videoId, srcPath, temp1Path, temp2Path, editPath);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
 }
 
 void DeferredVideoProcSession::ProcessVideo(const std::string& appName, const std::string& videoId)

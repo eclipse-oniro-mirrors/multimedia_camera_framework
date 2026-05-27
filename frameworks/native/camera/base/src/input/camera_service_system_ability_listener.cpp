@@ -23,7 +23,8 @@ namespace CameraStandard {
 void CameraServiceSystemAbilityListener::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     MEDIA_INFO_LOG("OnAddSystemAbility,id: %{public}d", systemAbilityId);
-    CameraManager::GetInstance()->OnCameraServerAlive();
+    sptr<CameraManager> cameraManager = CameraManager::GetInstance();
+    cameraManager->OnCameraServerAlive();
 }
 
 void CameraServiceSystemAbilityListener::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)

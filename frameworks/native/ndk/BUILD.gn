@@ -51,6 +51,7 @@ ohos_shared_library("ohcamera") {
     "./photo_output.cpp",
     "./preview_output.cpp",
     "./video_output.cpp",
+    "./metadata_object_ext.cpp",
     "impl/camera_input_impl.cpp",
     "impl/camera_manager_impl.cpp",
     "impl/camera_util.cpp",
@@ -61,6 +62,7 @@ ohos_shared_library("ohcamera") {
     "impl/preview_output_impl.cpp",
     "impl/video_output_impl.cpp",
     "photo_native.cpp",
+    "impl/metadata_object_ext_impl.cpp",
   ]
 
   deps = [ "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework" ]

@@ -110,6 +110,7 @@ public:
     bool IsFocusDrivenTypeSupported(FocusDrivenType type);
     bool IsFocusModeSupported(FocusMode afMode);
     virtual bool IsFocusAssistSupported();
+    bool IsLockFocusTrackingSupported();
 };
 
 class FocusImpl : public FocusQueryImpl {
@@ -127,6 +128,8 @@ public:
     bool GetFocusAssist();
     FocusMode GetFocusMode();
     void SetFocusMode(FocusMode afMode);
+    void LockFocusTracking(Point focusPoint);
+    void UnlockFocusTracking();
 };
 
 class StabilizationQueryImpl : virtual public SessionBase, virtual public FunctionBase {

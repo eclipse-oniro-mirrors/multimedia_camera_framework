@@ -39,14 +39,13 @@ int32_t VideoJobRepository::Initialize()
     return DP_OK;
 }
 
-void VideoJobRepository::AddVideoJob(const std::string& videoId, const std::shared_ptr<VideoInfo>& info)
+void VideoJobRepository::AddVideoJob(const std::string& videoId, std::unique_ptr<VideoInfo> info)
 {
     // LCOV_EXCL_START
+    DP_CHECK_RETURN_LOG(info == nullptr, "invalid videoId: %{public}s", videoId.c_str());
     DeferredVideoJobPtr jobPtrFind = GetJobUnLocked(videoId);
     DP_CHECK_RETURN_LOG(jobPtrFind != nullptr, "already existed, videoId: %{public}s", videoId.c_str());
-    DP_CHECK_RETURN_LOG(info == nullptr, "invailid videoId: %{public}s", videoId.c_str());
-    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(
-        videoId, info->srcFd_, info->dstFd_, info->movieFd_, info->movieCopyFd_);
+    DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, std::move(info));
     jobPtr->SetJobState(VideoJobState::PENDING);
     jobQueue_->Push(jobPtr);
     DP_INFO_LOG("DPS_VIDEO: AddVideoJob size: %{public}d, videoId: %{public}s",
@@ -72,6 +71,15 @@ bool VideoJobRepository::RemoveVideoJob(const std::string& videoId, bool restora
     jobPtrFind->SetJobState(VideoJobState::DELETED);
     jobPtrFind->SetJobPriority(JobPriority::NORMAL);
     UpdateRunningCountUnLocked(false, jobPtrFind);
+    std::string temp1Path = jobPtrFind->GetTemp1Path();
+    DP_CHECK_EXECUTE(!temp1Path.empty(), remove(temp1Path.c_str()));
+    std::string temp2Path = jobPtrFind->GetTemp2Path();
+    DP_CHECK_EXECUTE(!temp2Path.empty(), remove(temp2Path.c_str()));
+    size_t pos = temp1Path.find_last_of('_');
+    if (pos != std::string::npos) {
+        std::string tmpPath = temp1Path.substr(0, pos) + TEMP_TAG;
+        remove(tmpPath.c_str());
+    }
     return isNeedStop;
     // LCOV_EXCL_STOP
 }

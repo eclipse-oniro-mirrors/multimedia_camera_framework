@@ -723,6 +723,10 @@ public:
     static napi_value GetCurrentCustomOISBias(napi_env env, napi_callback_info info);
     static napi_value SetOISModeCustom(napi_env env, napi_callback_info info);
 
+    static napi_value IsLockFocusTrackingSupported(napi_env env, napi_callback_info info);
+    static napi_value LockFocusTracking(napi_env env, napi_callback_info info);
+    static napi_value UnlockFocusTracking(napi_env env, napi_callback_info info);
+
     static napi_value OnExposureStateChange(napi_env env, napi_callback_info info);
     static napi_value OnExposureStateChangeSync(napi_env env, napi_callback_info info);
     static napi_value OffExposureStateChange(napi_env env, napi_callback_info info);
@@ -889,6 +893,7 @@ public:
     static const std::vector<napi_property_descriptor> color_style_props;
     static const std::vector<napi_property_descriptor> image_stabilization_guide_props;
     static const std::vector<napi_property_descriptor> focus_tracking_props;
+    static const std::vector<napi_property_descriptor> focus_tracking_normal_props;
     static const std::vector<napi_property_descriptor> iso_props;
     static const std::vector<napi_property_descriptor> manual_iso_props;
     static const std::vector<napi_property_descriptor> manual_focus_props;

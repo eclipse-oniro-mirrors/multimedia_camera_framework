@@ -26,12 +26,17 @@
 #include "dp_utils.h"
 #include "video_process_command.h"
 
+#include "storage_manager_proxy.h"
+#include "system_ability_definition.h"
+#include "iservice_registry.h"
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 namespace {
     constexpr uint32_t X10 = 10;
     constexpr uint32_t MAX_PROC_TIME_MS = 2 * 60 * 1000 * X10;
+    const std::string CAMERA_BUSINESS_NAME = "com.huawei.hmos.camera";
 }
 MovieProgress::MovieProgress(const std::string& videoId, const std::weak_ptr<DeferredVideoProcessor>& process)
     : videoId_(videoId), process_(process)
@@ -68,12 +73,12 @@ int32_t DeferredVideoProcessor::Initialize()
     return DP_OK;
 }
 
-void DeferredVideoProcessor::AddVideo(const std::string& videoId, const std::shared_ptr<VideoInfo>& info)
+void DeferredVideoProcessor::AddVideo(const std::string& videoId, std::unique_ptr<VideoInfo> info)
 {
     bool isProcess = ProcessCatchResults(videoId);
     DP_CHECK_RETURN(isProcess);
     DP_CHECK_ERROR_RETURN_LOG(repository_ == nullptr, "VideoJobRepository is nullptr.");
-    repository_->AddVideoJob(videoId, info);
+    repository_->AddVideoJob(videoId, std::move(info));
 }
 
 void DeferredVideoProcessor::RemoveVideo(const std::string& videoId, bool restorable)
@@ -147,6 +152,7 @@ void DeferredVideoProcessor::OnProcessSuccess(const int32_t userId, const std::s
         mediaManagerProxy_->MpegAddUserMeta(std::move(userInfo)));
     auto jobPtr = repository_->GetJobUnLocked(videoId);
     auto result = StopMpeg(MediaResult::SUCCESS, jobPtr);
+    ReportStorage(userId, 0);
     DP_CHECK_EXECUTE_AND_RETURN(!result, HandleError(userId_, videoId, DPS_ERROR_VIDEO_PROC_FAILED));
 
     HandleSuccess(userId, videoId);
@@ -157,9 +163,11 @@ void DeferredVideoProcessor::OnProcessError(const int32_t userId, const std::str
     DP_ERR_LOG("DPS_VIDEO: userId: %{public}d, videoId: %{public}s, dps error: %{public}d.",
         userId, videoId.c_str(), error);
     StopTimer(videoId);
-    MediaResult resule = error == DPS_ERROR_VIDEO_PROC_INTERRUPTED ? MediaResult::PAUSE : MediaResult::FAIL;
+    MediaResult result = error == DPS_ERROR_VIDEO_PROC_INTERRUPTED ? MediaResult::PAUSE : MediaResult::FAIL;
     auto jobPtr = repository_->GetJobUnLocked(videoId);
-    StopMpeg(resule, jobPtr);
+    StopMpeg(result, jobPtr);
+    uint64_t size = GetTempFolderSize(jobPtr);
+    ReportStorage(userId, size);
     HandleError(userId, videoId, error);
 }
 
@@ -296,7 +304,13 @@ bool DeferredVideoProcessor::StartMpeg(const std::string& videoId, const DpsFdPt
 {
     mediaManagerProxy_ = MediaManagerProxy::CreateMediaManagerProxy();
     DP_CHECK_ERROR_RETURN_RET_LOG(mediaManagerProxy_ == nullptr, false, "MediaManagerProxy is nullptr.");
-    int32_t ret = mediaManagerProxy_->MpegAcquire(videoId, inputFd, width, height);
+    DP_CHECK_ERROR_RETURN_RET_LOG(repository_ == nullptr, false, "Repository is nullptr.");
+    auto job = repository_->GetJobUnLocked(videoId);
+    DP_CHECK_ERROR_RETURN_RET_LOG(job == nullptr, false, "Failed to get job for videoId.");
+    std::string temp1Path = job->GetTemp1Path();
+    std::string temp2Path = job->GetTemp2Path();
+    TempVideoPath tempPath { temp1Path, temp2Path };
+    int32_t ret = mediaManagerProxy_->MpegAcquire(videoId, tempPath, inputFd, width, height);
     DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, false, "MpegAcquire failed");
 
     auto isNeedNotifyProgress = repository_ != nullptr && repository_->IsHighJob(videoId);
@@ -334,20 +348,40 @@ bool DeferredVideoProcessor::StopMpeg(const MediaResult result, const DeferredVi
         return false;
     }
 
-    auto tempFd = resultFd->GetFd();
-    auto outFd = job->GetOutputFd()->GetFd();
-    CopyFileByFd(tempFd, outFd);
-    if (IsFileEmpty(outFd)) {
-        DP_ERR_LOG("Video size is empty, videoId: %{public}s", videoId.c_str());
+    std::string resultPath = mediaManagerProxy_->MpegGetResultPath();
+    std::string dstPath = GetDstPath(resultPath);
+    if (resultPath.empty() || dstPath.empty()) {
+        DP_ERR_LOG("source path or dstpath is invalid.");
         ReleaseMpeg();
         return false;
     }
-
-    DP_INFO_LOG("DPS_VIDEO: Video process done, videoId: %{public}s, tempFd: %{public}d, outFd: %{public}d",
-        videoId.c_str(), tempFd, outFd);
+    ret = rename(resultPath.c_str(), dstPath.c_str());
+    if (ret != 0) {
+        DP_ERR_LOG("Rename resultPath to dstPath failed.");
+        ReleaseMpeg();
+        return false;
+    }
+    DP_INFO_LOG("DPS_VIDEO: Video process done, videoId: %{public}s", videoId.c_str());
     ReleaseMpeg();
     return true;
     // LCOV_EXCL_STOP
+}
+
+std::string DeferredVideoProcessor::GetDstPath(const std::string& path)
+{
+    std::string resultPath = path;
+    size_t tempPos = resultPath.find("/temp/");
+    DP_CHECK_RETURN_RET_LOG(tempPos == std::string::npos, "", "temp Path is invalid.");
+    std::string parentPath = resultPath.substr(0, tempPos);
+    size_t lastSlashPos = resultPath.find_last_of('/');
+    DP_CHECK_RETURN_RET_LOG(lastSlashPos == std::string::npos, "", "temp/ Path is invalid.");
+    std::string fileName = resultPath.substr(lastSlashPos + 1);
+    size_t underscorePos = fileName.find_last_of('_');
+    DP_CHECK_RETURN_RET_LOG(underscorePos == std::string::npos, "", "temp_ Path is invalid.");
+    std::string newFileName = fileName.substr(0, underscorePos) + "_vid_tmp.mp4";
+    std::string dstPath = parentPath + "/enhanced/" + newFileName;
+    DP_DEBUG_LOG("GetDstPath success.");
+    return dstPath;
 }
 
 void DeferredVideoProcessor::ReleaseMpeg()
@@ -404,6 +438,46 @@ bool DeferredVideoProcessor::ProcessCatchResults(const std::string& videoId)
     }
     result_->DeRecordResult(videoId);
     return true;
+}
+
+uint64_t DeferredVideoProcessor::GetTempFolderSize(const DeferredVideoJobPtr& job)
+{
+    DP_INFO_LOG("GetTempFolderSize enter.");
+    uint64_t size = 0;
+    DP_CHECK_ERROR_RETURN_RET_LOG(job == nullptr, size, "job is nullptr.");
+    std::string tempPath = job->GetTemp1Path();
+    size_t tempPos = tempPath.find_last_of('/');
+    DP_CHECK_ERROR_RETURN_RET_LOG(tempPos == std::string::npos, size, "tempPath is invalid.");
+    std::string tempDir = tempPath.substr(0, tempPos);
+    size = GetFolderSize(tempDir);
+    return size;
+}
+
+void DeferredVideoProcessor::ReportStorage(const int32_t userId, const uint64_t size)
+{
+    DP_INFO_LOG("Reported ROM current tmp size: %{public}" PRIu64, size);
+    sptr<ISystemAbilityManager> samgrProxy = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    DP_CHECK_ERROR_RETURN_LOG(samgrProxy == nullptr, "Failed to get samgrProxy.");
+    auto remote = samgrProxy->GetSystemAbility(STORAGE_MANAGER_MANAGER_ID);
+    DP_CHECK_ERROR_RETURN_LOG(remote == nullptr, "Failed to get STORAGE_MANAGER_MANAGER_ID service.");
+    auto storageproxy = iface_cast<StorageManager::IStorageManager>(remote);
+    DP_CHECK_ERROR_RETURN_LOG(storageproxy == nullptr, "storageproxy is null.");
+
+    ExtBundleStats curStats;
+    curStats.businessName_ = CAMERA_BUSINESS_NAME;
+    if (storageproxy->GetExtBundleStats(userId, curStats) == 0) {
+        DP_INFO_LOG("Reported ROM curApp size : %{public}" PRIu64 ", last report size : %{public}" PRIu64,
+            curStats.businessSize_, lastSize_);
+        ExtBundleStats updateStats;
+        updateStats.businessName_ = CAMERA_BUSINESS_NAME;
+        updateStats.businessSize_ = curStats.businessSize_ - lastSize_ + size;
+        DP_INFO_LOG("Reported userId: %{public}d, bundleName: %{public}s, appsize: %{public}" PRIu64,
+            userId, updateStats.businessName_.c_str(), updateStats.businessSize_);
+        storageproxy->SetExtBundleStats(userId, updateStats);
+        lastSize_ = size;
+    } else {
+        DP_ERR_LOG("GetExtBundleStats failed");
+    }
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard

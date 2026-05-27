@@ -122,13 +122,14 @@ typedef enum Camera_ErrorCode {
     CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS = 7400110,
 
     /**
-     * Multiple cameras cannot be opened simultaneously.
-     * @since 24
+     * The optional property does not exist.
+     * @since 26.0.0
      */
-    CAMERA_MULTI_CAMERA_NOT_SUPPORTED = 7400113,
+    CAMERA_ERROR_OPTIONAL_PROPERTY_NOT_EXIST = 7400113,
 
     /**
-     * Camera service fatal error.
+     * The camera service is abnormal, for example, no camera permission, camera service restart, or abnormal cross-
+     * process invocation.
      */
     CAMERA_SERVICE_FATAL_ERROR = 7400201
 } Camera_ErrorCode;
@@ -692,28 +693,73 @@ typedef enum Camera_QualityLevel {
 } Camera_QualityLevel;
 
 /**
- * @brief Enum for metadata object type.
- *
+ * @brief Enumerates the metadata object types.
+ * 
  * @since 11
  * @version 1.0
  */
 typedef enum Camera_MetadataObjectType {
     /**
-     * Face detection.
+     * Metadata object used for face detection.<br> Since API version 23, you are advised to use the new enum value {@link CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION}
+     *  instead.
      */
     FACE_DETECTION = 0,
-    
+
     /**
-     * Face detection type.
+     * Metadata object used for face detection.
+     * 
      * @since 23
      */
     CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION = 0,
- 
+
     /**
-     * Human body detection type.
+     * Metadata object used for body detection.
+     * 
      * @since 23
      */
-    CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY = 1
+    CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY = 1,
+
+    /**
+     * Metadata object used for cat face detection.
+     * @since 26.0.0
+     */
+    CAMERA_METADATA_OBJECT_TYPE_CAT_FACE = 2,
+
+    /**
+     * Metadata object used for cat body detection.
+     * @since 26.0.0
+     */
+    CAMERA_METADATA_OBJECT_TYPE_CAT_BODY = 3,
+
+    /**
+     * Metadata object used for dog face detection.
+     * @since 26.0.0
+     */
+    CAMERA_METADATA_OBJECT_TYPE_DOG_FACE = 4,
+
+    /**
+     * Metadata object used for dog body detection.
+     * @since 26.0.0
+     */
+    CAMERA_METADATA_OBJECT_TYPE_DOG_BODY = 5,
+
+    /**
+     * Metadata object used for salient detection.
+     * @since 26.0.0
+     */
+    CAMERA_METADATA_OBJECT_TYPE_SALIENT_DETECTION = 6,
+
+    /**
+     * Metadata object used for bar code detection.
+     * @since 26.0.0
+     */
+    CAMERA_METADATA_OBJECT_TYPE_BAR_CODE_DETECTION = 7,
+
+    /**
+     * Metadata object used for basic face detection.
+     * @since 26.0.0
+     */
+    CAMERA_METADATA_OBJECT_TYPE_BASIC_FACE_DETECTION = 8
 } Camera_MetadataObjectType;
 
 /**
@@ -1778,6 +1824,70 @@ typedef struct OH_Camera_ZoomPointInfo {
      */
     uint32_t equivalentFocalLength;
 } OH_Camera_ZoomPointInfo;
+
+/**
+ * @brief Describes the camera rect ext.
+ *
+ * @since 26.0.0
+ * @version 1.0
+ */
+typedef struct OH_Camera_Rect_Ext {
+    /**
+     * X coordinate of the top-left corner of the rectangle, in the range of [0, 1].
+     * @since 26.0.0
+     */
+    double topLeftX;
+
+    /**
+     * Y coordinate of the top-left corner of the rectangle, in the range of [0, 1].
+     * @since 26.0.0
+     */
+    double topLeftY;
+
+    /**
+     * Width of the rectangle, in the range of [0, 1].
+     * @since 26.0.0
+     */
+    double width;
+
+    /**
+     * Height of the rectangle, in the range of [0, 1].
+     * @since 26.0.0
+     */
+    double height;
+} OH_Camera_Rect_Ext;
+
+/**
+ * @brief Enum for metadata object emotion.
+ *
+ * @since 26.0.0
+ * @version 1.0
+ */
+typedef enum OH_Camera_MetadataObjectEmotion {
+    /**
+     * Quiet and calm.
+     * @since 26.0.0
+     */
+    OH_CAMERA_METADATA_OBJECT_EMOTION_NEUTRAL = 0,
+
+    /**
+     * Sadness.
+     * @since 26.0.0
+     */
+    OH_CAMERA_METADATA_OBJECT_EMOTION_SADNESS = 1,
+
+    /**
+     * Smile.
+     * @since 26.0.0
+     */
+    OH_CAMERA_METADATA_OBJECT_EMOTION_SMILE = 2,
+
+    /**
+     * Surprise.
+     * @since 26.0.0
+     */
+    OH_CAMERA_METADATA_OBJECT_EMOTION_SURPRISE = 3
+} OH_Camera_MetadataObjectEmotion;
 
 #ifdef __cplusplus
 }

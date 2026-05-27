@@ -35,6 +35,8 @@ namespace {
     const std::string MEDIA_ROOT = "/data/test/media/";
     const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
     const std::string VIDEO_TEMP_PATH = MEDIA_ROOT + "test_video_temp.mp4";
+    const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
+    const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
     constexpr int32_t USER_ID = 0;
     constexpr int32_t OTHER_USER_ID = 101;
 }
@@ -53,15 +55,23 @@ void VideoSessionUnitTest::SetUp()
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId_);
     srcFd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
     dtsFd_ = open(VIDEO_TEMP_PATH.c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    temp1fd_ = open(VIDEO_TEMP_PATH_1.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    temp2fd_ = open(VIDEO_TEMP_PATH_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
 void VideoSessionUnitTest::TearDown()
 {
-    if (srcFd_ > 0) {
+    if (srcFd_ >= 0) {
         close(srcFd_);
     }
-    if (dtsFd_ > 0) {
+    if (dtsFd_ >= 0) {
         close(dtsFd_);
+    }
+    if (temp1fd_ >= 0) {
+        close(temp1fd_);
+    }
+    if (temp2fd_ >= 0) {
+        close(temp2fd_);
     }
 }
 
@@ -124,14 +134,9 @@ HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_002, TestSize.Le
     EXPECT_EQ(ret, DP_OK);
     std::string videoId = "testVideo";
     std::string appName = "testapp";
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(srcFd_));
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dup(dtsFd_));
-    sptr<IPCFileDescriptor> movieFd = sptr<IPCFileDescriptor>::MakeSptr(dup(srcFd_));
-    sptr<IPCFileDescriptor> movieCopyFd = sptr<IPCFileDescriptor>::MakeSptr(dup(srcFd_));
-    std::vector<sptr<IPCFileDescriptor>> fds {srcFd, dstFd, movieFd, movieCopyFd};
-    ret = deferredVideoSession->AddVideo(videoId, srcFd, dstFd);
+    ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     EXPECT_EQ(ret, DP_OK);
-    ret = deferredVideoSession->AddVideo(videoId, fds);
+    ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
     EXPECT_EQ(ret, DP_OK);
     ret = deferredVideoSession->RemoveVideo(videoId, true);
     EXPECT_EQ(ret, DP_OK);
@@ -159,14 +164,9 @@ HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_003, TestSize.Le
     ASSERT_NE(deferredVideoSession, nullptr);
     std::string videoId = "testVideo";
     std::string appName = "testapp";
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(srcFd_));
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dup(dtsFd_));
-    sptr<IPCFileDescriptor> movieFd = sptr<IPCFileDescriptor>::MakeSptr(dup(srcFd_));
-    sptr<IPCFileDescriptor> movieCopyFd = sptr<IPCFileDescriptor>::MakeSptr(dup(srcFd_));
-    std::vector<sptr<IPCFileDescriptor>> fds {srcFd, dstFd, movieFd, movieCopyFd};
-    auto ret = deferredVideoSession->AddVideo(videoId, srcFd, dstFd);
+    auto ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     EXPECT_EQ(ret, DP_OK);
-    ret = deferredVideoSession->AddVideo(videoId, fds);
+    ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
     EXPECT_EQ(ret, DP_OK);
     ret = deferredVideoSession->RemoveVideo(videoId, true);
     EXPECT_EQ(ret, DP_OK);

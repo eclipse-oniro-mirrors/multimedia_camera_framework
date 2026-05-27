@@ -105,8 +105,8 @@ Camera_ErrorCode OH_MetadataOutput_Release(Camera_MetadataOutput* metadataOutput
  * @since 23
  * @version 1.0
  */
-Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput* metadataOutput, 
-    Camera_MetadataObjectType* types, uint32_t size) 
+Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput* metadataOutput,
+    Camera_MetadataObjectType* types, uint32_t size)
 {
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
@@ -114,6 +114,15 @@ Camera_ErrorCode OH_MetadataOutput_AddMetadataObjectTypes(Camera_MetadataOutput*
         types == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, types is null!");
     CHECK_RETURN_RET_ELOG(
         size == 0, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is 0!");
+
+    const int32_t minTypeValue = 0;
+    const int32_t maxTypeValue = 8;
+    for (uint32_t i = 0; i < size; i++) {
+        CHECK_RETURN_RET_ELOG(static_cast<int32_t>(types[i]) < minTypeValue
+                              || static_cast<int32_t>(types[i]) > maxTypeValue,
+                              CAMERA_INVALID_ARGUMENT,
+                              "Invalid argument, metadataObjectTypes need to be 0 - 8");
+    }
     MEDIA_DEBUG_LOG("OH_MetadataOutput_AddMetadataObjectTypes"); 
     Camera_ErrorCode retCode = metadataOutput->AddMetadataObjectTypes(types, size);
     return retCode;
@@ -133,8 +142,83 @@ Camera_ErrorCode OH_MetadataOutput_RemoveMetadataObjectTypes(Camera_MetadataOutp
         types == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, types is null!");
     CHECK_RETURN_RET_ELOG(
         size == 0, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is 0!");
+
+    const int32_t minTypeValue = 0;
+    const int32_t maxTypeValue = 8;
+    for (uint32_t i = 0; i < size; i++) {
+        CHECK_RETURN_RET_ELOG(static_cast<int32_t>(types[i]) < minTypeValue
+                              || static_cast<int32_t>(types[i]) > maxTypeValue,
+                              CAMERA_INVALID_ARGUMENT,
+                              "Invalid argument, metadataObjectTypes need to be 0 - 8");
+    }
     Camera_ErrorCode retCode = metadataOutput->RemoveMetadataObjectTypes(types, size);
     return retCode;
+}
+
+bool OH_MetadataOutput_IsLockMetadataObjectTrackingSupported(
+    const Camera_MetadataOutput* metadataOutput)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, false, "Invalid argument, metadataOutput is null!");
+
+    return metadataOutput->IsLockMetadataObjectTrackingSupported();
+}
+
+
+Camera_ErrorCode OH_MetadataOutput_LockMetadataObjectTracking(
+    Camera_MetadataOutput* metadataOutput, Camera_Point* pointOfInterest)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    CHECK_RETURN_RET_ELOG(
+        pointOfInterest == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, pointOfInterest is null!");
+
+    return metadataOutput->LockMetadataObjectTracking(pointOfInterest);
+}
+
+Camera_ErrorCode OH_MetadataOutput_UnlockMetadataObjectTracking(
+    Camera_MetadataOutput* metadataOutput)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+
+    return metadataOutput->UnlockMetadataObjectTracking();
+}
+
+Camera_ErrorCode OH_MetadataOutput_RegisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return metadataOutput->RegisterMetadataObjectExtAvailableCallback(context, callback);
+}
+
+Camera_ErrorCode OH_MetadataOutput_UnregisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return metadataOutput->UnregisterMetadataObjectExtAvailableCallback(context, callback);
+}
+
+Camera_ErrorCode OH_MetadataOutput_RegisterErrorExtCallback(Camera_MetadataOutput* metadataOutput,
+    void* context, OH_MetadataOutput_OnErrorExt* callback)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return metadataOutput->RegisterErrorCallback(context, callback);
+}
+
+Camera_ErrorCode OH_MetadataOutput_UnregisterErrorExtCallback(Camera_MetadataOutput* metadataOutput,
+    void* context, OH_MetadataOutput_OnErrorExt* callback)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    return metadataOutput->UnregisterErrorCallback(context, callback);
 }
 
 #ifdef __cplusplus

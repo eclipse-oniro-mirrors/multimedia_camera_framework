@@ -29,6 +29,7 @@ using namespace DeferredProcessing;
 static constexpr int32_t MIN_SIZE_NUM = 128;
 static constexpr int NUM_TWO = 2;
 const size_t MAX_LENGTH_STRING = 64;
+const char* TEST_FILE_SRC_PATH = "/data/test/DeferredVideoProcessorFuzzTest_test_file.mp4";
 const char* TEST_FILE_PATH_1 = "/data/test/DeferredVideoProcessorFuzzTest_test_file1.mp4";
 const char* TEST_FILE_PATH_2 = "/data/test/DeferredVideoProcessorFuzzTest_test_file2.mp4";
 std::shared_ptr<DeferredVideoProcessor> DeferredVideoProcessorFuzzer::fuzz_{nullptr};
@@ -53,12 +54,11 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     DP_CHECK_ERROR_RETURN_LOG(!center_, "Create center_ Error");
     const std::shared_ptr<VideoPostProcessor> postProcessor = VideoPostProcessor::Create(userId);
     fuzz_ = std::make_shared<DeferredVideoProcessor>(userId, repository, postProcessor);
-    int sfd = open(TEST_FILE_PATH_1, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    int dfd = open(TEST_FILE_PATH_2, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    DpsFdPtr inputFd = std::make_shared<DpsFd>(sfd);
-    DpsFdPtr outFd = std::make_shared<DpsFd>(dfd);
-    std::shared_ptr<DeferredVideoJob> jobPtr =
-        std::make_shared<DeferredVideoJob>(videoId, inputFd, outFd, nullptr, nullptr);
+    std::string srcPath(TEST_FILE_SRC_PATH);
+    std::string temp1Path(TEST_FILE_PATH_1);
+    std::string temp2Path(TEST_FILE_PATH_2);
+    auto info = std::make_unique<VideoInfo>(srcPath, temp1Path, temp2Path, "");
+    std::shared_ptr<DeferredVideoJob> jobPtr = std::make_shared<DeferredVideoJob>(videoId, std::move(info));
     constexpr int32_t executionModeCount1 = static_cast<int32_t>(ExecutionMode::DUMMY) + 1;
     ExecutionMode selectedExecutionMode =
         static_cast<ExecutionMode>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount1);
@@ -77,9 +77,6 @@ void DeferredVideoProcessorFuzzer::DeferredVideoProcessorFuzzTest(FuzzedDataProv
     fuzz_->SetDefaultExecutionMode();
     fuzz_->OnProcessError(userId, videoId, selectedDpsError);
     fuzz_->OnProcessSuccess(userId, videoId, nullptr);
-
-    remove(TEST_FILE_PATH_1);
-    remove(TEST_FILE_PATH_2);
 }
 
 void Test(uint8_t* data, size_t size)

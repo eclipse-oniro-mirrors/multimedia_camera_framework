@@ -82,7 +82,8 @@
               "e2fsprogs",
               "libxml2",
               "openssl",
-              "icu"
+              "icu",
+              "storage_service"
             ]
         },
         "build": {

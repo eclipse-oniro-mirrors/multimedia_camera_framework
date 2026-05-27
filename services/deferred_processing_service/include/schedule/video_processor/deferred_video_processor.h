@@ -43,7 +43,7 @@ public:
     ~DeferredVideoProcessor();
 
     int32_t Initialize() override;
-    void AddVideo(const std::string& videoId, const std::shared_ptr<VideoInfo>& info);
+    void AddVideo(const std::string& videoId, std::unique_ptr<VideoInfo> info);
     void RemoveVideo(const std::string& videoId, bool restorable);
     void RestoreVideo(const std::string& videoId);
     void ProcessVideo(const std::string& videoId);
@@ -86,6 +86,9 @@ private:
     void CopyFileByFd(const int srcFd, const int dstFd);
     sptr<IDeferredVideoProcessingSessionCallback> GetCallback();
     bool ProcessCatchResults(const std::string& videoId);
+    std::string GetDstPath(const std::string& path);
+    uint64_t GetTempFolderSize(const DeferredVideoJobPtr& job);
+    void ReportStorage(const int32_t userId, const uint64_t size);
 
     const int32_t userId_;
     std::atomic_bool initialized_ {false};
@@ -94,6 +97,7 @@ private:
     std::shared_ptr<VideoJobRepository> repository_;
     std::shared_ptr<VideoPostProcessor> postProcessor_;
     std::shared_ptr<MovieProgress> progress_ {nullptr};
+    uint64_t lastSize_ {0};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

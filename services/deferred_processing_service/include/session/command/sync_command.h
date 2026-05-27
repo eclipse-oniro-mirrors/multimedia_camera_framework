@@ -54,14 +54,13 @@ protected:
 class VideoSyncCommand : public SyncCommand {
     DECLARE_CMD_CLASS(VideoSyncCommand)
 public:
-    VideoSyncCommand(const int32_t userId,
-        const std::unordered_map<std::string, std::shared_ptr<VideoInfo>>& videoIds);
+    VideoSyncCommand(const int32_t userId, std::unordered_map<std::string, std::unique_ptr<VideoInfo>> videoIds);
     ~VideoSyncCommand() override;
 
 protected:
     int32_t Executing() override;
 
-    std::unordered_map<std::string, std::shared_ptr<VideoInfo>> videoIds_ {};
+    std::unordered_map<std::string, std::unique_ptr<VideoInfo>> videoIds_ {};
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

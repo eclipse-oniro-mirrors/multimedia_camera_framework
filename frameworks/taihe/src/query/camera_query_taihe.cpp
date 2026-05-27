@@ -367,6 +367,13 @@ bool FocusQueryImpl::IsFocusAssistSupported()
     return false;
 }
 
+bool FocusQueryImpl::IsLockFocusTrackingSupported()
+{
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, false, "IsLockFocusTrackingSupported captureSession_ is null");
+    bool isLockFocusTracked = captureSession_->IsLockFocusTrackingSupported();
+    return isLockFocusTracked;
+}
+
 void FocusImpl::SetFocusDriven(FocusDrivenType type)
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
@@ -495,6 +502,30 @@ FocusMode FocusImpl::GetFocusMode()
     int32_t retCode = captureSession_->GetFocusMode(focusMode);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), errType);
     return FocusMode(static_cast<FocusMode::key_t>(focusMode));
+}
+
+void FocusImpl::LockFocusTracking(Point focusPoint)
+{
+    MEDIA_DEBUG_LOG("LockFocusTracking is called");
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "FocusImpl::LockFocusTracking captureSession_ is null!");
+    OHOS::CameraStandard::Point point {
+        .x = static_cast<float>(focusPoint.x),
+        .y = static_cast<float>(focusPoint.y),
+    };
+    captureSession_->LockForControl();
+    int retCode = captureSession_->LockFocusTracking(point);
+    captureSession_->UnlockForControl();
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "FlashImpl::LockFocusTracking fail");
+}
+ 
+void FocusImpl::UnlockFocusTracking()
+{
+    MEDIA_DEBUG_LOG("UnlockFocusTracking is called");
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "FocusImpl::UnlockFocusTracking captureSession_ is null!");
+    captureSession_->LockForControl();
+    int retCode = captureSession_->UnlockFocusTracking();
+    captureSession_->UnlockForControl();
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "FlashImpl::UnlockFocusTracking fail");
 }
 
 bool StabilizationQueryImpl::IsVideoStabilizationModeSupported(VideoStabilizationMode vsMode)

@@ -210,6 +210,7 @@ ohos_shared_library("deferred_processing_service") {
     "ipc:ipc_core",
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
+    "storage_service:storage_manager_sa_proxy",
     "samgr:samgr_proxy",
     "window_manager:libdm",
   ]

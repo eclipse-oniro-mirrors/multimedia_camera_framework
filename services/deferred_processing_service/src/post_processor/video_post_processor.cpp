@@ -197,14 +197,19 @@ std::vector<StreamDescription> VideoPostProcessor::PrepareStreams(const Deferred
     if (job->isMoving()) {
         auto sessionV1_5 = GetVideoSession<VideoSessionV1_5>();
         DP_CHECK_ERROR_RETURN_RET_LOG(sessionV1_5 == nullptr, streamDescs, "video sessionV1_5 is nullptr.");
-        std::vector<int> fds = {
-            job->GetMovieFd()->GetFd(),
-            job->GetMovieCopyFd()->GetFd(),
-            job->GetInputFd()->GetFd()
-        };
-        ret = sessionV1_5->Prepare(videoId, fds, streamDescs);
+        auto movie = job->GetMovieFd();
+        auto movieCopy = job->GetMovieFd();
+        auto input = job->GetInputFd();
+        DP_CHECK_ERROR_RETURN_RET_LOG(!movie || !movieCopy || !input, streamDescs, "fd is nullptr.");
+        DP_INFO_LOG("DPS_VIDEO: PrepareStreams movie fd: %{public}d, movieCopy fd: %{public}d, input fd: %{public}d",
+            movie->GetFd(), movieCopy->GetFd(), input->GetFd());
+        ret = sessionV1_5->Prepare(videoId,
+            {movie->GetFd(), movieCopy->GetFd(), input->GetFd()}, streamDescs);
     } else {
-        ret = session->Prepare(videoId, job->GetInputFd()->GetFd(), streamDescs);
+        auto input = job->GetInputFd();
+        DP_CHECK_ERROR_RETURN_RET_LOG(!input, streamDescs, "file fd is nullptr.");
+        DP_INFO_LOG("DPS_VIDEO: PrepareStreams input fd: %{public}d", input->GetFd());
+        ret = session->Prepare(videoId, input->GetFd(), streamDescs);
     }
     DP_INFO_LOG("DPS_VIDEO: PrepareStreams videoId: %{public}s, stream size: %{public}zu, ret: %{public}d",
         videoId.c_str(), streamDescs.size(), ret);
@@ -271,8 +276,6 @@ void VideoPostProcessor::RemoveRequest(const std::string& videoId)
         removeNeededList_.emplace_back(videoId);
         return;
     }
-    std::string path = PATH + videoId + OUT_TAG;
-    remove(path.c_str());
     auto ret = session->RemoveVideo(videoId);
     DP_INFO_LOG("DPS_VIDEO: Remove video to ive, videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
 }

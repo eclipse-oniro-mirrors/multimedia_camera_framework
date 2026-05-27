@@ -332,10 +332,6 @@ ohos_shared_library("camera_dynamic_media_manager") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/dfx",
   ]
 
-  deps = [
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_proxy",
-  ]
-
   public_configs = [
     ":camera_dynamic_media_manager_public_config",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:deferred_processing_service_idl_config", ]

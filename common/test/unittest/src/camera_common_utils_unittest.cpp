@@ -768,7 +768,11 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_001, TestSize.L
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     auto inputFd = std::make_shared<DeferredProcessing::DpsFd>(dup(VIDEO_REQUEST_FD_ID));
     ASSERT_NE(inputFd, nullptr);
-    mediaManagerProxy->MpegAcquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
+    std::string dstPath = "test_dstPath";
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = dstPath;
+    tempinfo.temp2Path = dstPath;
+    mediaManagerProxy->MpegAcquire(requestId, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
     EXPECT_EQ(mediaManagerProxy->MpegRelease(), DP_OK);
     MEDIA_INFO_LOG("CameraMediaManagerProxy_Test_001 End");
 }
@@ -792,8 +796,11 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_002, TestSize.L
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     auto inputFd = std::make_shared<DeferredProcessing::DpsFd>(dup(VIDEO_REQUEST_FD_ID));
     ASSERT_NE(inputFd, nullptr);
-    mediaManagerProxy->MpegAcquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
-
+    std::string dstPath = "test_dstPath";
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = dstPath;
+    tempinfo.temp2Path = dstPath;
+    mediaManagerProxy->MpegAcquire(requestId, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
     int32_t ret = mediaManagerProxy->MpegUnInit(1);
     EXPECT_EQ(ret, DP_ERR);
     EXPECT_EQ(mediaManagerProxy->MpegRelease(), DP_ERR);
@@ -842,7 +849,11 @@ HWTEST_F(CameraCommonUtilsUnitTest, CameraMediaManagerProxy_Test_004, TestSize.L
     std::string requestId(testStrings[randomNum % testStrings.size()]);
     auto inputFd = std::make_shared<DeferredProcessing::DpsFd>(dup(VIDEO_REQUEST_FD_ID));
     ASSERT_NE(inputFd, nullptr);
-    mediaManagerProxy->MpegAcquire(requestId, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
+    std::string dstPath = "test_dstPath";
+    DeferredProcessing::TempVideoPath tempinfo;
+    tempinfo.temp1Path = dstPath;
+    tempinfo.temp2Path = dstPath;
+    mediaManagerProxy->MpegAcquire(requestId, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGH);
     std::unique_ptr<DeferredProcessing::MediaUserInfo> userInfo = std::make_unique<DeferredProcessing::MediaUserInfo>();
     mediaManagerProxy->MpegAddUserMeta(std::move(userInfo));
 

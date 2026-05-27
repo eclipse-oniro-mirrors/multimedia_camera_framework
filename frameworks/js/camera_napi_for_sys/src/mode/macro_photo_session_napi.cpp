@@ -48,7 +48,8 @@ void MacroPhotoSessionNapi::Init(napi_env env)
         CameraSessionForSysNapi::camera_process_sys_props, flash_props, CameraSessionForSysNapi::flash_sys_props,
         auto_exposure_props, focus_props, CameraSessionForSysNapi::focus_sys_props, zoom_props,
         CameraSessionForSysNapi::zoom_sys_props, depth_fusion_sys_props, color_effect_sys_props,
-        scene_detection_sys_props, manual_focus_sys_props, color_management_props };
+        scene_detection_sys_props, manual_focus_sys_props, color_management_props,
+        focus_tracking_normal_props };
 
     std::vector<napi_property_descriptor> macro_photo_session_props =
         CameraNapiUtils::GetPropertyDescriptor(descriptors);

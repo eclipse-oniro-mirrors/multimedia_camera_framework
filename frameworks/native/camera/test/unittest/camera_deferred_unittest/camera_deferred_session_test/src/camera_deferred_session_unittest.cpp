@@ -34,6 +34,9 @@ namespace CameraStandard {
 namespace DeferredProcessing {
 constexpr int VIDEO_REQUEST_FD_ID = 1;
 constexpr int VIDEO_REQUEST_FD_TEMP = 8;
+const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
+const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
+const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
 void CameraDeferredSessionUnitTest::SetUpTestCase(void) {}
 
 void CameraDeferredSessionUnitTest::TearDownTestCase(void) {}
@@ -45,12 +48,24 @@ void CameraDeferredSessionUnitTest::SetUp()
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId_);
     sessionManagerPtr_ = SessionManager::Create();
     ASSERT_NE(sessionManagerPtr_, nullptr);
+    srcFd_ = open(VIDEO_PATH.c_str(), O_RDONLY);
+    temp1fd_ = open(VIDEO_TEMP_PATH_1.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    temp2fd_ = open(VIDEO_TEMP_PATH_2.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
 }
 
 void CameraDeferredSessionUnitTest::TearDown()
 {
     if (sessionManagerPtr_ != nullptr) {
         sessionManagerPtr_ = nullptr;
+    }
+    if (srcFd_ >= 0) {
+        close(srcFd_);
+    }
+    if (temp1fd_ >= 0) {
+        close(temp1fd_);
+    }
+    if (temp2fd_ >= 0) {
+        close(temp2fd_);
     }
 }
 
@@ -196,9 +211,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_003, Te
     EXPECT_FALSE(deferredVideoSession->inSync_.load());
 
     std::string videoId = "testVideo";
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_TEMP));
-    ret = deferredVideoSession->AddVideo(videoId, srcFd, dstFd);
+    ret = ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     EXPECT_EQ(deferredVideoSession->videoIds_.size(), 0);
 }
 
@@ -225,9 +238,7 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_004, Te
     EXPECT_TRUE(deferredVideoSession->inSync_.load());
 
     std::string videoId = "testVideo";
-    sptr<IPCFileDescriptor> srcFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_ID));
-    sptr<IPCFileDescriptor> dstFd = sptr<IPCFileDescriptor>::MakeSptr(dup(VIDEO_REQUEST_FD_TEMP));
-    ret = deferredVideoSession->AddVideo(videoId, srcFd, dstFd);
+    ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     EXPECT_EQ(ret, DP_OK);
     EXPECT_NE(deferredVideoSession->videoIds_.size(), 0);
 

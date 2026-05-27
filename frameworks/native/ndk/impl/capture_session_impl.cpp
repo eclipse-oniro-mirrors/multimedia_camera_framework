@@ -21,6 +21,7 @@
 #include "camera_util.h"
 #include "capture_scene_const.h"
 #include "capture_session.h"
+#include "icamera_util.h"
 #include "icapture_session_callback.h"
 
 using namespace std;
@@ -1356,7 +1357,8 @@ Camera_ErrorCode Camera_CaptureSession::SetExposureDuration(int32_t exposureDura
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetExposureDuration is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE
+        && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET_ELOG(!innerCaptureSession_->IsSessionCommited(), CAMERA_SESSION_NOT_CONFIG,
         "Camera_CaptureSession::SetExposureDuration session not config!");
     innerCaptureSession_->LockForControl();
@@ -1383,7 +1385,8 @@ Camera_ErrorCode Camera_CaptureSession::GetExposureDurationRange(
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetExposureDurationRange is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE
+        && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     std::vector<uint32_t> sensorExposureTimeRange;
     int32_t ret = innerCaptureSession_->GetSensorExposureTimeRange(sensorExposureTimeRange);
     CHECK_RETURN_RET(ret != CameraErrorCode::SUCCESS, FrameworkToNdkCameraError(ret));
@@ -1486,7 +1489,6 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterFlashStateCallback(
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->SetFlashStateCallback(nullptr);
     return CAMERA_OK;
 }
@@ -1607,7 +1609,8 @@ Camera_ErrorCode Camera_CaptureSession::GetPhysicalAperture(float* aperture) con
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetPhysicalAperture");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE
+        && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     CHECK_RETURN_RET(aperture == nullptr, CAMERA_INVALID_ARGUMENT);
     int32_t ret = innerCaptureSession_->GetPhysicalAperture(*aperture);
     return FrameworkToNdkCameraError(ret);
@@ -1747,4 +1750,34 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterExposureStateCallback(
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->SetExposureCallback(nullptr);
     return CAMERA_OK;
+}
+
+bool Camera_CaptureSession::IsLockFocusTrackingSupported() const
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::IsLockFocusTrackingSupported");
+    return innerCaptureSession_->IsLockFocusTrackingSupported();
+}
+ 
+Camera_ErrorCode Camera_CaptureSession::LockFocusTracking(Camera_Point focusPoint) const
+{
+    Point innerFocusPoint;
+    innerFocusPoint.x = focusPoint.x;
+    innerFocusPoint.y = focusPoint.y;
+ 
+    MEDIA_INFO_LOG("Camera_CaptureSession::LockFocusTracking");
+    int32_t ret = CameraErrorCode::SUCCESS;
+    innerCaptureSession_->LockForControl();
+    ret = innerCaptureSession_->LockFocusTracking(innerFocusPoint);
+    innerCaptureSession_->UnlockForControl();
+    return FrameworkToNdkCameraError(ret);
+}
+ 
+Camera_ErrorCode Camera_CaptureSession::UnlockFocusTracking() const
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::UnlockFocusTracking");
+    int32_t ret = CameraErrorCode::SUCCESS;
+    innerCaptureSession_->LockForControl();
+    ret = innerCaptureSession_->UnlockFocusTracking();
+    innerCaptureSession_->UnlockForControl();
+    return FrameworkToNdkCameraError(ret);
 }
