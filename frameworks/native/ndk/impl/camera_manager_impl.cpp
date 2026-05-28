@@ -66,38 +66,38 @@ const std::unordered_map<Camera_TorchMode, TorchMode> g_ndkToFwTorchMode_ = {
     {Camera_TorchMode::CAMERA_TORCH_MODE_ON, TorchMode::TORCH_MODE_ON},
     {Camera_TorchMode::CAMERA_TORCH_MODE_AUTO, TorchMode::TORCH_MODE_AUTO}
 };
-const std::unordered_map<AutomotiveCameraPosition, Camera_AutomotivePosition>
+const std::unordered_map<AutomotiveCameraPosition, OH_Camera_AutomotiveCameraPosition>
     g_fwToNdkAutomotiveCameraPosition_ = {
-    {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_UNSPECIFIED,
-        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_UNSPECIFIED},
+    {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_OTHER,
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_OTHER},
     {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_FRONT,
-        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_FRONT},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_FRONT},
     {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_REAR,
-        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_REAR},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_REAR},
     {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_LEFT,
-        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_LEFT},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_LEFT},
     {AutomotiveCameraPosition::CAMERA_POSITION_EXTERIOR_RIGHT,
-        Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_RIGHT},
-    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_UNSPECIFIED,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_UNSPECIFIED},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_RIGHT},
+    {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_OTHER,
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_OTHER},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_1_LEFT,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_1_LEFT},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_1_LEFT},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_1_CENTER,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_1_CENTER},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_1_CENTER},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_1_RIGHT,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_1_RIGHT},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_1_RIGHT},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_2_LEFT,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_2_LEFT},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_2_LEFT},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_2_CENTER,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_2_CENTER},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_2_CENTER},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_2_RIGHT,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_2_RIGHT},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_2_RIGHT},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_3_LEFT,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_3_LEFT},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_3_LEFT},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_3_CENTER,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_3_CENTER},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_3_CENTER},
     {AutomotiveCameraPosition::CAMERA_POSITION_INTERIOR_ROW_3_RIGHT,
-        Camera_AutomotivePosition::CAMERA_POSITION_INTERIOR_ROW_3_RIGHT},
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_3_RIGHT},
 };
 
 const std::unordered_map<SensorColorFilterArrangement, OH_Camera_SensorColorFilterArrangement> g_FWKToNDKCFA_ = {
@@ -883,8 +883,8 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceType(Camera_Device* camera, Camera
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_Manager::GetAutomotiveCameraPosition(Camera_Device* camera,
-    Camera_AutomotivePosition* position)
+Camera_ErrorCode Camera_Manager::GetAutomotiveCameraPosition(const Camera_Device* camera,
+    OH_Camera_AutomotiveCameraPosition* automotiveCameraPosition)
 {
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
@@ -901,7 +901,7 @@ Camera_ErrorCode Camera_Manager::GetAutomotiveCameraPosition(Camera_Device* came
     auto itr = g_fwToNdkAutomotiveCameraPosition_.find(pos);
     CHECK_RETURN_RET_ELOG(itr == g_fwToNdkAutomotiveCameraPosition_.end(), CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetAutomotiveCameraPosition fail, automotiveCameraPosition = %{public}d not supported!", pos);
-    *position = itr->second;
+    *automotiveCameraPosition = itr->second;
     return CAMERA_OK;
 }
 

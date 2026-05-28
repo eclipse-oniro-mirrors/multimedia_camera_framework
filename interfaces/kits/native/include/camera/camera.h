@@ -211,85 +211,71 @@ typedef enum Camera_Position {
 /**
  * @brief Enum for automotive camera position.
  *
- * @since 25
+ * @since 26
  * @version 1.0
  */
-typedef enum Camera_AutomotivePosition {
+typedef enum OH_Camera_AutomotiveCameraPosition {
     /**
-     * Exterior unspecified position.
+     * Exterior other position.
      */
-    CAMERA_POSITION_EXTERIOR_UNSPECIFIED = 0,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_OTHER = 0,
     /**
      * Exterior front position.
      */
-    CAMERA_POSITION_EXTERIOR_FRONT = 1,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_FRONT = 1,
     /**
      * Exterior rear position.
      */
-    CAMERA_POSITION_EXTERIOR_REAR = 2,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_REAR = 2,
     /**
      * Exterior left position.
      */
-    CAMERA_POSITION_EXTERIOR_LEFT = 3,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_LEFT = 3,
     /**
      * Exterior right position.
      */
-    CAMERA_POSITION_EXTERIOR_RIGHT = 4,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_RIGHT = 4,
     /**
-     * Interior unspecified position.
+     * Interior other position.
      */
-    CAMERA_POSITION_INTERIOR_UNSPECIFIED = 5,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_OTHER = 5,
     /**
-     * Interior row 1 left position.
+     * Interior left side position of the first row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_1_LEFT = 6,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_1_LEFT = 6,
     /**
-     * Interior row 1 center position.
+     * Interior center side position of the first row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_1_CENTER = 7,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_1_CENTER = 7,
     /**
-     * Interior row 1 right position.
+     * Interior right side position of the first row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_1_RIGHT = 8,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_1_RIGHT = 8,
     /**
-     * Interior row 2 left position.
+     * Interior left side position of the second row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_2_LEFT = 9,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_2_LEFT = 9,
     /**
-     * Interior row 2 center position.
+     * Interior center side position of the second row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_2_CENTER = 10,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_2_CENTER = 10,
     /**
-     * Interior row 2 right position.
+     * Interior right side position of the second row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_2_RIGHT = 11,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_2_RIGHT = 11,
     /**
-     * Interior row 3 left position.
+     * Interior left side position of the third row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_3_LEFT = 12,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_3_LEFT = 12,
     /**
-     * Interior row 3 center position.
+     * Interior center side position of the third row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_3_CENTER = 13,
-
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_3_CENTER = 13,
     /**
-     * Interior row 3 right position.
+     * Interior right side position of the third row.
      */
-    CAMERA_POSITION_INTERIOR_ROW_3_RIGHT = 14
-} Camera_AutomotivePosition;
+    OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_INTERIOR_ROW_3_RIGHT = 14
+} OH_Camera_AutomotiveCameraPosition;
 
 /**
  * @brief Enum for camera type.

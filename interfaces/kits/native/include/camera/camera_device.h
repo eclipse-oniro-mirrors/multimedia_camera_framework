@@ -68,14 +68,14 @@ Camera_ErrorCode OH_CameraDevice_GetHostDeviceType(Camera_Device* camera, Camera
  * @brief Gets the automotive camera position attribute for a camera device.
  *
  * @param camera the {@link Camera_Device} which use to get attributes.
- * @param position the automotive camera position attribute if the method call succeeds.
+ * @param automotiveCameraPosition the automotive camera position attribute if the method call succeeds.
  * @return {@link #CAMERA_OK} if the method call succeeds.
  *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
  *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
- * @since 25
+ * @since 26
  */
-Camera_ErrorCode OH_CameraDevice_GetAutomotiveCameraPosition(Camera_Device* camera,
-    Camera_AutomotivePosition* position);
+Camera_ErrorCode OH_CameraDevice_GetAutomotiveCameraPosition(const Camera_Device* camera,
+    OH_Camera_AutomotiveCameraPosition* automotiveCameraPosition);
 
 /**
  * @brief Gets the equivalent focal lengths of a camera device.

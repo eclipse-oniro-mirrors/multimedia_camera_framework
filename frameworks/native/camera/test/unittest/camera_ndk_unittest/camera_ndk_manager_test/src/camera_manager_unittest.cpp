@@ -1719,7 +1719,8 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_getcameraconcurrentinfos_002, Tes
  */
 HWTEST_F(CameraManagerUnitTest, camera_manager_getautomotivecameraposition_001, TestSize.Level0)
 {
-    Camera_AutomotivePosition position = Camera_AutomotivePosition::CAMERA_POSITION_EXTERIOR_UNSPECIFIED;
+    OH_Camera_AutomotiveCameraPosition position =
+        OH_Camera_AutomotiveCameraPosition::OH_CAMERA_AUTOMOTIVE_CAMERA_POSITION_EXTERIOR_OTHER;
     CHECK_EXECUTE(cameraDeviceSize == 0, GTEST_SKIP());
     Camera_ErrorCode ret = OH_CameraDevice_GetAutomotiveCameraPosition(cameraDevice, &position);
     EXPECT_EQ(ret, CAMERA_OK);
