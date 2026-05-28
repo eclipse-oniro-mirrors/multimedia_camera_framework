@@ -84,7 +84,8 @@ const std::map<FoldStatus, std::vector<OHOS::Rosen::FoldStatus>> g_foldStatusAss
             OHOS::Rosen::FoldStatus::FOLD_STATE_FOLDED_WITH_SECOND_EXPAND,
             OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND,
             OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED,
-            OHOS::Rosen::FoldStatus::FOLD_STATE_HALF_FOLDED_WITH_SECOND_EXPAND
+            OHOS::Rosen::FoldStatus::FOLD_STATE_HALF_FOLDED_WITH_SECOND_EXPAND,
+            OHOS::Rosen::FoldStatus::FOLD_STATE_HALF_FOLDED_WITH_SECOND_HALF_FOLDED
         }
     },
     {FoldStatus::FOLDED,
