@@ -322,6 +322,21 @@ Camera_ErrorCode OH_PreviewOutput_EnableBandwidthCompression(Camera_PreviewOutpu
 Camera_ErrorCode OH_PreviewOutput_AddDeferredSurface(const Camera_PreviewOutput* previewOutput, const char* surfaceId);
 
 bool OH_PreviewOutput_IsLogViewAssistSupported(const Camera_PreviewOutput* previewOutput);
+
+/**
+ * @brief Log video view assistance toggle.Before enabling this feature, you can call
+ * [isLogViewAssistSupported]{@link camera.PreviewOutput.isLogViewAssistSupported} to check whether
+ * the device supports log video view assistance.
+ *
+ * @param previewOutput Pointer to the target PreviewOutput instance.
+ * @param enable Whether to enable log video view assistance. **true** to enable, **false** otherwise.
+ * @return <ul><li>{@link CAMERA_OK}: The operation is successful.</li>
+ *     <li>{@link CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED}: The capability is not supported.</li>
+ *     <li>{@link CAMERA_INVALID_ARGUMENT}: A parameter is missing or the parameter type is incorrect.</li>
+ *     <li>{@link CAMERA_SESSION_NOT_CONFIG}: The camera session is not configured.</li>
+ *     <li>{@link CAMERA_SERVICE_FATAL_ERROR}: The camera service is abnormal.</li></ul>
+ * @since 26.0.0
+ */
 Camera_ErrorCode OH_PreviewOutput_SetLogViewAssistEnable(Camera_PreviewOutput* previewOutput, bool enabled);
 #ifdef __cplusplus
 }
