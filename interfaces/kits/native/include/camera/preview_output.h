@@ -321,6 +321,8 @@ Camera_ErrorCode OH_PreviewOutput_EnableBandwidthCompression(Camera_PreviewOutpu
  */
 Camera_ErrorCode OH_PreviewOutput_AddDeferredSurface(const Camera_PreviewOutput* previewOutput, const char* surfaceId);
 
+bool OH_PreviewOutput_IsLogViewAssistSupported(const Camera_PreviewOutput* previewOutput);
+Camera_ErrorCode OH_PreviewOutput_SetLogViewAssistEnable(Camera_PreviewOutput* previewOutput, bool enabled);
 #ifdef __cplusplus
 }
 #endif

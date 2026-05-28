@@ -572,6 +572,8 @@ interface PreviewOutput : CameraOutput {
   GetSketchRatio(): f64;
   IsBandwidthCompressionSupported(): bool;
   EnableBandwidthCompression(enabled: bool): void;
+  IsLogViewAssistSupported( ): bool;
+  SetLogViewAssistEnable(enabled: bool): void;
 }
 
 interface CameraInput {

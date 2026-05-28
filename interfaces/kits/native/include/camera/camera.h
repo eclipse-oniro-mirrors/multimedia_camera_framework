@@ -131,7 +131,12 @@ typedef enum Camera_ErrorCode {
      * The camera service is abnormal, for example, no camera permission, camera service restart, or abnormal cross-
      * process invocation.
      */
-    CAMERA_SERVICE_FATAL_ERROR = 7400201
+    CAMERA_SERVICE_FATAL_ERROR = 7400201,
+    /**
+    * The capability is not supported.
+    * @since 26.0.0
+    */
+    CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED = 7400114
 } Camera_ErrorCode;
 
 /**

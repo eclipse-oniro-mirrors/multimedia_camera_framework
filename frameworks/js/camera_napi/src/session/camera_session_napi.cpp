@@ -3613,8 +3613,15 @@ napi_value CameraSessionNapi::EnableMacro(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::EnableMacro parse parameter occur error");
         return nullptr;
     }
-
     if (cameraSessionNapi->cameraSession_ != nullptr) {
+        ColorSpace curColorSpace = ColorSpace::COLOR_SPACE_UNKNOWN;
+        cameraSessionNapi->cameraSession_->GetActiveColorSpace(curColorSpace);
+        MEDIA_INFO_LOG("CameraSessionNapi::EnableMacro curMode:%{public}d",
+                       cameraSessionNapi->cameraSession_->GetFeaturesMode().GetSceneMode());
+        CHECK_RETURN_RET_ELOG(
+            curColorSpace == ColorSpace::H_LOG &&
+                cameraSessionNapi->cameraSession_->GetFeaturesMode().GetSceneMode() == SceneMode::VIDEO,
+            nullptr, "CaptureSession::EnableMacro LOG Video not supported macro");
         MEDIA_INFO_LOG("CameraSessionNapi::EnableMacro:%{public}d", isEnableMacro);
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->EnableMacro(isEnableMacro);

@@ -136,6 +136,8 @@ const std::map<CM_ColorSpaceType_V2_1, ColorSpace> g_metaColorSpaceMap_ = {
     {CM_ColorSpaceType_V2_1::CM_P3_HLG_LIMIT, P3_HLG_LIMIT},
     {CM_ColorSpaceType_V2_1::CM_P3_PQ_LIMIT, P3_PQ_LIMIT},
     {CM_ColorSpaceType_V2_1::CM_BT2020_LOG_FULL, H_LOG},
+    // LOG视频开放三方，上报LIMIT
+    {CM_ColorSpaceType_V2_1::CM_BT2020_LOG_LIMIT, H_LOG},
 };
 
 const std::unordered_map<FocusMode, camera_focus_mode_enum_t> g_fwkFocusModeMap_ = {

@@ -83,7 +83,9 @@ const std::unordered_map<ColorSpace, OH_NativeBuffer_ColorSpace> g_fwToNdkColorS
     {ColorSpace::BT2020_HLG_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_LIMIT},
     {ColorSpace::BT2020_PQ_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_LIMIT},
     {ColorSpace::P3_HLG_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_HLG_LIMIT},
-    {ColorSpace::P3_PQ_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_LIMIT}
+    {ColorSpace::P3_PQ_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_LIMIT},
+    // LOG视频开放三方，上报LIMIT
+    {ColorSpace::H_LOG, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_LOG_LIMIT},
 };
 const std::unordered_map<OH_NativeBuffer_ColorSpace, ColorSpace> g_ndkToFwColorSpace_ = {
     {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_NONE, ColorSpace::COLOR_SPACE_UNKNOWN},
@@ -100,7 +102,8 @@ const std::unordered_map<OH_NativeBuffer_ColorSpace, ColorSpace> g_ndkToFwColorS
     {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_LIMIT, ColorSpace::BT2020_HLG_LIMIT},
     {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_LIMIT, ColorSpace::BT2020_PQ_LIMIT},
     {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_HLG_LIMIT, ColorSpace::P3_HLG_LIMIT},
-    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_LIMIT, ColorSpace::P3_PQ_LIMIT}
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_PQ_LIMIT, ColorSpace::P3_PQ_LIMIT},
+    {OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_LOG_LIMIT, ColorSpace::H_LOG},
 };
 
 const std::unordered_map<OH_Camera_OISMode, OISMode> g_ndkToFwkOisMode_ = {

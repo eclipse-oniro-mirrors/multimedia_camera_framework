@@ -250,6 +250,21 @@ Camera_ErrorCode OH_PreviewOutput_AddDeferredSurface(const Camera_PreviewOutput*
     return previewOutput->AddDeferredSurface(surfaceId);
 }
 
+bool OH_PreviewOutput_IsLogViewAssistSupported(const Camera_PreviewOutput* previewOutput)
+{
+    MEDIA_INFO_LOG("OH_PreviewOutput_IsLogViewAssistSupported is called.");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, false, "Invalid argument, previewOutput is null!");
+    return previewOutput->IsLogViewAssistSupported();
+}
+
+Camera_ErrorCode OH_PreviewOutput_SetLogViewAssistEnable(Camera_PreviewOutput* previewOutput, bool enabled)
+{
+    MEDIA_INFO_LOG("OH_PreviewOutput_SetLogViewAssistEnable is called.");
+    CHECK_RETURN_RET_ELOG(
+        previewOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, previewOutput is null!");
+    return previewOutput->SetLogViewAssistEnable(enabled);
+}
 #ifdef __cplusplus
 }
 #endif

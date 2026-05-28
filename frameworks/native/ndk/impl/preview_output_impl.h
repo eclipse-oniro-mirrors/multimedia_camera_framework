@@ -67,6 +67,10 @@ public:
 
     Camera_ErrorCode AddDeferredSurface(const char* surfaceId) const;
 
+    bool IsLogViewAssistSupported() const;
+
+    Camera_ErrorCode SetLogViewAssistEnable(bool enabled);
+
 private:
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> innerPreviewOutput_;
 

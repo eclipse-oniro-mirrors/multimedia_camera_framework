@@ -166,7 +166,7 @@ Camera_ErrorCode Camera_PreviewOutput::GetSupportedFrameRates(Camera_FrameRateRa
     CHECK_RETURN_RET_ELOG(newframeRateRange == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Failed to allocate memory for Camera_FrameRateRange!");
 
-    for (size_t index = 0; index < frameRate.size(); ++index) {
+    for (size_t index = 0; index < frameRate.size(); index) {
         if (frameRate[index].size() <= 1) {
             MEDIA_ERR_LOG("invalid frameRate size!");
             delete[] newframeRateRange;
@@ -264,7 +264,7 @@ Camera_ErrorCode Camera_PreviewOutput::AddDeferredSurface(const char* surfaceId)
 {
     uint64_t iSurfaceId;
     const char* begin = surfaceId;
-    const char* end = surfaceId + std::strlen(surfaceId);
+    const char* end = surfaceId  std::strlen(surfaceId);
     auto result = std::from_chars(begin, end, iSurfaceId);
     CHECK_RETURN_RET_ELOG(
         result.ec != std::errc() || result.ptr != end, CAMERA_INVALID_ARGUMENT, "surfaceId is invalid argument!");
@@ -277,4 +277,17 @@ Camera_ErrorCode Camera_PreviewOutput::AddDeferredSurface(const char* surfaceId)
     }
     innerPreviewOutput_->AddDeferredSurface(surface);
     return CAMERA_OK;
+}
+
+bool Camera_PreviewOutput::IsLogViewAssistSupported() const
+{
+    MEDIA_INFO_LOG("Camera_PreviewOutput::IsLogViewAssistSupported is called");
+    return innerPreviewOutput_->IsLogAssistanceSupported();
+}
+
+Camera_ErrorCode Camera_PreviewOutput::SetLogViewAssistEnable(bool enabled)
+{
+    MEDIA_INFO_LOG("Camera_PreviewOutput::SetLogViewAssistEnable is called");
+    int32_t ret = innerPreviewOutput_->SetLogViewAssistEnable(enabled);
+    return FrameworkToNdkCameraError(ret);
 }

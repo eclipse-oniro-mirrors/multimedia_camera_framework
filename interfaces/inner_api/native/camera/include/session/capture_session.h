@@ -2285,6 +2285,7 @@ public:
     void ProcessCompositionPositionMatch(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
     int32_t EnableLogAssistance(const bool enable);
+    int32_t SetLogViewAssistEnable(const bool enable);
     void EnableAutoFrameRate(bool isEnable);
     int32_t GetSupportedFocusTrackingModes(std::vector<FocusTrackingMode>& supportedFocusTrackingModes);
     int32_t IsFocusTrackingModeSupported(FocusTrackingMode focusTrackingMode, bool& isSupported);
@@ -2564,6 +2565,7 @@ protected:
     std::atomic<int32_t> prevDuration_ = 0;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
+    bool pendingDisableMacroOnCommit_ = false;
     atomic<bool> isDeferTypeSetted_ = false;
     atomic<bool> isAutoSwitchDevice_ = false;
     atomic<bool> isDeviceCapabilityChanged_ = false;

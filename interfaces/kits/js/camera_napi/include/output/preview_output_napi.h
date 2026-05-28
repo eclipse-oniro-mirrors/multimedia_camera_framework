@@ -131,6 +131,8 @@ public:
     static napi_value EnableLogAssistance(napi_env env, napi_callback_info info);
     static napi_value IsBandwidthCompressionSupported(napi_env env, napi_callback_info info);
     static napi_value EnableBandwidthCompression(napi_env env, napi_callback_info info);
+    static napi_value IsLogViewAssistSupported(napi_env env, napi_callback_info info);
+    static napi_value SetLogViewAssistEnable(napi_env env, napi_callback_info info);
 
     static napi_value OnFrameStart(napi_env env, napi_callback_info info);
     static napi_value OffFrameStart(napi_env env, napi_callback_info info);
