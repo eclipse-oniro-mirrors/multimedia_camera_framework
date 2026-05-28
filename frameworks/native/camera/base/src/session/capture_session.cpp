@@ -546,12 +546,9 @@ int32_t CaptureSession::CommitConfig()
     }
     SetZoomRatioForAudio(DEFAULT_ZOOM_RATIO);
     CHECK_EXECUTE (cameraDfxReportHelper_ != nullptr, cameraDfxReportHelper_->ReportCameraConfigInfo(errCode));
-    // commit成功后，如果需要关闭微距，则执行
     if (errCode == CAMERA_OK && pendingDisableMacroOnCommit_) {
-        MEDIA_INFO_LOG("CaptureSession::CommitConfig execute pending EnableMacro(false)");
         LockForControl();
-        CHECK_PRINT_ELOG(EnableMacro(false) != CameraErrorCode::SUCCESS,
-            "CaptureSession::CommitConfig() enableMacro failed");
+        EnableMacro(false);
         UnlockForControl();
         pendingDisableMacroOnCommit_ = false;  // 清除标志位
     }
