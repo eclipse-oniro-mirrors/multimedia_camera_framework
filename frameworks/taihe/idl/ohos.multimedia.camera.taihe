@@ -893,9 +893,6 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
   OnExposureInfoChangeWithoutErr(callback:(data: ExposureInfo)=> void): void;
   @rename("offExposureInfoChange")
   OffExposureInfoChangeWithoutErr(callback: Optional<(data: ExposureInfo)=> void>): void;
-
-  OnExposureStateChange(callback:(data: ExposureState)=> void): void;
-  OffExposureStateChange(callback: Optional<(data: ExposureState)=> void>): void;
 }
 
 interface PhotoConflictFunctions : ZoomQuery, MacroQuery {
@@ -2419,6 +2416,8 @@ interface AutoExposure : AutoExposureQuery {
   SetMeteringPoint(point: Point): void;
   GetExposureMode(): ExposureMode;
   SetExposureMode(aeMode: ExposureMode): void;
+  OnExposureStateChange(callback:(data: ExposureState)=> void): void;
+  OffExposureStateChange(callback: Optional<(data: ExposureState)=> void>): void;
 }
 
 interface PortraitQuery {
