@@ -124,4 +124,5 @@ interface ICameraService{
   [ipccode 108] void GetPhysicalCameraIds([out] List<String> cameraIds);
   [ipccode 109] void SetSpectrumCallback([in] SpectrumCallerInfo info, [in] ICameraSpectrumInfoCallback callbackFunc);
   [ipccode 110] void UnsetSpectrumCallback([in] SpectrumCallerInfo info);
+  [ipccode 111] void GetCameraIdByDisPlugin([in] int cameraPosition, [in] int cameraType, [out] String cameraId);
 }

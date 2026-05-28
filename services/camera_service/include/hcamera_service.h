@@ -61,6 +61,7 @@
 #include "suspend_state_observer.h"
 #include "res_sched_event_listener.h"
 #include "camera_extend_proxy.h"
+#include "display_plugin/camera_display_plugin.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -275,6 +276,7 @@ public:
     int32_t GetParameters(const std::string& key, std::vector<std::string>& values) override;
     int32_t GetSupportedKeys(std::vector<std::string>& keys) override;
     int32_t GetActiveParameter(const std::string& key, std::string& value) override;
+    int32_t GetCameraIdByDisPlugin(int32_t cameraPosition, int32_t cameraType, std::string& cameraId) override;
 protected:
     explicit HCameraService(sptr<HCameraHostManager> cameraHostManager);
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
@@ -435,6 +437,7 @@ private:
     float torchlevel_ = 0.0;
     OHOS::Rosen::FoldStatus preFoldStatus_ = OHOS::Rosen::FoldStatus::UNKNOWN;
     sptr<HCameraHostManager> cameraHostManager_;
+    sptr<CameraDisplayPlugin> cameraDisplayPlugin_;
     std::shared_ptr<StatusCallback> statusCallback_;
     map<uint32_t, sptr<ITorchServiceCallback>> torchServiceCallbacks_;
     map<uint32_t, sptr<IFoldServiceCallback>> foldServiceCallbacks_;

@@ -108,6 +108,8 @@ static std::map<std::string, std::string> CURRENT_PARAMETERS;
 constexpr int32_t DEFAULT_ITEMS = 1;
 constexpr int32_t DEFAULT_DATA_LENGTH = 1;
 constexpr int32_t DEFAULT_COUNT = 1;
+constexpr int32_t UID_TO_USERID = 200000;
+
 static const std::map<OHOS::Rosen::FoldStatus, std::vector<OHOS::Rosen::FoldStatus>> g_foldStatusAssociations = {
     {OHOS::Rosen::FoldStatus::EXPAND,
         {
@@ -229,6 +231,12 @@ void HCameraService::OnStart()
     cameraExtendProxy_.Set(CameraExtendProxy::CreateCameraExtendProxy());
     cameraHostManager_->ParseJsonFileToMap(SAVE_RESTORE_FILE_PATH, preCameraClient_, preCameraId_);
     RefreshRssCameraStatus();
+    cameraDisplayPlugin_ = CameraDisplayPlugin::GetInstance();
+    if (cameraDisplayPlugin_ != nullptr && cameraDisplayPlugin_->LoadSo()) {
+        auto initFunc = reinterpret_cast<void(*)()>(cameraDisplayPlugin_->GetFunction("CameraDisplay_Init"));
+        CHECK_PRINT_ILOG(!initFunc, "CameraDisplay_Init function not found or failed to load");
+        initFunc();
+    }
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
@@ -276,6 +284,9 @@ void HCameraService::OnStop()
     MEDIA_INFO_LOG("HCameraService::OnStop called");
     cameraHostManager_->DeInit();
     UnregisterFoldStatusListener();
+    if (cameraDisplayPlugin_ != nullptr) {
+        cameraDisplayPlugin_->UnLoadSo();
+    }
 }
 
 int32_t HCameraService::GetMuteModeFromDataShareHelper(bool &muteMode)
@@ -1687,6 +1698,26 @@ int32_t HCameraService::GetActiveParameter(const std::string& key, std::string& 
     auto pair = CURRENT_PARAMETERS.find(key);
     if (pair != CURRENT_PARAMETERS.end()) {
         value = pair->second;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCameraService::GetCameraIdByDisPlugin(int32_t cameraPosition, int32_t cameraType, std::string& cameraId)
+{
+    CHECK_RETURN_RET(cameraDisplayPlugin_ == nullptr, CAMERA_INVALID_ARG);
+
+    int32_t userId = IPCSkeleton::GetCallingUid() / UID_TO_USERID;
+    uint64_t displayId;
+    AccountSA::OsAccountManager::GetForegroundOsAccountDisplayId(userId, displayId);
+    std::string displayIdStr = std::to_string(displayId);
+    auto getByIdFunc = reinterpret_cast<const char*(*)(const int32_t, const int32_t, const char*)>(
+        cameraDisplayPlugin_->GetFunction("CameraDisplay_GetCameraIdByScreenId"));
+    CHECK_RETURN_RET(getByIdFunc == nullptr, CAMERA_INVALID_ARG);
+
+    const char* pCameraId = getByIdFunc(cameraPosition, cameraType, displayIdStr.c_str());
+    if (pCameraId != nullptr) {
+        cameraId = pCameraId;
+        MEDIA_INFO_LOG("HCameraService::GetCameraIdByScreenId Target matched: %{public}s", cameraId.c_str());
     }
     return CAMERA_OK;
 }
