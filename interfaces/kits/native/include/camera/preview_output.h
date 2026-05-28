@@ -321,6 +321,13 @@ Camera_ErrorCode OH_PreviewOutput_EnableBandwidthCompression(Camera_PreviewOutpu
  */
 Camera_ErrorCode OH_PreviewOutput_AddDeferredSurface(const Camera_PreviewOutput* previewOutput, const char* surfaceId);
 
+/**
+ * @brief Checks whether log video view assistance is supported.
+ *
+ * @param previewOutput Pointer to the target PreviewOutput instance.
+ * @return **true** if supported, **false** otherwise.
+ * @since 26.0.0
+ */
 bool OH_PreviewOutput_IsLogViewAssistSupported(const Camera_PreviewOutput* previewOutput);
 
 /**
