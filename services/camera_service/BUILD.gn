@@ -191,13 +191,13 @@ ohos_shared_library("camera_service") {
     "window_manager:libwm",
     "window_manager:libdm_lite",
     "openssl:libcrypto_shared",
+    "e2fsprogs:libext2_uuid"
   ]
 
   public_external_deps = [
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
-    "e2fsprogs:libext2_uuid",
   ]
 
   defines = []
