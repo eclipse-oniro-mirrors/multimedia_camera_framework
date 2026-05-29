@@ -774,11 +774,15 @@ shared_ptr<CameraMetaInfo> HCameraService::GetCameraMetaInfo(std::string &camera
     uint8_t cameraPosition = (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_POSITION_OTHER;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLDSCREEN_TYPE, &item);
     uint8_t foldType = (res == CAM_META_SUCCESS) ? item.data.u8[0] : OHOS_CAMERA_FOLDSCREEN_OTHER;
+    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
+    uint8_t connectionType =
+        (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
     auto foldScreenType = system::GetParameter("const.window.foldscreen.type", "")[0];
     isFoldableMutex.unlock();
     bool isOtherFold = isFoldable && cameraPosition == OHOS_CAMERA_POSITION_FRONT &&
         foldType == OHOS_CAMERA_FOLDSCREEN_OTHER &&
-        (foldScreenType == '1' || foldScreenType == '7' || foldScreenType == '8');
+        (foldScreenType == '1' || foldScreenType == '7' || foldScreenType == '8')
+        && connectionType != OHOS_CAMERA_CONNECTION_TYPE_REMOTE;
     if (isOtherFold) {
         isFoldableMutex.unlock();
         return nullptr;
@@ -791,9 +795,6 @@ shared_ptr<CameraMetaInfo> HCameraService::GetCameraMetaInfo(std::string &camera
     }
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_TYPE, &item);
     uint8_t cameraType = (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_TYPE_UNSPECIFIED;
-    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_CONNECTION_TYPE, &item);
-    uint8_t connectionType =
-        (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_CONNECTION_TYPE_BUILTIN;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_CAPTURE_MIRROR_SUPPORTED, &item);
     bool isMirrorSupported = res == CAM_META_SUCCESS && item.count;
     res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_CAMERA_FOLD_STATUS, &item);
