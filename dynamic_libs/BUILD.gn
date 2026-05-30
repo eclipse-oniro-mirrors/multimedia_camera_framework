@@ -407,6 +407,7 @@ ohos_shared_library("camera_dynamic_notification") {
 
   external_deps = [
     "ability_base:base",
+    "ability_base:configuration",
     "ability_base:zuri",
     "c_utils:utils",
     "distributed_notification_service:ans_innerkits",
