@@ -609,5 +609,25 @@ void PreviewOutputImpl::EnableBandwidthCompression(bool enabled)
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
         "PreviewOutputImpl::EnableBandwidthCompression fail! %{public}d", retCode);
 }
+
+bool PreviewOutputImpl::IsLogViewAssistSupported()
+{
+    MEDIA_INFO_LOG("PreviewOutputImpl::IsLogViewAssistSupported is called");
+    CHECK_RETURN_RET_ELOG(previewOutput_ == nullptr, false,
+        "IsLogViewAssistSupported failed, previewOutput is nullptr");
+    bool isSupported = previewOutput_->IsLogAssistanceSupported();
+    return isSupported;
+}
+
+void PreviewOutputImpl::SetLogViewAssistEnable(bool enabled)
+{
+    MEDIA_INFO_LOG("PreviewOutputImpl::SetLogViewAssistEnable is called, enabled: %{public}d", enabled);
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "SetLogViewAssistEnable failed, previewOutput is nullptr");
+
+    int32_t retCode = previewOutput_->EnableLogAssistance(enabled);
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PreviewOutputImpl::SetLogViewAssistEnable fail! %{public}d", retCode);
+}
 } // namespace Camera
 } // namespace Ani

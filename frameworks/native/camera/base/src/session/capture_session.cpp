@@ -479,6 +479,7 @@ int32_t CaptureSession::BeginConfig()
     }
 
     isColorSpaceSetted_ = false;
+    pendingDisableMacroOnCommit_ = false;
     int32_t errCode = CAMERA_UNKNOWN_ERROR;
     auto captureSession = GetCaptureSession();
     if (captureSession) {
@@ -545,6 +546,12 @@ int32_t CaptureSession::CommitConfig()
     }
     SetZoomRatioForAudio(DEFAULT_ZOOM_RATIO);
     CHECK_EXECUTE (cameraDfxReportHelper_ != nullptr, cameraDfxReportHelper_->ReportCameraConfigInfo(errCode));
+    if (errCode == CAMERA_OK && pendingDisableMacroOnCommit_) {
+        LockForControl();
+        EnableMacro(false);
+        UnlockForControl();
+        pendingDisableMacroOnCommit_ = false;  // 清除标志位
+    }
     return ServiceToCameraError(errCode);
 }
 
@@ -4919,11 +4926,14 @@ int32_t CaptureSession::SetColorSpace(ColorSpace colorSpace)
     if (IsSessionConfiged()) {
         isColorSpaceSetted_ = true;
     }
-
     // 若session还未commit，则后续createStreams会把色域带下去；否则，SetColorSpace要走updateStreams
     MEDIA_DEBUG_LOG("CaptureSession::SetColorSpace, IsSessionCommited %{public}d", IsSessionCommited());
     int32_t errCode = captureSession->SetColorSpace(static_cast<int32_t>(colorSpace), IsSessionCommited());
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "Failed to SetColorSpace!, %{public}d", errCode);
+    // 普通录像LOG视频，不支持微距
+    if (colorSpace == H_LOG && GetMode() == SceneMode::VIDEO) {
+        pendingDisableMacroOnCommit_ = true;
+    }
     return ServiceToCameraError(errCode);
 }
 
@@ -7180,13 +7190,26 @@ int32_t CaptureSession::SetRecommendedInfoLanguage(const std::string& language)
 
 int32_t CaptureSession::EnableLogAssistance(const bool enable)
 {
-    MEDIA_DEBUG_LOG("Enter CaptureSession::EnableLogAssistance");
+    MEDIA_INFO_LOG("Enter CaptureSession::EnableLogAssistance");
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::EnableLogAssistance Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::EnableLogAssistance Need to call LockForControl() before setting camera properties");
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOG_ASSISTANCE, &enable, 1);
     CHECK_PRINT_ELOG(!status, "CaptureSession::EnableLogAssistance Failed to set flash mode");
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetLogViewAssistEnable(const bool enable)
+{
+    MEDIA_INFO_LOG("Enter CaptureSession::SetLogViewAssistEnable");
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetLogViewAssistEnable Session is not Commited");
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "CaptureSession::SetLogViewAssistEnable Need to call LockForControl() before setting camera properties");
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOG_ASSISTANCE, &enable, 1);
+    CHECK_PRINT_ELOG(!status, "CaptureSession::SetLogViewAssistEnable Failed to set flash mode");
+    CHECK_PRINT_ELOG(status, "CaptureSession::SetLogViewAssistEnable Success to set flash mode");
     return CameraErrorCode::SUCCESS;
 }
 

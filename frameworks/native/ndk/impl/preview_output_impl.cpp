@@ -278,3 +278,16 @@ Camera_ErrorCode Camera_PreviewOutput::AddDeferredSurface(const char* surfaceId)
     innerPreviewOutput_->AddDeferredSurface(surface);
     return CAMERA_OK;
 }
+
+bool Camera_PreviewOutput::IsLogViewAssistSupported() const
+{
+    MEDIA_INFO_LOG("Camera_PreviewOutput::IsLogViewAssistSupported is called");
+    return innerPreviewOutput_->IsLogAssistanceSupported();
+}
+
+Camera_ErrorCode Camera_PreviewOutput::SetLogViewAssistEnable(bool enabled)
+{
+    MEDIA_INFO_LOG("Camera_PreviewOutput::SetLogViewAssistEnable is called");
+    int32_t ret = innerPreviewOutput_->SetLogViewAssistEnable(enabled);
+    return FrameworkToNdkCameraError(ret);
+}

@@ -83,7 +83,8 @@ public:
     void OffFrameResumed(optional_view<callback<void(uintptr_t, uintptr_t)>> callback);
     bool IsBandwidthCompressionSupported();
     void EnableBandwidthCompression(bool enabled);
-    
+    bool IsLogViewAssistSupported();
+    void SetLogViewAssistEnable(bool enabled);
     OHOS::sptr<OHOS::CameraStandard::PreviewOutput> GetPreviewOutput()
     {
         return previewOutput_;

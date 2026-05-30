@@ -759,6 +759,7 @@ sptr<PreviewOutputListenerManager> PreviewOutput::GetPreviewOutputListenerManage
 bool PreviewOutput::IsLogAssistanceSupported()
 {
     // LCOV_EXCL_START
+    MEDIA_INFO_LOG("PreviewOutput::IsLogAssistanceSupported is called");
     auto session = GetSession();
     CHECK_RETURN_RET_ELOG(
         session == nullptr, false, "PreviewOutput IsLogAssistanceSupported error!, session is nullptr");
@@ -776,13 +777,14 @@ bool PreviewOutput::IsLogAssistanceSupported()
         retCode != CAM_META_SUCCESS, false, "PreviewOutput Can not find OHOS_ABILITY_LOG_ASSISTANCE_SUPPORTED");
     bool isLogAssistanceSupported = false;
     SceneMode currentSceneMode = session->GetMode();
+    MEDIA_INFO_LOG("isLogAssistanceSupported item.count:%{public}d", static_cast<int>(item.count));
     for (int i = 0; i < static_cast<int>(item.count); i++) {
-        MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d", i, item.data.u8[i]);
+        MEDIA_INFO_LOG("mode u8[%{public}d]: %{public}d", i, item.data.u8[i]);
         if (currentSceneMode == static_cast<SceneMode>(item.data.u8[i])) {
             isLogAssistanceSupported = true;
         }
     }
-    MEDIA_DEBUG_LOG("IsLogAssistanceSupported isSupport: %{public}d", isLogAssistanceSupported);
+    MEDIA_INFO_LOG("IsLogAssistanceSupported isSupport: %{public}d", isLogAssistanceSupported);
     return isLogAssistanceSupported;
     // LCOV_EXCL_STOP
 }
@@ -808,6 +810,29 @@ int32_t PreviewOutput::EnableLogAssistance(bool isEnable)
         "PreviewOutput::EnableLogAssistance failed, EnableLogAssistance retCode: %{public}d", retCode);
     return CameraErrorCode::SUCCESS;
     // LCOV_EXCL_STOP
+}
+
+int32_t PreviewOutput::SetLogViewAssistEnable(bool isEnable)
+{
+    MEDIA_INFO_LOG("PreviewOutput::SetLogViewAssistEnable is called, enable: %{public}d", isEnable);
+    MEDIA_INFO_LOG("PreviewOutput::SetLogViewAssistEnable is called, IsLogAssistanceSupported: %{public}d",
+                   IsLogAssistanceSupported());
+    CHECK_RETURN_RET(!IsLogAssistanceSupported(), CameraErrorCode::CAPABILITY_NOT_SUPPORTED);
+    auto captureSession = GetSession();
+    CHECK_RETURN_RET_ELOG(captureSession == nullptr, SESSION_NOT_CONFIG,
+        "PreviewOutput::SetLogViewAssistEnable failed, captureSession is nullptr");
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "PreviewOutput::SetLogViewAssistEnable failed, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+                          "PreviewOutput::SetLogViewAssistEnable failed, cameraObj is nullptr");
+    captureSession->LockForControl();
+    int32_t retCode = captureSession->SetLogViewAssistEnable(isEnable);
+    captureSession->UnlockForControl();
+    CHECK_RETURN_RET_ELOG(retCode != CameraErrorCode::SUCCESS, retCode,
+        "PreviewOutput::SetLogViewAssistEnable failed, SetLogViewAssistEnable retCode: %{public}d", retCode);
+    return CameraErrorCode::SUCCESS;
 }
 
 void PreviewOutput::OnNativeRegisterCallback(const std::string& eventString)

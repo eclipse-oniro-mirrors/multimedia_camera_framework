@@ -270,6 +270,8 @@ napi_value PreviewOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("enableLogAssistance", EnableLogAssistance),
         DECLARE_NAPI_FUNCTION("isBandwidthCompressionSupported", IsBandwidthCompressionSupported),
         DECLARE_NAPI_FUNCTION("enableBandwidthCompression", EnableBandwidthCompression),
+        DECLARE_NAPI_FUNCTION("isLogViewAssistSupported", IsLogViewAssistSupported),
+        DECLARE_NAPI_FUNCTION("setLogViewAssistEnable", SetLogViewAssistEnable),
     };
 
     status = napi_define_class(env, CAMERA_PREVIEW_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
@@ -1183,6 +1185,40 @@ napi_value PreviewOutputNapi::EnableBandwidthCompression(napi_env env, napi_call
         return nullptr;
     }
     MEDIA_DEBUG_LOG("PreviewOutputNapi::EnableBandwidthCompression success");
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value PreviewOutputNapi::IsLogViewAssistSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PreviewOutputNapi::isLogViewAssistSupported is called");
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, previewOutputNapi);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::isLogViewAssistSupported parse parameter occur error");
+        return nullptr;
+    }
+
+    bool isSupported = previewOutputNapi->previewOutput_->IsLogAssistanceSupported();
+    return CameraNapiUtils::GetBooleanValue(env, isSupported);
+}
+
+napi_value PreviewOutputNapi::SetLogViewAssistEnable(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PreviewOutputNapi::SetLogViewAssistEnable enter");
+    bool isEnableLogAssistance;
+    PreviewOutputNapi* previewOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, previewOutputNapi, isEnableLogAssistance);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::SetLogViewAssistEnable parse parameter occur error");
+        return nullptr;
+    }
+
+    int32_t retCode = previewOutputNapi->previewOutput_->SetLogViewAssistEnable(isEnableLogAssistance);
+    if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::SetLogViewAssistEnable fail! %{public}d", retCode);
+        return nullptr;
+    }
+    MEDIA_INFO_LOG("PreviewOutputNapi::SetLogViewAssistEnable success");
     return CameraNapiUtils::GetUndefinedValue(env);
 }
 
