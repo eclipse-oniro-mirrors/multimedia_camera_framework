@@ -66,6 +66,7 @@ class CameraRotatePlugin : public RefBase {
         bool& mirror);
     bool HookCaptureStreamStart(ParameterMap basicInfoMap, int32_t& jpegOrientation, bool& mirror);
     void SetCaptureSession(const std::string& bundleName, wptr<HCaptureSession> hcaptureSession);
+    void DeleteCaptureSession(const std::string& bundleName);
 private:
     CameraRotatePlugin();
     bool Init();

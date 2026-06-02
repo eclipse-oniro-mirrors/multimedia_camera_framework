@@ -73,6 +73,11 @@ void CameraRotatePlugin::SetCaptureSession(const std::string& bundleName, wptr<H
     captureSessionMap_.EnsureInsert(bundleName, hcaptureSession);
 }
 
+void CameraRotatePlugin::DeleteCaptureSession(const std::string& bundleName)
+{
+    captureSessionMap_.Erase(bundleName);
+}
+
 bool CameraRotatePlugin::HookCameraAbility(const std::string& cameraId,
     std::shared_ptr<OHOS::Camera::CameraMetadata>& inability)
 {
@@ -304,7 +309,6 @@ bool CameraRotatePlugin::UnSubscribeUpdateSettingCallback(ParameterMap basicInfo
     ParameterMap updateParameter;
     bool result = GetParameterResult(basicInfoMap, "UnSubscribeUpdateSettingCallback", updateParameter);
     CHECK_RETURN_RET_ELOG(!result, false, "UnSubscribeUpdateSettingCallback is failed");
-    captureSessionMap_.Erase(basicInfoMap[PLUGIN_BUNDLE_NAME]);
     return result;
 }
 
