@@ -20,8 +20,7 @@
 #include "dp_utils.h"
 #include "istate_change_listener.h"
 #include "state_machine.h"
- #include "dps_metadata_info.h"
- 
+
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
@@ -89,8 +88,7 @@ private:
 class DeferredPhotoJob : public StateMachine {
 public:
     DeferredPhotoJob(const std::string& imageId, const PhotoJobType photoJobType, const bool discardable,
-        const DpsMetadata& metadata, const std::weak_ptr<IJobStateChangeListener>& jobChangeListener,
-        const std::string& bundleName);
+        const std::weak_ptr<IJobStateChangeListener>& jobChangeListener, const std::string& bundleName);
     ~DeferredPhotoJob() = default;
 
     bool Prepare();
@@ -106,10 +104,7 @@ public:
     {
         return imageId_ == other.imageId_;
     }
-    inline int32_t GetCompressionQuality() const
-    {
-        return compressionQuality_;
-    }
+
     bool operator>(const DeferredPhotoJob& other) const
     {
         // Compare based on priority first
@@ -211,7 +206,6 @@ private:
 
     const std::string imageId_;
     const PhotoJobType photoJobType_;
-    int32_t compressionQuality_ {-1};
     const bool discardable_;
     const std::string bundleName_;
     SteadyTimePoint createTime_;

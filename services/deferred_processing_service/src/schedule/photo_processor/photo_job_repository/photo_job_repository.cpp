@@ -97,15 +97,10 @@ void PhotoJobRepository::AddDeferredJob(const std::string& imageId, bool discard
     DeferredPhotoJobPtr jobPtrFind = GetJobUnLocked(imageId);
     DP_CHECK_RETURN_LOG(jobPtrFind != nullptr, "DPS_PHOTO: already existed, imageId: %{public}s", imageId.c_str());
     int32_t type;
-    auto ret = metadata.Get(DEFERRED_PROCESSING_TYPE_KEY, type);
-    if (ret != DPS_METADATA_OK) {
-        type = DPS_BACKGROUND;
-        DP_WARNING_LOG("DPS_PHOTO: missing %{public}s, use default type %{public}d, imageId: %{public}s",
-            DEFERRED_PROCESSING_TYPE_KEY, type, imageId.c_str());
-    }
+    metadata.Get(DEFERRED_PROCESSING_TYPE_KEY, type);
     auto jobPtr =
         std::make_shared<DeferredPhotoJob>(
-            imageId, static_cast<PhotoJobType>(type), discardable, metadata, jobChangeListener_, bundleName);
+            imageId, static_cast<PhotoJobType>(type), discardable, jobChangeListener_, bundleName);
     DP_INFO_LOG("DPS_PHOTO: AddJob imageId: %{public}s, type: %{public}d, discardable: %{public}d",
         imageId.c_str(), type, discardable);
     if (jobPtr->GetPhotoJobType() == PhotoJobType::BACKGROUND) {

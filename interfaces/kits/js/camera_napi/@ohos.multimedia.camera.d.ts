@@ -8804,14 +8804,6 @@ function getCameraManager(context: Context): CameraManager;
      * @since 10
      */
     rotation?: ImageRotation;
-    /**
-     * Photo compression quality (e.g. 0-100). If not set, framework uses default behavior.
-     *
-     * @type { ?number }
-     * @syscap SystemCapability.Multimedia.Camera.Core
-     * @since 16
-     */
-    compressionQuality?: number;
 
     /**
      * Photo location.

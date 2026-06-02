@@ -42,7 +42,6 @@ CameraPhotoProxy::CameraPhotoProxy()
     captureId_ = 0;
     burstSeqId_ = -1;
     imageFormat_ = 0;
-    compressionQuality_ = -1;
     cloudImageEnhanceFlag_ = 0;
 }
 
@@ -63,7 +62,6 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     captureId_ = captureId;
     burstSeqId_ = -1;
     imageFormat_ = 0;
-    compressionQuality_ = -1;
     cloudImageEnhanceFlag_ = 0;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
@@ -86,7 +84,6 @@ CameraPhotoProxy::CameraPhotoProxy(BufferHandle* bufferHandle, int32_t format,
     captureId_ = captureId;
     burstSeqId_ = burstSeqId;
     imageFormat_ = 0;
-    compressionQuality_ = -1;
     cloudImageEnhanceFlag_ = 0;
     MEDIA_INFO_LOG("format = %{public}d, width = %{public}d, height = %{public}d",
         format_, photoWidth, photoHeight);
@@ -115,7 +112,6 @@ void CameraPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     burstSeqId_ = parcel.ReadInt32();
     imageFormat_ = parcel.ReadInt32();
     cloudImageEnhanceFlag_ = parcel.ReadUint32();
-    compressionQuality_ = parcel.ReadInt32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("PhotoProxy::ReadFromParcel");
 }
@@ -157,7 +153,6 @@ void CameraPhotoProxy::WriteToParcel(MessageParcel &parcel) const
     parcel.WriteInt32(burstSeqId_);
     parcel.WriteInt32(imageFormat_);
     parcel.WriteUint32(cloudImageEnhanceFlag_);
-    parcel.WriteInt32(compressionQuality_);
     if (bufferHandle_) {
         MEDIA_DEBUG_LOG("PhotoProxy::WriteToParcel %{public}d", bufferHandle_->fd);
         bool ret = WriteBufferHandle(parcel, *bufferHandle_);
@@ -205,17 +200,6 @@ void CameraPhotoProxy::SetCloudImageEnhanceFlag(uint32_t cloudImageEnhanceFlag)
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_DEBUG_LOG("%{public}s set value: %{public}u", __FUNCTION__, cloudImageEnhanceFlag);
     cloudImageEnhanceFlag_ = cloudImageEnhanceFlag;
-}
-void CameraPhotoProxy::SetCompressionQuality(int32_t compressionQuality)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    compressionQuality_ = compressionQuality;
-}
-
-int32_t CameraPhotoProxy::GetCompressionQuality() const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return compressionQuality_;
 }
 
 } // namespace CameraStandard

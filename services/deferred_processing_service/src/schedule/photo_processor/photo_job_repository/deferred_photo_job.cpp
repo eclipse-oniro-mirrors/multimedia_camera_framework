@@ -69,13 +69,11 @@ void DeleteState::OnStateEntered()
 }
 
 DeferredPhotoJob::DeferredPhotoJob(const std::string& imageId, const PhotoJobType photoJobType, const bool discardable,
-    const DpsMetadata& metadata, const std::weak_ptr<IJobStateChangeListener>& jobChangeListener,
-    const std::string& bundleName)
+    const std::weak_ptr<IJobStateChangeListener>& jobChangeListener, const std::string& bundleName)
     : imageId_(imageId), photoJobType_(photoJobType), discardable_(discardable),
       bundleName_(bundleName), createTime_(GetSteadyNow()), jobChangeListener_(jobChangeListener)
 {
     DP_DEBUG_LOG("entered.");
-    (void)metadata.Get(DPS_PHOTO_COMPRESSION_QUALITY_KEY, compressionQuality_);
     add_ = std::make_shared<AddState>(imageId, jobChangeListener_);
     pending_ = std::make_shared<PendingState>(imageId, jobChangeListener_);
     failed_ = std::make_shared<FailedState>(imageId, jobChangeListener_);

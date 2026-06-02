@@ -448,21 +448,5 @@ HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_021,
     cameraPhotoProxy->Release();
 }
 
-/*
- * Feature: Framework
- * Function: CameraServerPhotoProxy compression quality (phase 1: carried on server photo proxy)
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: SetCompressionQuality / GetCompressionQuality round-trip
- */
-HWTEST_F(CameraServerPhotoProxyUnitTest, camera_server_photo_proxy_unittest_022, TestSize.Level1)
-{
-    sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
-    constexpr int32_t kQuality = 72;
-    cameraPhotoProxy->SetCompressionQuality(kQuality);
-    EXPECT_EQ(cameraPhotoProxy->GetCompressionQuality(), kQuality);
-}
-
 } // CameraStandard
 } // OHOS

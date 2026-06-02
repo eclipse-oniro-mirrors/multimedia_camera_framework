@@ -80,8 +80,7 @@ public:
     int32_t GetVideoEnhancementType() override;
     void SetVideoEnhancementType(int32_t videoEnhancementType);
     void SetHighQuality(bool isHigh);
-    void SetCompressionQuality(int32_t compressionQuality);
-    int32_t GetCompressionQuality();
+
 private:
     uint32_t cloudImageEnhanceFlag_;
     BufferHandle* bufferHandle_;
@@ -110,7 +109,6 @@ private:
     bool isVideo_ = false;
     int32_t videoEnhancementType_;
     int32_t CameraFreeBufferHandle(BufferHandle *handle);
-    int32_t compressionQuality_ = -1;
 };
 } // namespace CameraStandard
 } // namespace OHOS
