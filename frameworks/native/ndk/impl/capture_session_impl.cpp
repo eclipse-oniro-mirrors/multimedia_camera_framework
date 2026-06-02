@@ -804,7 +804,8 @@ Camera_ErrorCode Camera_CaptureSession::GetMeteringMode(OH_Camera_ExposureMeteri
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetMeteringMode is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE
+        && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     MeteringMode meteringMode;
     int32_t ret = innerCaptureSession_->GetMeteringMode(meteringMode);
     auto itr = g_FwToNdkExposureMeteringMode_.find(meteringMode);
@@ -1315,7 +1316,8 @@ Camera_ErrorCode Camera_CaptureSession::SetIso(int32_t iso) const
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetIso is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE
+        && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->LockForControl();
     int32_t ret = innerCaptureSession_->SetISO(iso);
     innerCaptureSession_->UnlockForControl();
@@ -1327,7 +1329,8 @@ Camera_ErrorCode Camera_CaptureSession::GetIso(int32_t* isoValue) const
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetISO is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE
+        && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     int32_t ret = innerCaptureSession_->GetISO(*isoValue);
     return FrameworkToNdkCameraError(ret);
 }
@@ -1337,7 +1340,8 @@ Camera_ErrorCode Camera_CaptureSession::GetIsoRange(int32_t* minIsoValue, int32_
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetIsoRange is called");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE
+        && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     *minIsoValue = 0;
     *maxIsoValue = 0;
     std::vector<int32_t> isoVec;
@@ -1542,7 +1546,8 @@ Camera_ErrorCode Camera_CaptureSession::GetSupportedPhysicalApertures(
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetSupportedPhysicalApertures");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::NORMAL && mode != SceneMode::CAPTURE
+        && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     vector<vector<float>> physicalApertures = {};
     *size = 0;
     int32_t retCode = innerCaptureSession_->GetSupportedPhysicalApertures(physicalApertures);
