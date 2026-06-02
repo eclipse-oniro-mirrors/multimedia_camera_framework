@@ -1387,6 +1387,11 @@ int32_t HStreamOperator::Release()
 #ifdef CAMERA_USE_SENSOR
     UnRegisterSensorCallback();
 #endif
+#ifdef HOOK_CAMERA_OPERATOR
+    std::string clientName = "";
+    CHECK_EXECUTE(cameraDevice_ != nullptr, clientName = cameraDevice_->GetClientName());
+    CameraRotatePlugin::GetInstance()->DeleteCaptureSession(clientName);
+#endif
     MEDIA_INFO_LOG("HStreamOperator::Release execute success");
     return errorCode;
 }
