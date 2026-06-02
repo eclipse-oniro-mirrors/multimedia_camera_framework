@@ -22,7 +22,6 @@
 using namespace std;
 using namespace OHOS;
 using namespace OHOS::CameraStandard;
-constexpr uint8_t COMPRESSION_QUALITY_MAX = 100;
 const std::unordered_map<CameraFormat, Camera_Format> g_fwToNdkCameraFormat = {
     {CameraFormat::CAMERA_FORMAT_RGBA_8888, Camera_Format::CAMERA_FORMAT_RGBA_8888},
     {CameraFormat::CAMERA_FORMAT_YUV_420_SP, Camera_Format::CAMERA_FORMAT_YUV_420_SP},
@@ -389,71 +388,4 @@ Camera_ErrorCode Camera_PhotoOutput::SetPhotoQualityPrioritization(
     int32_t ret = innerPhotoOutput_->SetPhotoQualityPrioritization(
         static_cast<PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization));
     return FrameworkToNdkCameraError(ret);
-}
-
-Camera_ErrorCode Camera_PhotoCaptureSettingExt::SetImageRotation(Camera_ImageRotation rotation)
-{
-    CHECK_RETURN_RET_ELOG(capSettings == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "capSettings is null!");
-    capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(rotation));
-    return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_PhotoCaptureSettingExt::SetLocation(const Camera_Location& location)
-{
-    CHECK_RETURN_RET_ELOG(capSettings == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "capSettings is null!");
-    auto loc = std::make_shared<Location>();
-    loc->latitude = location.latitude;
-    loc->longitude = location.longitude;
-    loc->altitude = location.altitude;
-    capSettings->SetLocation(loc);
-    return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_PhotoCaptureSettingExt::SetMirror(bool mirror)
-{
-    CHECK_RETURN_RET_ELOG(capSettings == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "capSettings is null!");
-    capSettings->SetMirror(mirror);
-    return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_PhotoCaptureSettingExt::SetCompressionQuality(uint8_t compressionQuality)
-{
-    CHECK_RETURN_RET_ELOG(capSettings == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "capSettings is null!");
-    CHECK_RETURN_RET_ELOG(compressionQuality > COMPRESSION_QUALITY_MAX, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, compressionQuality out of range!");
-    capSettings->SetCompressionQuality(static_cast<int32_t>(compressionQuality));
-    return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_PhotoCaptureSettingExt::Release()
-{
-    delete this;
-    return CAMERA_OK;
-}
-Camera_ErrorCode Camera_PhotoOutput::Capture_WithCaptureSettingExt(Camera_PhotoCaptureSettingExt* setting)
-{
-    CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "PhotoOutput is null!");
-    CHECK_RETURN_RET_ELOG(setting == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, setting is null!");
-    CHECK_RETURN_RET_ELOG(setting->capSettings == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, capSettings is null!");
-
-    int32_t ret = innerPhotoOutput_->Capture(setting->capSettings);
-    return FrameworkToNdkCameraError(ret);
-}
-
-Camera_ErrorCode Camera_PhotoOutput::CreatePhotoCaptureSettingExt(Camera_PhotoCaptureSettingExt** setting)
-{
-    CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED, "PhotoOutput is null!");
-    CHECK_RETURN_RET_ELOG(setting == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, setting is null!");
-
-    auto* ext = new (std::nothrow) Camera_PhotoCaptureSettingExt();
-    CHECK_RETURN_RET_ELOG(ext == nullptr, CAMERA_SERVICE_FATAL_ERROR, "Failed to allocate PhotoCaptureSettingExt!");
-
-    ext->capSettings = innerPhotoOutput_->GetDefaultCaptureSetting();
-    if (ext->capSettings == nullptr) {
-        ext->capSettings = std::make_shared<PhotoCaptureSetting>();
-    }
-
-    *setting = ext;
-    return CAMERA_OK;
 }

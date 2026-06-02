@@ -96,8 +96,6 @@ public:
     void SetIsVideo(bool isVideo);
     void SetLatitude(double latitude);
     void SetLongitude(double longitude);
-    void SetCompressionQuality(int32_t compressionQuality);
-    int32_t GetCompressionQuality();
 
 private:
     uint32_t cloudImageEnhanceFlag_;

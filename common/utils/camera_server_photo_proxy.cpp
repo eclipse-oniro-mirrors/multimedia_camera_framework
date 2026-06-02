@@ -187,7 +187,6 @@ void CameraServerPhotoProxy::ReadFromParcel(MessageParcel &parcel)
     burstSeqId_ = parcel.ReadInt32();
     imageFormat_ = parcel.ReadInt32();
     cloudImageEnhanceFlag_ = parcel.ReadUint32();
-    compressionQuality_ = parcel.ReadInt32();
     bufferHandle_ = ReadBufferHandle(parcel);
     MEDIA_INFO_LOG("CameraServerPhotoProxy::ReadFromParcel");
     // LCOV_EXCL_STOP
@@ -485,17 +484,6 @@ void CameraServerPhotoProxy::SetVideoEnhancementType(int32_t videoEnhancementTyp
 void CameraServerPhotoProxy::SetHighQuality(bool isHigh)
 {
     isHighQuality_ = isHigh;
-}
-void CameraServerPhotoProxy::SetCompressionQuality(int32_t compressionQuality)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    compressionQuality_ = compressionQuality;
-}
-
-int32_t CameraServerPhotoProxy::GetCompressionQuality()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return compressionQuality_;
 }
 } // namespace CameraStandard
 } // namespace OHOS

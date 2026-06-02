@@ -81,8 +81,6 @@ public:
     }
 };
 
-sptr<PhotoProcessingSessionCallbackMock> g_sessionMockForCompressionTest;
-
 void DeferredPhotoProcessorUnittest::SetUpTestCase(void)
 {
     DeferredProcessingService::GetInstance().Initialize();
@@ -97,10 +95,8 @@ void DeferredPhotoProcessorUnittest::TearDownTestCase(void)
 
 void DeferredPhotoProcessorUnittest::SetUp()
 {
-    g_sessionMockForCompressionTest = new (std::nothrow) PhotoProcessingSessionCallbackMock();
-    ASSERT_NE(g_sessionMockForCompressionTest, nullptr);
-    DeferredProcessingService::GetInstance().CreateDeferredPhotoProcessingSession(
-        USER_ID, g_sessionMockForCompressionTest);
+    sptr<IDeferredPhotoProcessingSessionCallback> callback = new (std::nothrow) PhotoProcessingSessionCallbackMock();
+    DeferredProcessingService::GetInstance().CreateDeferredPhotoProcessingSession(USER_ID, callback);
     sleep(1);
     scheduler_ = DPS_GetSchedulerManager();
     ASSERT_NE(scheduler_, nullptr);
@@ -301,46 +297,6 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_017, 
 {
     auto callback = process_->GetCallback();
     ASSERT_NE(callback, nullptr);
-}
-
-/*
- * Feature: Framework
- * Function: Compression quality from AddImage metadata is passed to YUV OnProcessImageDone callback
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: DpsMetadata carries compression quality; HandleSuccess merges job quality into callback metadata
- */
-HWTEST_F(DeferredPhotoProcessorUnittest,
-    deferred_photo_processor_unittest_compression_quality_yuv_metadata, TestSize.Level1)
-{
-    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_IDLE);
-
-    constexpr int32_t kExpectedQuality = 86;
-    DpsMetadata metadata;
-    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    ASSERT_EQ(metadata.Set(DPS_PHOTO_COMPRESSION_QUALITY_KEY, kExpectedQuality), DPS_METADATA_OK);
-
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
-    auto job = process_->repository_->GetJobUnLocked(TEST_IMAGE_1);
-    ASSERT_NE(job, nullptr);
-    EXPECT_EQ(job->GetCompressionQuality(), kExpectedQuality);
-
-    ASSERT_NE(g_sessionMockForCompressionTest, nullptr);
-    EXPECT_CALL(*g_sessionMockForCompressionTest, OnProcessImageDone(_, _, _))
-        .WillOnce(Invoke([kExpectedQuality](const std::string& imageId, const std::shared_ptr<PictureIntf>& picture,
-            const DpsMetadata& md) {
-            (void)picture;
-            EXPECT_EQ(imageId, "testImage1");
-            int32_t q = -1;
-            EXPECT_EQ(md.Get(DPS_PHOTO_COMPRESSION_QUALITY_KEY, q), DPS_METADATA_OK);
-            EXPECT_EQ(q, kExpectedQuality);
-            return 0;
-        }));
-
-    auto info = std::make_unique<ImageInfo>();
-    info->SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
-    process_->OnProcessSuccess(USER_ID, TEST_IMAGE_1, std::move(info));
 }
 
 /*

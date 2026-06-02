@@ -181,7 +181,6 @@ public:
 #ifdef CAMERA_CAPTURE_YUV
     static void OnPhotoStateCallback(int32_t photoNum);
 #endif
-    int32_t GetCompressionQuality(int32_t captureId) const;
     bool isYuvCapture_ = false;
     SpHolder<sptr<Surface>> gainmapSurface_;
     SpHolder<sptr<Surface>> deepSurface_;
@@ -259,8 +258,6 @@ private:
     int32_t deferredVideoSwitch_;
     bool enableCameraPhotoRotation_ = false;
     std::atomic<bool> isCaptureReady_ = true;
-    mutable std::mutex compressionQualityMutex_;
-    std::map<int32_t, int32_t> compressionQualityMap_;
     std::string curBurstKey_ = BURST_UUID_UNSET;
     bool isBursting_ = false;
     std::map<int32_t, std::vector<std::string>> burstImagesMap_;
