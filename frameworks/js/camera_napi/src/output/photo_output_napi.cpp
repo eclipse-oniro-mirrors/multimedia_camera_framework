@@ -55,8 +55,6 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace std;
 namespace {
-constexpr int32_t COMPRESSION_QUALITY_MIN = 0;
-constexpr int32_t COMPRESSION_QUALITY_MAX = 100;
 
 void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
 {
@@ -97,17 +95,6 @@ void ProcessCapture(PhotoOutputAsyncContext* context, bool isBurst)
         }
         if (context->rotation != -1) {
             capSettings->SetRotation(static_cast<PhotoCaptureSetting::RotationConfig>(context->rotation));
-        }
-        if (context->hasPhotoSettings && context->compressionQuality != -1) {
-            int32_t compressionQuality = context->compressionQuality;
-            if (compressionQuality < COMPRESSION_QUALITY_MIN || compressionQuality > COMPRESSION_QUALITY_MAX) {
-                MEDIA_WARNING_LOG("PhotoOutputAsyncContext: invalid compressionQuality=%{public}d, clamp to [0, 100]",
-                    compressionQuality);
-                compressionQuality =
-                    compressionQuality < COMPRESSION_QUALITY_MIN ? COMPRESSION_QUALITY_MIN : COMPRESSION_QUALITY_MAX;
-            }
-            MEDIA_INFO_LOG("PhotoOutputAsyncContext: CompressionQuality is set to %{public}d", compressionQuality);
-            capSettings->SetCompressionQuality(compressionQuality);
         }
         if (!context->isMirrorSettedByUser) {
             capSettings->SetMirror(context->objectInfo->GetEnableMirror());
@@ -1057,11 +1044,10 @@ bool ParseCaptureSettings(napi_env env, napi_callback_info info, PhotoOutputAsyn
     CameraNapiObject settingsNapiOjbect { {
         { "quality", &asyncContext->quality },
         { "rotation", &asyncContext->rotation },
-        { "compressionQuality", &asyncContext->compressionQuality },
         { "location", &settingsLocationNapiOjbect },
         { "mirror", &asyncContext->isMirror },
     } };
-    unordered_set<std::string> optionalKeys = { "quality", "rotation", "compressionQuality", "location", "mirror" };
+    unordered_set<std::string> optionalKeys = { "quality", "rotation", "location", "mirror" };
     settingsNapiOjbect.SetOptionalKeys(optionalKeys);
 
     asyncFunction =

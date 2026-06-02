@@ -87,7 +87,6 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
     // create photoProxy
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
-    cameraPhotoProxy->SetCompressionQuality(streamCapture->GetCompressionQuality(originCaptureId));
 
     std::string uri;
     int32_t cameraShotType = 0;
@@ -134,7 +133,6 @@ void PhotoAssetBufferConsumer::StartWaitAuxiliaryTask(const int32_t originCaptur
         MEDIA_INFO_LOG("PhotoAssetBufferConsumer StartWaitAuxiliaryTask 4 captureId = %{public}d", captureId);
         sptr<CameraServerPhotoProxy> photoProxy = new CameraServerPhotoProxy();
         photoProxy->GetServerPhotoProxyInfo(newSurfaceBuffer);
-        photoProxy->SetCompressionQuality(streamCapture->GetCompressionQuality(originCaptureId));
         photoProxy->SetDisplayName(CreateDisplayName(suffixJpeg));
         streamCapture->photoProxyMap_[captureId] = photoProxy;
         MEDIA_INFO_LOG("PhotoAssetBufferConsumer StartWaitAuxiliaryTask 5");

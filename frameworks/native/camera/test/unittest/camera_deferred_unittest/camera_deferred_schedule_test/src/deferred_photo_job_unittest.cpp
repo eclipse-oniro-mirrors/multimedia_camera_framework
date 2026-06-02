@@ -18,7 +18,6 @@
 #include "basic_definitions.h"
 #include "deferred_utils_unittest.h"
 #include "dp_utils.h"
-#include "dps_metadata_info.h"
 #include "gtest/gtest.h"
 #include "ideferred_photo_processing_session.h"
 
@@ -36,13 +35,6 @@ namespace {
     const std::string TEST_IMAGE_4 = "testImage4";
     constexpr int32_t WAIT_TIME_AFTER_CAPTURE = 10;
     const std::string SYSTEM_CAMERA = "com.huawei.hmos.camera";
-
-    DeferredPhotoJobPtr MakeJob(const std::string& imageId, PhotoJobType type, bool discardable,
-        const std::shared_ptr<IJobStateChangeListener>& listener)
-    {
-        DpsMetadata metadata;
-        return std::make_shared<DeferredPhotoJob>(imageId, type, discardable, metadata, listener, SYSTEM_CAMERA);
-    }
 }
 
 void DeferredPhotoJobUnitTest::SetUpTestCase(void) {}
@@ -60,24 +52,24 @@ void DeferredPhotoJobUnitTest::TearDown(void) {}
 class JobStateChangeListenerMock : public IJobStateChangeListener {
 public:
     JobStateChangeListenerMock() = default;
-    ~JobStateChangeListenerMock() override = default;
-
-    void UpdateRunningJob(const std::string& imageId, bool running) override
+    ~JobStateChangeListenerMock() = default;
+    
+    void UpdateRunningJob(const std::string& imageId, bool running)
     {
         DP_DEBUG_LOG("entered.");
     }
 
-    void UpdatePriorityJob(JobPriority cur, JobPriority pre) override
+    void UpdatePriorityJob(JobPriority cur, JobPriority pre)
     {
         DP_DEBUG_LOG("entered.");
     }
 
-    void UpdateJobSize() override
+    void UpdateJobSize()
     {
         DP_DEBUG_LOG("entered.");
     }
 
-    void TryDoNextJob(const std::string& imageId, bool isTryDo) override
+    void TryDoNextJob(const std::string& imageId, bool isTyrDo)
     {
         DP_DEBUG_LOG("entered.");
     }
@@ -86,8 +78,10 @@ public:
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_001, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     EXPECT_EQ(jobQueue_->GetSize(), 1);
     jobQueue_->Push(job2);
@@ -97,7 +91,8 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_001, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_002, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     EXPECT_EQ(jobQueue_->GetSize(), 1);
     auto job = jobQueue_->Peek();
@@ -110,13 +105,16 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_002, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_003, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     auto job = jobQueue_->Peek();
     EXPECT_EQ(job, job1);
@@ -125,16 +123,20 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_003, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_004, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     auto job = jobQueue_->Peek();
     EXPECT_EQ(job, job1);
     auto ret = jobQueue_->Contains(job2);
@@ -146,16 +148,20 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_004, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_005, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
 
     jobQueue_->Remove(job3);
@@ -171,16 +177,20 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_005, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_006, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
 
     jobQueue_->Remove(job1);
@@ -195,10 +205,12 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_006, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_007, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
 
     job1->Prepare();
@@ -210,12 +222,14 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_007, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_008, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     job1->Prepare();
     jobQueue_->Update(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     job2->Prepare();
     jobQueue_->Update(job2);
@@ -231,22 +245,26 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_008, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_009, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     job1->Prepare();
     jobQueue_->Update(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     job2->Prepare();
     jobQueue_->Update(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     job3->Prepare();
     jobQueue_->Update(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
     job4->Prepare();
     jobQueue_->Update(job4);
@@ -275,22 +293,26 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_009, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_010, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     job1->Prepare();
     jobQueue_->Update(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     job2->Prepare();
     jobQueue_->Update(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     job3->Prepare();
     jobQueue_->Update(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
     job4->Prepare();
     jobQueue_->Update(job4);
@@ -309,22 +331,26 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_010, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_011, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     job1->Prepare();
     jobQueue_->Update(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     job2->Prepare();
     jobQueue_->Update(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     job3->Prepare();
     jobQueue_->Update(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
     job4->Prepare();
     jobQueue_->Update(job4);
@@ -344,22 +370,26 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_011, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_012, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     job1->Prepare();
     jobQueue_->Update(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     job2->Prepare();
     jobQueue_->Update(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     job3->Prepare();
     jobQueue_->Update(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
     job4->Prepare();
     jobQueue_->Update(job4);
@@ -379,22 +409,26 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_012, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_013, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     job1->Prepare();
     jobQueue_->Update(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     job2->Prepare();
     jobQueue_->Update(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     job3->Prepare();
     jobQueue_->Update(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
     job4->Prepare();
     jobQueue_->Update(job4);
@@ -415,22 +449,26 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_013, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_014, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     job1->Prepare();
     jobQueue_->Update(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     job2->Prepare();
     jobQueue_->Update(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     job3->Prepare();
     jobQueue_->Update(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
     job4->Prepare();
     jobQueue_->Update(job4);
@@ -459,22 +497,26 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_014, TestSize.Level0
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_queue_unittest_015, TestSize.Level0)
 {
     auto listener = std::make_shared<JobStateChangeListenerMock>();
-    DeferredPhotoJobPtr job1 = MakeJob(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job1 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_1, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job1);
     job1->Prepare();
     jobQueue_->Update(job1);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job2 = MakeJob(TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job2 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_2, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job2);
     job2->Prepare();
     jobQueue_->Update(job2);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job3 = MakeJob(TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job3 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_3, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job3);
     job3->Prepare();
     jobQueue_->Update(job3);
     DeferredUtilsUnitTest::mssleep(WAIT_TIME_AFTER_CAPTURE);
-    DeferredPhotoJobPtr job4 = MakeJob(TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener);
+    DeferredPhotoJobPtr job4 = std::make_shared<DeferredPhotoJob>(
+        TEST_IMAGE_4, PhotoJobType::OFFLINE, true, listener, SYSTEM_CAMERA);
     jobQueue_->Push(job4);
     job4->Prepare();
     jobQueue_->Update(job4);
@@ -505,49 +547,6 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_001, TestSize.L
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
     repository->AddDeferredJob(TEST_IMAGE_1, true, metadata, SYSTEM_CAMERA);
     EXPECT_EQ(repository->offlineJobQueue_->GetSize(), 1);
-}
-
-/*
- * Feature: Deferred photo (phase 2)
- * Function: AddDeferredJob preserves DpsMetadata compression quality on DeferredPhotoJob
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Media library AddImage path supplies metadata;
- *job must expose same quality via GetCompressionQuality
- */
-HWTEST_F(DeferredPhotoJobUnitTest,
-    photo_job_repository_compression_quality_unittest, TestSize.Level0)
-{
-    auto repository = PhotoJobRepository::Create(USER_ID);
-    constexpr int32_t kQuality = 73;
-    DpsMetadata metadata;
-    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    ASSERT_EQ(metadata.Set(DPS_PHOTO_COMPRESSION_QUALITY_KEY, kQuality), DPS_METADATA_OK);
-    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata, SYSTEM_CAMERA);
-    auto job = repository->GetJobUnLocked(TEST_IMAGE_1);
-    ASSERT_NE(job, nullptr);
-    EXPECT_EQ(job->GetCompressionQuality(), kQuality);
-}
-
-/*
- * Feature: Deferred photo (phase 2)
- * Function: DeferredPhotoJob constructor reads compression quality from DpsMetadata
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Direct construction verifies metadata key is not dropped
- */
-HWTEST_F(DeferredPhotoJobUnitTest, deferred_photo_job_compression_quality_from_dps_metadata, TestSize.Level0)
-{
-    auto listener = std::make_shared<JobStateChangeListenerMock>();
-    constexpr int32_t kQuality = 88;
-    DpsMetadata metadata;
-    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    ASSERT_EQ(metadata.Set(DPS_PHOTO_COMPRESSION_QUALITY_KEY, kQuality), DPS_METADATA_OK);
-    auto job = std::make_shared<DeferredPhotoJob>(TEST_IMAGE_1, PhotoJobType::OFFLINE, true, metadata, listener,
-        SYSTEM_CAMERA);
-    EXPECT_EQ(job->GetCompressionQuality(), kQuality);
 }
 
 HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_002, TestSize.Level0)

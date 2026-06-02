@@ -259,61 +259,6 @@ Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSetting(Camera_PhotoOutput* p
     return photoOutput->Capture_WithCaptureSetting(setting);
 }
 
-Camera_ErrorCode OH_PhotoOutput_CreatePhotoCaptureSettingExt(Camera_PhotoOutput* photoOutput,
-    Camera_PhotoCaptureSettingExt** setting)
-{
-    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, photoOutput is null!");
-    CHECK_RETURN_RET_ELOG(setting == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, setting is null!");
-
-    return photoOutput->CreatePhotoCaptureSettingExt(setting);
-}
-
-Camera_ErrorCode OH_PhotoOutput_DestroyPhotoCaptureSettingExt(Camera_PhotoCaptureSettingExt* setting)
-{
-    CHECK_RETURN_RET_ELOG(setting == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, setting is null!");
-    return setting->Release();
-}
-
-Camera_ErrorCode OH_PhotoCaptureSettingExt_SetImageRotation(Camera_PhotoCaptureSettingExt* photoCaptureSettingExt,
-    Camera_ImageRotation rotation)
-{
-    CHECK_RETURN_RET_ELOG(photoCaptureSettingExt == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, photoCaptureSettingExt is null!");
-    return photoCaptureSettingExt->SetImageRotation(rotation);
-}
-
-Camera_ErrorCode OH_PhotoCaptureSettingExt_SetLocation(Camera_PhotoCaptureSettingExt* photoCaptureSettingExt,
-    Camera_Location location)
-{
-    CHECK_RETURN_RET_ELOG(photoCaptureSettingExt == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, photoCaptureSettingExt is null!");
-    return photoCaptureSettingExt->SetLocation(location);
-}
-
-Camera_ErrorCode OH_PhotoCaptureSettingExt_SetMirror(Camera_PhotoCaptureSettingExt* photoCaptureSettingExt, bool mirror)
-{
-    CHECK_RETURN_RET_ELOG(photoCaptureSettingExt == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, photoCaptureSettingExt is null!");
-    return photoCaptureSettingExt->SetMirror(mirror);
-}
-
-Camera_ErrorCode OH_PhotoCaptureSettingExt_SetCompressionQuality(Camera_PhotoCaptureSettingExt* photoCaptureSettingExt,
-    uint8_t compressionQuality)
-{
-    CHECK_RETURN_RET_ELOG(photoCaptureSettingExt == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, photoCaptureSettingExt is null!");
-    return photoCaptureSettingExt->SetCompressionQuality(compressionQuality);
-}
-
-Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSettingExt(Camera_PhotoOutput* photoOutput,
-    Camera_PhotoCaptureSettingExt* setting)
-{
-    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, photoOutput is null!");
-    CHECK_RETURN_RET_ELOG(setting == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, setting is null!");
-
-    return photoOutput->Capture_WithCaptureSettingExt(setting);
-}
-
 /**
  * @since 11
  * @version 1.0
