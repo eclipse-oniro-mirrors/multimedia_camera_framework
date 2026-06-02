@@ -87,18 +87,6 @@ void PhotoCaptureSetting::SetQuality(PhotoCaptureSetting::QualityLevel qualityLe
     bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_JPEG_QUALITY, &quality, 1);
     CHECK_PRINT_ELOG(!status, "PhotoCaptureSetting::SetQuality Failed to set Quality");
 }
-void PhotoCaptureSetting::SetCompressionQuality(int32_t quality)
-{
-    compressionQuality_ = quality;
-    bool status = AddOrUpdateMetadata(captureMetadataSetting_, OHOS_PHOTO_COMPRESSION_QUALITY, &quality, 1);
-    CHECK_PRINT_ELOG(!status, "PhotoCaptureSetting::SetCompressionQuality Failed to set CompressionQuality");
-}
-
-int32_t PhotoCaptureSetting::GetCompressionQuality() const
-{
-    return compressionQuality_;
-}
-
 
 PhotoCaptureSetting::RotationConfig PhotoCaptureSetting::GetRotation()
 {

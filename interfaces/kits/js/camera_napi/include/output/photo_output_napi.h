@@ -331,7 +331,6 @@ struct PhotoOutputAsyncContext : public AsyncContext {
     PhotoOutputAsyncContext(std::string funcName, int32_t taskId) : AsyncContext(funcName, taskId) {};
     int32_t quality = -1;
     int32_t rotation = -1;
-    int32_t compressionQuality = -1;
     bool isMirror = false;
     bool isMirrorSettedByUser = false;
     bool hasPhotoSettings = false;

@@ -37,8 +37,6 @@ public:
     void SetDeferredAttrs(std::string photoId, int32_t deferredProcType, uint64_t fileSize, int32_t imageFormat);
     void SetLocation(double latitude, double longitude);
     void SetCloudImageEnhanceFlag(uint32_t cloudImageEnhanceFlag);
-    void SetCompressionQuality(int32_t compressionQuality);
-    int32_t GetCompressionQuality() const;
     int32_t CameraFreeBufferHandle();
 
     BufferHandle* bufferHandle_;
@@ -58,7 +56,6 @@ public:
     sptr<Surface> photoSurface_;
     int32_t imageFormat_;
     uint32_t cloudImageEnhanceFlag_;
-    int32_t compressionQuality_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

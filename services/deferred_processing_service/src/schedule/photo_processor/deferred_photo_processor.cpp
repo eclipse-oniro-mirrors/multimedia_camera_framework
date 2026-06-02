@@ -220,12 +220,6 @@ void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::stri
     DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s", userId, imageId.c_str());
     uint32_t cloudFlag = imageInfo->GetCloudFlag();
     DpsMetadata metadata = imageInfo->GetMetaData();
-    if (jobPtr) {
-        int32_t compressionQuality = jobPtr->GetCompressionQuality();
-        if (compressionQuality != -1) {
-            metadata.Set(DPS_PHOTO_COMPRESSION_QUALITY_KEY, compressionQuality);
-        }
-    }
     uint32_t captureFlag = 0;
     metadata.Get("captureEnhancementFlag", captureFlag);
     DP_DEBUG_LOG("DPS_OHOTO: HandleSuccess cloudFlag: %{public}d, captureFlag: %{public}d ",

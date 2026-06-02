@@ -961,31 +961,12 @@ void HStreamCapture::ProcessCaptureInfoPhoto(CaptureInfo& captureInfoPhoto,
         // convert rotation with application set rotation
         SetRotation(captureMetadataSetting_, captureId);
 
-        camera_metadata_item_t item;
-        int32_t quality = -1;
-        int ret = OHOS::Camera::FindCameraMetadataItem(
-            captureMetadataSetting_->get(), OHOS_PHOTO_COMPRESSION_QUALITY, &item);
-        if (ret == CAM_META_SUCCESS && item.count > 0) {
-            quality = item.data.i32[0];
-        }
-        {
-            std::lock_guard<std::mutex> lock(compressionQualityMutex_);
-            compressionQualityMap_[captureId] = quality;
-        }
-
         // update settings
         std::vector<uint8_t> finalSetting;
         OHOS::Camera::MetadataUtils::ConvertMetadataToVec(captureMetadataSetting_, finalSetting);
         captureInfoPhoto.captureSetting_ = finalSetting;
     }
     GetLocation(captureMetadataSetting_);
-}
-
-int32_t HStreamCapture::GetCompressionQuality(int32_t captureId) const
-{
-    std::lock_guard<std::mutex> lock(compressionQualityMutex_);
-    auto it = compressionQualityMap_.find(captureId);
-    return it != compressionQualityMap_.end() ? it->second : -1;
 }
 
 void HStreamCapture::SetRotation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting_,
@@ -1770,7 +1751,6 @@ void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camera
     MEDIA_INFO_LOG("SetCameraPhotoProxyInfo get captureStream");
     cameraPhotoProxy->SetDisplayName(CreateDisplayName(format_ == OHOS_CAMERA_FORMAT_HEIC ? suffixHeif : suffixJpeg));
     cameraPhotoProxy->SetShootingMode(GetMode());
-    cameraPhotoProxy->SetCompressionQuality(GetCompressionQuality(cameraPhotoProxy->GetCaptureId()));
     MEDIA_INFO_LOG("SetCameraPhotoProxyInfo quality:%{public}d, format:%{public}d",
         cameraPhotoProxy->GetPhotoQuality(), cameraPhotoProxy->GetFormat());
     auto hStreamOperatorSptr_ = hStreamOperator_.promote();
@@ -1805,10 +1785,6 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhoto
     photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
     photoAssetProxy_.IncreaseCaptureStep(cameraPhotoProxy->GetCaptureId());
-    {
-        std::lock_guard<std::mutex> lock(compressionQualityMutex_);
-        compressionQualityMap_.erase(cameraPhotoProxy->GetCaptureId());
-    }
     MEDIA_DEBUG_LOG(
         "HStreamCapture UpdateMediaLibraryPhotoAssetProxy X captureId(%{public}d)", cameraPhotoProxy->GetCaptureId());
     return CAMERA_OK;

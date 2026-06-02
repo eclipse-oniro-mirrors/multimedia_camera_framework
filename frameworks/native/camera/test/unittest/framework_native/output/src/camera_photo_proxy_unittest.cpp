@@ -175,21 +175,5 @@ HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_006, TestSize.Level0)
     EXPECT_NE(proxy->format_, 16);
 }
 
-/*
- * Feature: Framework
- * Function: CameraPhotoProxy compression quality (phase 1: carried on photo proxy)
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: SetCompressionQuality / GetCompressionQuality round-trip
- */
-HWTEST_F(CameraPhotoProxyUnit, camera_photo_proxy_unittest_007, TestSize.Level0)
-{
-    std::shared_ptr<CameraPhotoProxy> proxy = std::make_shared<CameraPhotoProxy>(nullptr, 0, 0, 0, false, 0);
-    constexpr int32_t kQuality = 65;
-    proxy->SetCompressionQuality(kQuality);
-    EXPECT_EQ(proxy->GetCompressionQuality(), kQuality);
-}
-
 }
 }
