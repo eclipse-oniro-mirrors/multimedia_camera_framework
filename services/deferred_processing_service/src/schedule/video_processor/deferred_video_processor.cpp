@@ -470,10 +470,12 @@ void DeferredVideoProcessor::ReportStorage(const int32_t userId, const uint64_t 
             curStats.businessSize_, lastSize_);
         ExtBundleStats updateStats;
         updateStats.businessName_ = CAMERA_BUSINESS_NAME;
+        DP_CHECK_ERROR_RETURN_LOG(curStats.businessSize_ < lastSize_, "businessSize_ is less than lastSize_.");
         updateStats.businessSize_ = curStats.businessSize_ - lastSize_ + size;
         DP_INFO_LOG("Reported userId: %{public}d, bundleName: %{public}s, appsize: %{public}" PRIu64,
             userId, updateStats.businessName_.c_str(), updateStats.businessSize_);
-        storageproxy->SetExtBundleStats(userId, updateStats);
+        int32_t ret = storageproxy->SetExtBundleStats(userId, updateStats);
+        DP_CHECK_ERROR_RETURN_LOG(ret != 0, "SetExtBundleStats failed.");
         lastSize_ = size;
     } else {
         DP_ERR_LOG("GetExtBundleStats failed");
