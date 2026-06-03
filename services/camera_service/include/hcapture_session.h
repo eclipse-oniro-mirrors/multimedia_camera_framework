@@ -213,8 +213,8 @@ public:
 
     int32_t GetBeautyRange(std::vector<int32_t>& range, int32_t type) override;
     int32_t GetBeautyValue(int32_t type, int32_t& value) override;
-    int32_t SetBeautyValue(int32_t type, int32_t value, bool needPersist) override;	 
-     	 
+    int32_t SetBeautyValue(int32_t type, int32_t value, bool needPersist) override;
+
     int32_t IsAutoFramingSupported(bool& support) override;
     int32_t GetAutoFramingStatus(bool& status) override;
     int32_t EnableAutoFraming(bool enable, bool needPersist) override;
@@ -373,8 +373,8 @@ private:
     bool controlCenterPrecondition = true;
     std::string bundleForControlCenter_;
     bool isCameraSessionStart = false;
-    sptr<ICameraSpectrumInfoCallback> spectrumInfoCallback_;	 
-     	 
+    sptr<ICameraSpectrumInfoCallback> spectrumInfoCallback_;
+
 #ifdef CAMERA_USE_SENSOR
     std::mutex sensorLock_;
     bool isRegisterSensorSuccess_ = false;
