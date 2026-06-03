@@ -110,7 +110,11 @@ class EXPORT_API HCaptureSession : public CaptureSessionStub, public IHCameraClo
 public:
     static CamServiceError NewInstance(const uint32_t callerToken, int32_t opMode, sptr<HCaptureSession>& outSession);
     virtual ~HCaptureSession();
-
+    inline const sptr<HCameraDevice> GetCameraDevice()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceLock_);
+        return cameraDevice_;
+    }
     int32_t BeginConfig() override;
     int32_t CommitConfig() override;
     void DynamicConfigCommit();
@@ -210,7 +214,7 @@ public:
     int32_t GetBeautyRange(std::vector<int32_t>& range, int32_t type) override;
     int32_t GetBeautyValue(int32_t type, int32_t& value) override;
     int32_t SetBeautyValue(int32_t type, int32_t value, bool needPersist) override;
-    
+
     int32_t IsAutoFramingSupported(bool& support) override;
     int32_t GetAutoFramingStatus(bool& status) override;
     int32_t EnableAutoFraming(bool enable, bool needPersist) override;
@@ -303,11 +307,6 @@ private:
     bool isNeedCommitting_ = false;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     void SetCameraDevice(sptr<HCameraDevice> device);
-    inline const sptr<HCameraDevice> GetCameraDevice()
-    {
-        std::lock_guard<std::mutex> lock(cameraDeviceLock_);
-        return cameraDevice_;
-    }
     string CreateDisplayName(const std::string& suffix);
     string CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId);
     int32_t ValidateSessionInputs();
@@ -375,7 +374,7 @@ private:
     std::string bundleForControlCenter_;
     bool isCameraSessionStart = false;
     sptr<ICameraSpectrumInfoCallback> spectrumInfoCallback_;
-    
+
 #ifdef CAMERA_USE_SENSOR
     std::mutex sensorLock_;
     bool isRegisterSensorSuccess_ = false;
