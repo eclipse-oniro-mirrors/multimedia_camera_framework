@@ -1,0 +1,79 @@
+From 668a3d41fabc971b0f4868c80bb207c8780a9dfa Mon Sep 17 00:00:00 2001
+From: mengzhe 00939602 <mengzhe5@huawei.com>
+Date: Thu, 4 Jun 2026 10:05:17 +0800
+Subject: [PATCH] =?UTF-8?q?=E6=99=AE=E9=80=9A=E5=BD=95=E5=83=8F=E8=AE=BE?=
+ =?UTF-8?q?=E7=BD=AELOG=E8=A7=86=E9=A2=91=E6=97=B6=E5=85=B3=E9=97=AD?=
+ =?UTF-8?q?=E5=BE=AE=E8=B7=9D=20TicketNo:DTS2026060268997=20Description:?=
+ =?UTF-8?q?=E6=99=AE=E9=80=9A=E5=BD=95=E5=83=8F=E8=AE=BE=E7=BD=AELOG?=
+ =?UTF-8?q?=E8=A7=86=E9=A2=91=E6=97=B6=E5=85=B3=E9=97=AD=E5=BE=AE=E8=B7=9D?=
+ =?UTF-8?q?=20Team:=20Feature=20or=20Bugfix:=20Binary=20Source:=20PrivateC?=
+ =?UTF-8?q?ode(Yes/No):?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: I95625bbab557a2e548f685fef23f173b79e55e5d
+---
+ .../camera/base/src/session/capture_session.cpp    | 14 +++++++++++++-
+ .../camera/include/session/capture_session.h       |  6 ++++--
+ 2 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/frameworks/native/camera/base/src/session/capture_session.cpp b/frameworks/native/camera/base/src/session/capture_session.cpp
+index efb8c61037..3e5d66f500 100644
+--- a/frameworks/native/camera/base/src/session/capture_session.cpp
++++ b/frameworks/native/camera/base/src/session/capture_session.cpp
+@@ -574,7 +574,7 @@ int32_t CaptureSession::CommitConfig()
+     CHECK_EXECUTE (cameraDfxReportHelper_ != nullptr, cameraDfxReportHelper_->ReportCameraConfigInfo(errCode));
+     if (errCode == CAMERA_OK && pendingDisableMacroOnCommit_) {
+         LockForControl();
+-        EnableMacro(false);
++        InnerEnableMacro(false);
+         UnlockForControl();
+         pendingDisableMacroOnCommit_ = false;  // 清除标志位
+     }
+@@ -5937,6 +5937,18 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
+     return CameraErrorCode::SUCCESS;
+ }
+ 
++void CaptureSession::InnerEnableMacro(bool isEnable)
++{
++    MEDIA_INFO_LOG("CaptureSession::InnerEnableMacro is called");
++    CHECK_RETURN_ELOG(changedMetadata_ == nullptr,
++        "CaptureSession::InnerEnableMacro Need to call LockForControl() before setting camera properties");
++    uint8_t enableValue = static_cast<uint8_t>(isEnable ? OHOS_CAMERA_MACRO_ENABLE : OHOS_CAMERA_MACRO_DISABLE);
++    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_MACRO, &enableValue, 1);
++    isSetMacroEnable_ = isEnable;
++    CHECK_PRINT_ILOG(!status, "CaptureSession::InnerEnableMacro failed");
++}
++ 
++
+ std::shared_ptr<MoonCaptureBoostFeature> CaptureSession::GetMoonCaptureBoostFeature()
+ {
+     auto inputDevice = GetInputDevice();
+diff --git a/interfaces/inner_api/native/camera/include/session/capture_session.h b/interfaces/inner_api/native/camera/include/session/capture_session.h
+index 757498959c..4bb2ee6c55 100644
+--- a/interfaces/inner_api/native/camera/include/session/capture_session.h
++++ b/interfaces/inner_api/native/camera/include/session/capture_session.h
+@@ -2564,7 +2564,7 @@ public:
+ 
+     void StartVideoOutput();
+     bool StopVideoOutput();
+-
++     
+     /**
+      * @brief Enables or disables the Auto Extended Gainmap Delivery.   
+      *
+@@ -2573,7 +2573,9 @@ public:
+      */
+     int32_t EnableAutoExtendedGainmapDelivery(bool enabled);
+     int32_t ExpandLhdrGainmapStream(bool enabled);
+-
++ 
++    void InnerEnableMacro(bool isEnable);
++    
+ protected:
+     static const std::unordered_map<camera_flash_state_enum_t, FlashState> metaFlashStateMap_;
+     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
+-- 
+2.51.2.huawei.11
+
