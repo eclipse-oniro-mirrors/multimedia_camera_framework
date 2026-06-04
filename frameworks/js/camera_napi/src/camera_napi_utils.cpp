@@ -46,6 +46,7 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
     {74002011, "Camera service fatal error: Unsupported resolution configuration."},
     {74002012, "Camera service fatal error: Alloc failed."},
     {74002013, "Camera service fatal error: Invalid Session Configuration."},
+    {74002014, "Camera service fatal error: Invalid Input Device"},
     {7400801, "Capability not supported."},
 };
 
@@ -59,6 +60,7 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
     {74002011, "7400201"},
     {74002012, "7400201"},
     {74002013, "7400201"},
+    {74002014, "7400201"},
     {7400801, "801"}
 };
 

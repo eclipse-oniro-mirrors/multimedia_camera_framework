@@ -2369,6 +2369,7 @@ public:
      * @return Returns errCode.
      */
     int32_t UnlockFocusTracking();
+    void InnerEnableMacro(bool isEnable);
 
 protected:
     static const std::unordered_map<camera_flash_state_enum_t, FlashState> metaFlashStateMap_;
