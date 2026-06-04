@@ -25,7 +25,8 @@ namespace DeferredProcessing {
 namespace {
     constexpr char COMMON_CAMERA_ID[] = "cameraId";
     constexpr char COMMON_CAMERA_STATE[] = "cameraState";
-    constexpr char COMMON_IS_SYSTEM_CAMERA[] = "isSystemCamera";
+    constexpr char COMMON_CLIENT_REAL_NAME[] = "clientRealName";
+    constexpr char SYSTEM_CAMERA[] = "com.huawei.hmos.camera";
 }
 enum CameraType {
     SYSTEM = 0,
@@ -53,8 +54,8 @@ void CameraStrategy::handleEvent(const EventFwk::CommonEventData& data)
     auto want = data.GetWant();
     std::string cameraId = want.GetStringParam(COMMON_CAMERA_ID);
     int32_t state = want.GetIntParam(COMMON_CAMERA_STATE, CameraStatus::CAMERA_CLOSE);
-    int32_t cameraType = want.GetIntParam(COMMON_IS_SYSTEM_CAMERA, CameraType::SYSTEM);
-    bool isSystemCamera = cameraType == CameraType::SYSTEM;
+    std::string clientRealName = want.GetStringParam(COMMON_CLIENT_REAL_NAME);
+    bool isSystemCamera = clientRealName == SYSTEM_CAMERA;
     CameraSessionStatus cameraSessionStatus;
     if (state == CameraStatus::CAMERA_OPEN) {
         numActiveSessions_++;

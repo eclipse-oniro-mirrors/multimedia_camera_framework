@@ -291,10 +291,20 @@ std::string HCameraDevice::GetClientName()
 {
     std::lock_guard<std::mutex> lock(clientNameMutex_);
     if (clientName_ == "") {
-        uint32_t token = firstCallerTokenID_ != 0 ? firstCallerTokenID_ : callerToken_;
-        clientName_ = GetClientNameByToken(token);
+        int tokenId = static_cast<int32_t>(IPCSkeleton::GetCallingTokenID());
+        clientName_ = GetClientNameByToken(tokenId);
     }
     return clientName_;
+}
+
+std::string HCameraDevice::GetFirstClientName()
+{
+    std::lock_guard<std::mutex> lock(clientNameMutex_);
+    if (firstClientName_ == "" || firstClientName_ == "unknown") {
+        uint32_t token = firstCallerTokenID_ != 0 ? firstCallerTokenID_ : callerToken_;
+        firstClientName_ = GetClientNameByToken(token);
+    }
+    return firstClientName_;
 }
 
 int32_t HCameraDevice::GetCameraPosition()
@@ -2121,6 +2131,7 @@ void HCameraDevice::NotifyCameraStatus(int32_t state, int32_t msg)
     want.SetParam(IS_SYSTEM_CAMERA, type);
     want.SetParam(CAMERA_MSG, msg);
     want.SetParam(CLIENT_NAME, clientName);
+    want.SetParam(CLIENT_REAL_NAME, GetFirstClientName());
     MEDIA_DEBUG_LOG(
         "OnCameraStatusChanged userId: %{public}d, cameraId: %{public}s, state: %{public}d, "
         "cameraType: %{public}d, msg: %{public}d, clientName: %{public}s",

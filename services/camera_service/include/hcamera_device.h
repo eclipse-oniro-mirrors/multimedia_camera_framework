@@ -182,6 +182,8 @@ public:
 
     std::string GetClientName();
 
+    std::string GetFirstClientName();
+
     int32_t GetCameraConnectType();
 
     int32_t GetSensorOrientation();
@@ -265,6 +267,7 @@ private:
     bool isLogicCamera_  = false;
     std::string foldScreenType_;
     std::string clientName_ = "";
+    std::string firstClientName_ = "";
     uint64_t openCamTime_ = 0;
     int clientUserId_;
     uint8_t usedAsPosition_ = OHOS_CAMERA_POSITION_OTHER;
