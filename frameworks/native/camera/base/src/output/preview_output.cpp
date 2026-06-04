@@ -815,17 +815,16 @@ int32_t PreviewOutput::EnableLogAssistance(bool isEnable)
 int32_t PreviewOutput::SetLogViewAssistEnable(bool isEnable)
 {
     MEDIA_INFO_LOG("PreviewOutput::SetLogViewAssistEnable is called, enable: %{public}d", isEnable);
-    MEDIA_INFO_LOG("PreviewOutput::SetLogViewAssistEnable is called, IsLogAssistanceSupported: %{public}d",
-                   IsLogAssistanceSupported());
-    CHECK_RETURN_RET(!IsLogAssistanceSupported(), CameraErrorCode::CAPABILITY_NOT_SUPPORTED);
+    CHECK_RETURN_RET_ELOG(!IsLogAssistanceSupported(), CameraErrorCode::CAPABILITY_NOT_SUPPORTED,
+                          "PreviewOutput::SetLogViewAssistEnable is not supported ViewAssist");
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SESSION_NOT_CONFIG,
         "PreviewOutput::SetLogViewAssistEnable failed, captureSession is nullptr");
     auto inputDevice = captureSession->GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR_OF_INPUT_DEVICE,
         "PreviewOutput::SetLogViewAssistEnable failed, inputDevice is nullptr");
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR_OF_INPUT_DEVICE,
                           "PreviewOutput::SetLogViewAssistEnable failed, cameraObj is nullptr");
     captureSession->LockForControl();
     int32_t retCode = captureSession->SetLogViewAssistEnable(isEnable);

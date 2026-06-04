@@ -548,7 +548,7 @@ int32_t CaptureSession::CommitConfig()
     CHECK_EXECUTE (cameraDfxReportHelper_ != nullptr, cameraDfxReportHelper_->ReportCameraConfigInfo(errCode));
     if (errCode == CAMERA_OK && pendingDisableMacroOnCommit_) {
         LockForControl();
-        EnableMacro(false);
+        InnerEnableMacro(false);
         UnlockForControl();
         pendingDisableMacroOnCommit_ = false;  // 清除标志位
     }
@@ -5181,6 +5181,18 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
     return CameraErrorCode::SUCCESS;
 }
 
+void CaptureSession::InnerEnableMacro(bool isEnable)
+{
+    MEDIA_INFO_LOG("CaptureSession::InnerEnableMacro is called");
+    CHECK_RETURN_ELOG(changedMetadata_ == nullptr,
+        "CaptureSession::InnerEnableMacro Need to call LockForControl() before setting camera properties");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable ? OHOS_CAMERA_MACRO_ENABLE : OHOS_CAMERA_MACRO_DISABLE);
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CAMERA_MACRO, &enableValue, 1);
+    isSetMacroEnable_ = isEnable;
+    CHECK_PRINT_ILOG(!status, "CaptureSession::InnerEnableMacro failed");
+}
+ 
+
 std::shared_ptr<MoonCaptureBoostFeature> CaptureSession::GetMoonCaptureBoostFeature()
 {
     auto inputDevice = GetInputDevice();
@@ -7208,8 +7220,7 @@ int32_t CaptureSession::SetLogViewAssistEnable(const bool enable)
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
         "CaptureSession::SetLogViewAssistEnable Need to call LockForControl() before setting camera properties");
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOG_ASSISTANCE, &enable, 1);
-    CHECK_PRINT_ELOG(!status, "CaptureSession::SetLogViewAssistEnable Failed to set flash mode");
-    CHECK_PRINT_ELOG(status, "CaptureSession::SetLogViewAssistEnable Success to set flash mode");
+    CHECK_PRINT_ELOG(!status, "CaptureSession::SetLogViewAssistEnable Failed to set view assist");
     return CameraErrorCode::SUCCESS;
 }
 
