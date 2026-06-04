@@ -7217,7 +7217,7 @@ int32_t CaptureSession::SetLogViewAssistEnable(const bool enable)
     MEDIA_INFO_LOG("Enter CaptureSession::SetLogViewAssistEnable");
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
         "CaptureSession::SetLogViewAssistEnable Session is not Commited");
-    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CaptureSession::SetLogViewAssistEnable Need to call LockForControl() before setting camera properties");
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOG_ASSISTANCE, &enable, 1);
     CHECK_PRINT_ELOG(!status, "CaptureSession::SetLogViewAssistEnable Failed to set view assist");
