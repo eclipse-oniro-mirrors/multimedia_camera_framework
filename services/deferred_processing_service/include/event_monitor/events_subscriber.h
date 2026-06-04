@@ -26,8 +26,11 @@ class EventSubscriber : public EventFwk::CommonEventSubscriber,
 public:
     virtual ~EventSubscriber();
 
-    static std::shared_ptr<EventSubscriber> Create();
-    void Initialize();
+    static std::shared_ptr<EventSubscriber> CreateCommonSubscriber();
+    static std::shared_ptr<EventSubscriber> CreatePermissionSubscriber(
+        const std::string& events, const std::string& permission);
+    static std::shared_ptr<EventSubscriber> CreateCameraSubscriber();
+    static void InitializeStrategies();
     void Subcribe();
     void UnSubscribe();
     void OnReceiveEvent(const EventFwk::CommonEventData& data) override;
@@ -36,9 +39,9 @@ protected:
     explicit EventSubscriber(const EventFwk::CommonEventSubscribeInfo& subscriberInfo);
 
 private:
-    std::mutex mutex_;
-    static const std::vector<std::string> events_;
-    std::unordered_map<std::string, std::shared_ptr<EventStrategy>> eventStrategy_ {};
+    static std::mutex mutex_;
+    static const std::vector<std::string> commonEvents_;
+    static std::unordered_map<std::string, std::shared_ptr<EventStrategy>> eventStrategy_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard

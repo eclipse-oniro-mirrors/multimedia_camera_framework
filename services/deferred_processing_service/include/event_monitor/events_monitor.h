@@ -31,7 +31,8 @@ public:
 
 private:
     std::mutex eventSubscriberMutex_;
-    std::shared_ptr<EventSubscriber> eventSubscriber_ {nullptr};
+    std::shared_ptr<EventSubscriber> commonEventSubscriber_ {nullptr};
+    std::shared_ptr<EventSubscriber> cameraEventSubscriber_ {nullptr};
 };
 
 class EventsMonitor : public Singleton<EventsMonitor> {

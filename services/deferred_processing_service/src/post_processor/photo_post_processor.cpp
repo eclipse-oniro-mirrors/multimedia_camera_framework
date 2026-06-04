@@ -228,7 +228,9 @@ void PhotoPostProcessor::ProcessImage(const std::string& imageId)
 
 void PhotoPostProcessor::RemoveImage(const std::string& imageId)
 {
-    runningId_.erase(imageId);
+    if (runningId_.erase(imageId)) {
+        Interrupt();
+    }
     auto session = GetPhotoSession();
     if (session == nullptr) {
         DP_ERR_LOG("photo session is nullptr.");
