@@ -518,14 +518,26 @@ int32_t HCameraService::GetControlCenterStatusFromDataShareHelper(bool &status)
     }
 
     std::string bundleName = sessionForControlCenter->GetBundleForControlCenter();
+
+    // 获取当前镜头位置
+    auto device = sessionForControlCenter->GetCameraDevice();
+    int32_t cameraPosition = OHOS_CAMERA_POSITION_BACK;  // 默认后置
+    if (device != nullptr) {
+        cameraPosition = device->GetCameraPosition();
+    }
+
+    // 构造带镜头位置的key
+    std::string keyWithPosition = bundleName + "_" +
+        (cameraPosition == OHOS_CAMERA_POSITION_FRONT ? "front" : "back");
+
     std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> controlCenterMap
         = StringToControlCenterMap(value);
-    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
-        int32_t statusVal = static_cast<int32_t>(controlCenterMap[bundleName][CONTROL_CENTER_STATUS_INDEX]);
+    if (controlCenterMap.find(keyWithPosition) != controlCenterMap.end()) {
+        int32_t statusVal = static_cast<int32_t>(controlCenterMap[keyWithPosition][CONTROL_CENTER_STATUS_INDEX]);
         MEDIA_INFO_LOG("GetControlCenterStatusFromDataShareHelper success value: %{public}d", statusVal);
         status = (statusVal == 1) ? true: false;
     } else {
-        MEDIA_ERR_LOG("GetControlCenterStatusFromDataShareHelper failed, no bundle.");
+        MEDIA_ERR_LOG("GetControlCenterStatusFromDataShareHelper failed, no key for current position.");
         status = false;
         return CAMERA_OK;
     }
@@ -560,8 +572,21 @@ int32_t HCameraService::UpdateDataShareAndTag(bool status, bool needPersistEnabl
         return ret;
     }
     controlCenterMap = StringToControlCenterMap(value);
-    if (controlCenterMap.find(bundleName) != controlCenterMap.end()) {
-        controlCenterMap[bundleName][CONTROL_CENTER_STATUS_INDEX] = status;
+
+    // 获取当前镜头位置
+    auto device = sessionForControlCenter->GetCameraDevice();
+    int32_t cameraPosition = OHOS_CAMERA_POSITION_BACK;  // 默认后置
+    if (device != nullptr) {
+        cameraPosition = device->GetCameraPosition();
+    }
+
+    // 构造带镜头位置的key
+    std::string keyWithPosition = bundleName + "_" +
+        (cameraPosition == OHOS_CAMERA_POSITION_FRONT ? "front" : "back");
+
+    if (controlCenterMap.find(keyWithPosition) != controlCenterMap.end()) {
+        // 找到对应镜头的存储数据，更新状态
+        controlCenterMap[keyWithPosition][CONTROL_CENTER_STATUS_INDEX] = status;
         std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
         if (needPersistEnable) {
             ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
@@ -569,18 +594,18 @@ int32_t HCameraService::UpdateDataShareAndTag(bool status, bool needPersistEnabl
         }
         if (status) {
             sessionForControlCenter->SetBeautyValue(
-                BeautyType::AUTO_TYPE, controlCenterMap[bundleName][CONTROL_CENTER_BEAUTY_INDEX], false);
+                BeautyType::AUTO_TYPE, controlCenterMap[keyWithPosition][CONTROL_CENTER_BEAUTY_INDEX], false);
             sessionForControlCenter->SetVirtualApertureValue(
-                controlCenterMap[bundleName][CONTROL_CENTER_APERTURE_INDEX], false);
+                controlCenterMap[keyWithPosition][CONTROL_CENTER_APERTURE_INDEX], false);
             sessionForControlCenter->EnableAutoFraming(
-                controlCenterMap[bundleName][CONTROL_CENTER_AUTO_FRAMING_INDEX], false);
+                controlCenterMap[keyWithPosition][CONTROL_CENTER_AUTO_FRAMING_INDEX], false);
         } else if (needPersistEnable) {
             sessionForControlCenter->SetBeautyValue(BeautyType::AUTO_TYPE, 0, false);
             sessionForControlCenter->SetVirtualApertureValue(0, false);
             sessionForControlCenter->EnableAutoFraming(0, false);
         }
     } else if (needPersistEnable) {
-        MEDIA_INFO_LOG("UpdateDataShareAndTag no bundle, create info for new bundle.");
+        MEDIA_INFO_LOG("UpdateDataShareAndTag no key for current position, create info.");
         ret = CreateControlCenterDataShare(controlCenterMap, bundleName, status);
     }
     return ret;
@@ -597,7 +622,18 @@ int32_t HCameraService::CreateControlCenterDataShare(std::map<std::string,
     float biggestAperture = 0;
     CHECK_EXECUTE(virtualMetadata.size() > 0, biggestAperture = virtualMetadata.back());
 
-    controlCenterMap[bundleName] = {status, 0, biggestAperture, 0};
+    // 获取当前镜头位置
+    auto device = sessionForControlCenter->GetCameraDevice();
+    int32_t cameraPosition = OHOS_CAMERA_POSITION_FRONT;  // 默认前置
+    if (device != nullptr) {
+        cameraPosition = device->GetCameraPosition();
+    }
+
+    // 构造带镜头位置的key
+    std::string keyWithPosition = bundleName + "_" +
+        (cameraPosition == OHOS_CAMERA_POSITION_FRONT ? "front" : "back");
+
+    controlCenterMap[keyWithPosition] = {status, 0, biggestAperture, 0};
     std::string controlCenterString = ControlCenterMapToString(controlCenterMap);
     auto ret = cameraDataShareHelper_->UpdateOnce(CONTROL_CENTER_DATA, controlCenterString);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "CreateControlCenterDataShare failed.");
@@ -1010,6 +1046,34 @@ void HCameraService::SetControlCenterInVideo(sptr<HCaptureSession>& captureSessi
     MEDIA_INFO_LOG("Save videoSession for controlCenter");
 }
 
+void HCameraService::SetControlCenterDefaultActiveCase()
+{
+    bool defaultCase = system::GetParameter("const.multimedia.camera.default_active_control_center",
+        "false") == "true" && !CheckSystemApp();
+    if (!defaultCase) {
+        return;
+    }
+    MEDIA_INFO_LOG("HCameraService::SetControlCenterDefaultActiveCase");
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
+    CHECK_RETURN_ELOG(sessionForControlCenter == nullptr,
+        "GetVideoSessionForControlCenter failed, session == nullptr.");
+    auto device = sessionForControlCenter->GetCameraDevice();
+    CHECK_RETURN_ELOG(device == nullptr,
+        "HCameraService::SetControlCenterDefaultActiveCase current session has null camera device");
+    auto settings = device->GetDeviceAbility();
+    CHECK_RETURN_ELOG(settings == nullptr, "metadata is null");
+    camera_metadata_item_t item;
+    bool isSupported = false;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_CONTROL_CENTER_SUPPORTED, &item);
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
+        isSupported = static_cast<bool>(item.data.u8[0]);
+    }
+    ret = EnableControlCenter(isSupported, true);
+    if (ret != CAMERA_OK) {
+        MEDIA_ERR_LOG("EnableControlCenter failed, retCode:%d", ret);
+    }
+}
+
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
@@ -1054,6 +1118,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
         std::lock_guard<std::mutex> lock(preCameraMutex_);
         SetPrelaunchScanCameraConfig(bundleName);
         clearPreScanConfig();
+        SetControlCenterDefaultActiveCase();
     });
     return rc;
 }

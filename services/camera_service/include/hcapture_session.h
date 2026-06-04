@@ -110,7 +110,11 @@ class EXPORT_API HCaptureSession : public CaptureSessionStub, public IHCameraClo
 public:
     static CamServiceError NewInstance(const uint32_t callerToken, int32_t opMode, sptr<HCaptureSession>& outSession);
     virtual ~HCaptureSession();
-
+    inline const sptr<HCameraDevice> GetCameraDevice()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceLock_);
+        return cameraDevice_;
+    }
     int32_t BeginConfig() override;
     int32_t CommitConfig() override;
     void DynamicConfigCommit();
@@ -303,11 +307,6 @@ private:
     bool isNeedCommitting_ = false;
     std::shared_ptr<CameraDataShareHelper> cameraDataShareHelper_;
     void SetCameraDevice(sptr<HCameraDevice> device);
-    inline const sptr<HCameraDevice> GetCameraDevice()
-    {
-        std::lock_guard<std::mutex> lock(cameraDeviceLock_);
-        return cameraDevice_;
-    }
     string CreateDisplayName(const std::string& suffix);
     string CreateBurstDisplayName(int32_t imageSeqId, int32_t seqId);
     int32_t ValidateSessionInputs();
