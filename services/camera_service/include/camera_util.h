@@ -68,6 +68,7 @@ static const std::string CAMERA_STATE = "cameraState";
 static const std::string IS_SYSTEM_CAMERA = "isSystemCamera";
 static const std::string CAMERA_MSG = "cameraMsg";
 static const std::string CLIENT_NAME = "clientName";
+static const std::string CLIENT_REAL_NAME = "clientRealName";
 
 static const uint32_t ROOT_UID = 0;
 static const uint32_t FACE_CLIENT_UID = 1088;
