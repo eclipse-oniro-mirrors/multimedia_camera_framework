@@ -1,4 +1,4 @@
-From 668a3d41fabc971b0f4868c80bb207c8780a9dfa Mon Sep 17 00:00:00 2001
+From 0107cb5b23a45e4c0b674219a85d2a96968c2a15 Mon Sep 17 00:00:00 2001
 From: mengzhe 00939602 <mengzhe5@huawei.com>
 Date: Thu, 4 Jun 2026 10:05:17 +0800
 Subject: [PATCH] =?UTF-8?q?=E6=99=AE=E9=80=9A=E5=BD=95=E5=83=8F=E8=AE=BE?=
@@ -14,12 +14,62 @@ Content-Transfer-Encoding: 8bit
 
 Change-Id: I95625bbab557a2e548f685fef23f173b79e55e5d
 ---
- .../camera/base/src/session/capture_session.cpp    | 14 +++++++++++++-
- .../camera/include/session/capture_session.h       |  6 ++++--
- 2 files changed, 17 insertions(+), 3 deletions(-)
+ .../js/camera_napi/src/camera_napi_utils.cpp    |  2 ++
+ .../camera/base/src/output/preview_output.cpp   |  9 ++++-----
+ .../camera/base/src/session/capture_session.cpp | 17 ++++++++++++++---
+ frameworks/native/ndk/impl/camera_util.cpp      |  1 +
+ .../native/camera/include/camera_error_code.h   |  1 +
+ .../camera/include/session/capture_session.h    |  6 ++++--
+ 6 files changed, 26 insertions(+), 10 deletions(-)
 
+diff --git a/frameworks/js/camera_napi/src/camera_napi_utils.cpp b/frameworks/js/camera_napi/src/camera_napi_utils.cpp
+index 3417094c14..ddad6ce960 100644
+--- a/frameworks/js/camera_napi/src/camera_napi_utils.cpp
++++ b/frameworks/js/camera_napi/src/camera_napi_utils.cpp
+@@ -48,6 +48,7 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
+     {74002011, "Camera service fatal error: Unsupported resolution configuration."},
+     {74002012, "Camera service fatal error: Alloc failed."},
+     {74002013, "Camera service fatal error: Invalid Session Configuration."},
++    {74002014, "Camera service fatal error: Invalid Input Device"},
+     {7400801, "Capability not supported."},
+ };
+ 
+@@ -61,6 +62,7 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
+     {74002011, "7400201"},
+     {74002012, "7400201"},
+     {74002013, "7400201"},
++    {74002014, "7400201"},
+     {7400801, "801"}
+ };
+ 
+diff --git a/frameworks/native/camera/base/src/output/preview_output.cpp b/frameworks/native/camera/base/src/output/preview_output.cpp
+index acc5083f8d..77d2430d98 100644
+--- a/frameworks/native/camera/base/src/output/preview_output.cpp
++++ b/frameworks/native/camera/base/src/output/preview_output.cpp
+@@ -841,17 +841,16 @@ int32_t PreviewOutput::EnableLogAssistance(bool isEnable)
+ int32_t PreviewOutput::SetLogViewAssistEnable(bool isEnable)
+ {
+     MEDIA_INFO_LOG("PreviewOutput::SetLogViewAssistEnable is called, enable: %{public}d", isEnable);
+-    MEDIA_INFO_LOG("PreviewOutput::SetLogViewAssistEnable is called, IsLogAssistanceSupported: %{public}d",
+-                   IsLogAssistanceSupported());
+-    CHECK_RETURN_RET(!IsLogAssistanceSupported(), CameraErrorCode::CAPABILITY_NOT_SUPPORTED);
++    CHECK_RETURN_RET_ELOG(!IsLogAssistanceSupported(), CameraErrorCode::CAPABILITY_NOT_SUPPORTED,
++                          "PreviewOutput::SetLogViewAssistEnable is not supported ViewAssist");
+     auto captureSession = GetSession();
+     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SESSION_NOT_CONFIG,
+         "PreviewOutput::SetLogViewAssistEnable failed, captureSession is nullptr");
+     auto inputDevice = captureSession->GetInputDevice();
+-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
++    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR_OF_INPUT_DEVICE,
+         "PreviewOutput::SetLogViewAssistEnable failed, inputDevice is nullptr");
+     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR,
++    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, SERVICE_FATL_ERROR_OF_INPUT_DEVICE,
+                           "PreviewOutput::SetLogViewAssistEnable failed, cameraObj is nullptr");
+     captureSession->LockForControl();
+     int32_t retCode = captureSession->SetLogViewAssistEnable(isEnable);
 diff --git a/frameworks/native/camera/base/src/session/capture_session.cpp b/frameworks/native/camera/base/src/session/capture_session.cpp
-index efb8c61037..3e5d66f500 100644
+index efb8c61037..4d54c42cc9 100644
 --- a/frameworks/native/camera/base/src/session/capture_session.cpp
 +++ b/frameworks/native/camera/base/src/session/capture_session.cpp
 @@ -574,7 +574,7 @@ int32_t CaptureSession::CommitConfig()
@@ -50,6 +100,40 @@ index efb8c61037..3e5d66f500 100644
  std::shared_ptr<MoonCaptureBoostFeature> CaptureSession::GetMoonCaptureBoostFeature()
  {
      auto inputDevice = GetInputDevice();
+@@ -8117,8 +8129,7 @@ int32_t CaptureSession::SetLogViewAssistEnable(const bool enable)
+     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
+         "CaptureSession::SetLogViewAssistEnable Need to call LockForControl() before setting camera properties");
+     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_LOG_ASSISTANCE, &enable, 1);
+-    CHECK_PRINT_ELOG(!status, "CaptureSession::SetLogViewAssistEnable Failed to set flash mode");
+-    CHECK_PRINT_ELOG(status, "CaptureSession::SetLogViewAssistEnable Success to set flash mode");
++    CHECK_PRINT_ELOG(!status, "CaptureSession::SetLogViewAssistEnable Failed to set view assist");
+     return CameraErrorCode::SUCCESS;
+ }
+ 
+diff --git a/frameworks/native/ndk/impl/camera_util.cpp b/frameworks/native/ndk/impl/camera_util.cpp
+index 67530d0d4a..ae1bf784e4 100644
+--- a/frameworks/native/ndk/impl/camera_util.cpp
++++ b/frameworks/native/ndk/impl/camera_util.cpp
+@@ -40,6 +40,7 @@ static const std::unordered_map<int32_t, Camera_ErrorCode> frameworkToNdkErrorMa
+     {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG), CAMERA_SERVICE_FATAL_ERROR},
+     {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC), CAMERA_SERVICE_FATAL_ERROR},
+     {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE), CAMERA_SERVICE_FATAL_ERROR},
+     {static_cast<int32_t>(CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS),
+      CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS},
+     {static_cast<int32_t>(CameraErrorCode::CAPABILITY_NOT_SUPPORTED),
+diff --git a/interfaces/inner_api/native/camera/include/camera_error_code.h b/interfaces/inner_api/native/camera/include/camera_error_code.h
+index ca0847caf9..e865eb8707 100644
+--- a/interfaces/inner_api/native/camera/include/camera_error_code.h
++++ b/interfaces/inner_api/native/camera/include/camera_error_code.h
+@@ -54,6 +54,7 @@ enum CameraErrorCode : int32_t {
+     SERVICE_FATL_ERROR_OF_CONFIG = 74002011,
+     SERVICE_FATL_ERROR_OF_ALLOC = 74002012,
+     SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG = 74002013,
++    SERVICE_FATL_ERROR_OF_INPUT_DEVICE = 74002014,
+ 
+     UNSUPPORTED_MULTI_CAMERA_COMBINATION =  7400113,
+     DEVICE_REPLACED = 7400114,
 diff --git a/interfaces/inner_api/native/camera/include/session/capture_session.h b/interfaces/inner_api/native/camera/include/session/capture_session.h
 index 757498959c..4bb2ee6c55 100644
 --- a/interfaces/inner_api/native/camera/include/session/capture_session.h
