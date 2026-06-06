@@ -1,0 +1,163 @@
+From a7342ad31af3cd20169e2fea2f5601156e3a1bbd Mon Sep 17 00:00:00 2001
+From: m00939602 <m00939602@notesmail.huawei.com/>
+Date: Sat, 6 Jun 2026 09:29:52 +0800
+Subject: [PATCH] TicketNo: Description: Team: Feature or Bugfix: Binary
+ Source: PrivateCode(Yes/No):
+
+Change-Id: I2d85a21e62a80e21c1481536cd9f63f064721920
+---
+ .../src/output/preview_output_napi.cpp        |  2 +-
+ .../camera/base/src/output/preview_output.cpp | 44 ++++++++++++++++++-
+ .../base/src/session/capture_session.cpp      | 11 ++++-
+ .../native/ndk/impl/preview_output_impl.cpp   |  2 +-
+ .../camera/include/output/preview_output.h    |  1 +
+ .../camera/include/session/capture_session.h  |  2 +
+ 6 files changed, 57 insertions(+), 5 deletions(-)
+
+diff --git a/frameworks/js/camera_napi/src/output/preview_output_napi.cpp b/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
+index 385c376bd7..891726b790 100644
+--- a/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
+@@ -1198,7 +1198,7 @@ napi_value PreviewOutputNapi::IsLogViewAssistSupported(napi_env env, napi_callba
+         return nullptr;
+     }
+ 
+-    bool isSupported = previewOutputNapi->previewOutput_->IsLogAssistanceSupported();
++    bool isSupported = previewOutputNapi->previewOutput_->IsLogViewAssistSupported();
+     return CameraNapiUtils::GetBooleanValue(env, isSupported);
+ }
+ 
+diff --git a/frameworks/native/camera/base/src/output/preview_output.cpp b/frameworks/native/camera/base/src/output/preview_output.cpp
+index 77d2430d98..f59146963f 100644
+--- a/frameworks/native/camera/base/src/output/preview_output.cpp
++++ b/frameworks/native/camera/base/src/output/preview_output.cpp
+@@ -82,6 +82,8 @@ static constexpr int32_t SKETCH_MIN_WIDTH = 480;
+ static constexpr int32_t RENDER_FIL_FILL = 9;
+ static constexpr int32_t RENDER_FIL_COVER = 13;
+ static constexpr float TARGET_MIN_RATIO = 0.01;
++static constexpr int32_t HD_WIDTH = 1920;
++static constexpr int32_t HD_HEIGHT = 1080;
+ PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
+     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
+ {
+@@ -810,11 +812,51 @@ bool PreviewOutput::IsLogAssistanceSupported()
+             isLogAssistanceSupported = true;
+         }
+     }
+-    MEDIA_INFO_LOG("IsLogAssistanceSupported isSupport: %{public}d", isLogAssistanceSupported);
+     return isLogAssistanceSupported;
+     // LCOV_EXCL_STOP
+ }
+ 
++bool IsLower1080P(Size size)
++{
++    if (size.width <= HD_WIDTH && size.height <= HD_HEIGHT) {
++        return true;
++    }
++    return false;
++}
++
++bool PreviewOutput::IsLogViewAssistSupported()
++{
++    MEDIA_INFO_LOG("PreviewOutput::IsLogViewAssistSupported is called");
++    auto session = GetSession();
++    CHECK_RETURN_RET_ELOG(
++        session == nullptr, false, "PreviewOutput IsLogViewAssistSupported error!, session is nullptr");
++    auto inputDevice = session->GetInputDevice();
++    CHECK_RETURN_RET_ELOG(
++        inputDevice == nullptr, false, "PreviewOutput IsLogViewAssistSupported error!, inputDevice is nullptr");
++    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
++    CHECK_RETURN_RET_ELOG(
++        cameraObj == nullptr, false, "PreviewOutput IsLogViewAssistSupported error!, cameraObj is nullptr");
++    auto previewProfile = GetPreviewProfile();
++    CHECK_RETURN_RET_ELOG(!IsLower1080P(previewProfile->GetSize()), false,
++                          "PreviewOutput::IsLogViewAssistSupported Resolution is not supported");
++    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
++    CHECK_RETURN_RET(metadata == nullptr, false);
++    camera_metadata_item_t item;
++    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LOG_ASSISTANCE_SUPPORTED, &item);
++    CHECK_RETURN_RET_ELOG(
++        retCode != CAM_META_SUCCESS, false, "PreviewOutput Can not find OHOS_ABILITY_LOG_ASSISTANCE_SUPPORTED");
++    bool isLogAssistanceSupported = false;
++    SceneMode currentSceneMode = session->GetMode();
++    MEDIA_INFO_LOG("IsLogViewAssistSupported item.count:%{public}d", static_cast<int>(item.count));
++    for (int i = 0; i < static_cast<int>(item.count); i++) {
++        MEDIA_INFO_LOG("mode u8[%{public}d]: %{public}d", i, item.data.u8[i]);
++        if (currentSceneMode == static_cast<SceneMode>(item.data.u8[i])) {
++            isLogAssistanceSupported = true;
++        }
++    }
++    return isLogAssistanceSupported;
++}
++
+ int32_t PreviewOutput::EnableLogAssistance(bool isEnable)
+ {
+     // LCOV_EXCL_START
+diff --git a/frameworks/native/camera/base/src/session/capture_session.cpp b/frameworks/native/camera/base/src/session/capture_session.cpp
+index 59da84020e..eafbebb327 100644
+--- a/frameworks/native/camera/base/src/session/capture_session.cpp
++++ b/frameworks/native/camera/base/src/session/capture_session.cpp
+@@ -572,13 +572,20 @@ int32_t CaptureSession::CommitConfig()
+     }
+     SetZoomRatioForAudio(DEFAULT_ZOOM_RATIO);
+     CHECK_EXECUTE (cameraDfxReportHelper_ != nullptr, cameraDfxReportHelper_->ReportCameraConfigInfo(errCode));
+-    if (errCode == CAMERA_OK && pendingDisableMacroOnCommit_) {
++    CHECK_EXECUTE(errCode == CAMERA_OK, CheckAndEnableMacro());
++    return ServiceToCameraError(errCode);
++}
++
++void CaptureSession::CheckAndEnableMacro()
++{
++    ColorSpace colorSpace = ColorSpace::COLOR_SPACE_UNKNOWN;
++    GetActiveColorSpace(colorSpace);
++    if (pendingDisableMacroOnCommit_ || colorSpace == ColorSpace::H_LOG) {
+         LockForControl();
+         InnerEnableMacro(false);
+         UnlockForControl();
+         pendingDisableMacroOnCommit_ = false;  // 清除标志位
+     }
+-    return ServiceToCameraError(errCode);
+ }
+ 
+ std::string CaptureSession::CameraDfxReportHelper::GetStreamTypeName(StreamType type)
+diff --git a/frameworks/native/ndk/impl/preview_output_impl.cpp b/frameworks/native/ndk/impl/preview_output_impl.cpp
+index cf990b7fee..2a98f4a45a 100644
+--- a/frameworks/native/ndk/impl/preview_output_impl.cpp
++++ b/frameworks/native/ndk/impl/preview_output_impl.cpp
+@@ -282,7 +282,7 @@ Camera_ErrorCode Camera_PreviewOutput::AddDeferredSurface(const char* surfaceId)
+ bool Camera_PreviewOutput::IsLogViewAssistSupported() const
+ {
+     MEDIA_INFO_LOG("Camera_PreviewOutput::IsLogViewAssistSupported is called");
+-    return innerPreviewOutput_->IsLogAssistanceSupported();
++    return innerPreviewOutput_->IsLogViewAssistSupported();
+ }
+ 
+ Camera_ErrorCode Camera_PreviewOutput::SetLogViewAssistEnable(bool enabled)
+diff --git a/interfaces/inner_api/native/camera/include/output/preview_output.h b/interfaces/inner_api/native/camera/include/output/preview_output.h
+index 591e447866..845d9277a6 100644
+--- a/interfaces/inner_api/native/camera/include/output/preview_output.h
++++ b/interfaces/inner_api/native/camera/include/output/preview_output.h
+@@ -310,6 +310,7 @@ public:
+     std::string GetSurfaceId();
+     void ReportXComponentInfoEvent();
+     int32_t SetLogViewAssistEnable(bool isEnable);
++    bool IsLogViewAssistSupported();
+ private:
+     int32_t previewFormat_;
+     std::mutex surfaceIdMutex_;
+diff --git a/interfaces/inner_api/native/camera/include/session/capture_session.h b/interfaces/inner_api/native/camera/include/session/capture_session.h
+index 8df27d9b7b..dcf72a6e91 100644
+--- a/interfaces/inner_api/native/camera/include/session/capture_session.h
++++ b/interfaces/inner_api/native/camera/include/session/capture_session.h
+@@ -2697,6 +2697,8 @@ protected:
+ 
+     void SetLightPathEffectStatus(bool isEnabled);
+ 
++    void CheckAndEnableMacro();
++
+ private:
+     int32_t ValidateSessionForZoom();
+ 
+-- 
+2.51.2.huawei.11
+
