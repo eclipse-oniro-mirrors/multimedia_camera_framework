@@ -1036,13 +1036,6 @@ void HCameraService::SetControlCenterInVideo(sptr<HCaptureSession>& captureSessi
         std::bind(&HCameraService::UpdateControlCenterStatus, this, std::placeholders::_1));
     std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
     captureSession->SetBundleForControlCenter(bundleName);
-    if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true"
-        && !CheckSystemApp()) {
-        int32_t rc = EnableControlCenter(true, true);
-        if (rc != CAMERA_OK) {
-            MEDIA_INFO_LOG("EnableControlCenter failed,retCode:%d", rc);
-        }
-    }
     MEDIA_INFO_LOG("Save videoSession for controlCenter");
 }
 
