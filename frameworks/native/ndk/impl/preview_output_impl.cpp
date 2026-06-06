@@ -282,7 +282,7 @@ Camera_ErrorCode Camera_PreviewOutput::AddDeferredSurface(const char* surfaceId)
 bool Camera_PreviewOutput::IsLogViewAssistSupported() const
 {
     MEDIA_INFO_LOG("Camera_PreviewOutput::IsLogViewAssistSupported is called");
-    return innerPreviewOutput_->IsLogAssistanceSupported();
+    return innerPreviewOutput_->IsLogViewAssistSupported();
 }
 
 Camera_ErrorCode Camera_PreviewOutput::SetLogViewAssistEnable(bool enabled)

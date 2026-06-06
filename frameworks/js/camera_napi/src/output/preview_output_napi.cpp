@@ -1198,7 +1198,7 @@ napi_value PreviewOutputNapi::IsLogViewAssistSupported(napi_env env, napi_callba
         return nullptr;
     }
 
-    bool isSupported = previewOutputNapi->previewOutput_->IsLogAssistanceSupported();
+    bool isSupported = previewOutputNapi->previewOutput_->IsLogViewAssistSupported();
     return CameraNapiUtils::GetBooleanValue(env, isSupported);
 }
 

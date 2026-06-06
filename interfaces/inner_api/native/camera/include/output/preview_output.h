@@ -308,6 +308,7 @@ public:
     std::string GetSurfaceId();
     void ReportXComponentInfoEvent();
     int32_t SetLogViewAssistEnable(bool isEnable);
+    bool IsLogViewAssistSupported();
 private:
     int32_t previewFormat_;
     std::mutex surfaceIdMutex_;

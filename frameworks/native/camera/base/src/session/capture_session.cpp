@@ -546,13 +546,20 @@ int32_t CaptureSession::CommitConfig()
     }
     SetZoomRatioForAudio(DEFAULT_ZOOM_RATIO);
     CHECK_EXECUTE (cameraDfxReportHelper_ != nullptr, cameraDfxReportHelper_->ReportCameraConfigInfo(errCode));
-    if (errCode == CAMERA_OK && pendingDisableMacroOnCommit_) {
+    CHECK_EXECUTE(errCode == CAMERA_OK, CheckAndEnableMacro());
+    return ServiceToCameraError(errCode);
+}
+
+void CaptureSession::CheckAndEnableMacro()
+{
+    ColorSpace colorSpace = ColorSpace::COLOR_SPACE_UNKNOWN;
+    GetActiveColorSpace(colorSpace);
+    if (pendingDisableMacroOnCommit_ || colorSpace == ColorSpace::H_LOG) {
         LockForControl();
         InnerEnableMacro(false);
         UnlockForControl();
         pendingDisableMacroOnCommit_ = false;  // 清除标志位
     }
-    return ServiceToCameraError(errCode);
 }
 
 std::string CaptureSession::CameraDfxReportHelper::GetStreamTypeName(StreamType type)
