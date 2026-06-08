@@ -81,6 +81,8 @@ static constexpr int32_t SKETCH_MIN_WIDTH = 480;
 static constexpr int32_t RENDER_FIL_FILL = 9;
 static constexpr int32_t RENDER_FIL_COVER = 13;
 static constexpr float TARGET_MIN_RATIO = 0.01;
+static constexpr int32_t HD_WIDTH = 1920;
+static constexpr int32_t HD_HEIGHT = 1080;
 PreviewOutput::PreviewOutput(sptr<IBufferProducer> bufferProducer)
     : CaptureOutput(CAPTURE_OUTPUT_TYPE_PREVIEW, StreamType::REPEAT, bufferProducer, nullptr)
 {
@@ -784,9 +786,49 @@ bool PreviewOutput::IsLogAssistanceSupported()
             isLogAssistanceSupported = true;
         }
     }
-    MEDIA_INFO_LOG("IsLogAssistanceSupported isSupport: %{public}d", isLogAssistanceSupported);
     return isLogAssistanceSupported;
     // LCOV_EXCL_STOP
+}
+
+bool IsLower1080P(Size size)
+{
+    if (size.width <= HD_WIDTH && size.height <= HD_HEIGHT) {
+        return true;
+    }
+    return false;
+}
+
+bool PreviewOutput::IsLogViewAssistSupported()
+{
+    MEDIA_INFO_LOG("PreviewOutput::IsLogViewAssistSupported is called");
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, false, "PreviewOutput IsLogViewAssistSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(
+        inputDevice == nullptr, false, "PreviewOutput IsLogViewAssistSupported error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, false, "PreviewOutput IsLogViewAssistSupported error!, cameraObj is nullptr");
+    auto previewProfile = GetPreviewProfile();
+    CHECK_RETURN_RET_ELOG(!IsLower1080P(previewProfile->GetSize()), false,
+                          "PreviewOutput::IsLogViewAssistSupported Resolution is not supported");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET(metadata == nullptr, false);
+    camera_metadata_item_t item;
+    int32_t retCode = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_LOG_ASSISTANCE_SUPPORTED, &item);
+    CHECK_RETURN_RET_ELOG(
+        retCode != CAM_META_SUCCESS, false, "PreviewOutput Can not find OHOS_ABILITY_LOG_ASSISTANCE_SUPPORTED");
+    bool isLogAssistanceSupported = false;
+    SceneMode currentSceneMode = session->GetMode();
+    MEDIA_INFO_LOG("IsLogViewAssistSupported item.count:%{public}d", static_cast<int>(item.count));
+    for (int i = 0; i < static_cast<int>(item.count); i++) {
+        MEDIA_INFO_LOG("mode u8[%{public}d]: %{public}d", i, item.data.u8[i]);
+        if (currentSceneMode == static_cast<SceneMode>(item.data.u8[i])) {
+            isLogAssistanceSupported = true;
+        }
+    }
+    return isLogAssistanceSupported;
 }
 
 int32_t PreviewOutput::EnableLogAssistance(bool isEnable)
