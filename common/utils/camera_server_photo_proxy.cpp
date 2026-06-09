@@ -240,8 +240,8 @@ void CameraServerPhotoProxy::GetServerPhotoProxyInfo(sptr<SurfaceBuffer>& surfac
 int32_t CameraServerPhotoProxy::GetCaptureId()
 {
     // LCOV_EXCL_START
-    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetCaptureId captureId:%{public}d", captureId_);
     std::lock_guard<std::mutex> lock(mutex_);
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetCaptureId captureId:%{public}d", captureId_);
     return captureId_;
     // LCOV_EXCL_STOP
 }
@@ -249,8 +249,8 @@ int32_t CameraServerPhotoProxy::GetCaptureId()
 int32_t CameraServerPhotoProxy::GetBurstSeqId()
 {
     // LCOV_EXCL_START
-    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetBurstSeqId burstSeqId:%{public}d", burstSeqId_);
     std::lock_guard<std::mutex> lock(mutex_);
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetBurstSeqId burstSeqId:%{public}d", burstSeqId_);
     return burstSeqId_;
     // LCOV_EXCL_STOP
 }
@@ -258,8 +258,8 @@ int32_t CameraServerPhotoProxy::GetBurstSeqId()
 std::string CameraServerPhotoProxy::GetPhotoId()
 {
     // LCOV_EXCL_START
-    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetPhotoId photoId:%{public}s", photoId_.c_str());
     std::lock_guard<std::mutex> lock(mutex_);
+    MEDIA_INFO_LOG("CameraServerPhotoProxy::GetPhotoId photoId:%{public}s", photoId_.c_str());
     return photoId_;
     // LCOV_EXCL_STOP
 }
