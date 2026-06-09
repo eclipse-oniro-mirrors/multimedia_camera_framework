@@ -115,7 +115,7 @@ void UIExtensionCallback::OnResult(int32_t resultCode, const OHOS::AAFwk::Want &
     const AAFwk::WantParams &wantParams = result.GetParams();
     std::string uri = wantParams.GetStringParam("resourceUri");
     std::string resourceMode = wantParams.GetStringParam("mode");
-    MEDIA_INFO_LOG("OnResult is called,resultCode = %{public}d, uri = %{public}s ,CaptureMode:%{public}s", resultCode,
+    MEDIA_INFO_LOG("OnResult is called,resultCode = %{public}d, uri = %{private}s ,CaptureMode:%{public}s", resultCode,
                    uri.c_str(), resourceMode.c_str());
     resultUri_ = uri;
     resultMode_ = resourceMode;
@@ -273,7 +273,7 @@ void Pick(OHOS::AbilityRuntime::Context *context, CArrI32 pickerMediaTypes, CJPi
     asyncCtx->pickerProfile.saveUri = std::string(pickerProfile.saveUri);
     MEDIA_INFO_LOG("GetPickerProfile cameraPosition: %{public}d, duration: %{public}d",
                    asyncCtx->pickerProfile.cameraPosition, asyncCtx->pickerProfile.videoDuration);
-    MEDIA_INFO_LOG("GetPickerProfile saveUri: %{public}s", asyncCtx->pickerProfile.saveUri.c_str());
+    MEDIA_INFO_LOG("GetPickerProfile saveUri: %{private}s", asyncCtx->pickerProfile.saveUri.c_str());
     SetPickerWantParams(asyncCtx->want, asyncCtx->contextProxy, mediaTypes, asyncCtx->pickerProfile);
     asyncCtx->uiExtCallback = StartCameraAbility(asyncCtx->contextProxy, asyncCtx->want);
     if (asyncCtx->uiExtCallback == nullptr) {
