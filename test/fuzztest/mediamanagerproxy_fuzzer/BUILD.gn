@@ -55,6 +55,7 @@ ohos_fuzztest("MediaManagerProxyFuzzTest") {
     "media_library:media_library",
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
+    "media_foundation:media_foundation",
   ]
 }
 
