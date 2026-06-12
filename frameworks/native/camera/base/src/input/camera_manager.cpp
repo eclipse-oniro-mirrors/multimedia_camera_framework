@@ -3794,7 +3794,7 @@ void CameraManager::UpdateTorchMode(TorchMode mode)
 int32_t CameraManager::SetTorchLevel(float level)
 {
     auto serviceProxy = GetServiceProxy();
-    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, SERVICE_FATL_ERROR, "SetTorchLevel serviceProxy is null");
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CAMERA_SERVICE_NULL, "SetTorchLevel serviceProxy is null");
     MEDIA_INFO_LOG("CameraManager::SetTorchLevel is %{public}f", level);
     int32_t retCode = serviceProxy->SetTorchLevel(level);
     CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SetTorchLevel call failed, retCode: %{public}d", retCode);
@@ -3821,7 +3821,7 @@ int32_t CameraManager::SetTorchModeOnWithLevel(TorchMode mode, float level)
     if (retCode == CAMERA_OK) {
         UpdateTorchMode(mode);
     }
-    return ServiceToCameraError(retCode);
+    return ServiceToCameraErrorV2(retCode);
 }
 
 int32_t CameraManager::SetPrelaunchConfig(
