@@ -1263,10 +1263,10 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output, bool isVerifyOutp
         return ServiceToCameraError(CAMERA_INVALID_ARG);
     }
 
-    CHECK_RETURN_RET_ELOG(ConfigureOutput(output) != CameraErrorCode::SUCCESS, CameraErrorCode::SERVICE_FATL_ERROR,
-        "CaptureSession::AddOutput ConfigureOutput fail!");
+    CHECK_RETURN_RET_ELOG(ConfigureOutput(output) != CameraErrorCode::SUCCESS,
+        CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG, "CaptureSession::AddOutput ConfigureOutput fail!");
     CHECK_EXECUTE(output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA, metaOutput_ = output);
-    CHECK_RETURN_RET_ELOG(isVerifyOutput && !CanAddOutput(output), ServiceToCameraError(CAMERA_INVALID_ARG),
+    CHECK_RETURN_RET_ELOG(isVerifyOutput && !CanAddOutput(output), CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG,
         "CanAddOutput check failed!");
     auto captureSession = GetCaptureSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, ServiceToCameraError(CAMERA_UNKNOWN_ERROR),

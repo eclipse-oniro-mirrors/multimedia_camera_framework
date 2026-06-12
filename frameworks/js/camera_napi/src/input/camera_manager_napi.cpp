@@ -2536,7 +2536,7 @@ napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callbac
         }
         TorchMode torchMode = (TorchMode)mode;
         int32_t retCode = CameraManager::GetInstance()->SetTorchModeOnWithLevel(torchMode, level);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
+        if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
             MEDIA_DEBUG_LOG("SetTorchModeOnWithLevel fail throw error");
         }
     } else {

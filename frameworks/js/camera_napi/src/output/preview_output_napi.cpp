@@ -1095,7 +1095,7 @@ napi_value PreviewOutputNapi::SetFrameRate(napi_env env, napi_callback_info info
         int32_t maxFrameRate;
         napi_get_value_int32(env, argv[PARAM1], &maxFrameRate);
         int32_t retCode = previewOutputNapi->previewOutput_->SetFrameRate(minFrameRate, maxFrameRate);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
+        if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
             MEDIA_ERR_LOG("PreviewOutputNapi::SetFrameRate! %{public}d", retCode);
             return result;
         }

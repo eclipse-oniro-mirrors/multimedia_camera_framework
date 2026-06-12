@@ -34,6 +34,7 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
     {74001021, "Operation not allowed: Session not ready."},
     {74001022, "Operation not allowed: Feature or mode unsupported."},
     {74001023, "Operation not allowed: Device unavailable."},
+    {74001024, "Operation not allowed: Device conflict."},
     {7400103, "Session not config."},
     {7400104, "Session not running."},
     {7400105, "Session config locked."},
@@ -47,6 +48,7 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
     {74002012, "Camera service fatal error: Alloc failed."},
     {74002013, "Camera service fatal error: Invalid Session Configuration."},
     {74002014, "Camera service fatal error: Invalid Input Device"},
+    {74002015, "Camera service fatal error: Camera Service is Null"},
     {7400801, "Capability not supported."},
 };
 
@@ -55,12 +57,14 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
     {74001021, "7400102"},
     {74001022, "7400102"},
     {74001023, "7400102"},
+    {74001024, "7400102"},
     {7400103, "7400103"},
     {7400201, "7400201"},
     {74002011, "7400201"},
     {74002012, "7400201"},
     {74002013, "7400201"},
     {74002014, "7400201"},
+    {74002015, "7400201"},
     {7400801, "801"}
 };
 

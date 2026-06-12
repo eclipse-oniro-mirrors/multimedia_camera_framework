@@ -1514,6 +1514,7 @@ void CameraSessionNapi::CommitConfigAsync(uv_work_t *work)
     CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
         context->errorCode = context->objectInfo->cameraSession_->CommitConfig();
         context->status = context->errorCode == CameraErrorCode::SUCCESS;
+        context->errorMsg = CameraNapiUtils::GetErrorMessageV2(context->errorCode).c_str();
         MEDIA_INFO_LOG("CommitConfigAsync errorCode:%{public}d", context->errorCode);
     });
 }
