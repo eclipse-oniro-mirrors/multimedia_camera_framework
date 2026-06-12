@@ -841,11 +841,16 @@ shared_ptr<CameraMetaInfo> HCameraService::GetCameraMetaInfo(std::string &camera
     for (uint32_t i = 0; i < item.count; i++) {
         supportModes.push_back(item.data.u8[i]);
     }
+    res = OHOS::Camera::FindCameraMetadataItem(metadata, OHOS_ABILITY_AUTOMOTIVE_CAMERA_POSITION, &item);
+    uint8_t automotivePosition =
+        (res == CAM_META_SUCCESS && item.count) ? item.data.u8[0] : OHOS_CAMERA_POSITION_EXTERIOR_OTHER;
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager GetCameras camera ID:%s, Camera position:%d, "
-                                        "Camera Type:%d, Connection Type:%d, Mirror support:%d, Fold status %d",
-        cameraId.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported, foldStatus));
+                                        "Camera Type:%d, Connection Type:%d, Mirror support:%d, Fold status %d, "
+                                        "Camera automotive position:%d",
+        cameraId.c_str(), cameraPosition, cameraType, connectionType, isMirrorSupported, foldStatus,
+        automotivePosition));
     return make_shared<CameraMetaInfo>(cameraId, cameraType, cameraPosition, connectionType,
-        foldStatus, supportModes, cameraAbility);
+        foldStatus, automotivePosition, supportModes, cameraAbility);
 }
 
 void HCameraService::FillPhysicalCameras(vector<shared_ptr<CameraMetaInfo>>& cameraInfos,
@@ -906,8 +911,9 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChoosePhysicalCameras(
     vector<shared_ptr<CameraMetaInfo>> physicalCameras = {};
     for (auto& camera : physicalCameraInfos) {
         MEDIA_INFO_LOG("ChoosePhysicalCameras camera ID:%s, CameraType: %{public}d, Camera position:%{public}d, "
-                       "Connection Type:%{public}d",
-                       camera->cameraId.c_str(), camera->cameraType, camera->position, camera->connectionType);
+                       "Connection Type:%{public}d, Camera automotive position:%{public}d",
+                       camera->cameraId.c_str(), camera->cameraType, camera->position, camera->connectionType,
+                       camera->automotivePosition);
         bool isSupportPhysicalCamera = std::any_of(camera->supportModes.begin(), camera->supportModes.end(),
             [&supportedPhysicalCamerasModes](auto mode) -> bool {
                 return any_of(supportedPhysicalCamerasModes.begin(), supportedPhysicalCamerasModes.end(),
@@ -927,14 +933,16 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
 {
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
     for (auto& camera : cameraInfos) {
-        MEDIA_DEBUG_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d",
-            camera->cameraId.c_str(), camera->position, camera->connectionType);
+        MEDIA_DEBUG_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d, "
+                        "Camera automotive position:%{public}d",
+            camera->cameraId.c_str(), camera->position, camera->connectionType, camera->automotivePosition);
         if (any_of(choosedCameras.begin(), choosedCameras.end(),
             [camera](const auto& defaultCamera) {
                 return (camera->connectionType == OHOS_CAMERA_CONNECTION_TYPE_BUILTIN &&
                     defaultCamera->position == camera->position &&
                     defaultCamera->connectionType == camera->connectionType &&
-                    defaultCamera->foldStatus == camera->foldStatus);
+                    defaultCamera->foldStatus == camera->foldStatus &&
+                    defaultCamera->automotivePosition == camera->automotivePosition);
             })
         ) {
             MEDIA_DEBUG_LOG("ChooseDeFaultCameras alreadly has default camera");
