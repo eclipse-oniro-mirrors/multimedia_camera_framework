@@ -164,6 +164,7 @@ ohos_shared_library("camera_dynamic_avcodec") {
     "samgr:samgr_proxy",
     "graphic_surface:buffer_handle",
     "graphic_surface:surface",
+    "media_foundation:media_foundation",
   ]
 
   cflags_cc = cflags
@@ -369,6 +370,7 @@ ohos_shared_library("camera_dynamic_media_manager") {
     "graphic_surface:buffer_handle",
     "graphic_surface:surface",
     "graphic_surface:sync_fence",
+    "media_foundation:media_foundation",
   ]
 
   cflags_cc = cflags
