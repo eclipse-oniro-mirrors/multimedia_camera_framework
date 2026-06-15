@@ -60,5 +60,6 @@ ohos_unittest("pipeline_unit_test") {
     "graphic_surface:sync_fence",
     "hilog:libhilog",
     "ipc:ipc_core",
+    "media_foundation:media_foundation",
   ]
 }

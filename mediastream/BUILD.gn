@@ -108,6 +108,7 @@ ohos_shared_library("media_stream") {
     "safwk:system_ability_fwk",
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
+    "media_foundation:media_foundation",
   ]
 
   public_external_deps = [

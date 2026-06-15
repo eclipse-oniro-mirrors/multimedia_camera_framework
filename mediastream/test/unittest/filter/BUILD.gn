@@ -93,5 +93,6 @@ ohos_unittest("cfilter_unit_test") {
     "image_framework:image_native",
     "ipc:ipc_core",
     "samgr:samgr_proxy",
+    "media_foundation:media_foundation",
   ]
 }
