@@ -271,9 +271,10 @@ bool DeferredVideoProcessor::IsNeedStopJob()
 
 uint32_t DeferredVideoProcessor::StartTimer(const std::string& videoId)
 {
-    uint32_t interval = MAX_PROC_TIME_MS;
-    DP_CHECK_EXECUTE(mediaManagerProxy_ != nullptr,
-        interval = std::max(mediaManagerProxy_->MpegGetDuration() * X10, interval));
+    uint32_t duration = UINT32_MAX;
+    DP_CHECK_EXECUTE(mediaManagerProxy_ != nullptr, duration = mediaManagerProxy_->MpegGetDuration());
+    duration = (duration > UINT32_MAX / X10) ? UINT32_MAX : (duration * X10);
+    uint32_t interval = std::max(duration, MAX_PROC_TIME_MS);
     auto thisPtr = weak_from_this();
     uint32_t timerId = CameraTimer::GetInstance().Register(
         [thisPtr, videoId]() {
