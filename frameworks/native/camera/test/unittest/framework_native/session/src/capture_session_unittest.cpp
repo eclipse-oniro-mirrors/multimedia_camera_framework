@@ -1165,7 +1165,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_004, TestSize.Level0)
     ASSERT_NE(preview, nullptr);
 
     ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(GetCameraErrorCode(ret), CameraErrorCode::SERVICE_FATL_ERROR);
 
     ret = session->CommitConfig();
     EXPECT_NE(ret, 0);

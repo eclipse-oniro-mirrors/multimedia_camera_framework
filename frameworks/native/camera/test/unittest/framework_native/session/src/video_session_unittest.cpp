@@ -678,10 +678,10 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_010, TestSize.Level0
 
     // 会话已配置时
     result = videoSessionForSys->AddOutput(nullOutput);
-    EXPECT_EQ(result, CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(GetCameraErrorCode(result), CameraErrorCode::SERVICE_FATL_ERROR);
 
     result = videoSessionForSys->AddOutput(videoOutputCaptureUpper);
-    EXPECT_EQ(result, CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(GetCameraErrorCode(result), CameraErrorCode::SERVICE_FATL_ERROR);
 
     // 关闭相机输入
     input->Close();
