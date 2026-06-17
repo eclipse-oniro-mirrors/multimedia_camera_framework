@@ -105,7 +105,7 @@ HWTEST_F(CameraStitchingPhotoSessionUnit, camera_stitching_photo_session_unittes
 
         sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
         intResult = stitchingPhotoSession->AddOutput(previewOutputCaptureUpper);
-        EXPECT_EQ(intResult, 0);
+        EXPECT_EQ(GetCameraErrorCode(intResult), 0);
 
         intResult = stitchingPhotoSession->CommitConfig();
         EXPECT_EQ(intResult, 0);

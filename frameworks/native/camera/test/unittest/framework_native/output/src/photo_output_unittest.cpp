@@ -1348,7 +1348,7 @@ HWTEST_F(CameraPhotoOutputUnit, IsOfflineSupported_002, TestSize.Level0)
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(GetCameraErrorCode(session->AddOutput(photoOutput)), CameraErrorCode::SERVICE_FATL_ERROR);
     EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR);
     EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
     EXPECT_EQ(phtOutput->IsOfflineSupported(), false);
@@ -1428,7 +1428,7 @@ HWTEST_F(CameraPhotoOutputUnit, EnableOfflinePhoto_002, TestSize.Level0)
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(GetCameraErrorCode(session->AddOutput(photoOutput)), CameraErrorCode::SERVICE_FATL_ERROR);
     EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR);
     EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
     EXPECT_EQ(phtOutput->EnableOfflinePhoto(), CameraErrorCode::SESSION_NOT_RUNNING);
@@ -1606,7 +1606,7 @@ HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_002, TestSize.Level0)
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(GetCameraErrorCode(session->AddOutput(photoOutput)), CameraErrorCode::SERVICE_FATL_ERROR);
     EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR);
     EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
     bool isAutoAigcPhotoSupported = false;
@@ -1685,7 +1685,7 @@ HWTEST_F(CameraPhotoOutputUnit, EnableAutoAigcPhoto_002, TestSize.Level0)
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
     EXPECT_EQ(session->BeginConfig(), 0);
-    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR);
+    EXPECT_EQ(GetCameraErrorCode(session->AddOutput(photoOutput)), CameraErrorCode::SERVICE_FATL_ERROR);
     EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR);
     EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
     bool enabled = true;
