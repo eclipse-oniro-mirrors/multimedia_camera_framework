@@ -606,8 +606,7 @@ private:
 };
 
 // Test Class Definition
-class UnifiedPipelineUnitTest : public testing::Test
-{
+class UnifiedPipelineUnitTest : public testing::Test {
 protected:
     void SetUp() override
     {
@@ -780,8 +779,7 @@ HWTEST_F(UnifiedPipelineUnitTest, RemovePlugin_Normal, TestSize.Level0)
     EXPECT_EQ(pipeline_->plugins_.size(), 0);
 }
 
-class UnifiedPipelineManagerTest : public testing::Test
-{
+class UnifiedPipelineManagerTest : public testing::Test {
 protected:
     void SetUp() override
     {
@@ -1029,8 +1027,7 @@ HWTEST_F(UnifiedPipelineDataProducerTest, OnBufferArrival_NullBuffer, TestSize.L
     producer->OnBufferArrival(nullptr);
 }
 
-class UnifiedPiplinePluginTest : public testing::Test
-{
+class UnifiedPiplinePluginTest : public testing::Test {
 protected:
     void SetUp() override
     {
