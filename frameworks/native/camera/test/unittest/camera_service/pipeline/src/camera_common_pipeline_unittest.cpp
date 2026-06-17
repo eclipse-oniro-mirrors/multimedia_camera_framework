@@ -1029,7 +1029,7 @@ HWTEST_F(UnifiedPipelineDataProducerTest, OnBufferArrival_NullBuffer, TestSize.L
     producer->OnBufferArrival(nullptr);
 }
 
-class UnifiedPiplinePluginTest : public testing::Test 
+class UnifiedPiplinePluginTest : public testing::Test
 {
 protected:
     void SetUp() override
