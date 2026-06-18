@@ -35,17 +35,6 @@ private:
     void OnIsoInfoChangedCallback(OHOS::CameraStandard::IsoInfo info) const;
 };
 
-class ApertureInfoCallbackListener : public OHOS::CameraStandard::ApertureInfoCallback, public ListenerBase,
-    public std::enable_shared_from_this<ApertureInfoCallbackListener> {
-public:
-    ApertureInfoCallbackListener(ani_env* env) : ListenerBase(env) {}
-    ~ApertureInfoCallbackListener() = default;
-    void OnApertureInfoChanged(OHOS::CameraStandard::ApertureInfo info) override;
-
-private:
-    void OnApertureInfoChangedCallback(OHOS::CameraStandard::ApertureInfo info) const;
-};
-
 class LuminationInfoCallbackListener : public OHOS::CameraStandard::LuminationInfoCallback, public ListenerBase,
     public std::enable_shared_from_this<LuminationInfoCallbackListener> {
 public:

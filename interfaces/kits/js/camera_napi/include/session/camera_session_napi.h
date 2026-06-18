@@ -508,6 +508,25 @@ private:
     bool isAsync_ = true;
 };
 
+class ApertureInfoCallbackListener : public ApertureInfoCallback, public ListenerBase,
+    public std::enable_shared_from_this<ApertureInfoCallbackListener> {
+public:
+    ApertureInfoCallbackListener(napi_env env) : ListenerBase(env) {}
+    ~ApertureInfoCallbackListener() = default;
+    void OnApertureInfoChanged(ApertureInfo info) override;
+
+private:
+    void OnApertureInfoChangedCallback(ApertureInfo info) const;
+    void OnApertureInfoChangedCallbackAsync(ApertureInfo info) const;
+};
+
+struct ApertureInfoChangedCallback {
+    ApertureInfo info_;
+    weak_ptr<const ApertureInfoCallbackListener> listener_;
+    ApertureInfoChangedCallback(ApertureInfo info, shared_ptr<const ApertureInfoCallbackListener> listener)
+        : info_(info), listener_(listener) {}
+};
+
 class  FlashStateCallbackListener : public FlashStateCallback, public ListenerBase,
     public std::enable_shared_from_this<FlashStateCallbackListener> {
 public:
@@ -836,6 +855,10 @@ public:
     static napi_value OnCameraSwitchRequest(napi_env env, napi_callback_info info);
     static napi_value OffCameraSwitchRequest(napi_env env, napi_callback_info info);
 
+    static napi_value IsWhiteBalanceGainsSupported(napi_env env, napi_callback_info info);
+    static napi_value SetWhiteBalanceGains(napi_env env, napi_callback_info info);
+    static napi_value GetWhiteBalanceGains(napi_env env, napi_callback_info info);
+
     napi_env env_;
     sptr<CaptureSession> cameraSession_;
     std::shared_ptr<IsoInfoCallbackListener> isoInfoCallback_ = nullptr;
@@ -859,6 +882,7 @@ public:
     std::shared_ptr<CameraSwitchRequestCallbackListener> cameraSwitchSessionNapiCallback_;
     std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;
     std::shared_ptr<FlashStateCallbackListener> flashStateCallback_ = nullptr;
+    std::shared_ptr<ApertureInfoCallbackListener> apertureInfoCallback_ = nullptr;
     
 
     static thread_local napi_ref sConstructor_;
@@ -901,6 +925,7 @@ public:
     static const std::vector<napi_property_descriptor> flash_cb_props;
     static const std::vector<napi_property_descriptor> physical_aperture_props;
     static const std::vector<napi_property_descriptor> optical_image_stabilization_props;
+    static const std::vector<napi_property_descriptor> aperture_info_cb_props;
 
     void RegisterExposureCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);

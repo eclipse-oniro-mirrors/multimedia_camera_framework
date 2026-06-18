@@ -1017,6 +1017,48 @@ bool WhiteBalanceQueryImpl::IsWhiteBalanceModeSupported(WhiteBalanceMode mode)
     return isSupported;
 }
 
+bool WhiteBalanceQueryImpl::IsWhiteBalanceGainsSupported()
+{
+    bool isSupported = false;
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, isSupported,
+        "IsWhiteBalanceGainsSupported captureSession_ is null");
+    int32_t retCode = captureSession_->IsWhiteBalanceGainsSupported(isSupported);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), isSupported);
+    return isSupported;
+}
+
+void WhiteBalanceImpl::SetWhiteBalanceGains(WhiteBalanceGains gains)
+{
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetWhiteBalanceGains captureSession_ is null");
+    std::vector<double> normalizedGains = {
+        gains.redGain,
+        gains.greenGain,
+        gains.blueGain
+    };
+    captureSession_->LockForControl();
+    captureSession_->SetWhiteBalanceGains(normalizedGains);
+    captureSession_->UnlockForControl();
+}
+
+WhiteBalanceGains WhiteBalanceImpl::GetWhiteBalanceGains()
+{
+    WhiteBalanceGains gains = {};
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, gains, "GetWhiteBalanceGains captureSession_ is null");
+    std::vector<double> vecWhiteBalanceGains;
+    int32_t retCode = captureSession_->GetWhiteBalanceGains(vecWhiteBalanceGains);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), gains);
+    MEDIA_INFO_LOG("GetWhiteBalanceGains len = %{public}zu", vecWhiteBalanceGains.size());
+    constexpr int32_t rangeSize = 3;
+    CHECK_RETURN_RET(vecWhiteBalanceGains.size() != rangeSize, gains);
+    int32_t redGainIdx = 0;
+    int32_t greenGainIdx = 1;
+    int32_t blueGainIdx = 2;
+    gains.redGain = vecWhiteBalanceGains[redGainIdx];
+    gains.greenGain = vecWhiteBalanceGains[greenGainIdx];
+    gains.blueGain = vecWhiteBalanceGains[blueGainIdx];
+    return gains;
+}
+
 array<int32_t> WhiteBalanceQueryImpl::GetWhiteBalanceRange()
 {
     CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, {}, "SetWhiteBalance captureSession_ is null");

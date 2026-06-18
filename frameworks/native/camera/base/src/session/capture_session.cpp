@@ -3491,6 +3491,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     session->ProcessFlashStateChange(result);
     session->ProcessIsoChange(result);
     session->ProcessOISModeChange(result);
+    session->ProcessApertureChange(result);
 }
 
 std::vector<FlashMode> CaptureSession::GetSupportedFlashModes()
@@ -6157,13 +6158,13 @@ int32_t CaptureSession::GetColorTintRange(std::vector<int32_t> &colorTintRange)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_COLOR_TINT_RANGE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetColorTintRange Failed with return code %{public}d", ret);
-    int32_t num = 2;
+    int32_t num = 4;
     if (item.count == num) {
         colorTintRange.clear();
-        colorTintRange.push_back(item.data.i32[0]);
         colorTintRange.push_back(item.data.i32[1]);
+        colorTintRange.push_back(item.data.i32[2]);
         MEDIA_INFO_LOG("CaptureSession::GetColorTintRange: [%{public}d, %{public}d]",
-            colorTintRange[0], colorTintRange[1]);
+            colorTintRange[1], colorTintRange[2]);
     } else {
         MEDIA_ERR_LOG("CaptureSession::GetColorTintRange: invalid metadata item count %{public}d",
             static_cast<int32_t>(item.count));
@@ -7866,6 +7867,177 @@ int32_t CaptureSession::GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointI
         zoomPointInfoList.size(), currentMode);
     zoomPointInfoList = zoomPointInfoList.size() == 0 ? zoomPointInfoList_Default : zoomPointInfoList;
     return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSupportedRGBGainsRange(std::vector<int32_t> &supportedRGBGainsRange)
+{
+    supportedRGBGainsRange.clear();
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetSupportedRGBGainsRange Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(
+        !inputDevice, CameraErrorCode::SUCCESS, "CaptureSession::GetSupportedRGBGainsRange camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedRGBGainsRange camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedRGBGainsRange camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_RGBGAIN_RANGE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetSupportedRGBGainsRange Failed with return code %{public}d", ret);
+    for (uint32_t i = 0; i < item.count; i++) {
+        supportedRGBGainsRange.emplace_back(item.data.i32[i]);
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::IsWhiteBalanceGainsSupported(bool &isSupported)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "IsWhiteBalanceGainsSupported SystemApi called!");
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::IsWhiteBalanceGainsSupported Session is not Commited");
+    std::vector<int32_t> vecSupportedRGBGainsRange;
+    (void)this->GetSupportedRGBGainsRange(vecSupportedRGBGainsRange);
+    isSupported = (vecSupportedRGBGainsRange.size() > 0);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetWhiteBalanceGains(std::vector<double>& whiteBalanceGains)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "GetWhiteBalanceGains SystemApi called!");
+    MEDIA_DEBUG_LOG("CaptureSession::GetWhiteBalanceGains is Called");
+    whiteBalanceGains.clear();
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetWhiteBalanceGains Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice || !inputDevice->GetCameraDeviceInfo(),
+                          CameraErrorCode::SUCCESS,
+                          "CaptureSession::GetWhiteBalanceGains camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetWhiteBalanceGains camera device info is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+                          "CaptureSession::GetWhiteBalanceGains camera metadata is null");
+
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_RGBGAIN_VALUE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetWhiteBalanceGains Failed with return code:%{public}d, item.count:%{public}d",
+        ret, item.count);
+
+    std::vector<int32_t> supportedRGBGainsRange;
+    ret = GetSupportedRGBGainsRange(supportedRGBGainsRange);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
+        "CaptureSession::GetWhiteBalanceGains Failed to get supported RGB gains range, ret:%{public}d", ret);
+    constexpr size_t normalizedRangeSize = 2;
+    CHECK_RETURN_RET_ELOG(supportedRGBGainsRange.size() < normalizedRangeSize, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetWhiteBalanceGains supported RGB gains range size is invalid");
+    const int32_t minGain = supportedRGBGainsRange[0];
+    const int32_t maxGain = supportedRGBGainsRange[1];
+    CHECK_RETURN_RET_ELOG(maxGain == minGain, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetWhiteBalanceGains supported RGB gains range is invalid");
+    const double gainRange = static_cast<double>(maxGain - minGain);
+
+    for (uint32_t i = 0; i < item.count; i++) {
+        const double normalizedGain = (static_cast<double>(item.data.i32[i] - minGain) / gainRange) * 2.0 - 1.0;
+        whiteBalanceGains.emplace_back(normalizedGain);
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetWhiteBalanceGains(std::vector<int32_t> whiteBalanceGains)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetWhiteBalanceGains Session is not Commited");
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetWhiteBalanceGains Need to call LockForControl() before setting camera properties");
+    bool isSupported = false;
+    (void)this->IsWhiteBalanceGainsSupported(isSupported);
+    CHECK_RETURN_RET_ELOG(!isSupported, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetWhiteBalanceGains WhiteBalance gains is not supported");
+
+    MEDIA_INFO_LOG("CaptureSession::SetWhiteBalanceGains metadata gains: %{public}s",
+        Container2String(whiteBalanceGains.begin(), whiteBalanceGains.end()).c_str());
+
+    bool res = AddOrUpdateMetadata(changedMetadata_->get(), OHOS_CONTROL_RGBGAIN_VALUE, whiteBalanceGains.data(),
+                                   whiteBalanceGains.size());
+    CHECK_PRINT_ELOG(!res, "CaptureSession::SetWhiteBalanceGains Failed to set WhiteBalance gains");
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetWhiteBalanceGains(std::vector<double> whiteBalanceGains)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "SetWhiteBalanceGains SystemApi called!");
+    CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::SetWhiteBalanceGains Session is not Commited");
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetWhiteBalanceGains Need to call LockForControl() before setting camera properties");
+    bool isSupported = false;
+    (void)this->IsWhiteBalanceGainsSupported(isSupported);
+    CHECK_RETURN_RET_ELOG(!isSupported, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetWhiteBalanceGains WhiteBalance gains is not supported");
+
+    MEDIA_INFO_LOG("CaptureSession::SetWhiteBalanceGains normalized gains: %{public}s",
+        Container2String(whiteBalanceGains.begin(), whiteBalanceGains.end()).c_str());
+
+    std::vector<int32_t> supportedRGBGainsRange;
+    int32_t ret = GetSupportedRGBGainsRange(supportedRGBGainsRange);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
+        "CaptureSession::SetWhiteBalanceGains Failed to get supported RGB gains range, ret:%{public}d", ret);
+    constexpr size_t normalizedRangeSize = 2;
+    CHECK_RETURN_RET_ELOG(supportedRGBGainsRange.size() < normalizedRangeSize, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetWhiteBalanceGains supported RGB gains range size is invalid");
+    const int32_t minGain = supportedRGBGainsRange[0];
+    const int32_t maxGain = supportedRGBGainsRange[1];
+    CHECK_RETURN_RET_ELOG(maxGain == minGain, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetWhiteBalanceGains supported RGB gains range is invalid");
+
+    const double gainRange = static_cast<double>(maxGain - minGain);
+    std::vector<int32_t> denormalizedGains;
+    denormalizedGains.reserve(whiteBalanceGains.size());
+    for (const auto gain : whiteBalanceGains) {
+        CHECK_RETURN_RET_ELOG(gain < -1.0 || gain > 1.0, CameraErrorCode::SUCCESS,
+            "CaptureSession::SetWhiteBalanceGains gain is invalid");
+        const double denormalizedGain = ((gain + 1.0) / 2.0) * gainRange + minGain;
+        denormalizedGains.emplace_back(static_cast<int32_t>(denormalizedGain));
+    }
+
+    return SetWhiteBalanceGains(std::move(denormalizedGains));
+}
+
+void CaptureSession::SetApertureInfoCallback(std::shared_ptr<ApertureInfoCallback> callback)
+{
+    // LCOV_EXCL_START
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    apertureInfoCallback_ = callback;
+    // LCOV_EXCL_STOP
+}
+
+void CaptureSession::ProcessApertureChange(const std::shared_ptr<OHOS::Camera::CameraMetadata> &result)
+{
+    // LCOV_EXCL_START
+    camera_metadata_item_t item;
+    common_metadata_header_t* metadata = result->get();
+    int ret = Camera::FindCameraMetadataItem(metadata, OHOS_STATUS_CAMERA_APERTURE_VALUE, &item);
+    CHECK_RETURN(ret != CAM_META_SUCCESS);
+    MEDIA_DEBUG_LOG("aperture Value: %{public}f", ConfusingNumber(item.data.f[0]));
+    std::lock_guard<std::mutex> lock(sessionCallbackMutex_);
+    ApertureInfo info = {
+        .apertureValue = item.data.f[0],
+    };
+    bool isChanged = apertureInfoCallback_ != nullptr && (item.data.f[0] != apertureValue_ || apertureValue_ == 0);
+    CHECK_RETURN(!isChanged);
+    apertureInfoCallback_->OnApertureInfoChanged(info);
+    apertureValue_ = item.data.f[0];
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

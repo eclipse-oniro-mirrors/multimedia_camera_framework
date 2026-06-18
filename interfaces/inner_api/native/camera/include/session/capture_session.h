@@ -257,6 +257,16 @@ enum ReadModeSupportedStreamsState : int32_t{
     TYPE_COUNT = 4
 };
 
+typedef struct WhiteBalanceGains {
+    float redGain;
+    float greenGain;
+    float blueGain;
+} WhiteBalanceGains;
+
+typedef struct {
+    float apertureValue;
+} ApertureInfo;
+
 typedef struct StreamConfigInfo {
     CaptureOutputType outputType = CaptureOutputType::CAPTURE_OUTPUT_TYPE_PREVIEW;
     StreamType type = StreamType::CAPTURE;
@@ -663,6 +673,13 @@ public:
     virtual void OnApertureEffectChange(ApertureEffectType effectSuggestionType) const = 0;
     bool isFirstRecord = true;
     ApertureEffectType currentType{ApertureEffectType::APERTURE_EFFECT_MIN};
+};
+
+class ApertureInfoCallback {
+public:
+    ApertureInfoCallback() = default;
+    virtual ~ApertureInfoCallback() = default;
+    virtual void OnApertureInfoChanged(ApertureInfo info) = 0;
 };
 
 struct EffectSuggestionStatus {
@@ -2370,6 +2387,57 @@ public:
      */
     int32_t UnlockFocusTracking();
 
+    /**
+ 	 * @brief Get supported RGB gains range.
+ 	 * @param rgbGainsRange supported RGB gains range .
+ 	 * @return Returns errCode.
+ 	 */
+    int32_t GetSupportedRGBGainsRange(std::vector<int32_t> &rgbGainsRange);
+
+ 	/**
+ 	 * @brief Is WhiteBalance Gains Supported.
+ 	 * @param isSupported is Support WhiteBalance Gains .
+ 	 * @return Returns errCode.
+ 	 */
+    int32_t IsWhiteBalanceGainsSupported(bool &isSupported);
+
+ 	/**
+ 	 * @brief Get WhiteBalance Gains.
+ 	 * @param whiteBalanceGains WhiteBalance Gains .
+ 	 * @return Returns errCode.
+ 	 */
+    int32_t GetWhiteBalanceGains(std::vector<double> &whiteBalanceGains);
+ 	
+    /**
+     * @brief Set WhiteBalance Gains.
+     * @param whiteBalanceGains WhiteBalance Gains to be set.
+     * @return Returns errCode.
+     */
+    int32_t SetWhiteBalanceGains(std::vector<int32_t> whiteBalanceGains);
+
+    /**
+     * @brief Set normalized WhiteBalance Gains.
+     * @param whiteBalanceGains Normalized WhiteBalance Gains to be set.
+     * @return Returns errCode.
+     */
+    int32_t SetWhiteBalanceGains(std::vector<double> whiteBalanceGains);
+
+    /**
+     * @brief Set the aperture info callback.
+     * which will be called when there is aperture info change.
+     *
+     * @param The ApertureInfoCallback pointer.
+     */
+    void SetApertureInfoCallback(std::shared_ptr<ApertureInfoCallback> callback);
+
+    /**
+     * @brief This function is called when there is aperture change
+     * and process the aperture callback.
+     *
+     * @param result metadata got from callback from service layer.
+     */
+    void ProcessApertureChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
+
 protected:
     static const std::unordered_map<camera_flash_state_enum_t, FlashState> metaFlashStateMap_;
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;
@@ -2416,6 +2484,7 @@ protected:
     std::shared_ptr<ImageStabilizationGuideCallback> imageStabilizationGuideCallback_;
     std::shared_ptr<ExposureInfoCallback> exposureInfoCallback_;
     std::shared_ptr<FlashStateCallback> flashStateCallback_;
+    std::shared_ptr<ApertureInfoCallback> apertureInfoCallback_;
 
     SafeMap<SceneMode, SafeMap<OHOS::CameraStandard::CaptureOutputType, int>> StreamsModeNumMap_;
     static const std::unordered_map<StreamIntent, CaptureOutputType> StreamIntentMap_;

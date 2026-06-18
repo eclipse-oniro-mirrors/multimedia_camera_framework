@@ -22,25 +22,6 @@
 namespace OHOS {
 namespace CameraStandard {
 
-class ApertureInfoCallbackListener : public ApertureInfoCallback, public ListenerBase,
-    public std::enable_shared_from_this<ApertureInfoCallbackListener> {
-public:
-    ApertureInfoCallbackListener(napi_env env) : ListenerBase(env) {}
-    ~ApertureInfoCallbackListener() = default;
-    void OnApertureInfoChanged(ApertureInfo info) override;
-
-private:
-    void OnApertureInfoChangedCallback(ApertureInfo info) const;
-    void OnApertureInfoChangedCallbackAsync(ApertureInfo info) const;
-};
-
-struct ApertureInfoChangedCallback {
-    ApertureInfo info_;
-    weak_ptr<const ApertureInfoCallbackListener> listener_;
-    ApertureInfoChangedCallback(ApertureInfo info, shared_ptr<const ApertureInfoCallbackListener> listener)
-        : info_(info), listener_(listener) {}
-};
-
 class LuminationInfoCallbackListener : public LuminationInfoCallback, public ListenerBase,
     public std::enable_shared_from_this<LuminationInfoCallbackListener> {
 public:

@@ -60,6 +60,10 @@ protected:
         napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
     void UnregisterExposureInfoCallbackListener(
         const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    void RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
+    void UnregisterApertureInfoCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
 };
 }
 }

@@ -371,19 +371,8 @@ private:
 };
 
 typedef struct {
-    float apertureValue;
-} ApertureInfo;
-
-typedef struct {
     float luminationValue;
 } LuminationInfo;
-
-class ApertureInfoCallback {
-public:
-    ApertureInfoCallback() = default;
-    virtual ~ApertureInfoCallback() = default;
-    virtual void OnApertureInfoChanged(ApertureInfo info) = 0;
-};
 
 class LuminationInfoCallback {
 public:
