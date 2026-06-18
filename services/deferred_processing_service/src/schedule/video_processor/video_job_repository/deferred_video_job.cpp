@@ -29,11 +29,26 @@ DeferredVideoJob::DeferredVideoJob(const std::string& videoId, std::unique_ptr<V
 DpsFdPtr DeferredVideoJob::GetInputFd()
 {
     DP_INFO_LOG("GetInputFd start.");
-    DP_CHECK_RETURN_RET(srcFd_ != nullptr && srcFd_->GetFd() >= 0, srcFd_);
-    int fd = open(info_->GetSrcPath().c_str(), O_RDONLY);
-    DP_CHECK_RETURN_RET_LOG(fd < 0, nullptr, "Failed to open srcPath file: %{public}s", strerror(errno));
-    srcFd_ = std::make_shared<DpsFd>(fd);
-    return srcFd_;
+    std::vector<std::string> srcPaths = info_->GetSrcPaths();
+    if (!srcPaths.empty()) {
+        for (const auto& path : srcPaths) {
+            char* canonicalPath = realpath(path.c_str(), nullptr);
+            if (canonicalPath == nullptr) {
+                DP_ERR_LOG("Invalid path: %{public}s", path.c_str());
+                continue;
+            }
+            int fd = open(canonicalPath, O_RDONLY);
+            if (fd >= 0) {
+                DP_DEBUG_LOG("Open srcPaths file success: %{public}s", canonicalPath);
+                free(canonicalPath);
+                return std::make_shared<DpsFd>(fd);
+            }
+            free(canonicalPath);
+        }
+    }
+
+    DP_ERR_LOG("Failed to open srcPath file: %{public}s", strerror(errno));
+    return nullptr;
 }
 
 DpsFdPtr DeferredVideoJob::GetMovieFd()

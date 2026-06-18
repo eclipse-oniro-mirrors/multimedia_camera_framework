@@ -243,7 +243,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_007, Te
     uint8_t randomNum = 1;
     std::string videoId(testStrings[randomNum % testStrings.size()]);
     auto isAutoSuspend = true;
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, "");
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, "");
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, std::move(info));
     jobPtr->SetExecutionMode(LOAD_BALANCE);
     jobPtr->SetChargState(isAutoSuspend);
@@ -337,7 +338,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_012, Te
     auto postProcessor = VideoPostProcessor::Create(userId_);
     auto session = sptr<MockVideoProcessSession>::MakeSptr();
     postProcessor->sessionV1_3_ = session;
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, std::move(info));
     std::vector<StreamDescription> resultDescs {
         StreamDescription {
@@ -373,7 +375,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_013, Te
     auto postProcessor = VideoPostProcessor::Create(userId_);
     auto session = sptr<MockVideoProcessSession>::MakeSptr();
     postProcessor->sessionV1_3_ = session;
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, std::move(info));
     std::vector<StreamDescription> resultDescs;
     EXPECT_CALL(*session, Prepare(_, Matcher<int>(_), _))
@@ -628,7 +631,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_025, Te
     DeferredProcessing::TempVideoPath tempinfo;
     tempinfo.temp1Path = VIDEO_TEMP_PATH_1;
     tempinfo.temp2Path = VIDEO_TEMP_PATH_2;
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, std::move(info));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
     mediaManagerProxy->MpegAcquire(VIDEO_ID, tempinfo, inputFd, VIDEO_WIDTH, VIDEO_HIGHT);
@@ -662,7 +666,8 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_026, Te
     auto session = sptr<MockVideoProcessSession>::MakeSptr();
     postProcessor->sessionV1_3_ = session;
     DpsFdPtr inputFd = std::make_shared<DpsFd>(dup(srcFd_));
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID, std::move(info));
     auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
     DeferredProcessing::TempVideoPath tempinfo;

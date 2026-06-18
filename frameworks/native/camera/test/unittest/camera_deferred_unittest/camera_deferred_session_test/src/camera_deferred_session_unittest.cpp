@@ -211,7 +211,8 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_003, Te
     EXPECT_FALSE(deferredVideoSession->inSync_.load());
 
     std::string videoId = "testVideo";
-    ret = ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    ret = ret = deferredVideoSession->AddVideo(videoId, srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     EXPECT_EQ(deferredVideoSession->videoIds_.size(), 0);
 }
 
@@ -238,7 +239,8 @@ HWTEST_F(CameraDeferredSessionUnitTest, camera_deferred_session_unittest_004, Te
     EXPECT_TRUE(deferredVideoSession->inSync_.load());
 
     std::string videoId = "testVideo";
-    ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    ret = deferredVideoSession->AddVideo(videoId, srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     EXPECT_EQ(ret, DP_OK);
     EXPECT_NE(deferredVideoSession->videoIds_.size(), 0);
 

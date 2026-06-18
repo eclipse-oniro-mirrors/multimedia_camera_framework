@@ -74,8 +74,9 @@ void DeferredSessionCommandUnitTest::TearDown(void)
 
 void DeferredSessionCommandUnitTest::PrepareVideoInfo(const std::string& videoId)
 {
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
     std::unique_ptr<VideoInfo> videoInfo =
-        std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+        std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     ASSERT_NE(videoInfo, nullptr);
     videoInfoMap_[videoId] = std::move(videoInfo);
 }
@@ -234,7 +235,8 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_006, 
 HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_007, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, std::move(info));
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);
@@ -335,7 +337,8 @@ HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_011, 
 HWTEST_F(DeferredSessionCommandUnitTest, deferred_session_command_unittest_012, TestSize.Level0)
 {
     std::string videoId = "testVideoId";
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     std::shared_ptr<AddVideoCommand> addVideoCmd = std::make_shared<AddVideoCommand>(USER_ID, videoId, std::move(info));
     std::shared_ptr<SchedulerManager> schedulerManager = DPS_GetSchedulerManager();
     ASSERT_NE(schedulerManager, nullptr);

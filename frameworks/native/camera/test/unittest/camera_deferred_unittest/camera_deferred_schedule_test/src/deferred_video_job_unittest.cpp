@@ -77,7 +77,8 @@ void DeferredVideoJobUnitTest::TearDown(void)
 DeferredVideoJobPtr DeferredVideoJobUnitTest::CreateTestDeferredVideoJobPtr(
     const std::string& videoId, VideoJobState curStatus)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(videoId, std::move(info));
     if (jobPtr == nullptr) {
         return nullptr;
@@ -663,7 +664,8 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_016, TestSize.Lev
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_001, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     EXPECT_EQ(repository->jobQueue_->GetSize(), 1);
 }
@@ -679,7 +681,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_001, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_002, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     EXPECT_EQ(repository->jobQueue_->GetSize(), 1);
 }
@@ -695,7 +698,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_002, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_003, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->RequestJob(VIDEO_ID_1);
     auto job = repository->GetJob();
@@ -715,7 +719,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_003, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_004, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->RequestJob(VIDEO_ID_2);
     auto job = repository->GetJob();
@@ -735,7 +740,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_004, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_005, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->RemoveVideoJob(VIDEO_ID_1, true);
     EXPECT_EQ(repository->jobQueue_->GetSize(), 1);
@@ -754,7 +760,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_005, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_006, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->RemoveVideoJob(VIDEO_ID_1, false);
     EXPECT_EQ(repository->jobQueue_->GetSize(), 0);
@@ -773,7 +780,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_006, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_007, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->RemoveVideoJob(VIDEO_ID_2, false);
     EXPECT_EQ(repository->jobQueue_->GetSize(), 1);
@@ -790,7 +798,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_007, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_008, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->RemoveVideoJob(VIDEO_ID_1, true);
     auto job = repository->GetJob();
@@ -810,7 +819,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_008, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_009, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobPending(VIDEO_ID_1);
     auto job = repository->GetJob();
@@ -828,7 +838,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_009, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_010, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobPending(VIDEO_ID_2);
     auto job = repository->GetJob();
@@ -846,7 +857,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_010, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_011, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobRunning(VIDEO_ID_1);
     auto job = repository->GetJob();
@@ -864,7 +876,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_011, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_012, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobRunning(VIDEO_ID_2);
     auto job = repository->GetJob();
@@ -882,7 +895,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_012, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_013, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobCompleted(VIDEO_ID_1);
     auto job = repository->GetJobUnLocked(VIDEO_ID_1);
@@ -900,7 +914,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_013, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_014, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobCompleted(VIDEO_ID_2);
     auto job = repository->GetJobUnLocked(VIDEO_ID_2);
@@ -918,7 +933,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_014, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_015, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobFailed(VIDEO_ID_1);
     auto job = repository->jobQueue_->Pop();
@@ -936,7 +952,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_015, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_016, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobFailed(VIDEO_ID_2);
     auto job = repository->jobQueue_->Pop();
@@ -954,7 +971,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_016, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_017, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobPause(VIDEO_ID_1);
     auto job = repository->jobQueue_->Pop();
@@ -972,7 +990,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_017, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_018, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobPause(VIDEO_ID_2);
     auto job = repository->jobQueue_->Pop();
@@ -990,7 +1009,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_018, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_019, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobError(VIDEO_ID_1);
     auto job = repository->jobQueue_->Pop();
@@ -1008,7 +1028,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_019, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_020, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobError(VIDEO_ID_2);
     auto job = repository->jobQueue_->Pop();
@@ -1026,7 +1047,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_020, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_021, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     auto job = repository->GetJobUnLocked(VIDEO_ID_1);
     EXPECT_NE(job, nullptr);
@@ -1058,7 +1080,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_022, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_023, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobPending(VIDEO_ID_1);
     auto job = repository->GetJob();
@@ -1093,7 +1116,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_024, TestSize.L
 HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_025, TestSize.Level0)
 {
     auto repository = VideoJobRepository::Create(USER_ID);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobRunning(VIDEO_ID_1);
     std::vector<std::string> list;
@@ -1113,7 +1137,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_026, TestSize.L
 {
     auto repository = VideoJobRepository::Create(USER_ID);
     EXPECT_EQ(repository->HasRunningJob(), false);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID_1, std::move(info));
     repository->SetJobRunning(VIDEO_ID_1);
     repository->HasRunningJob();
@@ -1132,7 +1157,8 @@ HWTEST_F(DeferredVideoJobUnitTest, video_job_repository_unittest_027, TestSize.L
 {
     auto repository = VideoJobRepository::Create(USER_ID);
     repository->NotifyJobChangedUnLocked(VIDEO_ID_1);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     DeferredVideoJobPtr jobPtr = std::make_shared<DeferredVideoJob>(VIDEO_ID_1, std::move(info));
     jobPtr->SetJobState(VideoJobState::RUNNING);
     repository->UpdateRunningCountUnLocked(true, jobPtr);

@@ -106,7 +106,8 @@ void DeferredVideoProcessorUnittest::TearDown()
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_001, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 1);
     process_->RemoveVideo(VIDEO_ID_1, false);
@@ -122,7 +123,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_001, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_002, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 1);
     process_->RemoveVideo(VIDEO_ID_1, false);
@@ -139,7 +141,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_002, 
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_003, TestSize.Level1)
 {
     process_->result_->cacheMap_.emplace(VIDEO_ID_1, DpsError::DPS_NO_ERROR);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 0);
     process_->RemoveVideo(VIDEO_ID_1, false);
@@ -155,7 +158,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_003, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_004, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->RemoveVideo(VIDEO_ID_1, true);
@@ -173,7 +177,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_004, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_005, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->RemoveVideo(VIDEO_ID_1, false);
@@ -190,7 +195,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_005, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_006, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->RemoveVideo(VIDEO_ID_1, true);
@@ -211,7 +217,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_006, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_007, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->ProcessVideo(VIDEO_ID_1);
@@ -230,7 +237,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_007, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_008, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
     jobPtr->SetJobState(VideoJobState::FAILED);
@@ -250,7 +258,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_008, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_009, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->ProcessVideo(VIDEO_ID_1);
@@ -269,7 +278,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_009, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_010, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
 
     process_->ProcessVideo(VIDEO_ID_1);
@@ -290,7 +300,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_010, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_011, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
     process_->DoProcess(jobPtr);
@@ -308,7 +319,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_011, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_012, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
     process_->OnProcessSuccess(USER_ID, VIDEO_ID_1, nullptr);
@@ -328,7 +340,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_012, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_013, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
@@ -347,7 +360,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_013, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_014, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
@@ -366,7 +380,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_014, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_015, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
@@ -385,7 +400,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_015, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_016, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
@@ -404,7 +420,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_016, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_017, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
 
@@ -423,7 +440,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_017, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_018, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     process_->repository_->SetJobRunning(VIDEO_ID_1);
     auto jobPtr = process_->repository_->jobQueue_->GetJobById(VIDEO_ID_1);
@@ -442,7 +460,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_018, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_019, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     process_->SetDefaultExecutionMode();
     EXPECT_EQ(process_->repository_->jobQueue_->GetSize(), 1);
@@ -474,7 +493,8 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_020, 
  */
 HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_021, TestSize.Level1)
 {
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     process_->AddVideo(VIDEO_ID_1, std::move(info));
     process_->repository_->SetJobRunning(VIDEO_ID_1);
     auto ret = process_->HasRunningJob();

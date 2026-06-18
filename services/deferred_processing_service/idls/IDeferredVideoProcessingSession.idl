@@ -27,4 +27,7 @@ interface IDeferredVideoProcessingSession{
       [in] String editPath);
   [ipccode 7] void ProcessVideo([in] String appName, [in] String videoId);
   [ipccode 8] void CancelProcessVideo([in] String videoId);
+  [ipccode 9] void AddVideo([in] String videoId, [in] List<String> srcPaths, [in] String temp1Path, [in] String temp2Path);
+  [ipccode 10] void AddVideo([in] String videoId, [in] List<String> srcPaths, [in] String temp1Path, [in] String temp2Path,
+      [in] String editPath);
 }

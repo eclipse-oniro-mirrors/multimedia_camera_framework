@@ -51,6 +51,21 @@ public:
     {
         return 0;
     }
+    int32_t AddVideo(const std::string& videoId,
+        const std::vector<std::string>& srcPaths,
+        const std::string& temp1Path,
+        const std::string& temp2Path) override
+    {
+        return 0;
+    }
+    int32_t AddVideo(const std::string& videoId,
+        const std::vector<std::string>& srcPaths,
+        const std::string& temp1Path,
+        const std::string& temp2Path,
+        const std::string& editPath) override
+    {
+        return 0;
+    }
     int32_t RemoveVideo(
         const std::string& videoId,
         bool restorable) override

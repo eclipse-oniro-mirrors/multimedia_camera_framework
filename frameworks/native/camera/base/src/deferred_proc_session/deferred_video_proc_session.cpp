@@ -138,6 +138,24 @@ void DeferredVideoProcSession::AddVideo(const std::string& videoId, const std::s
     CHECK_PRINT_ELOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
 }
 
+void DeferredVideoProcSession::AddVideo(const std::string& videoId, const std::vector<std::string>& srcPaths,
+    const std::string& temp1Path, const std::string& temp2Path)
+{
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "AddVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession::AddVideo() enter.");
+    auto ret = remoteSession_->AddVideo(videoId, srcPaths, temp1Path, temp2Path);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
+}
+
+void DeferredVideoProcSession::AddVideo(const std::string& videoId, const std::vector<std::string>& srcPaths,
+    const std::string& temp1Path, const std::string& temp2Path, const std::string& editPath)
+{
+    CHECK_RETURN_ELOG(remoteSession_ == nullptr, "AddVideo failed due to binder died.");
+    MEDIA_INFO_LOG("DeferredVideoProcSession::AddVideo() enter.");
+    auto ret = remoteSession_->AddVideo(videoId, srcPaths, temp1Path, temp2Path, editPath);
+    CHECK_PRINT_ELOG(ret != ERR_OK, "AddVideo failed errorCode: %{public}d", ret);
+}
+
 void DeferredVideoProcSession::ProcessVideo(const std::string& appName, const std::string& videoId)
 {
     CHECK_RETURN_ELOG(remoteSession_ == nullptr, "ProcessVideo failed due to binder died.");
