@@ -608,12 +608,14 @@ private:
 // Test Class Definition
 class UnifiedPipelineUnitTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         // Test initialization
         pipeline_ = std::make_shared<UnifiedPipeline>(4);  // Default 4 threads
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         // Test cleanup
         pipeline_.reset();
     }
@@ -779,11 +781,13 @@ HWTEST_F(UnifiedPipelineUnitTest, RemovePlugin_Normal, TestSize.Level0)
 
 class UnifiedPipelineManagerTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         // Initialization if needed
     }
     
-    void TearDown() override {
+    void TearDown() override
+    {
         // Cleanup if needed
     }
 };
@@ -1025,11 +1029,13 @@ HWTEST_F(UnifiedPipelineDataProducerTest, OnBufferArrival_NullBuffer, TestSize.L
 
 class UnifiedPiplinePluginTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         // Initialization if needed
     }
     
-    void TearDown() override {
+    void TearDown() override
+    {
         // Cleanup if needed
     }
 };
