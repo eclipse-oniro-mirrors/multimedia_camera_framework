@@ -669,19 +669,15 @@ CameraManagerNapi::CameraManagerNapi(napi_env env) : env_(env)
 {
     CAMERA_SYNC_TRACE;
     // Pre-load napiexlib for System APP, before call CreateDeprecatedSessionForSys.
-    if (CameraSecurity::CheckSystemApp() && !CameraNapiExManager::IsLoadedNapiEx()) {
+    if (CameraSecurity::CheckSystemApp()) {
         MEDIA_INFO_LOG("PreLoad CameraNapiExProxy");
-        napi_value resourceName;
-        napi_create_string_utf8(env_, "CameraNapiExPreload", NAPI_AUTO_LENGTH, &resourceName);
-        napi_async_work asyncWork;
-        napi_create_async_work(env_, nullptr, resourceName,
-            [](napi_env env, void* data) {
-                CameraNapiExManager::GetCameraNapiExProxy();
-            },
-            [](napi_env env, napi_status status, void* data) {
-                MEDIA_INFO_LOG("CameraNapiExProxy preload completed, status: %{public}d", status);
-            }, nullptr, &asyncWork);
-        napi_queue_async_work_with_qos(env_, asyncWork, napi_qos_user_initiated);
+        std::thread preloadThread([]() {
+            QOS::SetThreadQos(QOS::QosLevel::QOS_USER_INTERACTIVE);
+            CameraNapiExManager::GetCameraNapiExProxy();
+            MEDIA_INFO_LOG("CameraNapiExProxy preload completed");
+            QOS::ResetThreadQos();
+        });
+        preloadThread.detach();
     }
 }
 
