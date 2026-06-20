@@ -1076,7 +1076,7 @@ int32_t HCaptureSession::GetColorEffectsMetadata(std::vector<int32_t>& colorEffe
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
         "HCaptureSession::GetColorEffectsMetadata check permission failed.");
-
+ 
     auto device = GetCameraDevice();
     CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     auto settings = device->GetDeviceAbility();
@@ -1118,11 +1118,11 @@ int32_t HCaptureSession::GetColorEffect(int32_t& colourEffect)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "HCaptureSession::GetColorEffect check permission failed.");
-
+ 
     auto device = GetCameraDevice();
     CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     auto settings = device->GetDeviceAbility();
-
+ 
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, ret,
@@ -1144,7 +1144,7 @@ int32_t HCaptureSession::SetColorEffect(int32_t colourEffect)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "HCaptureSession::SetColorEffect check permission failed.");
-
+ 
     auto device = GetCameraDevice();
     CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     constexpr int32_t DEFAULT_ITEMS = 1;
