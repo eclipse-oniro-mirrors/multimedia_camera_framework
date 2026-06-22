@@ -144,7 +144,7 @@ constexpr int32_t PER_BEAUTY_VAL_NUM = 6;
 constexpr int32_t SUPPORT_BEAUTY_START = SKIN_SMOOTH;
 constexpr int32_t SUPPORT_BEAUTY_END = NOSE_SLENDER;
 constexpr int32_t BEAUTY_TYPE_NUM = SUPPORT_BEAUTY_END - SUPPORT_BEAUTY_START + 1;
-static int32_t BEAUTY_SHARE_MAX = (std::pow)(PER_BEAUTY_VAL_NUM, BEAUTY_TYPE_NUM) - 1;
+static int32_t g_beautyShareMax = (std::pow)(PER_BEAUTY_VAL_NUM, BEAUTY_TYPE_NUM) - 1;
 
 const std::unordered_map<BeautyType, camera_device_metadata_tag_t> h_fwkBeautyControlMap_ = {
     {AUTO_TYPE, OHOS_CONTROL_BEAUTY_AUTO_VALUE},
@@ -193,10 +193,10 @@ static int32_t UpdateBeauty(const sptr<HCameraDevice>& device, int32_t type, int
     CHECK_RETURN_RET_WLOG(metaItr == h_fwkBeautyControlMap_.end(),
         CAMERA_INVALID_ARG, "beautyType:%d not support", type);
     camera_device_metadata_tag_t metadata = metaItr->second;
-    constexpr int32_t DEFAULT_ITEMS = 1;
-    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    constexpr int32_t defaultItems = 1;
+    constexpr int32_t defaultDataLength = 1;
     shared_ptr<OHOS::Camera::CameraMetadata> beautyMetaData =
-        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+        make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
     uint32_t dataCount = 1;
     AddOrUpdateMetadata(beautyMetaData, OHOS_CONTROL_BEAUTY_TYPE, &beautyType, dataCount);
     AddOrUpdateMetadata(beautyMetaData, metadata, &value, dataCount);
@@ -253,11 +253,11 @@ static int32_t SwitchBeautyValToDataShareVal(const sptr<HCameraDevice>& device,
         MEDIA_ERR_LOG("SwitchBeautyValToDataShareVal failed, beautyVal:%{public}d not support", beautyVal);
         return CAMERA_INVALID_ARG;
     }
-    valbasePlaceDiff = std::distance(range.begin(), it) * (PER_BEAUTY_VAL_NUM - 1) / static_cast<int32_t>(range.size() - 1) -
-        valbasePlaceOld;
+    valbasePlaceDiff = std::distance(range.begin(), it) * (PER_BEAUTY_VAL_NUM - 1) /
+        static_cast<int32_t>(range.size() - 1) - valbasePlaceOld;
     valbasePlaceDiff = std::clamp(valbasePlaceDiff, -PER_BEAUTY_VAL_NUM + 1, PER_BEAUTY_VAL_NUM - 1);
     shareVal += valbasePlaceDiff * basePlaceVal;
-    shareVal = std::clamp(shareVal, 0, BEAUTY_SHARE_MAX);
+    shareVal = std::clamp(shareVal, 0, g_beautyShareMax);
     return errCode;
 }
 
