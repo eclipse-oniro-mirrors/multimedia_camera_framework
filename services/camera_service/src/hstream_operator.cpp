@@ -2548,13 +2548,8 @@ int32_t HStreamOperator::GetSensorRotation()
         CHECK_EXECUTE(cameraDevice_ != nullptr, clientName = cameraDevice_->GetClientName());
         bool isCorrect = false;
         CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName, isCorrect);
-        if (isCorrect) {
-            std::string foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
-            CHECK_EXECUTE(!foldScreenType.empty() && foldScreenType[0] == '6',
-                innerRotation = (innerRotation + STREAM_ROTATE_90) % STREAM_ROTATE_360);
-            MEDIA_INFO_LOG("GetSensorRotation Correct, current sensorRotation: %{public}d", innerRotation);
-            return innerRotation;
-        }
+        CHECK_RETURN_RET_ILOG(
+            isCorrect, innerRotation, "GetSensorRotation Correct, current sensorRotation: %{public}d", innerRotation);
         int32_t customLogicDirection = 0;
         CameraApplistManager::GetInstance()->GetCustomLogicDirection(clientName, customLogicDirection);
         innerRotation =

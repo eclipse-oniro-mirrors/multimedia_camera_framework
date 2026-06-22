@@ -44,21 +44,16 @@ sptr<CameraApplistManager> &CameraApplistManager::GetInstance()
 
 CameraApplistManager::CameraApplistManager()
 {
-    isLogicCamera_ = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
-    foldScreenType_ = system::GetParameter("const.window.foldscreen.type", "");
-    CHECK_EXECUTE(!foldScreenType_.empty() && foldScreenType_[0] == '6', uriForWhiteList_ = COMPATIBLE_APP_STRATEGY);
-    if (!foldScreenType_.empty() && (foldScreenType_[0] == '7' || foldScreenType_[0] == '8')) {
-        uriForWhiteList_ = APP_LOGICAL_DEVICE_CONFIGURATION;
-        GetLogicCameraScreenStatus();
-    }
     MEDIA_INFO_LOG("CameraApplistManager construct");
+    bool isLogicCamera = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
+    CHECK_EXECUTE(isLogicCamera, GetLogicCameraScreenStatus());
 }
 
 CameraApplistManager::~CameraApplistManager()
 {
+    MEDIA_INFO_LOG("CameraApplistManager::~CameraApplistManager");
     ClearApplistManager();
     UnregisterCameraApplistManagerObserver();
-    MEDIA_INFO_LOG("CameraApplistManager::~CameraApplistManager");
 }
 
 int32_t CameraApplistManager::GetLogicCameraScreenStatus()
@@ -104,7 +99,7 @@ bool CameraApplistManager::RegisterCameraApplistManagerObserver()
     auto dataShareHelper = CreateCameraDataShareHelper();
     CHECK_RETURN_RET_ELOG(dataShareHelper == nullptr, false,
         "CameraApplistManager::RegisterCameraApplistManagerObserver DataShareHelper is nullptr");
-    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + uriForWhiteList_;
+    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + APP_LOGICAL_DEVICE_CONFIGURATION;
     int ret = dataShareHelper->RegisterObserver(Uri(uriApplistStr), this);
     dataShareHelper->Release();
     CHECK_RETURN_RET_ELOG(ret != DataShare::E_OK, false,
@@ -118,7 +113,7 @@ void CameraApplistManager::UnregisterCameraApplistManagerObserver()
     auto dataShareHelper = CreateCameraDataShareHelper();
     CHECK_RETURN_ELOG(dataShareHelper == nullptr,
         "CameraApplistManager::RegisterCameraApplistManagerObserver DataShareHelper is nullptr");
-    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + uriForWhiteList_;
+    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + APP_LOGICAL_DEVICE_CONFIGURATION;
     int ret = dataShareHelper->UnregisterObserver(Uri(uriApplistStr), this);
     dataShareHelper->Release();
     CHECK_RETURN_ELOG(ret != DataShare::E_OK,
@@ -132,10 +127,10 @@ bool CameraApplistManager::GetApplistConfigure()
     auto dataShareHelper = CreateCameraDataShareHelper();
     CHECK_RETURN_RET_ELOG(dataShareHelper == nullptr, false,
         "CameraApplistManager::GetApplistConfigure dataShareHelper is nullptr");
-    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + uriForWhiteList_;
+    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + APP_LOGICAL_DEVICE_CONFIGURATION;
     Uri uri(uriApplistStr);
     DataShare::DataSharePredicates predicates;
-    predicates.EqualTo(SETTINGS_DATA_COLUMN_KEYWORD, uriForWhiteList_);
+    predicates.EqualTo(SETTINGS_DATA_COLUMN_KEYWORD, APP_LOGICAL_DEVICE_CONFIGURATION);
     std::vector<std::string> columns = { SETTINGS_DATA_COLUMN_VALUE };
     auto resultSet = dataShareHelper->Query(uri, predicates, columns);
     CHECK_RETURN_RET_ELOG(resultSet == nullptr, false,
@@ -175,10 +170,6 @@ void CameraApplistManager::ParseApplistConfigureJsonStr(const std::string& cfgJs
     for (auto& [bundleName, info] : jsonParsed.items()) {
         ApplistConfigure appConfigure;
         appConfigure.bundleName = bundleName;
-
-        bool flag = info.contains("exemptNaturalDirectionCorrect") &&
-            info["exemptNaturalDirectionCorrect"].is_boolean();
-        appConfigure.exemptNaturalDirectionCorrect = flag ? info["exemptNaturalDirectionCorrect"].get<bool>() : false;
 
         std::map<int32_t, int32_t> useLogicCamera = {};
         if (info.contains("useLogicCamera") && info["useLogicCamera"].is_object()) {
@@ -262,7 +253,7 @@ bool CameraApplistManager::GetNaturalDirectionCorrectByBundleName(const std::str
         "CameraApplistManager::GetNaturalDirectionCorrectByBundleName appConfigure is nullptr");
 
     std::map<int32_t, int32_t> useLogicCamera = appConfigure->useLogicCamera;
-    exemptNaturalDirectionCorrect = appConfigure->exemptNaturalDirectionCorrect || (!useLogicCamera.empty() &&
+    exemptNaturalDirectionCorrect = (!useLogicCamera.empty() &&
         (std::all_of(useLogicCamera.begin(), useLogicCamera.end(), [](const auto& pair) { return pair.second == 0; })));
     MEDIA_INFO_LOG("CameraApplistManager::GetNaturalDirectionCorrectByBundleName BundleName: %{public}s, "
         "exemptNaturalDirectionCorrect: %{public}d", bundleName.c_str(), exemptNaturalDirectionCorrect);
@@ -317,7 +308,7 @@ void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string&
         "CameraApplistManager::GetAppNaturalDirectionByBundleName appConfigure is nullptr");
 
     std::map<int32_t, int32_t> useLogicCamera = appConfigure->useLogicCamera;
-    bool isCorrect = appConfigure->exemptNaturalDirectionCorrect || (!useLogicCamera.empty() &&
+    bool isCorrect = (!useLogicCamera.empty() &&
         (std::all_of(useLogicCamera.begin(), useLogicCamera.end(), [](const auto& pair) { return pair.second == 0; })));
     CHECK_RETURN(isCorrect);
 
