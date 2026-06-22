@@ -2680,6 +2680,9 @@ interface MetadataOutput : CameraOutput {
 
   RemoveMetadataObjectTypes(types: Array<MetadataObjectType>): void;
   AddMetadataObjectTypes(types: Array<MetadataObjectType>): void;
+  IsLockMetadataObjectTrackingSupported(): bool;
+  LockMetadataObjectTracking(pointOfInterest: Point): void;
+  UnlockMetadataObjectTracking(): void;
 }
 
 struct MovieInfo {
