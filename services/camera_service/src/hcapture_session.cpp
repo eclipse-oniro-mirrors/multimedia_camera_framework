@@ -2570,10 +2570,13 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         // Clear current session
         if (type != CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED) {
             HCameraSessionManager::GetInstance().RemoveSession(this);
+            if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
+                // for the case in default active control center,need update enable
+                UpdateCameraControl(false);
+            }
             MEDIA_DEBUG_LOG("HCaptureSession::Release clear pid left sessions(%{public}zu).",
                 HCameraSessionManager::GetInstance().GetTotalSessionSize());
         }
-        UpdateCameraControl(false);
         auto hStreamOperatorSptr = GetStreamOperator();
         CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "hStreamOperatorSptr is null");
 #ifdef CAMERA_MOVING_PHOTO
@@ -2594,6 +2597,7 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         if (!(hStreamOperatorSptr->IsOfflineCapture())) {
             hStreamOperatorSptr->Release();
         }
+        UpdateCameraControl(false);
         sptr<ICaptureSessionCallback> emptyCallback = nullptr;
         SetCallback(emptyCallback);
         UnSetPressureCallback();
