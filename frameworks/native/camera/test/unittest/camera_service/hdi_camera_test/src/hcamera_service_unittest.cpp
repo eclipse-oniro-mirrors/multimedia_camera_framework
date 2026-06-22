@@ -3138,9 +3138,7 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_078, TestSize.Level0)
     std::vector<int32_t> useLogicCamera = {};
     std::vector<int32_t> customLogicDirection = {};
     int32_t ret = cameraService_->GetLogicCameraConfig(clientName, useLogicCamera, customLogicDirection);
-    std::string foldScreenType = cameraService_->foldScreenType_;
-    if (cameraService_->isLogicCamera_ && !foldScreenType.empty() && (
-        foldScreenType[0] == '7' || foldScreenType[0] == '8')) {
+    if (cameraService_->isLogicCamera_) {
         EXPECT_EQ(ret, CAMERA_OK);
     } else {
         EXPECT_EQ(ret, CAMERA_OPERATION_NOT_ALLOWED);

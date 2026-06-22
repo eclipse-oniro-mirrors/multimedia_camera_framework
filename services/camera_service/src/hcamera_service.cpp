@@ -363,9 +363,7 @@ int32_t HCameraService::GetLogicCameraConfig(const std::string& clientName, std:
     MEDIA_DEBUG_LOG("HCameraService::GetLogicCameraConfig is called");
     useLogicCamera = {};
     customLogicDirection = {};
-    CHECK_RETURN_RET(!isLogicCamera_ || foldScreenType_.empty() ||
-        !(foldScreenType_[0] == '7' || foldScreenType_[0] == '8'),
-        CAMERA_OPERATION_NOT_ALLOWED);
+    CHECK_RETURN_RET(!isLogicCamera_, CAMERA_OPERATION_NOT_ALLOWED);
     auto appConfigure = CameraApplistManager::GetInstance()->GetConfigureByBundleName(clientName);
     CHECK_RETURN_RET_DLOG(
         appConfigure == nullptr, CAMERA_OK, "HCameraService::GetLogicCameraConfig appConfigure is nullptr");
