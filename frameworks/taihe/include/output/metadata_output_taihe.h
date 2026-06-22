@@ -62,6 +62,9 @@ public:
     void OffMetadataObjectsAvailable(optional_view<callback<void(uintptr_t, array_view<MetadataObject>)>> callback);
     void RemoveMetadataObjectTypes(array_view<MetadataObjectType> types);
     void AddMetadataObjectTypes(array_view<MetadataObjectType> types);
+    bool IsLockMetadataObjectTrackingSupported();
+    void LockMetadataObjectTracking(Point pointOfInterest);
+    void UnlockMetadataObjectTracking();
     std::shared_ptr<MetadataOutputCallbackListener> metadataOutputCallback_;
     std::shared_ptr<MetadataObjectsAvailableCallbackListener> metadataObjectsAvailableCallback_;
     sptr<CameraStandard::MetadataOutput> GetMetadataOutput()

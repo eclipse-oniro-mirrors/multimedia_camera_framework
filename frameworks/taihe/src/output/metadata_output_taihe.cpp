@@ -223,5 +223,31 @@ void MetadataOutputImpl::AddMetadataObjectTypes(array_view<MetadataObjectType> t
     int32_t retCode = metadataOutput_->AddMetadataObjectTypes(metadataObjectType);
     CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode), "AddMetadataObjectTypes failure!");
 }
+
+bool MetadataOutputImpl::IsLockMetadataObjectTrackingSupported()
+{
+    MEDIA_INFO_LOG("IsLockMetadataObjectTrackingSupported is called");
+    CHECK_RETURN_RET_ELOG(metadataOutput_ == nullptr, false, "metadataOutput_ is nullptr!");
+    return metadataOutput_->IsLockMetadataObjectTrackingSupported();
+}
+
+void MetadataOutputImpl::LockMetadataObjectTracking(Point pointOfInterest)
+{
+    MEDIA_INFO_LOG("LockMetadataObjectTracking is called");
+    CHECK_RETURN_ELOG(metadataOutput_ == nullptr, "metadataOutput_ is nullptr!");
+    OHOS::CameraStandard::Point point;
+    point.x = pointOfInterest.x;
+    point.y = pointOfInterest.y;
+    int32_t retCode = metadataOutput_->LockMetadataObjectTracking(point);
+    CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode), "LockMetadataObjectTracking failure!");
+}
+
+void MetadataOutputImpl::UnlockMetadataObjectTracking()
+{
+    MEDIA_INFO_LOG("UnlockMetadataObjectTracking is called");
+    CHECK_RETURN_ELOG(metadataOutput_ == nullptr, "metadataOutput_ is nullptr!");
+    int32_t retCode = metadataOutput_->UnlockMetadataObjectTracking();
+    CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode), "UnlockMetadataObjectTracking failure!");
+}
 } // namespace Camera
 } // namespace Ani
