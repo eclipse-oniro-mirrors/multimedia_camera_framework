@@ -201,10 +201,12 @@ void HCameraService::OnReceiveEvent(const EventFwk::CommonEventData &data)
         int32_t currentFlag = wantParams.GetIntParam(BEAUTY_NOTIFICATION_ACTION_PARAM, -1);
         MEDIA_INFO_LOG("currentFlag: %{public}d", currentFlag);
         int32_t beautyStatus = currentFlag == BEAUTY_STATUS_OFF ? BEAUTY_STATUS_ON : BEAUTY_STATUS_OFF;
-        CameraBeautyNotification::GetInstance()->SetBeautyStatusFromDataShareHelper(beautyStatus);
-        SetBeauty(beautyStatus);
-        CameraBeautyNotification::GetInstance()->SetBeautyStatus(beautyStatus);
-        CameraBeautyNotification::GetInstance()->PublishNotification(false);
+        if (auto instance = CameraBeautyNotification::GetInstance()) {
+            instance->SetBeautyStatusFromDataShareHelper(beautyStatus);
+            SetBeauty(beautyStatus);
+            instance->SetBeautyStatus(beautyStatus);
+            instance->PublishNotification(false);
+        }
     }
 #endif
     if (action == COMMON_EVENT_SCREEN_LOCKED) {
