@@ -104,7 +104,8 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
     ASSERT_NE(repository, nullptr);
     auto strategyCenter = VideoStrategyCenter::Create(repository);
     ASSERT_NE(strategyCenter, nullptr);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID, std::move(info));
     strategyCenter->isNeedStop_ = false;
     strategyCenter->isCharging_ = true;
@@ -144,7 +145,8 @@ HWTEST_F(DeferredVideoProcessorStratetyUnittest, deferred_video_processor_strate
     ASSERT_NE(repository, nullptr);
     auto strategyCenter = VideoStrategyCenter::Create(repository);
     ASSERT_NE(strategyCenter, nullptr);
-    auto info = std::make_unique<VideoInfo>(VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     repository->AddVideoJob(VIDEO_ID, std::move(info));
     auto job = strategyCenter->GetJob();
     EXPECT_EQ(job, nullptr);

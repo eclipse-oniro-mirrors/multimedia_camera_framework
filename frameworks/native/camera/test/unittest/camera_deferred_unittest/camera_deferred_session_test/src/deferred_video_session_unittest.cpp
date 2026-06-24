@@ -134,9 +134,10 @@ HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_002, TestSize.Le
     EXPECT_EQ(ret, DP_OK);
     std::string videoId = "testVideo";
     std::string appName = "testapp";
-    ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    ret = deferredVideoSession->AddVideo(videoId, srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     EXPECT_EQ(ret, DP_OK);
-    ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    ret = deferredVideoSession->AddVideo(videoId, srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
     EXPECT_EQ(ret, DP_OK);
     ret = deferredVideoSession->RemoveVideo(videoId, true);
     EXPECT_EQ(ret, DP_OK);
@@ -164,9 +165,10 @@ HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_003, TestSize.Le
     ASSERT_NE(deferredVideoSession, nullptr);
     std::string videoId = "testVideo";
     std::string appName = "testapp";
-    auto ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto ret = deferredVideoSession->AddVideo(videoId, srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
     EXPECT_EQ(ret, DP_OK);
-    ret = deferredVideoSession->AddVideo(videoId, VIDEO_PATH, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    ret = deferredVideoSession->AddVideo(videoId, srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
     EXPECT_EQ(ret, DP_OK);
     ret = deferredVideoSession->RemoveVideo(videoId, true);
     EXPECT_EQ(ret, DP_OK);

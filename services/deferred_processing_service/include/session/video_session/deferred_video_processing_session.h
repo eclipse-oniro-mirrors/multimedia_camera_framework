@@ -34,6 +34,10 @@ public:
         const std::string& temp2Path) override;
     int32_t AddVideo(const std::string& videoId, const std::string& srcPath, const std::string& temp1Path,
         const std::string& temp2Path, const std::string& editPath) override;
+    int32_t AddVideo(const std::string& videoId, const std::vector<std::string>& srcPaths, const std::string& temp1Path,
+        const std::string& temp2Path) override;
+    int32_t AddVideo(const std::string& videoId, const std::vector<std::string>& srcPaths, const std::string& temp1Path,
+        const std::string& temp2Path, const std::string& editPath) override;
     int32_t RemoveVideo(const std::string& videoId, bool restorable) override;
     int32_t RestoreVideo(const std::string& videoId) override;
     int32_t ProcessVideo(const std::string& appName, const std::string& videoId) override;

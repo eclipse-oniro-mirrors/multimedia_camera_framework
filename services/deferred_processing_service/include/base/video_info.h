@@ -18,6 +18,7 @@
 
 #include <fcntl.h>
 #include <string>
+#include <vector>
 
 namespace OHOS {
 namespace CameraStandard {
@@ -25,13 +26,19 @@ class PictureIntf;
 namespace DeferredProcessing {
 class VideoInfo {
 public:
-VideoInfo(const std::string& srcPath, const std::string& temp1Path, const std::string& temp2Path,
-    const std::string& moviePath = "");
-~VideoInfo() = default;
+    VideoInfo(const std::string& srcPath, const std::string& temp1Path, const std::string& temp2Path,
+        const std::string& moviePath = "");
+    VideoInfo(const std::vector<std::string>& srcPaths, const std::string& temp1Path, const std::string& temp2Path,
+        const std::string& moviePath = "");
+    ~VideoInfo() = default;
 
     inline const std::string& GetSrcPath() const
     {
         return srcPath_;
+    }
+    inline const std::vector<std::string>& GetSrcPaths() const
+    {
+        return srcPaths_;
     }
     inline const std::string& GetTemp1Path() const
     {
@@ -48,6 +55,7 @@ VideoInfo(const std::string& srcPath, const std::string& temp1Path, const std::s
 
 private:
     std::string srcPath_;
+    std::vector<std::string> srcPaths_;
     std::string temp1Path_;
     std::string temp2Path_;
     std::string moviePath_;

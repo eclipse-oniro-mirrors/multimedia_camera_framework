@@ -19,6 +19,7 @@
 #include <refbase.h>
 #include <iostream>
 #include <mutex>
+#include <vector>
 
 #include "camera_death_recipient.h"
 #include "ideferred_video_processing_session.h"
@@ -51,6 +52,10 @@ public:
     void RemoveVideo(const std::string& videoId, const bool restorable = false);
     void RestoreVideo(const std::string& videoId);
     void AddVideo(const std::string& videoId, const std::string& srcPath, const std::string& temp1Path,
+        const std::string& temp2Path, const std::string& editPath);
+    void AddVideo(const std::string& videoId, const std::vector<std::string>& srcPaths, const std::string& temp1Path,
+        const std::string& temp2Path);
+    void AddVideo(const std::string& videoId, const std::vector<std::string>& srcPaths, const std::string& temp1Path,
         const std::string& temp2Path, const std::string& editPath);
     void ProcessVideo(const std::string& appName, const std::string& videoId);
     void CancelProcessVideo(const std::string& videoId);

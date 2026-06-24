@@ -95,6 +95,40 @@ int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId, con
     return ret;
 }
 
+int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId, const std::vector<std::string>& srcPaths,
+    const std::string& temp1Path, const std::string& temp2Path)
+{
+    auto info = std::make_unique<VideoInfo>(srcPaths, temp1Path, temp2Path, "");
+    if (inSync_.load()) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        DP_INFO_LOG("AddVideo inSync!");
+        videoIds_.emplace(videoId, std::move(info));
+        return DP_OK;
+    }
+
+    auto ret = DPS_SendCommand<AddVideoCommand>(userId_, videoId, std::move(info));
+    DP_INFO_LOG("DPS_VIDEO: AddVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
+    DfxVideoReport::GetInstance().ReportAddVideoEvent(videoId, GetDpsCallerInfo());
+    return ret;
+}
+
+int32_t DeferredVideoProcessingSession::AddVideo(const std::string& videoId, const std::vector<std::string>& srcPaths,
+    const std::string& temp1Path, const std::string& temp2Path, const std::string& editPath)
+{
+    auto info = std::make_unique<VideoInfo>(srcPaths, temp1Path, temp2Path, editPath);
+    if (inSync_.load()) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        DP_INFO_LOG("AddVideo error, inSync!");
+        videoIds_.emplace(videoId, std::move(info));
+        return DP_OK;
+    }
+
+    auto ret = DPS_SendCommand<AddVideoCommand>(userId_, videoId, std::move(info));
+    DP_INFO_LOG("DPS_VIDEO: AddVideo videoId: %{public}s, ret: %{public}d", videoId.c_str(), ret);
+    DfxVideoReport::GetInstance().ReportAddVideoEvent(videoId, GetDpsCallerInfo());
+    return ret;
+}
+
 int32_t DeferredVideoProcessingSession::RemoveVideo(const std::string& videoId, bool restorable)
 {
     DP_CHECK_RETURN_RET_LOG(inSync_.load(), DP_OK, "RemoveVideo inSync!");
