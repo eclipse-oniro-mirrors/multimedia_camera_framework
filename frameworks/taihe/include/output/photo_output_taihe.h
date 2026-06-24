@@ -175,6 +175,8 @@ public:
     void DeferImageDelivery(DeferredDeliveryImageType type);
     bool IsPhotoQualityPrioritizationSupported(PhotoQualityPrioritization qualityPrioritization);
     void SetPhotoQualityPrioritization(PhotoQualityPrioritization qualityPrioritization);
+    void EnableAutoExtendedGainmapDelivery(bool enabled);
+    bool IsAutoExtendedGainmapDeliverySupported();
 
     static uint32_t photoOutputTaskId_;
 private:

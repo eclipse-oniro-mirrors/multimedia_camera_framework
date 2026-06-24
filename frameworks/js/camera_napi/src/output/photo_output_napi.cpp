@@ -240,6 +240,7 @@ void CleanAfterTransPicture(sptr<PhotoOutput> photoOutput, int32_t captureId)
     photoOutput->captureIdAuxiliaryCountMap_.erase(captureId);
     photoOutput->captureIdCountMap_.erase(captureId);
     photoOutput->captureIdHandleMap_.erase(captureId);
+    photoOutput->captureIdLhdrGainmapMap_.erase(captureId);
 }
 
 PhotoOutputCallback::PhotoOutputCallback(napi_env env) : ListenerBase(env) {}
@@ -865,7 +866,10 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isAutoBokehDataDeliverySupported", IsAutoBokehDataDeliverySupported),
         DECLARE_NAPI_FUNCTION("enableAutoBokehDataDelivery", EnableAutoBokehDataDelivery),
         DECLARE_NAPI_FUNCTION("isPhotoQualityPrioritizationSupported", IsPhotoQualityPrioritizationSupported),
-        DECLARE_NAPI_FUNCTION("setPhotoQualityPrioritization", SetPhotoQualityPrioritization)
+        DECLARE_NAPI_FUNCTION("setPhotoQualityPrioritization", SetPhotoQualityPrioritization),
+        DECLARE_NAPI_FUNCTION("isAutoExtendedGainmapDeliverySupported", IsAutoExtendedGainmapDeliverySupported),
+        DECLARE_NAPI_FUNCTION("enableAutoExtendedGainmapDelivery", EnableAutoExtendedGainmapDelivery)
+
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -2721,6 +2725,58 @@ napi_value PhotoOutputNapi::OffConstellationDrawingStateChange(napi_env env, nap
     MEDIA_DEBUG_LOG("PhotoOutputNapi::OffConstellationDrawingStateChange is called");
     const std::string eventName = "constellationDrawingStateChange";
     return ListenerTemplate<PhotoOutputNapi>::Off(env, info, eventName);
+}
+
+napi_value PhotoOutputNapi::IsAutoExtendedGainmapDeliverySupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PhotoOutputNapi::IsAutoExtendedGainmapDeliverySupported is called");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    bool isSupported = false;
+    napi_get_boolean(env, isSupported, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi);
+    if (!jsParamParser.IsStatusOk()) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoExtendedGainmapDeliverySupported invalid argument");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ != nullptr) {
+        int32_t retCode = photoOutputNapi->photoOutput_->IsAutoExtendedGainmapDeliverySupported(isSupported);
+        if (retCode != 0) {
+            MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoExtendedGainmapDeliverySupported fail %{public}d", retCode);
+            return result;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoExtendedGainmapDeliverySupported get native object fail");
+        return result;
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableAutoExtendedGainmapDelivery(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PhotoOutputNapi::EnableAutoExtendedGainmapDelivery is called");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    bool isEnable;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoExtendedGainmapDelivery parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoExtendedGainmapDelivery get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return result;
+    }
+
+    int32_t retCode = photoOutputNapi->photoOutput_->EnableAutoExtendedGainmapDelivery(isEnable);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableAutoExtendedGainmapDelivery fail %{public}d", retCode);
+        return result;
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoExtendedGainmapDelivery success");
+    return result;
 }
 
 extern "C" {

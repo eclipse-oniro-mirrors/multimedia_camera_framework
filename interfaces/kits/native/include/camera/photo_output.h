@@ -640,6 +640,30 @@ Camera_ErrorCode OH_PhotoCaptureSettingExt_SetCompressionQuality(Camera_PhotoCap
  */
 Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSettingExt(Camera_PhotoOutput* photoOutput,
     Camera_PhotoCaptureSettingExt* setting);
+
+/**
+ * @brief Checks whether the auto extended gainmap delivery is supported.
+ *
+ * @param photoOutput Pointer to the target PhotoOutput instance.
+ * @return **true** if supported, **false** otherwise.
+ * @since 26.0.0
+ */
+bool OH_PhotoOutput_IsAutoExtendedGainmapDeliverySupported(const Camera_PhotoOutput* photoOutput);
+
+/**
+ * @brief Enables auto extended gainmap delivery.
+ *
+ * @param photoOutput Pointer to the target PhotoOutput instance.
+ * @param enabled Whether to enable or disable auto extended gainmap delivery. **true** to enable,
+ * **false** otherwise.
+ * @return **CAMERA_OK**: The operation is successful.
+ *     <br>**CAMERA_INVALID_ARGUMENT**: A parameter is missing or the parameter type is incorrect.
+ *     <br>**CAMERA_OPERATION_NOT_ALLOWED**: The operation is not allowed.
+ *     <br>**CAMERA_SESSION_NOT_CONFIG**: The capture session is not configured.
+ *     <br>**CAMERA_SERVICE_FATAL_ERROR**: The camera service is abnormal.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_PhotoOutput_EnableAutoExtendedGainmapDelivery(Camera_PhotoOutput* photoOutput, bool enabled);
 #ifdef __cplusplus
 }
 #endif

@@ -2017,5 +2017,193 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_032, TestSize.Level0)
     session->Release();
     input->Release();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with IsAutoExtendedGainmapDeliverySupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with IsAutoExtendedGainmapDeliverySupported
+ */
+HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_001, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    bool isSupported = false;
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    phtOutput->stream_ = nullptr;
+    EXPECT_EQ(phtOutput->IsAutoExtendedGainmapDeliverySupported(isSupported), SERVICE_FATL_ERROR);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with EnableAutoExtendedGainmapDelivery
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with EnableAutoExtendedGainmapDelivery
+ */
+HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+
+    bool enabled = false;
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    phtOutput->stream_ = nullptr;
+    EXPECT_EQ(phtOutput->EnableAutoExtendedGainmapDelivery(enabled), SERVICE_FATL_ERROR);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with IsAutoExtendedGainmapDeliverySupported and EnableAutoExtendedGainmapDelivery
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput AutoExtendedGainmapDelivery with normal flow
+ */
+HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    bool isSupported = false;
+    int32_t ret = phtOutput->IsAutoExtendedGainmapDeliverySupported(isSupported);
+    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+
+    if (isSupported) {
+        bool enabled = true;
+        EXPECT_EQ(phtOutput->EnableAutoExtendedGainmapDelivery(enabled), CameraErrorCode::SUCCESS);
+        enabled = false;
+        EXPECT_EQ(phtOutput->EnableAutoExtendedGainmapDelivery(enabled), CameraErrorCode::SUCCESS);
+    }
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateMultiChannel with lhdrGainmapSurface when it is null
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateMultiChannel creates lhdrGainmapSurface when it is null
+ */
+HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput->GetStream().GetRefPtr(), nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    phtOutput->gainmapSurface_ = nullptr;
+    phtOutput->deepSurface_ = nullptr;
+    phtOutput->exifSurface_ = nullptr;
+    phtOutput->debugSurface_ = nullptr;
+    phtOutput->rawPhotoSurface_ = nullptr;
+    phtOutput->lhdrGainmapSurface_ = nullptr;
+    phtOutput->CreateMultiChannel();
+    EXPECT_NE(phtOutput->lhdrGainmapSurface_, nullptr);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateMultiChannel with lhdrGainmapSurface when it already exists
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CreateMultiChannel when lhdrGainmapSurface already exists
+ */
+HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_005, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    ASSERT_NE(phtOutput->GetStream().GetRefPtr(), nullptr);
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    phtOutput->lhdrGainmapSurface_ = Surface::CreateSurfaceAsConsumer("lhdrGainmapImage");
+    phtOutput->gainmapSurface_ = Surface::CreateSurfaceAsConsumer("gainmapImage");
+    phtOutput->deepSurface_ = Surface::CreateSurfaceAsConsumer("deepSurface");
+    phtOutput->exifSurface_ = Surface::CreateSurfaceAsConsumer("exifSurface");
+    phtOutput->debugSurface_ = Surface::CreateSurfaceAsConsumer("debugSurface");
+    phtOutput->rawPhotoSurface_ = Surface::CreateSurfaceAsConsumer("rawPhotoSurface");
+    phtOutput->CreateMultiChannel();
+    EXPECT_NE(phtOutput->lhdrGainmapSurface_, nullptr);
+
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+}
+} // namespace CameraStandard
+} // namespace OHOS

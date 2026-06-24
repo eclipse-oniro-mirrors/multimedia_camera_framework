@@ -2386,6 +2386,8 @@ interface PhotoOutput : CameraOutput {
   IsDeferredImageDeliveryEnabled(type: DeferredDeliveryImageType): bool;
   IsPhotoQualityPrioritizationSupported(qualityPrioritization: PhotoQualityPrioritization): bool;
   SetPhotoQualityPrioritization(qualityPrioritization: PhotoQualityPrioritization): void;
+  EnableAutoExtendedGainmapDelivery(enabled: bool): void;
+  IsAutoExtendedGainmapDeliverySupported(): bool;
 }
 
 enum VideoCodecType : i32{

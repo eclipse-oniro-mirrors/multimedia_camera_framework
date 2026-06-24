@@ -212,6 +212,7 @@ public:
     SafeMap<int32_t, sptr<SurfaceBuffer>> captureIdDepthMap_ = {};
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdLhdrGainmapMap_;
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,

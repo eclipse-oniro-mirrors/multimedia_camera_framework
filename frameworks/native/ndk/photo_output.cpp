@@ -438,6 +438,23 @@ Camera_ErrorCode OH_PhotoOutput_SetPhotoQualityPrioritization(
         "Invalid argument, photoOutput is null!");
     return photoOutput->SetPhotoQualityPrioritization(qualityPrioritization);
 }
+
+Camera_ErrorCode OH_PhotoOutput_EnableAutoExtendedGainmapDelivery(Camera_PhotoOutput* photoOutput, bool enabled)
+{
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, photoOutput is null!");
+
+    return photoOutput->EnableAutoExtendedGainmapDelivery(enabled);
+}
+
+bool OH_PhotoOutput_IsAutoExtendedGainmapDeliverySupported(const Camera_PhotoOutput* photoOutput)
+{
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, false, "Invalid argument, photoOutput is null!");
+    bool isSupported = false;
+    int32_t retCode = photoOutput->IsAutoExtendedGainmapDeliverySupported(&isSupported);
+    CHECK_RETURN_RET_ELOG(retCode != 0, false, "IsAutoExtendedGainmapDeliverySupported failed!");
+
+    return isSupported;
+}
 #ifdef __cplusplus
 }
 #endif
