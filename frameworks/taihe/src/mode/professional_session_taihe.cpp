@@ -206,25 +206,6 @@ void ProfessionalSessionImpl::UnregisterApertureInfoCallbackListener(const std::
     apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
 }
 
-void ApertureInfoCallbackListener::OnApertureInfoChanged(OHOS::CameraStandard::ApertureInfo info)
-{
-    MEDIA_DEBUG_LOG("OnApertureInfoChanged is called, apertureValue: %{public}f", info.apertureValue);
-    OnApertureInfoChangedCallback(info);
-}
-
-void ApertureInfoCallbackListener::OnApertureInfoChangedCallback(OHOS::CameraStandard::ApertureInfo info) const
-{
-    MEDIA_DEBUG_LOG("OnApertureInfoChangedCallback is called");
-    auto sharePtr = shared_from_this();
-    auto task = [info, sharePtr]() {
-        ApertureInfo apertureInfo{  .aperture = optional<double>::make(static_cast<double>(info.apertureValue)) };
-        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback<ApertureInfo const&>(
-            "apertureInfoChange", 0, "Callback is OK", apertureInfo));
-    };
-    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
-    mainHandler_->PostTask(task, "OnApertureInfoChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
-}
-
 void ProfessionalSessionImpl::RegisterLuminationInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {

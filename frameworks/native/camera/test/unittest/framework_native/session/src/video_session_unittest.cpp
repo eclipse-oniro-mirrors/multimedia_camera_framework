@@ -37,6 +37,18 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_1;
 
+class RecordingVideoApertureInfoCallback : public ApertureInfoCallback {
+public:
+    void OnApertureInfoChanged(ApertureInfo info) override
+    {
+        callCount_++;
+        lastApertureValue_ = info.apertureValue;
+    }
+
+    int32_t callCount_ = 0;
+    float lastApertureValue_ = 0.0f;
+};
+
 void CameraVideoSessionUnitTest::SetUpTestCase(void)
 {
     ASSERT_TRUE(TestToken().GetAllCameraPermission());
@@ -755,6 +767,63 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_012, TestSize.Level0
     expectResult = intResult == CAMERA_INVALID_STATE || intResult == CAMERA_OK;
     EXPECT_EQ(expectResult, true);
  
+    input->Close();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoSession metadata callback aperture branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoSession metadata processor dispatches aperture callbacks and filters duplicates
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_013, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    sptr<VideoSessionForSys> videoSessionForSys = static_cast<VideoSessionForSys*>(sessionForSys.GetRefPtr());
+    ASSERT_NE(videoSessionForSys, nullptr);
+
+    auto callback = std::make_shared<RecordingVideoApertureInfoCallback>();
+    ASSERT_NE(callback, nullptr);
+    videoSessionForSys->SetApertureInfoCallback(callback);
+    ASSERT_NE(videoSessionForSys->apertureInfoCallback_, nullptr);
+
+    int32_t defaultItems = 10;
+    int32_t defaultDataLength = 200;
+    auto metadata = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    ASSERT_NE(metadata, nullptr);
+
+    uint64_t timestamp = 1;
+    float firstApertureValue = 1.8f;
+    metadata->addEntry(OHOS_STATUS_CAMERA_APERTURE_VALUE, &firstApertureValue, 1);
+    videoSessionForSys->metadataResultProcessor_->ProcessCallbacks(timestamp, metadata);
+    EXPECT_EQ(callback->callCount_, 1);
+    EXPECT_FLOAT_EQ(callback->lastApertureValue_, 1.8f);
+    EXPECT_FLOAT_EQ(videoSessionForSys->apertureValue_, 1.8f);
+
+    videoSessionForSys->metadataResultProcessor_->ProcessCallbacks(timestamp, metadata);
+    EXPECT_EQ(callback->callCount_, 1);
+
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_STATUS_CAMERA_APERTURE_VALUE);
+    float secondApertureValue = 2.2f;
+    metadata->addEntry(OHOS_STATUS_CAMERA_APERTURE_VALUE, &secondApertureValue, 1);
+    videoSessionForSys->metadataResultProcessor_->ProcessCallbacks(timestamp, metadata);
+    EXPECT_EQ(callback->callCount_, 2);
+    EXPECT_FLOAT_EQ(callback->lastApertureValue_, 2.2f);
+    EXPECT_FLOAT_EQ(videoSessionForSys->apertureValue_, 2.2f);
+
     input->Close();
 }
 }

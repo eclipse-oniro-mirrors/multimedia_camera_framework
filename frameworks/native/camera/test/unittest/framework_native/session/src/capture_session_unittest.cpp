@@ -160,6 +160,18 @@ public:
     void OnLcdFlashStatusChanged(LcdFlashStatusInfo lcdFlashStatusInfo) override {}
 };
 
+class RecordingApertureInfoCallback : public ApertureInfoCallback {
+public:
+    void OnApertureInfoChanged(ApertureInfo info) override
+    {
+        callCount_++;
+        lastApertureValue_ = info.apertureValue;
+    }
+
+    int32_t callCount_ = 0;
+    float lastApertureValue_ = 0.0f;
+};
+
 void CaptureSessionUnitTest::SetUpTestCase(void)
 {
     ASSERT_TRUE(TestToken().GetAllCameraPermission());
@@ -15363,6 +15375,416 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_221, TestSize.Level0)
     preview->Release();
     input->Release();
     sessionForSys->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test white balance gains interfaces before session commit
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test new white balance gains interfaces when session is not committed
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_white_balance_gains_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<int32_t> supportedRgbGainsRange;
+    std::vector<double> whiteBalanceGains;
+    bool isSupported = false;
+    std::vector<int32_t> intWhiteBalanceGains = {255, 127, 0};
+    std::vector<double> doubleWhiteBalanceGains = {1.0, 0.0, -1.0};
+
+    EXPECT_EQ(session->GetSupportedRGBGainsRange(supportedRgbGainsRange), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->IsWhiteBalanceGainsSupported(isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->GetWhiteBalanceGains(whiteBalanceGains), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->SetWhiteBalanceGains(intWhiteBalanceGains), CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(session->SetWhiteBalanceGains(doubleWhiteBalanceGains), CameraErrorCode::SESSION_NOT_CONFIG);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test white balance gains interfaces normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Get normalized white balance gains and set denormalized values after session commit
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_white_balance_gains_unittest_002, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = session->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_RGBGAIN_RANGE);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_CONTROL_RGBGAIN_VALUE);
+    int32_t rangeData[] = {100, 400};
+    int32_t gainsData[] = {100, 250, 400};
+    metadata->addEntry(OHOS_ABILITY_RGBGAIN_RANGE, rangeData, sizeof(rangeData) / sizeof(rangeData[0]));
+    metadata->addEntry(OHOS_CONTROL_RGBGAIN_VALUE, gainsData, sizeof(gainsData) / sizeof(gainsData[0]));
+
+    std::vector<int32_t> supportedRgbGainsRange;
+    std::vector<double> whiteBalanceGains;
+    bool isSupported = false;
+
+    EXPECT_EQ(session->IsWhiteBalanceGainsSupported(isSupported), CameraErrorCode::SUCCESS);
+    EXPECT_TRUE(isSupported);
+
+    session->LockForControl();
+    std::vector<double> normalizedGains = {-1.0, 0.0, 1.0};
+    EXPECT_EQ(session->SetWhiteBalanceGains(normalizedGains), CameraErrorCode::SUCCESS);
+    ASSERT_NE(session->changedMetadata_, nullptr);
+    camera_metadata_item_t item;
+    ASSERT_EQ(OHOS::Camera::FindCameraMetadataItem(session->changedMetadata_->get(), OHOS_CONTROL_RGBGAIN_VALUE, &item),
+        CAM_META_SUCCESS);
+    ASSERT_EQ(item.count, 3);
+    EXPECT_EQ(item.data.i32[0], 100);
+    EXPECT_EQ(item.data.i32[1], 250);
+    EXPECT_EQ(item.data.i32[2], 400);
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test white balance gains interfaces abnormal metadata branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test white balance gains interfaces when metadata tags are absent after session commit
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_white_balance_gains_unittest_003, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = session->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_RGBGAIN_RANGE);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_CONTROL_RGBGAIN_VALUE);
+
+    std::vector<int32_t> supportedRgbGainsRange;
+    std::vector<double> whiteBalanceGains;
+    bool isSupported = true;
+
+    EXPECT_EQ(session->GetSupportedRGBGainsRange(supportedRgbGainsRange), CameraErrorCode::SUCCESS);
+    EXPECT_TRUE(supportedRgbGainsRange.empty());
+    EXPECT_EQ(session->IsWhiteBalanceGainsSupported(isSupported), CameraErrorCode::SUCCESS);
+    EXPECT_FALSE(isSupported);
+    EXPECT_EQ(session->GetWhiteBalanceGains(whiteBalanceGains), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_TRUE(whiteBalanceGains.empty());
+
+    session->LockForControl();
+    std::vector<int32_t> intWhiteBalanceGains = {100, 200, 300};
+    std::vector<double> doubleWhiteBalanceGains = {-1.0, 0.0, 1.0};
+    EXPECT_EQ(session->SetWhiteBalanceGains(intWhiteBalanceGains), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_EQ(session->SetWhiteBalanceGains(doubleWhiteBalanceGains), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test white balance gains interfaces abnormal device branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test white balance gains interfaces when camera device info is unavailable
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_white_balance_gains_unittest_004, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    auto oldDevice = ((sptr<CameraInput>&)(session->innerInputDevice_))->cameraObj_;
+    ((sptr<CameraInput>&)(session->innerInputDevice_))->cameraObj_ = nullptr;
+
+    std::vector<int32_t> supportedRgbGainsRange;
+    std::vector<double> whiteBalanceGains;
+    bool isSupported = true;
+
+    EXPECT_EQ(session->GetSupportedRGBGainsRange(supportedRgbGainsRange), CameraErrorCode::SUCCESS);
+    EXPECT_TRUE(supportedRgbGainsRange.empty());
+    EXPECT_EQ(session->IsWhiteBalanceGainsSupported(isSupported), CameraErrorCode::SUCCESS);
+    EXPECT_FALSE(isSupported);
+    EXPECT_EQ(session->GetWhiteBalanceGains(whiteBalanceGains), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    EXPECT_TRUE(whiteBalanceGains.empty());
+
+    ((sptr<CameraInput>&)(session->innerInputDevice_))->cameraObj_ = oldDevice;
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test white balance gains setter with null changed metadata
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetWhiteBalanceGains when LockForControl has not prepared changed metadata
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_white_balance_gains_unittest_005, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    EXPECT_EQ(session->changedMetadata_, nullptr);
+    std::vector<int32_t> intWhiteBalanceGains = {255, 127, 0};
+    std::vector<double> doubleWhiteBalanceGains = {1.0, 0.0, -1.0};
+    EXPECT_EQ(session->SetWhiteBalanceGains(intWhiteBalanceGains), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(session->SetWhiteBalanceGains(doubleWhiteBalanceGains), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(session->changedMetadata_, nullptr);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test white balance gains normalization abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetWhiteBalanceGains and SetWhiteBalanceGains when supported range metadata is invalid
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_white_balance_gains_unittest_006, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = session->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_RGBGAIN_RANGE);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_CONTROL_RGBGAIN_VALUE);
+    int32_t invalidRangeData[] = {100};
+    int32_t gainsData[] = {100, 250, 400};
+    metadata->addEntry(OHOS_ABILITY_RGBGAIN_RANGE, invalidRangeData,
+        sizeof(invalidRangeData) / sizeof(invalidRangeData[0]));
+    metadata->addEntry(OHOS_CONTROL_RGBGAIN_VALUE, gainsData, sizeof(gainsData) / sizeof(gainsData[0]));
+
+    bool isSupported = false;
+    std::vector<double> whiteBalanceGains;
+    EXPECT_EQ(session->IsWhiteBalanceGainsSupported(isSupported), CameraErrorCode::SUCCESS);
+    EXPECT_TRUE(isSupported);
+    EXPECT_EQ(session->GetWhiteBalanceGains(whiteBalanceGains), CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    session->LockForControl();
+    std::vector<double> normalizedGains = {-1.0, 0.0, 1.0};
+    EXPECT_EQ(session->SetWhiteBalanceGains(normalizedGains), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    session->UnlockForControl();
+
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_RGBGAIN_RANGE);
+    int32_t equalRangeData[] = {200, 200};
+    metadata->addEntry(OHOS_ABILITY_RGBGAIN_RANGE, equalRangeData, sizeof(equalRangeData) / sizeof(equalRangeData[0]));
+    EXPECT_EQ(session->GetWhiteBalanceGains(whiteBalanceGains), CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    session->LockForControl();
+    EXPECT_EQ(session->SetWhiteBalanceGains(normalizedGains), CameraErrorCode::OPERATION_NOT_ALLOWED);
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test white balance gains double setter parameter validation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test SetWhiteBalanceGains with normalized gains out of range
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_white_balance_gains_unittest_007, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = session->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_ABILITY_RGBGAIN_RANGE);
+    int32_t rangeData[] = {100, 400};
+    metadata->addEntry(OHOS_ABILITY_RGBGAIN_RANGE, rangeData, sizeof(rangeData) / sizeof(rangeData[0]));
+
+    session->LockForControl();
+    std::vector<double> invalidNormalizedGains = {-1.1, 0.0, 1.0};
+    EXPECT_EQ(session->SetWhiteBalanceGains(invalidNormalizedGains), CameraErrorCode::PARAMETER_ERROR);
+    session->UnlockForControl();
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test aperture info callback normal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessApertureChange callback dispatch and duplicate filtering
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_aperture_info_callback_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto callback = std::make_shared<RecordingApertureInfoCallback>();
+    ASSERT_NE(callback, nullptr);
+    session->SetApertureInfoCallback(callback);
+
+    int32_t defaultItems = 10;
+    int32_t defaultDataLength = 200;
+    auto metadata = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    ASSERT_NE(metadata, nullptr);
+    float firstApertureValue = 2.0f;
+    metadata->addEntry(OHOS_STATUS_CAMERA_APERTURE_VALUE, &firstApertureValue, 1);
+    session->ProcessApertureChange(metadata);
+    EXPECT_EQ(callback->callCount_, 1);
+    EXPECT_FLOAT_EQ(callback->lastApertureValue_, 2.0f);
+    EXPECT_FLOAT_EQ(session->apertureValue_, 2.0f);
+
+    session->ProcessApertureChange(metadata);
+    EXPECT_EQ(callback->callCount_, 1);
+
+    OHOS::Camera::DeleteCameraMetadataItem(metadata->get(), OHOS_STATUS_CAMERA_APERTURE_VALUE);
+    float secondApertureValue = 2.8f;
+    metadata->addEntry(OHOS_STATUS_CAMERA_APERTURE_VALUE, &secondApertureValue, 1);
+    session->ProcessApertureChange(metadata);
+    EXPECT_EQ(callback->callCount_, 2);
+    EXPECT_FLOAT_EQ(callback->lastApertureValue_, 2.8f);
+    EXPECT_FLOAT_EQ(session->apertureValue_, 2.8f);
+
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test aperture info callback abnormal branches
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessApertureChange when metadata is missing the aperture tag or callback is null
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_aperture_info_callback_unittest_002, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t defaultItems = 10;
+    int32_t defaultDataLength = 200;
+    auto metadataWithoutAperture = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    ASSERT_NE(metadataWithoutAperture, nullptr);
+    session->ProcessApertureChange(metadataWithoutAperture);
+    EXPECT_FLOAT_EQ(session->apertureValue_, 0.0f);
+
+    auto metadataWithAperture = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    ASSERT_NE(metadataWithAperture, nullptr);
+    float apertureValue = 1.4f;
+    metadataWithAperture->addEntry(OHOS_STATUS_CAMERA_APERTURE_VALUE, &apertureValue, 1);
+    session->SetApertureInfoCallback(nullptr);
+    EXPECT_EQ(session->apertureInfoCallback_, nullptr);
+    session->ProcessApertureChange(metadataWithAperture);
+    EXPECT_FLOAT_EQ(session->apertureValue_, 0.0f);
+
+    session->Release();
 }
 }
 }

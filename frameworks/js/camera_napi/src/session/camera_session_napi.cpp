@@ -318,6 +318,9 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::white_balance_pro
     DECLARE_NAPI_FUNCTION("getColorTintRange", CameraSessionNapi::GetColorTintRange),
     DECLARE_NAPI_FUNCTION("getColorTint", CameraSessionNapi::GetColorTint),
     DECLARE_NAPI_FUNCTION("setColorTint", CameraSessionNapi::SetColorTint),
+    DECLARE_NAPI_FUNCTION("isWhiteBalanceGainsSupported", CameraSessionNapi::IsWhiteBalanceGainsSupported),
+    DECLARE_NAPI_FUNCTION("getWhiteBalanceGains", CameraSessionNapi::GetWhiteBalanceGains),
+    DECLARE_NAPI_FUNCTION("setWhiteBalanceGains", CameraSessionNapi::SetWhiteBalanceGains),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::auto_switch_props = {
@@ -357,6 +360,11 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::physical_aperture
     DECLARE_NAPI_FUNCTION("getSupportedPhysicalApertures", CameraSessionNapi::GetSupportedPhysicalApertures),
     DECLARE_NAPI_FUNCTION("getPhysicalAperture", CameraSessionNapi::GetPhysicalAperture),
     DECLARE_NAPI_FUNCTION("setPhysicalAperture", CameraSessionNapi::SetPhysicalAperture)
+};
+
+const std::vector<napi_property_descriptor> CameraSessionNapi::aperture_info_cb_props = {
+    DECLARE_NAPI_FUNCTION("onApertureInfoChange", CameraSessionNapi::OnApertureInfoChange),
+    DECLARE_NAPI_FUNCTION("offApertureInfoChange", CameraSessionNapi::OffApertureInfoChange)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::optical_image_stabilization_props = {
@@ -6631,6 +6639,175 @@ napi_value CameraSessionNapi::SetOISModeCustom(napi_env env, napi_callback_info 
         return nullptr;
     }
     return result;
+}
+
+napi_value CameraSessionNapi::IsWhiteBalanceGainsSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsWhiteBalanceGainsSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsWhiteBalanceGainsSupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("IsWhiteBalanceGainsSupported call Failed!");
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::GetWhiteBalanceGains(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetWhiteBalanceGains is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<double> vecWhiteBalanceGains;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetWhiteBalanceGains(vecWhiteBalanceGains);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        MEDIA_INFO_LOG("GetWhiteBalanceGains len = %{public}zu", vecWhiteBalanceGains.size());
+        constexpr int32_t rangeSize = 3;
+        constexpr size_t redGainIndex = 0;
+        constexpr size_t greenGainIndex = 1;
+        constexpr size_t blueGainIndex = 2;
+        CHECK_RETURN_RET(vecWhiteBalanceGains.size() != rangeSize, nullptr);
+        napi_create_object(env, &result);
+        napi_value redGain;
+        napi_create_double(env, vecWhiteBalanceGains[redGainIndex], &redGain);
+        napi_set_named_property(env, result, "redGain", redGain);
+        napi_value greenGain;
+        napi_create_double(env, vecWhiteBalanceGains[greenGainIndex], &greenGain);
+        napi_set_named_property(env, result, "greenGain", greenGain);
+        napi_value blueGain;
+        napi_create_double(env, vecWhiteBalanceGains[blueGainIndex], &blueGain);
+        napi_set_named_property(env, result, "blueGain", blueGain);
+    } else {
+        MEDIA_ERR_LOG("GetWhiteBalanceGains call Failed!");
+    }
+    return result;
+}
+
+bool ParseWhiteBalanceGainsParam(napi_env env, napi_value root, std::vector<double> &whiteBalanceGains)
+{
+    const char* propertyNames[] = {"redGain", "greenGain", "blueGain"};
+    
+    for (const char* prop : propertyNames) {
+        napi_value item = nullptr;
+        if (napi_get_named_property(env, root, prop, &item) == napi_ok) {
+            double gain;
+            if (napi_get_value_double(env, item, &gain) == napi_ok) {
+                if (gain < -1 || gain > 1) {
+                    return false;
+                }
+                whiteBalanceGains.emplace_back(gain);
+                continue;
+            }
+        }
+        whiteBalanceGains.emplace_back(0);
+    }
+    return true;
+}
+
+napi_value CameraSessionNapi::SetWhiteBalanceGains(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires one parameter");
+    napi_value whiteBalanceGainsObject = argv[PARAM0];
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, whiteBalanceGainsObject, &valueType);
+    CHECK_RETURN_RET(valueType != napi_object, result);
+    napi_get_undefined(env, &result);
+
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        std::vector<double> whiteBalanceGains;
+        bool isSuccess = ParseWhiteBalanceGainsParam(env, whiteBalanceGainsObject, whiteBalanceGains);
+        CHECK_RETURN_RET(!isSuccess, result);
+        cameraSessionNapi->cameraSession_->LockForControl();
+        int32_t retCode = cameraSessionNapi->cameraSession_->SetWhiteBalanceGains(whiteBalanceGains);
+        MEDIA_INFO_LOG("CameraSessionNapi::SetWhiteBalanceGains set gains:%{public}d", retCode);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+    } else {
+        MEDIA_ERR_LOG("SetWhiteBalanceGains call Failed!");
+    }
+    return result;
+}
+
+void ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync(ApertureInfo info) const
+{
+    MEDIA_DEBUG_LOG("OnApertureInfoChangedCallbackAsync is called");
+    std::unique_ptr<ApertureInfoChangedCallback> callback =
+        std::make_unique<ApertureInfoChangedCallback>(info, shared_from_this());
+    ApertureInfoChangedCallback *event = callback.get();
+    auto task = [event]() {
+        ApertureInfoChangedCallback* callback = reinterpret_cast<ApertureInfoChangedCallback *>(event);
+        if (callback) {
+            auto listener = callback->listener_.lock();
+            if (listener != nullptr) {
+                listener->OnApertureInfoChangedCallback(callback->info_);
+            }
+            delete callback;
+        }
+    };
+    std::unordered_map<std::string, std::string> params = {
+        {"apertureValue", std::to_string(info.apertureValue)},
+    };
+    std::string taskName =
+        CameraNapiUtils::GetTaskName("ApertureInfoCallbackListener::OnApertureInfoChangedCallbackAsync", params);
+    if (napi_ok != napi_send_event(env_, task, napi_eprio_immediate, taskName.c_str())) {
+        MEDIA_ERR_LOG("failed to execute work");
+    } else {
+        callback.release();
+    }
+}
+
+void ApertureInfoCallbackListener::OnApertureInfoChangedCallback(ApertureInfo info) const
+{
+    MEDIA_DEBUG_LOG("OnApertureInfoChangedCallback is called");
+    napi_value result[ARGS_TWO] = { nullptr, nullptr };
+    napi_value retVal;
+
+    napi_get_undefined(env_, &result[PARAM0]);
+    napi_create_object(env_, &result[PARAM1]);
+    napi_value value;
+    napi_create_double(env_, info.apertureValue, &value);
+    napi_set_named_property(env_, result[PARAM1], "aperture", value);
+    ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_TWO, .argv = result, .result = &retVal };
+    ExecuteCallback("apertureInfoChange", callbackNapiPara);
+}
+
+void ApertureInfoCallbackListener::OnApertureInfoChanged(ApertureInfo info)
+{
+    MEDIA_DEBUG_LOG("OnApertureInfoChanged is called, apertureValue: %{public}f", info.apertureValue);
+    OnApertureInfoChangedCallbackAsync(info);
 }
 } // namespace CameraStandard
 } // namespace OHOS

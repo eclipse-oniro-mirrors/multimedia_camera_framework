@@ -402,5 +402,24 @@ void VideoSessionImpl::UnregisterIsoInfoCallbackListener(const std::string& even
     CHECK_RETURN_ELOG(isoInfoCallback_ == nullptr, "isoInfoCallback is null");
     isoInfoCallback_->RemoveCallbackRef(eventName, callback);
 }
+
+void VideoSessionImpl::RegisterApertureInfoCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CHECK_RETURN_ELOG(videoSession_ == nullptr, "videoSession_ is null!");
+    if (apertureInfoCallback_ == nullptr) {
+        ani_env *env = get_env();
+        apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
+        videoSession_->SetApertureInfoCallback(apertureInfoCallback_);
+    }
+    apertureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void VideoSessionImpl::UnregisterApertureInfoCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback)
+{
+    CHECK_RETURN_ELOG(apertureInfoCallback_ == nullptr, "apertureInfoCallback is null");
+    apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
+}
 } // namespace Camera
 } // namespace Ani

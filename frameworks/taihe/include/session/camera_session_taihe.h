@@ -158,6 +158,18 @@ private:
     bool isAsync_;
 };
 
+class ApertureInfoCallbackListener : public OHOS::CameraStandard::ApertureInfoCallback, public ListenerBase,
+	     public std::enable_shared_from_this<ApertureInfoCallbackListener> {
+public:
+    ApertureInfoCallbackListener(ani_env* env) : ListenerBase(env) {}
+    ~ApertureInfoCallbackListener() = default;
+    void OnApertureInfoChanged(OHOS::CameraStandard::ApertureInfo info) override;
+
+private:
+    void OnApertureInfoChangedCallback(OHOS::CameraStandard::ApertureInfo info) const;
+    void OnApertureInfoChangedCallbackAsync(OHOS::CameraStandard::ApertureInfo info) const;
+};
+
 class FlashStateCallbackListener : public OHOS::CameraStandard::FlashStateCallback, public ListenerBase,
     public std::enable_shared_from_this<FlashStateCallbackListener> {
 public:
@@ -273,6 +285,8 @@ public:
     void OffIsoInfoChangeWithoutErr(optional_view<callback<void(IsoInfo const&)>> callback);
     void OnExposureStateChange(callback_view<void(ExposureState)> callback);
     void OffExposureStateChange(optional_view<callback<void(ExposureState)>> callback);
+    void OnApertureInfoChangeWithoutErr(callback_view<void(ApertureInfo const&)> callback);
+    void OffApertureInfoChangeWithoutErr(optional_view<callback<void(ApertureInfo const&)>> callback);
 
     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;

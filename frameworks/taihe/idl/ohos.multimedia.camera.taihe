@@ -1095,6 +1095,11 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
   OnExposureInfoChangeWithoutErr(callback:(data: ExposureInfo)=> void): void;
   @rename("offExposureInfoChange")
   OffExposureInfoChangeWithoutErr(callback: Optional<(data: ExposureInfo)=> void>): void;
+
+  @rename("onApertureInfoChange")
+  OnApertureInfoChangeWithoutErr(callback: (data: ApertureInfo)=> void): void;
+  @rename("offApertureInfoChange")
+ 	OffApertureInfoChangeWithoutErr(callback: Optional<(data: ApertureInfo)=> void>);
 }
 
 interface VideoConflictFunctions : ZoomQuery, MacroQuery {
@@ -2535,6 +2540,13 @@ interface WhiteBalanceQuery {
   IsWhiteBalanceModeSupported(mode: WhiteBalanceMode): bool;
   GetWhiteBalanceRange(): Array<i32>;
   GetColorTintRange(): Array<i32>;
+  IsWhiteBalanceGainsSupported(): bool;
+}
+
+struct WhiteBalanceGains {
+  redGain: f64;
+  greenGain: f64;
+  blueGain: f64;
 }
 
 interface WhiteBalance : WhiteBalanceQuery {
@@ -2544,6 +2556,8 @@ interface WhiteBalance : WhiteBalanceQuery {
   GetWhiteBalanceMode(): WhiteBalanceMode;
   SetColorTint(colorTint: i32): void;
   GetColorTint(): i32;
+  GetWhiteBalanceGains(): WhiteBalanceGains;
+  SetWhiteBalanceGains(gains: WhiteBalanceGains): void;
 }
 
 interface ManualIsoQuery {
