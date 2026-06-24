@@ -189,6 +189,16 @@ typedef struct PhotoOutput_Callbacks {
 } PhotoOutput_Callbacks;
 
 /**
+ * @brief Photo capture setting extension object.
+ *
+ * The instance can be created by {@link OH_PhotoOutput_CreatePhotoCaptureSettingExt} and must be released by
+ * {@link OH_PhotoOutput_DestroyPhotoCaptureSettingExt}.
+ *
+ * @since 21
+ */
+typedef struct Camera_PhotoCaptureSettingExt Camera_PhotoCaptureSettingExt;
+
+/**
  * @brief Register photo output change event callback.
  *
  * @param photoOutput the {@link Camera_PhotoOutput} instance.
@@ -542,6 +552,94 @@ Camera_ErrorCode OH_PhotoOutput_IsPhotoQualityPrioritizationSupported(Camera_Pho
  */
 Camera_ErrorCode OH_PhotoOutput_SetPhotoQualityPrioritization(Camera_PhotoOutput* photoOutput,
     Camera_PhotoQualityPrioritization qualityPrioritization);
+
+/**
+ * @brief Create a photo capture setting extension instance.
+ *
+ * The caller must call {@link OH_PhotoOutput_DestroyPhotoCaptureSettingExt} to free the instance.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance which used to create the setting.
+ * @param setting the {@link Camera_PhotoCaptureSettingExt} will be created if the method call succeeds.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 21
+ */
+Camera_ErrorCode OH_PhotoOutput_CreatePhotoCaptureSettingExt(Camera_PhotoOutput* photoOutput,
+    Camera_PhotoCaptureSettingExt** setting);
+    
+/**
+ * @brief Destroy a photo capture setting extension instance.
+ *
+ * @param setting the {@link Camera_PhotoCaptureSettingExt} instance to be destroyed.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 21
+ */
+Camera_ErrorCode OH_PhotoOutput_DestroyPhotoCaptureSettingExt(Camera_PhotoCaptureSettingExt* setting);
+
+/**
+ * @brief Set the image rotation for {@link Camera_PhotoCaptureSettingExt}.
+ *
+ * @param photoCaptureSettingExt the {@link Camera_PhotoCaptureSettingExt} instance.
+ * @param rotation the {@link Camera_ImageRotation} to set.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 21
+ */
+Camera_ErrorCode OH_PhotoCaptureSettingExt_SetImageRotation(Camera_PhotoCaptureSettingExt* photoCaptureSettingExt,
+    Camera_ImageRotation rotation);
+
+/**
+ * @brief Set the photo geographic location for {@link Camera_PhotoCaptureSettingExt}.
+ *
+ * @param photoCaptureSettingExt the {@link Camera_PhotoCaptureSettingExt} instance.
+ * @param location the {@link Camera_Location} to set.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 21
+ */
+Camera_ErrorCode OH_PhotoCaptureSettingExt_SetLocation(Camera_PhotoCaptureSettingExt* photoCaptureSettingExt,
+    Camera_Location location);
+
+/**
+ * @brief Set the mirror enable flag for {@link Camera_PhotoCaptureSettingExt}.
+ *
+ * @param photoCaptureSettingExt the {@link Camera_PhotoCaptureSettingExt} instance.
+ * @param mirror the mirror enable flag.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_I NVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 21
+ */
+Camera_ErrorCode OH_PhotoCaptureSettingExt_SetMirror(Camera_PhotoCaptureSettingExt* photoCaptureSettingExt,
+    bool mirror);
+
+
+/**
+ * @brief Set the compression quality for {@link Camera_PhotoCaptureSettingExt}.
+ *
+ * @param photoCaptureSettingExt the {@link Camera_PhotoCaptureSettingExt} instance.
+ * @param compressionQuality photo compression quality in range [0, 100].
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ * @since 21
+ */
+Camera_ErrorCode OH_PhotoCaptureSettingExt_SetCompressionQuality(Camera_PhotoCaptureSettingExt* photoCaptureSettingExt,
+    uint8_t compressionQuality);
+
+/**
+ * @brief Capture photo with {@link Camera_PhotoCaptureSettingExt}.
+ *
+ * @param photoOutput the {@link Camera_PhotoOutput} instance which used to capture photo.
+ * @param setting the {@link Camera_PhotoCaptureSettingExt} to be used to capture photo.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SESSION_NOT_RUNNING} if the capture session not running.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 21
+ */
+Camera_ErrorCode OH_PhotoOutput_Capture_WithCaptureSettingExt(Camera_PhotoOutput* photoOutput,
+    Camera_PhotoCaptureSettingExt* setting);
 #ifdef __cplusplus
 }
 #endif

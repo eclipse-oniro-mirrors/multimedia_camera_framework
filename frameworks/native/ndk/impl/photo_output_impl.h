@@ -27,6 +27,17 @@
 #include "photo_native_impl.h"
 #include "media_asset_helper.h"
 
+struct Camera_PhotoCaptureSettingExt {
+public:
+    std::shared_ptr<OHOS::CameraStandard::PhotoCaptureSetting> capSettings {nullptr};
+    OHOS::sptr<OHOS::CameraStandard::PhotoOutput> photoOutput {nullptr};
+    Camera_ErrorCode SetImageRotation(Camera_ImageRotation rotation);
+    Camera_ErrorCode SetLocation(const Camera_Location& location);
+    Camera_ErrorCode SetMirror(bool mirror);
+    Camera_ErrorCode SetCompressionQuality(uint8_t compressionQuality);
+    Camera_ErrorCode Release();
+};
+
 class InnerPhotoOutputCallback : public OHOS::CameraStandard::PhotoStateCallback,
                                  public OHOS::CameraStandard::PhotoAvailableCallback,
                                  public OHOS::CameraStandard::PhotoAssetAvailableCallback {
@@ -327,6 +338,10 @@ public:
     Camera_ErrorCode Capture();
 
     Camera_ErrorCode Capture_WithCaptureSetting(Camera_PhotoCaptureSetting setting);
+
+    Camera_ErrorCode Capture_WithCaptureSettingExt(Camera_PhotoCaptureSettingExt* setting);
+   
+    Camera_ErrorCode CreatePhotoCaptureSettingExt(Camera_PhotoCaptureSettingExt** setting);
 
     Camera_ErrorCode Release();
 
