@@ -33,6 +33,8 @@ void VideoSessionImpl::SetQualityPrioritization(QualityPrioritization quality)
 bool VideoSessionImpl::IsSaturationSupported()
 {
     MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi %{public}s is called!", __FUNCTION__);
     CHECK_RETURN_RET_ELOG(videoSession_ == nullptr, false, "%{public}s videoSession_ is nullptr", __FUNCTION__);
     bool isSupported = false;
     int32_t retCode = videoSession_->IsSaturationSupported(isSupported);
@@ -45,6 +47,8 @@ double VideoSessionImpl::GetSaturation()
 {
     MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
     float saturationVal = 0.0;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        static_cast<double>(saturationVal), "SystemApi %{public}s is called!", __FUNCTION__);
     CHECK_RETURN_RET_ELOG(videoSession_ == nullptr, static_cast<double>(saturationVal),
         "%{public}s: videoSession_ is nullptr", __FUNCTION__);
     videoSession_->LockForControl();
@@ -58,6 +62,8 @@ double VideoSessionImpl::GetSaturation()
 void VideoSessionImpl::SetSaturation(double saturationVal)
 {
     MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi %{public}s is called!", __FUNCTION__);
     CHECK_RETURN_ELOG(videoSession_ == nullptr, "%{public}s videoSession_ is nullptr", __FUNCTION__);
     videoSession_->LockForControl();
     int32_t retCode = videoSession_->SetSaturation(static_cast<float>(saturationVal));
