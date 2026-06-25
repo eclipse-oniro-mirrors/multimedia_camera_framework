@@ -81,6 +81,9 @@ constexpr int32_t CONTROL_CENTER_FPS_MAX = 30;
 constexpr float DEFAULT_ZOOM_RATIO = 1.0;
 const std::string AUDIO_EXTRA_PARAM_AUDIO_EFFECT = "audio_effect";
 const std::string AUDIO_EXTRA_PARAM_ZOOM_RATIO = "zoom_ratio";
+constexpr float SATURATION_VALUE_MIN = -1.0f;
+constexpr float SATURATION_VALUE_MAX = 1.0f;
+constexpr uint32_t SATURATION_RANGE_SIZE_MIN = 2;
 } // namespace
 
 static const std::unordered_map<CaptureOutputType, std::set<CaptureOutputType>> typeConflictMap = {
@@ -7247,6 +7250,105 @@ int32_t CaptureSession::IsColorStyleSupported(bool &isSupported)
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
         "CaptureSession::IsColorStyleSupported Failed with return code %{public}d", ret);
     isSupported = static_cast<bool>(item.data.u8[0]);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSupportedSaturationRange(std::vector<int32_t> &saturationRange)
+{
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+                          "GetSupportedSaturationRange Session is not Commited.");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SUCCESS,
+                          "GetSupportedSaturationRange camera device is null");
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
+                          "GetSupportedSaturationRange camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+                          "GetSupportedSaturationRanged camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SATURATION_RANGE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
+                          "GetSupportedSaturationRange Failed with return code %{public}d", ret);
+    std::vector<int32_t> saturationRangeTemp;
+    for (uint32_t i = 0; i < item.count; i++) {
+        MEDIA_INFO_LOG("GetSupportedSaturationRange i: %{public}d, dumpMeta:%{public}d", i, item.data.i32[i]);
+        saturationRangeTemp.push_back(item.data.i32[i]);
+    }
+    CHECK_RETURN_RET_ELOG(saturationRangeTemp.size() < SATURATION_RANGE_SIZE_MIN,
+                          CameraErrorCode::CAPABILITY_NOT_SUPPORTED, "saturationRange size < minRangeSize");
+    std::sort(saturationRangeTemp.begin(), saturationRangeTemp.end());
+    int32_t minVal = std::min(saturationRangeTemp.front(), saturationRangeTemp.back());
+    saturationRange.push_back(minVal);
+    int32_t maxVal = std::max(saturationRangeTemp.front(), saturationRangeTemp.back());
+    saturationRange.push_back(maxVal);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::IsSaturationSupported(bool &isSupported)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "IsSaturationSupported SystemApi called!");
+    MEDIA_INFO_LOG("Enter CaptureSession::IsSaturationSupported");
+    isSupported = false;
+    std::vector<int32_t> saturationRange;
+    auto ret = GetSupportedSaturationRange(saturationRange);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
+                          "CaptureSession::IsSaturationSupported Failed with return code %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(
+        saturationRange.empty() || (!saturationRange.empty() && saturationRange.size() < SATURATION_RANGE_SIZE_MIN),
+        CameraErrorCode::SUCCESS, "saturationRange is empty or saturationRange size < minRangeSize");
+    isSupported = true;
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSaturation(float &saturationVal)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "GetSaturation SystemApi called!");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "GetSaturation Session is not Commited");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS, "GetSaturation camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS, "GetSaturation camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS, "GetSaturation camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_SATURATION, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
+                          "GetSaturation Failed with return code %{public}d", ret);
+    int32_t saturationValTemp = item.data.i32[0];
+    std::vector<int32_t> saturationRange;
+    GetSupportedSaturationRange(saturationRange);
+    if (!saturationRange.empty() && saturationRange.size() >= SATURATION_RANGE_SIZE_MIN && saturationRange[1] != 0) {
+        int32_t clamped_val = std::clamp(saturationValTemp, saturationRange[0], saturationRange[1]);
+        saturationVal = static_cast<float>(clamped_val) / saturationRange[1];
+    }
+    MEDIA_INFO_LOG(
+        "GetSaturation saturationVal: %{public}d, clamped_val: %{public}f", saturationValTemp, saturationVal);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetSaturation(float saturationVal)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "SetSaturation SystemApi called!");
+    MEDIA_INFO_LOG("SetSaturation is called");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "SetSaturation Session is not Commited");
+    CHECK_RETURN_RET_ELOG(
+        changedMetadata_ == nullptr, CameraErrorCode::SUCCESS, "SetSaturation changedMetadata_ is null");
+    float saturationValTemp = std::clamp(saturationVal, SATURATION_VALUE_MIN, SATURATION_VALUE_MAX);
+    std::vector<int32_t> saturationRange;
+    auto ret = GetSupportedSaturationRange(saturationRange);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS || saturationRange.empty() ||
+                          saturationRange.size() < SATURATION_RANGE_SIZE_MIN,
+                          ret, "SetSaturation Failed with return code %{public}d", ret);
+    int32_t clamped_val = static_cast<int32_t>(saturationValTemp * static_cast<float>(saturationRange[1]));
+    MEDIA_INFO_LOG("SetSaturation saturationVal: %{public}f, clamped_val: %{public}d", saturationValTemp, clamped_val);
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SATURATION, &clamped_val, 1);
+    CHECK_PRINT_ELOG(!status, "SetSaturation Failed to set saturationVal");
     return CameraErrorCode::SUCCESS;
 }
 

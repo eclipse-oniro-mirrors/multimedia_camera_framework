@@ -1569,6 +1569,28 @@ public:
     int32_t IsColorStyleSupported(bool &isSupported);
 
     /**
+     * @brief Checks whether the saturation feature is supported by the current hardware configuration.
+     * @param isSupported [out] Receives true if supported, false otherwise.
+     * @return Returns errCode. 0 indicates success.
+     */
+    int32_t IsSaturationSupported(bool &isSupported);
+
+    /**
+     * @brief Retrieves the current saturation adjustment value.
+     * @param saturationVal [out] Receives the current saturation value (typically range: -100.0 to 100.0).
+     * @return Returns errCode. 0 indicates success.
+     */
+    int32_t GetSaturation(float &saturationVal);
+
+    /**
+     * @brief Sets the saturation adjustment value.
+     * @param saturationVal The desired saturation value (typically range: -100.0 to 100.0).
+     * @return Returns errCode. 0 indicates success. Invalid range or unsupported feature will return a specific error
+     * code.
+     */
+    int32_t SetSaturation(float saturationVal);
+
+    /**
      * @brief Get default color style setttings.
      * @param defaultColorStyles default color style setttings.
      * @return Returns errCode.
@@ -2738,6 +2760,14 @@ protected:
     void ParseSupportedOISBiasRangeAndStep(const SceneMode modeName, const camera_metadata_item_t& item,
         std::vector<float>& supportBias);
     OISMode oisMode_ = OIS_MODE_AUTO;
+    /**
+     * @brief Retrieves the supported range of saturation values for the current hardware.
+     * @param saturationRange [out] Receives a vector containing the minimum and maximum supported values (e.g.,
+     * {-100, 100}).
+     * @return Returns errCode. 0 indicates success. If the feature is not supported, an appropriate error code is
+     * returned.
+     */
+    int32_t GetSupportedSaturationRange(std::vector<int32_t> &saturationRange);
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -11605,5 +11605,227 @@ HWTEST_F(CameraSessionModuleTest, video_session_moduletest_029, TestSize.Level0)
     intResult = videoSession->Release();
     EXPECT_EQ(intResult, 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Testing the GetSupportedSaturationRange interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the GetSupportedSaturationRange interface.
+ */
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_030, TestSize.Level0)
+{
+    SceneMode videoMode = SceneMode::VIDEO;
+    if (!IsSceneModeSupported(videoMode)) {
+        GTEST_SKIP();
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> modeAbility =
+            cameraManagerObj->GetSupportedOutputCapability(cameras_[0], videoMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(videoMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    int32_t intResult = videoSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = videoSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    uint32_t width = 1920;
+    uint32_t height = 1080;
+    uint32_t maxFps = 120;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+
+    auto previewProfileOpt = GetPreviewProfileByFormat(modeAbility, width, height, previewFormat);
+    if (!previewProfileOpt) {
+        std::cout << "previewProfile not support" << std::endl;
+        GTEST_SKIP();
+    }
+    Profile previewProfile = previewProfileOpt.value();
+    // The GetVideoProfileByFormat method is used to filter the corresponding capabilities,
+    // but SetHapToken cannot meet the camera framework's requirements, so it can only be set forcibly.
+    Size videoSize = {.width = width, .height = height};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, {maxFps, maxFps});
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
+    ASSERT_NE(previewOutput, nullptr);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = videoSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+    std::vector<int32_t> saturationRange;
+    intResult = videoSession->GetSupportedSaturationRange(saturationRange);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Stop();
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Release();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Testing the GetSaturation interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the GetSaturation interface.
+ */
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_031, TestSize.Level0)
+{
+    SceneMode videoMode = SceneMode::VIDEO;
+    if (!IsSceneModeSupported(videoMode)) {
+        GTEST_SKIP();
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> modeAbility =
+            cameraManagerObj->GetSupportedOutputCapability(cameras_[0], videoMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(videoMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    int32_t intResult = videoSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = videoSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    uint32_t width = 1920;
+    uint32_t height = 1080;
+    uint32_t maxFps = 120;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+
+    auto previewProfileOpt = GetPreviewProfileByFormat(modeAbility, width, height, previewFormat);
+    if (!previewProfileOpt) {
+        std::cout << "previewProfile not support" << std::endl;
+        GTEST_SKIP();
+    }
+    Profile previewProfile = previewProfileOpt.value();
+    // The GetVideoProfileByFormat method is used to filter the corresponding capabilities,
+    // but SetHapToken cannot meet the camera framework's requirements, so it can only be set forcibly.
+    Size videoSize = {.width = width, .height = height};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, {maxFps, maxFps});
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
+    ASSERT_NE(previewOutput, nullptr);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = videoSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+    float saturationVal;
+    intResult = videoSession->GetSaturation(saturationVal);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Stop();
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Release();
+    EXPECT_EQ(intResult, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Testing the SetSaturation interface
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test the SetSaturation interface.
+ */
+HWTEST_F(CameraSessionModuleTest, video_session_moduletest_032, TestSize.Level0)
+{
+    SceneMode videoMode = SceneMode::VIDEO;
+    if (!IsSceneModeSupported(videoMode)) {
+        GTEST_SKIP();
+    }
+    sptr<CameraManager> cameraManagerObj = CameraManager::GetInstance();
+    ASSERT_NE(cameraManagerObj, nullptr);
+
+    std::vector<SceneMode> modes = cameraManagerObj->GetSupportedModes(cameras_[0]);
+    ASSERT_TRUE(modes.size() != 0);
+    sptr<CameraOutputCapability> modeAbility =
+            cameraManagerObj->GetSupportedOutputCapability(cameras_[0], videoMode);
+    ASSERT_NE(modeAbility, nullptr);
+
+    sptr<CaptureSession> captureSession = cameraManagerObj->CreateCaptureSession(videoMode);
+    ASSERT_NE(captureSession, nullptr);
+
+    sptr<VideoSession> videoSession = static_cast<VideoSession*>(captureSession.GetRefPtr());
+    ASSERT_NE(videoSession, nullptr);
+
+    int32_t intResult = videoSession->BeginConfig();
+    EXPECT_EQ(intResult, 0);
+
+    intResult = videoSession->AddInput(input_);
+    EXPECT_EQ(intResult, 0);
+
+    uint32_t width = 1920;
+    uint32_t height = 1080;
+    uint32_t maxFps = 120;
+    CameraFormat previewFormat = CAMERA_FORMAT_YUV_420_SP;
+    CameraFormat videoFormat = CAMERA_FORMAT_YUV_420_SP;
+
+    auto previewProfileOpt = GetPreviewProfileByFormat(modeAbility, width, height, previewFormat);
+    if (!previewProfileOpt) {
+        std::cout << "previewProfile not support" << std::endl;
+        GTEST_SKIP();
+    }
+    Profile previewProfile = previewProfileOpt.value();
+    // The GetVideoProfileByFormat method is used to filter the corresponding capabilities,
+    // but SetHapToken cannot meet the camera framework's requirements, so it can only be set forcibly.
+    Size videoSize = {.width = width, .height = height};
+    VideoProfile videoProfile = VideoProfile(videoFormat, videoSize, {maxFps, maxFps});
+    sptr<CaptureOutput> previewOutput = CreatePreviewOutput(previewProfile);
+    sptr<CaptureOutput> videoOutput = CreateVideoOutput(videoProfile);
+    ASSERT_NE(previewOutput, nullptr);
+    ASSERT_NE(videoOutput, nullptr);
+
+    intResult = videoSession->AddOutput(previewOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->AddOutput(videoOutput);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->CommitConfig();
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Start();
+    EXPECT_EQ(intResult, 0);
+    sleep(WAIT_TIME_AFTER_START);
+    float saturationVal = 0.0;
+    intResult = videoSession->SetSaturation(saturationVal);
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Stop();
+    EXPECT_EQ(intResult, 0);
+    intResult = videoSession->Release();
+    EXPECT_EQ(intResult, 0);
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -377,6 +377,12 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::optical_image_sta
     DECLARE_NAPI_FUNCTION("setOISModeCustom", CameraSessionNapi::SetOISModeCustom),
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::saturation_props = {
+    DECLARE_NAPI_FUNCTION("isSaturationSupported", CameraSessionNapi::IsSaturationSupported),
+    DECLARE_NAPI_FUNCTION("getSaturation", CameraSessionNapi::GetSaturation),
+    DECLARE_NAPI_FUNCTION("setSaturation", CameraSessionNapi::SetSaturation)
+};
+
 void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info, bool isSync) const
 {
     MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackAsync is called");
@@ -6808,6 +6814,82 @@ void ApertureInfoCallbackListener::OnApertureInfoChanged(ApertureInfo info)
 {
     MEDIA_DEBUG_LOG("OnApertureInfoChanged is called, apertureValue: %{public}f", info.apertureValue);
     OnApertureInfoChangedCallbackAsync(info);
+}
+
+napi_value CameraSessionNapi::IsSaturationSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsSaturationSupported is called.");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
+        "CameraSessionNapi::IsSaturationSupported parse parameter occur error");
+ 
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        bool isSupported = false;
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsSaturationSupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("CameraSessionNapi::IsSaturationSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        return nullptr;
+    }
+    return result;
+}
+
+napi_value CameraSessionNapi::SetSaturation(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("SetSaturation is called.");
+    double saturationVal = 0.0;
+    double maxVal = 1.0;
+    double minVal = -1.0;
+    double scaleFactor = 100.0;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, saturationVal);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("SetSaturation parse parameter occur error");
+        return nullptr;
+    }
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        double clamped_val = std::clamp(saturationVal, minVal, maxVal);
+        float rounded_float = static_cast<float>(std::round(clamped_val * scaleFactor) / scaleFactor);
+        int32_t retCode =
+            cameraSessionNapi->cameraSession_->SetSaturation(rounded_float);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    } else {
+        MEDIA_ERR_LOG("SetSaturation call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::GetSaturation(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetSaturation is called.");
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("GetSaturation parse parameter occur error");
+        return nullptr;
+    }
+
+    if (cameraSessionNapi->cameraSession_ != nullptr) {
+        float saturationVal = 0.0;
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetSaturation(saturationVal);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+        napi_value result = nullptr;
+        napi_create_double(env, CameraNapiUtils::FloatToDouble(saturationVal), &result);
+        return result;
+    } else {
+        MEDIA_ERR_LOG("GetSaturation call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
 }
 } // namespace CameraStandard
 } // namespace OHOS

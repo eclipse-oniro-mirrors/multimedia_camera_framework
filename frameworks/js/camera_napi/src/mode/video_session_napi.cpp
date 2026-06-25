@@ -52,7 +52,7 @@ napi_value VideoSessionNapi::Init(napi_env env, napi_value exports)
         filter_props, stabilization_props, preconfig_props, color_management_props, auto_switch_props,
         quality_prioritization_props, macro_props, white_balance_props, control_center_props, iso_props,
         manual_iso_props, manual_exposure_props, manual_focus_props, exposure_cb_props, flash_cb_props, raw_props,
-        physical_aperture_props, optical_image_stabilization_props, focus_tracking_normal_props,
+        physical_aperture_props, optical_image_stabilization_props, focus_tracking_normal_props, saturation_props,
         aperture_info_cb_props };
     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
