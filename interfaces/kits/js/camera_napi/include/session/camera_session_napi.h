@@ -746,6 +746,10 @@ public:
     static napi_value LockFocusTracking(napi_env env, napi_callback_info info);
     static napi_value UnlockFocusTracking(napi_env env, napi_callback_info info);
 
+    static napi_value IsSaturationSupported(napi_env env, napi_callback_info info);
+    static napi_value GetSaturation(napi_env env, napi_callback_info info);
+    static napi_value SetSaturation(napi_env env, napi_callback_info info);
+
     static napi_value OnExposureStateChange(napi_env env, napi_callback_info info);
     static napi_value OnExposureStateChangeSync(napi_env env, napi_callback_info info);
     static napi_value OffExposureStateChange(napi_env env, napi_callback_info info);
@@ -925,6 +929,7 @@ public:
     static const std::vector<napi_property_descriptor> flash_cb_props;
     static const std::vector<napi_property_descriptor> physical_aperture_props;
     static const std::vector<napi_property_descriptor> optical_image_stabilization_props;
+    static const std::vector<napi_property_descriptor> saturation_props;
     static const std::vector<napi_property_descriptor> aperture_info_cb_props;
 
     void RegisterExposureCallbackListener(const std::string& eventName, napi_env env, napi_value callback,

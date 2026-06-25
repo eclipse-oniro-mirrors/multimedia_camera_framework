@@ -36,6 +36,9 @@ public:
     }
     ~VideoSessionImpl() = default;
     void SetQualityPrioritization(QualityPrioritization quality);
+    bool IsSaturationSupported();
+    double GetSaturation();
+    void SetSaturation(double saturationVal);
     void Preconfig(PreconfigType preconfigType, optional_view<PreconfigRatio> preconfigRatio);
     bool CanPreconfig(PreconfigType preconfigType, optional_view<PreconfigRatio> preconfigRatio);
     taihe::array<VideoFunctions> GetSessionFunctions(CameraOutputCapability const& outputCapability);

@@ -1048,6 +1048,9 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
         }
   """)
 
+  IsSaturationSupported(): bool;
+  GetSaturation(): f64;
+  SetSaturation(val: f64): void;
   OnError(callback: (err: @sts_type("BusinessError<void>") Opaque)=> void): void;
   OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque)=> void>): void;
 
