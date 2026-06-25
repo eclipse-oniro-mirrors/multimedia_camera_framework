@@ -362,6 +362,7 @@ void CleanAfterTransPicture(sptr<OHOS::CameraStandard::PhotoOutput> photoOutput,
     photoOutput->captureIdAuxiliaryCountMap_.erase(captureId);
     photoOutput->captureIdCountMap_.erase(captureId);
     photoOutput->captureIdHandleMap_.erase(captureId);
+    photoOutput->captureIdLhdrGainmapMap_.erase(captureId);
 }
 
 void ThumbnailSetColorSpaceAndRotate(std::unique_ptr<Media::PixelMap>& pixelMap, sptr<SurfaceBuffer> surfaceBuffer,
@@ -1299,6 +1300,32 @@ void PhotoOutputImpl::SetPhotoQualityPrioritization(PhotoQualityPrioritization q
     CHECK_RETURN_ELOG(photoOutput_ == nullptr, "SetPhotoQualityPrioritization photoOutput_ is nullptr");
     photoOutput_->SetPhotoQualityPrioritization(
         static_cast<OHOS::CameraStandard::PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization.get_value()));
+}
+
+void PhotoOutputImpl::EnableAutoExtendedGainmapDelivery(bool enabled)
+{
+    MEDIA_INFO_LOG("PhotoOutputImpl::EnableAutoExtendedGainmapDelivery is called");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "EnableAutoExtendedGainmapDelivery photoOutput_ is null");
+    int32_t retCode = photoOutput_->EnableAutoExtendedGainmapDelivery(enabled);
+    CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PhotoOutputImpl::EnableAutoExtendedGainmapDelivery fail %{public}d", retCode);
+    MEDIA_DEBUG_LOG("PhotoOutputImpl::EnableAutoExtendedGainmapDelivery success");
+}
+
+bool PhotoOutputImpl::IsAutoExtendedGainmapDeliverySupported()
+{
+    MEDIA_INFO_LOG("PhotoOutputImpl::IsAutoExtendedGainmapDeliverySupported is called");
+    if (photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputImpl::IsAutoExtendedGainmapDeliverySupported get native object fail");
+        return false;
+    }
+
+    bool isAutoExtendedGainmapDeliverySupported = false;
+    int32_t retCode = photoOutput_->IsAutoExtendedGainmapDeliverySupported(isAutoExtendedGainmapDeliverySupported);
+    CHECK_RETURN_RET(retCode != 0, false);
+    MEDIA_DEBUG_LOG("PhotoOutputImpl::IsAutoExtendedGainmapDeliverySupported is %{public}d",
+        isAutoExtendedGainmapDeliverySupported);
+    return isAutoExtendedGainmapDeliverySupported;
 }
 } // namespace Camera
 } // namespace Ani

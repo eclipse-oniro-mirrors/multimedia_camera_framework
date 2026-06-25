@@ -253,6 +253,8 @@ public:
     static napi_value EnableAutoBokehDataDelivery(napi_env env, napi_callback_info info);
     static napi_value IsPhotoQualityPrioritizationSupported(napi_env env, napi_callback_info info);
     static napi_value SetPhotoQualityPrioritization(napi_env env, napi_callback_info info);
+    static napi_value IsAutoExtendedGainmapDeliverySupported(napi_env env, napi_callback_info info);
+    static napi_value EnableAutoExtendedGainmapDelivery(napi_env env, napi_callback_info info);
 
     static napi_value OnQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value OffQuickThumbnail(napi_env env, napi_callback_info info);

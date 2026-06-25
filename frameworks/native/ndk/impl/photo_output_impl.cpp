@@ -461,3 +461,23 @@ Camera_ErrorCode Camera_PhotoOutput::SetPhotoQualityPrioritization(
         static_cast<PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization));
     return FrameworkToNdkCameraError(ret);
 }
+
+Camera_ErrorCode Camera_PhotoOutput::IsAutoExtendedGainmapDeliverySupported(bool* isSupported) const
+{
+    MEDIA_INFO_LOG("Camera_PhotoOutput IsAutoExtendedGainmapDeliverySupported is called");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_PhotoOutput::IsAutoExtendedGainmapDeliverySupported failed, isSupported is null");
+    CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::IsAutoExtendedGainmapDeliverySupported failed, innerPhotoOutput_ is null");
+    int32_t ret = innerPhotoOutput_->IsAutoExtendedGainmapDeliverySupported(*isSupported);
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_PhotoOutput::EnableAutoExtendedGainmapDelivery(bool enabled)
+{
+    MEDIA_INFO_LOG("Camera_PhotoOutput EnableAutoExtendedGainmapDelivery is called");
+    CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::EnableAutoExtendedGainmapDelivery failed, innerPhotoOutput_ is null");
+    int32_t ret = innerPhotoOutput_->EnableAutoExtendedGainmapDelivery(enabled);
+    return FrameworkToNdkCameraError(ret);
+}

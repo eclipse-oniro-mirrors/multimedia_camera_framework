@@ -575,6 +575,20 @@ public:
     int32_t SetPhotoQualityPrioritization(PhotoQualityPrioritization quality);
 
     /**
+     * @brief Check whether the current mode supports auto extended gainmap delivery.
+     *
+     * @return Return the supported result.
+     */
+    int32_t IsAutoExtendedGainmapDeliverySupported(bool& isAutoExtendedGainmapDeliverySupported);
+
+    /**
+     * @brief To enable the auto extended gainmap delivery.
+     *
+     * @return Returns the result of the auto extended gainmap delivery enable.
+     */
+    int32_t EnableAutoExtendedGainmapDelivery(bool enabled);
+
+    /**
      * @brief Get photo buffer.
      */
     sptr<Surface> GetPhotoSurface();
@@ -590,6 +604,7 @@ public:
     sptr<Surface> exifSurface_;
     sptr<Surface> debugSurface_;
     sptr<Surface> photoSurface_;
+    sptr<Surface> lhdrGainmapSurface_;
     sptr<SurfaceBuffer> gainmapSurfaceBuffer_;
     sptr<SurfaceBuffer> deepSurfaceBuffer_;
     sptr<SurfaceBuffer> exifSurfaceBuffer_;
@@ -612,6 +627,7 @@ public:
     SafeMap<int32_t, sptr<SurfaceBuffer>> captureIdDepthMap_ = {};
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdLhdrGainmapMap_;
     std::atomic<bool> isRawImageDelivery_ = false;
     SafeMap<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;

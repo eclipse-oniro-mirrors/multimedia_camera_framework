@@ -368,6 +368,10 @@ public:
         Camera_PhotoQualityPrioritization qualityPrioritization, bool* isSupported);
     Camera_ErrorCode SetPhotoQualityPrioritization(
         Camera_PhotoQualityPrioritization qualityPrioritization);
+
+    Camera_ErrorCode IsAutoExtendedGainmapDeliverySupported(bool* isSupported) const;
+
+    Camera_ErrorCode EnableAutoExtendedGainmapDelivery(bool enabled);
 private:
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_ = nullptr;

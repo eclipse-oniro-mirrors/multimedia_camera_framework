@@ -2462,6 +2462,13 @@ public:
      */
     void ProcessApertureChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& result);
 
+    /**
+     * @brief Enables or disables the Auto Extended Gainmap Delivery.
+     *
+     * @param enabled True to enable, false to disable.
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int32_t EnableAutoExtendedGainmapDelivery(bool enabled);
 protected:
     static const std::unordered_map<camera_flash_state_enum_t, FlashState> metaFlashStateMap_;
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

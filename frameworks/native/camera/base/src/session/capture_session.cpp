@@ -8159,5 +8159,24 @@ void CaptureSession::ProcessApertureChange(const std::shared_ptr<OHOS::Camera::C
     apertureValue_ = item.data.f[0];
     // LCOV_EXCL_STOP
 }
+
+int32_t CaptureSession::EnableAutoExtendedGainmapDelivery(bool enabled)
+{
+    MEDIA_INFO_LOG("CaptureSession::EnableAutoExtendedGainmapDelivery enabled:%{public}d", enabled);
+
+    LockForControl();
+    if (changedMetadata_ == nullptr) {
+        MEDIA_ERR_LOG("CaptureSession::EnableAutoExtendedGainmapDelivery changedMetadata_ is NULL");
+        UnlockForControl();
+        return CameraErrorCode::SUCCESS;
+    }
+
+    uint8_t AutoExtendedGainmapDeliveryEnable = static_cast<uint8_t>(enabled);
+    bool status = AddOrUpdateMetadata(
+        changedMetadata_, OHOS_CONTROL_AUTO_EXTENDED_GAINMAP_DELIVERY, &AutoExtendedGainmapDeliveryEnable, 1);
+    CHECK_PRINT_ELOG(!status, "CaptureSession::EnableAutoExtendedGainmapDelivery Failed!");
+    UnlockForControl();
+    return CameraErrorCode::SUCCESS;
+}
 } // namespace CameraStandard
 } // namespace OHOS
