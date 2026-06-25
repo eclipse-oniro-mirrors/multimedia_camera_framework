@@ -313,6 +313,10 @@ private:
     sptr<HCaptureSession> videoSessionForControlCenter_;
     bool deviceControlCenterAbility_ = false;
 
+#ifdef HOOK_CAMERA_OPERATOR
+    bool IsOrientationVariable();
+#endif
+
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
 #endif

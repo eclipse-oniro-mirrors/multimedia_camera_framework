@@ -129,11 +129,12 @@ bool CameraRotatePlugin::HookCloseDeviceForRotate(const std::string& bundleName,
     return UnSubscribeUpdateSettingCallback(param);
 }
 
-bool CameraRotatePlugin::HookCreatePreviewFormat(const std::string& bundleName, int32_t& format)
+bool CameraRotatePlugin::HookCreatePreviewFormat(const std::string& bundleName, int32_t& format, const bool isVariable)
 {
     ParameterMap param = {
         {PLUGIN_BUNDLE_NAME, bundleName},
-        {PLUGIN_PREVIEW_FORMAT, to_string(format)}
+        {PLUGIN_PREVIEW_FORMAT, to_string(format)},
+        {PLUGIN_ORIENTATION_VARIABLE, to_string(isVariable)}
     };
     return CreatePreviewOutput(param, format);
 }
