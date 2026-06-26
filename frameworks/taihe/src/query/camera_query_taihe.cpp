@@ -1019,6 +1019,8 @@ bool WhiteBalanceQueryImpl::IsWhiteBalanceModeSupported(WhiteBalanceMode mode)
 
 bool WhiteBalanceQueryImpl::IsWhiteBalanceGainsSupported()
 {
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsWhiteBalanceGainsSupported is called!");
     bool isSupported = false;
     CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, isSupported,
         "IsWhiteBalanceGainsSupported captureSession_ is null");
@@ -1029,6 +1031,8 @@ bool WhiteBalanceQueryImpl::IsWhiteBalanceGainsSupported()
 
 void WhiteBalanceImpl::SetWhiteBalanceGains(WhiteBalanceGains gains)
 {
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetWhiteBalanceGains is called!");
     CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetWhiteBalanceGains captureSession_ is null");
     std::vector<double> normalizedGains = {
         gains.redGain,
@@ -1036,13 +1040,16 @@ void WhiteBalanceImpl::SetWhiteBalanceGains(WhiteBalanceGains gains)
         gains.blueGain
     };
     captureSession_->LockForControl();
-    captureSession_->SetWhiteBalanceGains(normalizedGains);
+    int32_t retCode = captureSession_->SetWhiteBalanceGains(normalizedGains);
     captureSession_->UnlockForControl();
+    CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
 }
 
 WhiteBalanceGains WhiteBalanceImpl::GetWhiteBalanceGains()
 {
     WhiteBalanceGains gains = {};
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), gains,
+        "SystemApi GetWhiteBalanceGains is called!");
     CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, gains, "GetWhiteBalanceGains captureSession_ is null");
     std::vector<double> vecWhiteBalanceGains;
     int32_t retCode = captureSession_->GetWhiteBalanceGains(vecWhiteBalanceGains);
