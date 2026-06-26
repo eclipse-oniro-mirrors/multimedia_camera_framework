@@ -209,6 +209,7 @@ void PhotoAssetBufferConsumer::CleanAfterTransPicture(int32_t captureId)
     streamCapture->captureIdAuxiliaryCountMap_.erase(captureId);
     streamCapture->captureIdCountMap_.erase(captureId);
     streamCapture->captureIdHandleMap_.erase(captureId);
+    streamCapture->captureIdLhdrGainmapMap_.erase(captureId);
 }
 
 void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId, int32_t originCaptureId)
@@ -232,6 +233,13 @@ void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_
         picture->SetAuxiliaryPicture(
             streamCapture->captureIdGainmapMap_[captureId], CameraAuxiliaryPictureType::GAINMAP);
         streamCapture->captureIdGainmapMap_[captureId] = nullptr;
+    }
+    if (streamCapture->captureIdLhdrGainmapMap_[captureId] && picture) {
+        MEDIA_INFO_LOG("AssembleDeferredPicture lhdrGainmapSurfaceBuffer");
+        LoggingSurfaceBufferInfo(streamCapture->captureIdLhdrGainmapMap_[captureId], "lhdrGainmapSurfaceBuffer");
+        picture->SetAuxiliaryPicture(
+            streamCapture->captureIdLhdrGainmapMap_[captureId], CameraAuxiliaryPictureType::LHDR_GAINMAP);
+        streamCapture->captureIdLhdrGainmapMap_[captureId] = nullptr;
     }
     sptr<SurfaceBuffer> depthBuffer = nullptr;
     streamCapture->captureIdDepthMap_.FindOldAndSetNew(captureId, depthBuffer, nullptr);

@@ -26,6 +26,7 @@ namespace DeferredProcessing {
 class TaskManager;
 }
 static const std::string S_GAINMAP = "gainmap";
+static const std::string S_LHDR_GAINMAP = "lhdrGainmap";
 static const std::string S_DEEP = "deep";
 static const std::string S_EXIF = "exif";
 static const std::string S_DEBUG = "debug";

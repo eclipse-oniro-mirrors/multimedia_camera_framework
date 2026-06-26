@@ -1135,6 +1135,20 @@ int32_t HStreamOperator::UpdateStreamInfos(const std::shared_ptr<OHOS::Camera::C
     return CAMERA_OK;
 }
 
+int32_t HStreamOperator::SetIsNeedLhdrGainmap(bool isNeedLhdrGainmap)
+{
+    MEDIA_INFO_LOG("HStreamOperator::SetIsNeedLhdrGainmap enter.isNeedLhdrGainmap: %{public}d", isNeedLhdrGainmap);
+    std::list<sptr<HStreamCommon>> streams = streamContainer_.GetStreams(StreamType::CAPTURE);
+
+    std::for_each(streams.begin(), streams.end(), [&isNeedLhdrGainmap](auto& stream) {
+        MEDIA_INFO_LOG("HStreamOperator::SetIsNeedLhdrGainmap CAPTURE stream.isNeedLhdrGainmap: %{public}d",
+            isNeedLhdrGainmap);
+        sptr<HStreamCapture> captureStream = CastStream<HStreamCapture>(stream);
+        captureStream->SetIsNeedLhdrGainmap(isNeedLhdrGainmap);
+    });
+    return CAMERA_OK;
+}
+
 int32_t HStreamOperator::VerifyCaptureModeColorSpace(ColorSpace colorSpace)
 {
     // check format and color space pair for non-sys capture mode
@@ -2177,6 +2191,7 @@ int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_5::StreamInfo
 
 int32_t HStreamOperator::UpdateStreams(std::vector<StreamInfo_V1_5>& streamInfos)
 {
+    MEDIA_INFO_LOG("HStreamOperator::UpdateStreams enter.");
     sptr<OHOS::HDI::Camera::V1_2::IStreamOperator> streamOperatorV1_2;
     auto streamOperator = GetHDIStreamOperator();
     CHECK_RETURN_RET_ELOG(

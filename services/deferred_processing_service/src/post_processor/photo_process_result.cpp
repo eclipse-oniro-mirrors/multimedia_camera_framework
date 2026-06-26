@@ -129,6 +129,29 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_4(
     return DP_OK;
 }
 
+int32_t PhotoProcessResult::ProcessPictureInfo1_7For1_4(
+    const std::string& imageId, const HDI::Camera::V1_7::ImageBufferInfo_V1_7& bufferV7)
+{
+    const auto& bufferV_3 = bufferV7.v1_4.v1_3;
+    DP_CHECK_RETURN_RET(bufferV_3.imageHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED);
+    auto bufferHandle = bufferV_3.imageHandle->GetBufferHandle();
+    DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "bufferHandle is nullptr.");
+
+    int32_t deferredFormat = 0;
+    GetMetadataValue(bufferV_3.metadata, MetadataKeys::DEFERRED_FORMAT, deferredFormat);
+    if (deferredFormat != static_cast<int32_t>(PhotoFormat::YUV)) {
+        return ProcessBufferInfo(imageId, bufferV_3); // JPG deepCopy
+    }
+
+    auto imageInfo = CreateFromMeta(bufferHandle->size, bufferV_3.metadata);
+    std::vector<std::shared_ptr<PictureIntf>> pictures = AssemblePictureListV7(imageId, bufferV7); // YUV
+    DP_CHECK_ERROR_RETURN_RET_LOG(pictures.empty(), DPS_ERROR_IMAGE_PROC_FAILED, "failed to AssemblePictureList.");
+
+    imageInfo->SetPicture(pictures[0]);
+    OnProcessDone(imageId, std::move(imageInfo));
+    return DP_OK;
+}
+
 int32_t PhotoProcessResult::JudgeBuffersType(
     const std::vector<HDI::Camera::V1_5::ImageBufferInfo_V1_4>& buffers, std::unique_ptr<ImageInfo>& imageInfo)
 {
@@ -141,6 +164,47 @@ int32_t PhotoProcessResult::JudgeBuffersType(
     DP_CHECK_RETURN_RET(bufferV_3.imageHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED);
 
     std::vector<std::shared_ptr<PictureIntf>> pictures = AssemblePictureList(buffer);
+    DP_CHECK_ERROR_RETURN_RET_LOG(pictures.empty(), DPS_ERROR_IMAGE_PROC_FAILED, "failed to AssemblePictureList.");
+
+    auto firstPicIntf = pictures.front();
+    DP_CHECK_ERROR_RETURN_RET_LOG(!firstPicIntf, DPS_ERROR_IMAGE_PROC_FAILED, "firstPicIntf nullptr");
+    auto firstPic = firstPicIntf->GetPicture();
+    bool isFaceDetected = PictureAdapter::IsFaceDetected(firstPic);
+    imageInfo->isEnableOriginImg_ = isFaceDetected;
+
+    if (buffers.size() == TWO_BUFFER) {
+        imageInfo->buffersType_ = ImageInfo::ONE_EFFECT_ONE_ORIGIN;
+        return DP_OK;
+    }
+    // ONE_BUFFER
+    int32_t deferredFormat = 0;
+    GetMetadataValue(bufferV_3.metadata, MetadataKeys::DEFERRED_FORMAT, deferredFormat);
+    if (deferredFormat != static_cast<int32_t>(PhotoFormat::YUV)) {
+        imageInfo->buffersType_ = ImageInfo::ONE_EFFECT;
+        return DP_OK;
+    }
+
+    if (isFaceDetected) {
+        imageInfo->buffersType_ = ImageInfo::ONE_EFFECT_NEED_ORIGIN;
+    } else {
+        imageInfo->buffersType_ = ImageInfo::ONE_EFFECT;
+    }
+#endif
+    return DP_OK;
+}
+
+int32_t PhotoProcessResult::JudgeBuffersTypeV7(const std::string& imageId,
+    const std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7>& buffers, std::unique_ptr<ImageInfo>& imageInfo)
+{
+#ifdef CAMERA_CAPTURE_YUV
+    const int32_t TWO_BUFFER = 2;
+    DP_CHECK_RETURN_RET_LOG(buffers.size() > TWO_BUFFER || buffers.empty(), DPS_ERROR_IMAGE_PROC_FAILED,
+        "invalid buffer size:%{public}zu", buffers.size());
+    auto& buffer = buffers.front();
+    const auto& bufferV_3 = buffer.v1_4.v1_3;
+    DP_CHECK_RETURN_RET(bufferV_3.imageHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED);
+
+    std::vector<std::shared_ptr<PictureIntf>> pictures = AssemblePictureListV7(imageId, buffer);
     DP_CHECK_ERROR_RETURN_RET_LOG(pictures.empty(), DPS_ERROR_IMAGE_PROC_FAILED, "failed to AssemblePictureList.");
 
     auto firstPicIntf = pictures.front();
@@ -434,6 +498,272 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
     return DP_OK;
 }
 
+int32_t PhotoProcessResult::ProcessPictureInfoV1_7(
+    const std::string& imageId, const std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7>& buffers)
+{
+    DP_INFO_LOG("ProcessPictureInfoV1_7 enter");
+    auto imageInfo = std::make_unique<ImageInfo>();
+    DP_CHECK_ERROR_RETURN_RET_LOG(buffers.empty(), DPS_ERROR_IMAGE_PROC_FAILED, "buffers is empty");
+
+#ifdef CAMERA_CAPTURE_YUV
+    bool isDump = system::GetParameter("const.camera_service.dump100_enable", "0") == "1";
+    DP_INFO_LOG("ProcessPictureInfoV1_7 isDump %{public}d", isDump);
+    auto mediaLibraryManagerProxy = MediaLibraryManagerProxy::GetMediaLibraryManagerProxy();
+    DP_CHECK_ERROR_RETURN_RET_LOG(mediaLibraryManagerProxy == nullptr, DPS_ERROR_IMAGE_PROC_FAILED,
+        "ProcessPictureInfoV1_7 get MediaLibraryManagerProxy fail");
+
+    DeferredPictureInfo deferInfo = mediaLibraryManagerProxy->GetDeferredPictureInfo(imageId);
+    std::string editData = deferInfo.editData;
+    if (!editData.empty()) {
+        editData = CreateOrSetFaceBeautifyParamValidToBeautyFilter(editData, true);
+    }
+    std::string encodeFormat = deferInfo.mimeType;
+    DP_INFO_LOG("ProcessPictureInfoV1_7 encodeFormat:%{public}s", encodeFormat.c_str());
+    int32_t ret = JudgeBuffersTypeV7(imageId, buffers, imageInfo);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "JudgeBuffersTypeV7 fail");
+    DP_INFO_LOG("ProcessPictureInfoV1_7 buffersType:%{public}d", imageInfo->buffersType_);
+
+    if (imageInfo->buffersType_ == ImageInfo::ONE_EFFECT) {
+        DP_INFO_LOG("ProcessPictureInfo1_7For1_4 only effectImage, enter V1_4");
+        return ProcessPictureInfo1_7For1_4(imageId, buffers.front());
+    }
+    bool isRequireOriginImg = imageInfo->buffersType_ == ImageInfo::ONE_EFFECT_NEED_ORIGIN;
+    auto [filterName, filterParam] = ParseWatermarkFilter(editData);
+    bool isIncludeWatermark = !filterName.empty() && !filterParam.empty();
+    DP_INFO_LOG("ProcessPictureInfoV1_7 isRequireOriginImg: %{public}d, "
+                "isIncludeWatermark:%{public}d", isRequireOriginImg, isIncludeWatermark);
+#else
+    std::string editData;
+    std::string encodeFormat;
+    DP_INFO_LOG("ProcessPictureInfo1_7For1_4 not support yuv, enter V1_4");
+    return ProcessPictureInfo1_7For1_4(imageId, buffers.front());
+#endif
+    DP_INFO_LOG("ProcessPictureInfoV1_7 editData:%{public}s", editData.c_str());
+    for (auto& buffer : buffers) {
+        DP_INFO_LOG("ProcessPictureInfoV1_7 buffer loop enter");
+        const auto& bufferV_3 = buffer.v1_4.v1_3;
+        DP_CHECK_RETURN_RET(bufferV_3.imageHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED);
+        auto bufferHandle = bufferV_3.imageHandle->GetBufferHandle();
+        DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "bufferHandle is nullptr.");
+        int32_t deferredFormat = 0;
+        GetMetadataValue(bufferV_3.metadata, MetadataKeys::DEFERRED_FORMAT, deferredFormat);
+        auto [dataSize, isHighQuality, cloudFlag, captureFlag, dpsMetadata] =
+            ParseMeta(bufferHandle->size, bufferV_3.metadata);
+        dpsMetadata.Set(MetadataKeys::EDIT_DATA, editData);
+        auto imageInfoSingle =
+            std::make_unique<ImageInfoSingle>(dataSize, isHighQuality, cloudFlag, captureFlag, dpsMetadata);
+        DP_CHECK_ERROR_RETURN_RET_LOG(!imageInfoSingle, DPS_ERROR_IMAGE_PROC_FAILED, "imageInfoSingle is nullptr");
+        if (deferredFormat != static_cast<int32_t>(PhotoFormat::YUV)) {
+            // JPG
+            DP_INFO_LOG("ProcessPictureInfoV1_7 JPG process");
+            auto dataSize = imageInfoSingle->GetDataSize();
+            MappedMemory mapped(bufferHandle->fd, dataSize);
+            DP_CHECK_ERROR_RETURN_RET_LOG(
+                !mapped, DPS_ERROR_IMAGE_PROC_FAILED, "Memory mapping failed for imageId: %{public}s", imageId.c_str());
+
+            auto bufferPtr = std::make_unique<SharedBuffer>(dataSize);
+            DP_CHECK_ERROR_RETURN_RET_LOG(bufferPtr->Initialize() != DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
+                "Failed to initialize shared buffer for imageId: %{public}s", imageId.c_str());
+
+            auto ret = bufferPtr->CopyFrom(mapped.data(), dataSize);
+            DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, DPS_ERROR_IMAGE_PROC_FAILED,
+                "Failed to copy buffer for imageId: %{public}s", imageId.c_str());
+
+            DP_INFO_LOG("DPS_PHOTO: bufferHandle fd: %{public}d, bufferPtr fd: %{public}d", bufferHandle->fd,
+                bufferPtr->GetFd());
+            imageInfoSingle->SetBuffer(std::move(bufferPtr));
+            // jpg no need to post process
+            OnProcessDone(imageId, std::make_unique<ImageInfo>(std::move(*imageInfoSingle)));
+            return EOK;
+        }
+#ifdef CAMERA_CAPTURE_YUV
+        else {
+            // YUV
+            DP_INFO_LOG("ProcessPictureInfoV1_7 YUV process");
+            std::vector<std::shared_ptr<PictureIntf>> pictures = AssemblePictureListV7(imageId, buffer);
+            DP_CHECK_ERROR_RETURN_RET_LOG(
+                pictures.empty(), DPS_ERROR_IMAGE_PROC_FAILED, "failed to AssemblePictureListV7.");
+            const int32_t TWO = 2;
+            bool isIncludeXtStyle = pictures.size() == TWO;
+
+            imageInfoSingle->SetPicture(imageInfo->isEnableOriginImg_ && isIncludeXtStyle ? pictures[1] : pictures[0]);
+        }
+        // process
+        DP_INFO_LOG("ProcessPictureInfoV1_7 continue processing");
+        auto Encode = [&](const std::unique_ptr<ImageInfoSingle>& imageSingle,
+            const std::string& encodeFormat, const std::string& title) -> std::unique_ptr<ImageInfoSingle> {
+            // encode to jpeg
+            DP_CHECK_ERROR_RETURN_RET_LOG(!imageSingle, nullptr, "Encode imageSingle is nullptr");
+            auto pictureIntf = imageSingle->GetPicture();
+            auto [buffer, bfSize] = pictureIntf->Encode(encodeFormat);
+            DP_CHECK_ERROR_RETURN_RET_LOG(!buffer, nullptr, "Encode fail buffer nullptr ");
+            DP_CHECK_ERROR_RETURN_RET_LOG(bfSize == 0, nullptr, "Encode fail size 0");
+            DP_INFO_LOG("Encode pack pixelMap success, packedSize: %{public}" PRId64, bfSize);
+
+            if (isDump) {
+                PictureAdapter::DumpEncoded(buffer.get(), bfSize, title + "100encode");
+            }
+            auto bufferPtr = std::make_unique<SharedBuffer>(bfSize);
+            DP_CHECK_ERROR_RETURN_RET_LOG(bufferPtr->Initialize() != DP_OK, nullptr,
+                "Encode Failed to initialize shared buffer for imageId: %{public}s", imageId.c_str());
+
+            auto ret = bufferPtr->CopyFrom(buffer.get(), bfSize);
+            DP_CHECK_ERROR_RETURN_RET_LOG(
+                ret != DP_OK, nullptr, "Encode Failed to copy buffer for imageId: %{public}s", imageId.c_str());
+
+            DP_INFO_LOG("Encode DPS_PHOTO: bufferHandle fd: %{public}d, bufferPtr fd: %{public}d", bufferHandle->fd,
+                bufferPtr->GetFd());
+            auto encodedImg = std::make_unique<ImageInfoSingle>(*imageSingle);
+            encodedImg->SetBuffer(std::move(bufferPtr));
+            encodedImg->SetDataSize(bfSize);
+            return encodedImg;
+        };
+
+        auto SuppressWatermark = [&](std::unique_ptr<ImageInfoSingle>& imageSingle,
+                                     const std::string& editData) -> int32_t {
+            // add watermark
+            DP_INFO_LOG("SuppressWatermark start");
+            DP_CHECK_ERROR_RETURN_RET_LOG(!imageSingle, DPS_ERROR_IMAGE_PROC_FAILED, "imageSingle is nullptr");
+            auto imageEffectProxy = ImageEffectProxy::CreateImageEffectProxy();
+            DP_CHECK_ERROR_RETURN_RET_LOG(
+                !imageEffectProxy, DPS_ERROR_IMAGE_PROC_FAILED, "imageEffectProxy is nullptr");
+            auto pictureIntf = imageSingle->GetPicture();
+            DP_CHECK_ERROR_RETURN_RET_LOG(!pictureIntf, DPS_ERROR_IMAGE_PROC_FAILED, "pictureIntf is nullptr");
+            auto picture = pictureIntf->GetPicture();
+            DP_CHECK_ERROR_RETURN_RET_LOG(!picture, DPS_ERROR_IMAGE_PROC_FAILED, "picture is nullptr");
+            int32_t ret = imageEffectProxy->SuppressWatermarkForPicture(picture, editData);
+            DP_CHECK_ERROR_RETURN_RET_LOG(ret != 0, DPS_ERROR_IMAGE_PROC_FAILED,
+                "ProcessPictureInfoV1_7 SuppressWatermarkForPicture fail, editData:%{public}s", editData.c_str());
+            imageEffectProxy->FreeImageEffectDynamiclib();
+            return DPS_NO_ERROR;
+        };
+
+        auto DownSampling = [&](std::unique_ptr<ImageInfoSingle>& imageSingle) -> std::shared_ptr<PictureIntf> {
+            // downSampling
+            using namespace Media;
+            auto pictureIntf = imageSingle->GetPicture();
+            DP_CHECK_ERROR_RETURN_RET_LOG(!pictureIntf, nullptr, "pictureIntf is nullptr");
+            auto picture = pictureIntf->GetPicture();
+            DP_CHECK_ERROR_RETURN_RET_LOG(!picture, nullptr, "picture is nullptr");
+            std::shared_ptr<PictureIntf> lcdPicAdapter = std::make_shared<PictureAdapter>(std::move(picture));
+            DP_CHECK_ERROR_RETURN_RET_LOG(lcdPicAdapter == nullptr, nullptr, "lcdPicAdapter is nullptr");
+            bool isSucc = lcdPicAdapter->ResizeLcdPicture();
+            if (!isSucc) {
+                DP_ERR_LOG("ResizeLcdPicture fail");
+            }
+            return lcdPicAdapter;
+        };
+
+        int32_t imageType = ImageBufferType::NONE;
+        auto& metadata = bufferV_3.metadata;
+        DP_CHECK_ERROR_RETURN_RET_LOG(metadata == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "metadata is nullptr");
+        metadata->Get("ImageBufferType", imageType);
+
+        switch (imageType) {
+            case ImageBufferType::ORIGINAL: {
+                DP_INFO_LOG("ProcessPictureInfoV1_7 process origin image");
+                auto encodedImg = Encode(imageInfoSingle, encodeFormat, "100org");
+                if (isDump) {
+                    if (auto pictureIntf = imageInfoSingle->GetPicture()) {
+                        pictureIntf->DumpMainPixel(imageId + "_100Org");
+                    }
+                }
+                DP_CHECK_ERROR_RETURN_RET_LOG(encodedImg == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "Encode fail");
+                encodedImg->SetType(CallbackType::IMAGE_ORIGIN);
+                imageInfo->imageInfoSingles_.emplace_back(std::move(encodedImg));
+                break;
+            }
+            case ImageBufferType::RENDER: {
+                DP_INFO_LOG("ProcessPictureInfoV1_7 process render image");
+                if (isDump) {
+                    if (auto pictureIntf = imageInfoSingle->GetPicture()) {
+                        pictureIntf->DumpMainPixel(imageId + "_100Effect");
+                    }
+                }
+
+                std::unique_ptr<ImageInfoSingle> imageInfoSingleOrg = nullptr;
+                if (isRequireOriginImg) {
+                    // encode org
+                    DP_CHECK_ERROR_RETURN_RET_LOG(
+                        !imageInfoSingle, DPS_ERROR_IMAGE_PROC_FAILED, "imageInfoSingle is nullptr");
+                    imageInfoSingleOrg = std::make_unique<ImageInfoSingle>(*imageInfoSingle);
+                    DP_CHECK_ERROR_RETURN_RET_LOG(
+                        imageInfoSingleOrg == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "imageInfoSingleOrg nullptr");
+                    if (isIncludeWatermark) {
+                        // deep copy
+                        auto pictureIntf = imageInfoSingle->GetPicture();
+                        DP_CHECK_ERROR_RETURN_RET_LOG(
+                            pictureIntf == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "GetPicture fail");
+                        auto picture = pictureIntf->GetPicture();
+                        DP_CHECK_ERROR_RETURN_RET_LOG(
+                            picture == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "picture is nullptr");
+                        auto cpPicture = PictureAdapter::CopyPictureSource(picture);
+                        std::shared_ptr<PictureAdapter> picAdp = std::make_shared<PictureAdapter>(cpPicture);
+                        imageInfoSingleOrg->SetPicture(picAdp);
+                    } else {
+                        imageInfoSingleOrg->SetPicture(imageInfoSingle->GetPicture());
+                    }
+                }
+                if (isIncludeWatermark) {
+                    // only effect
+                    int32_t ret = SuppressWatermark(imageInfoSingle, editData);
+                    if (ret != DPS_NO_ERROR) {
+                        DP_ERR_LOG("SuppressWatermark fail,editData:%{public}s", editData.c_str());
+                    }
+                }
+                DP_CHECK_ERROR_RETURN_RET_LOG(
+                    !imageInfoSingle, DPS_ERROR_IMAGE_PROC_FAILED, "imageInfoSingleWater is nullptr");
+                if (imageInfoSingle->GetType() == CallbackType::IMAGE_PROCESS_DONE) {
+                    DP_ERR_LOG("only yuv support, return");
+                    return DPS_ERROR_IMAGE_PROC_FAILED;
+                } else if (imageInfoSingle->GetType() == CallbackType::IMAGE_PROCESS_YUV_DONE) {
+                    // encode
+                    auto encodedImg = Encode(imageInfoSingle, encodeFormat, "100eff");
+                    DP_CHECK_ERROR_RETURN_RET_LOG(encodedImg == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "Encode fail");
+                    if (isRequireOriginImg) {
+                        if (isIncludeWatermark) {
+                            auto encodedImgOrg = Encode(imageInfoSingleOrg, encodeFormat, "100orgOne");
+                            DP_CHECK_ERROR_RETURN_RET_LOG(
+                                encodedImgOrg == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "encodedImgOrg fail");
+                            encodedImgOrg->SetType(CallbackType::IMAGE_ORIGIN);
+                            imageInfo->imageInfoSingles_.emplace_back(std::move(encodedImgOrg));
+                            encodedImg->SetType(CallbackType::IMAGE_EFFECT);
+                            imageInfo->imageInfoSingles_.emplace_back(std::move(encodedImg));
+                        } else {
+                            encodedImg->SetType(CallbackType::IMAGE_BOTH);
+                            imageInfo->imageInfoSingles_.emplace_back(std::move(encodedImg));
+                        }
+                    } else {
+                        encodedImg->SetType(CallbackType::IMAGE_EFFECT);
+                        imageInfo->imageInfoSingles_.emplace_back(std::move(encodedImg));
+                    }
+
+                    // lcd
+                    auto lcdImage = DownSampling(imageInfoSingle);
+                    if (isDump) {
+                        if (auto pictureIntf = imageInfoSingle->GetPicture()) {
+                            pictureIntf->DumpMainPixel(imageId + "_100Lcd");
+                        }
+                    }
+                    DP_CHECK_ERROR_RETURN_RET_LOG(!lcdImage, DPS_ERROR_IMAGE_PROC_FAILED, "lcdImage is nullptr");
+                    imageInfo->SetLcdImage(lcdImage);
+                } else {
+                    DP_ERR_LOG("error buffer type: %{public}d", (int32_t)imageInfoSingle->GetType());
+                    return DPS_ERROR_IMAGE_PROC_FAILED;
+                }
+                break;
+            }
+            default:
+                DP_ERR_LOG("error buffer type: %{public}d", imageType);
+                return DPS_ERROR_IMAGE_PROC_FAILED;
+        }
+#endif
+    }
+#ifdef CAMERA_CAPTURE_YUV
+    OnProcessDone(imageId, std::move(imageInfo));
+#endif
+    return DP_OK;
+}
 
 std::vector<std::shared_ptr<PictureIntf>> PhotoProcessResult::AssemblePictureList(
     const HDI::Camera::V1_5::ImageBufferInfo_V1_4& bufferV4)
@@ -577,6 +907,68 @@ std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePictureV4(
     return picture;
 }
 
+std::shared_ptr<PictureIntf> PhotoProcessResult::AssemblePictureV7(const std::string& imageId,
+    const HDI::Camera::V1_7::ImageBufferInfo_V1_7& bufferV7, bool isUseImageHandle)
+{
+    DP_INFO_LOG("PhotoProcessListener::AssemblePictureV7 isUseImageHandle: %{public}d", isUseImageHandle);
+    const auto& bufferV_4 = bufferV7.v1_4;
+    const auto& bufferV_3 = bufferV_4.v1_3;
+    int32_t exifDataSize = 0;
+    int32_t rotationInIps = false;
+    GetMetadataValue(bufferV_3.metadata, MetadataKeys::EXIF_SIZE, exifDataSize);
+    GetMetadataValue(bufferV_3.metadata, MetadataKeys::ROTATION_IN_IPS, rotationInIps);
+    DP_CHECK_ERROR_RETURN_RET_LOG((isUseImageHandle && bufferV_3.imageHandle == nullptr) ||
+            (!isUseImageHandle && bufferV_4.originalImageHandle == nullptr),
+        nullptr, "imageHandle or originalImageHandle is nullptr.");
+    BufferHandle* handle =
+        isUseImageHandle ? bufferV_3.imageHandle->GetBufferHandle() : bufferV_4.originalImageHandle->GetBufferHandle();
+    auto imageBuffer = TransBufferHandleToSurfaceBuffer(handle);
+    DP_CHECK_ERROR_RETURN_RET_LOG(imageBuffer == nullptr, nullptr, "imageBuffer is nullptr.");
+
+    DP_INFO_LOG("DPS_PHOTO: AssemblePictureV7 ImageBufferInfo_V1_7 valid: gainMap(%{public}d), depthMap(%{public}d), "
+        "unrefocusMap(%{public}d), linearMap(%{public}d), exif(%{public}d), makeInfo(%{public}d), "
+        "OriginalImage(%{public}d), auxiliaryInfo(%{public}d), lhdrGainmap(%{public}d), exifDataSize(%{public}d)",
+        bufferV_3.isGainMapValid, bufferV_3.isDepthMapValid, bufferV_3.isUnrefocusImageValid,
+        bufferV_3.isHighBitDepthLinearImageValid, bufferV_3.isExifValid, bufferV_3.isMakerInfoValid,
+        bufferV_4.isOriginalImageValid, bufferV_4.isAuxiliaryInfoValid, bufferV7.isExtendedGainMapValid, exifDataSize);
+    std::shared_ptr<PictureIntf> picture = PictureProxy::CreatePictureProxy();
+    DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, nullptr, "picture is nullptr.");
+
+    picture->Create(imageBuffer);
+    if (bufferV_3.isExifValid) {
+        DP_CHECK_ERROR_RETURN_RET_LOG(bufferV_3.exifHandle == nullptr, nullptr, "exifHandle is nullptr.");
+        auto exifBuffer = TransBufferHandleToSurfaceBuffer(bufferV_3.exifHandle->GetBufferHandle());
+        sptr<BufferExtraData> extraData = sptr<BufferExtraDataImpl>::MakeSptr();
+        extraData->ExtraSet(MetadataKeys::EXIF_SIZE, exifDataSize);
+        DP_CHECK_EXECUTE(exifBuffer, exifBuffer->SetExtraData(extraData));
+        picture->SetExifMetadata(exifBuffer);
+    }
+    AssemleAuxilaryPictureV7(bufferV7, picture);
+    DP_CHECK_ERROR_RETURN_RET_LOG(rotationInIps, picture, "HAL rotationInIps");
+#ifndef CAMERA_CAPTURE_YUV
+    DP_INFO_LOG("DPS_PHOTO rotate picture user id: %{public}d", userId_);
+    picture->RotatePicture();
+#endif
+    return picture;
+}
+
+std::vector<std::shared_ptr<PictureIntf>> PhotoProcessResult::AssemblePictureListV7(const std::string& imageId,
+    const HDI::Camera::V1_7::ImageBufferInfo_V1_7& bufferV7)
+{
+    std::vector<std::shared_ptr<PictureIntf>> pictures;
+    if (bufferV7.v1_4.isOriginalImageValid) {
+        auto picXTstyle = AssemblePictureV7(imageId, bufferV7, !bufferV7.v1_4.isAuxiliaryInfoValid);
+        DP_CHECK_ERROR_RETURN_RET_LOG(picXTstyle == nullptr, pictures, "picXTstyle is nullptr.");
+
+        pictures.emplace_back(picXTstyle);
+    }
+    auto picture = AssemblePictureV7(imageId, bufferV7, true);
+    DP_CHECK_ERROR_RETURN_RET_LOG(picture == nullptr, pictures, "picture is nullptr.");
+
+    pictures.emplace_back(picture);
+    return pictures;
+}
+
 sptr<SurfaceBuffer> PhotoProcessResult::TransBufferHandleToSurfaceBuffer(const BufferHandle *bufferHandle)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(bufferHandle == nullptr, nullptr, "bufferHandle is nullptr.");
@@ -659,6 +1051,16 @@ void PhotoProcessResult::AssemleAuxilaryPicture(
         auto makerInfoBuffer = TransBufferHandleToSurfaceBuffer(buffer.makerInfoHandle->GetBufferHandle());
         picture->SetMaintenanceData(makerInfoBuffer);
     });
+}
+
+void PhotoProcessResult::AssemleAuxilaryPictureV7(
+    const HDI::Camera::V1_7::ImageBufferInfo_V1_7& bufferV7, const std::shared_ptr<PictureIntf>& picture)
+{
+    const auto& bufferV_4 = bufferV7.v1_4;
+    AssemleAuxilaryPictureV4(bufferV_4, picture);
+    DP_CHECK_EXECUTE(bufferV7.isExtendedGainMapValid,
+        SetAuxiliaryPicture(picture, bufferV7.extendedGainMapHandle->GetBufferHandle(),
+        CameraAuxiliaryPictureType::LHDR_GAINMAP));
 }
 
 void PhotoProcessResult::AssemleAuxilaryPictureV4(

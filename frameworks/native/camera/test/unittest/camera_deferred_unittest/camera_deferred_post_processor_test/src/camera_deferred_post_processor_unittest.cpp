@@ -38,6 +38,7 @@
 #include "picture_interface.h"
 #include "media_manager_proxy.h"
 #include "test_token.h"
+#include "v1_7/types.h"
 
 using namespace testing;
 using namespace testing::ext;
@@ -937,6 +938,211 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_034, Te
     EXPECT_EQ(val2, cloudFlag);
 }
 
+/*
+ * Feature: DeferredProcessing
+ * Function: Test PhotoProcessResult::ProcessPictureInfoV1_7 with empty buffers
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessPictureInfoV1_7 returns error when buffers is empty
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, ProcessPictureInfo_V1_7_001, TestSize.Level0)
+{
+    int32_t userId = 0;
+    PhotoProcessResult processResult(userId);
+
+    std::string imageId = "test_image_id";
+    std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7> emptyBuffers;
+
+    int32_t ret = processResult.ProcessPictureInfoV1_7(imageId, emptyBuffers);
+    EXPECT_EQ(ret, DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
+/*
+ * Feature: DeferredProcessing
+ * Function: Test PhotoProcessResult::ProcessPictureInfoV1_7 with null imageHandle
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessPictureInfoV1_7 returns error when buffer has null imageHandle
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, ProcessPictureInfo_V1_7_002, TestSize.Level0)
+{
+    int32_t userId = 0;
+    PhotoProcessResult processResult(userId);
+
+    std::string imageId = "test_image_id";
+    HDI::Camera::V1_7::ImageBufferInfo_V1_7 buffer;
+    buffer.v1_4.v1_3.imageHandle = nullptr;
+    buffer.v1_4.v1_3.metadata = nullptr;
+    std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7> buffers = {buffer};
+
+    int32_t ret = processResult.ProcessPictureInfoV1_7(imageId, buffers);
+    EXPECT_EQ(ret, DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
+/*
+ * Feature: DeferredProcessing
+ * Function: Test PhotoProcessResult::ProcessPictureInfoV1_7 with null bufferHandle
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessPictureInfo1_7For1_4 returns error when imageHandle
+ *     is non-null but GetBufferHandle() returns null
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, ProcessPictureInfo_V1_7_003, TestSize.Level0)
+{
+    int32_t userId = 0;
+    PhotoProcessResult processResult(userId);
+
+    std::string imageId = "test_image_id";
+    HDI::Camera::V1_7::ImageBufferInfo_V1_7 buffer;
+    buffer.v1_4.v1_3.imageHandle =
+        sptr<HDI::Camera::V1_0::BufferHandleSequenceable>::MakeSptr();
+    buffer.v1_4.v1_3.metadata = nullptr;
+    std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7> buffers = {buffer};
+
+    int32_t ret = processResult.ProcessPictureInfoV1_7(imageId, buffers);
+    EXPECT_EQ(ret, DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
+/*
+ * Feature: DeferredProcessing
+ * Function: Test PhotoProcessResult::ProcessPictureInfoV1_7 with null metadata
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessPictureInfo1_7For1_4 JPG path with null metadata
+ *     verifies GetMetadataValue handles null metadata gracefully
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, ProcessPictureInfo_V1_7_004, TestSize.Level0)
+{
+    int32_t userId = 0;
+    PhotoProcessResult processResult(userId);
+
+    std::string imageId = "test_image_id";
+    HDI::Camera::V1_7::ImageBufferInfo_V1_7 buffer;
+    buffer.v1_4.v1_3.imageHandle = nullptr;
+    buffer.v1_4.v1_3.metadata = nullptr;
+    std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7> buffers = {buffer};
+
+    int32_t ret = processResult.ProcessPictureInfoV1_7(imageId, buffers);
+    EXPECT_EQ(ret, DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
+/*
+ * Feature: DeferredProcessing
+ * Function: Test PhotoProcessResult::ProcessPictureInfoV1_7 with isExtendedGainMapValid
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessPictureInfoV1_7 with lhdrGainmap flag set to true
+ *     but extendedGainMapHandle is null, verifies no crash in auxiliary picture assembly
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, ProcessPictureInfo_V1_7_005, TestSize.Level0)
+{
+    int32_t userId = 0;
+    PhotoProcessResult processResult(userId);
+
+    std::string imageId = "test_image_id";
+    HDI::Camera::V1_7::ImageBufferInfo_V1_7 buffer;
+    buffer.v1_4.v1_3.imageHandle = nullptr;
+    buffer.v1_4.v1_3.metadata = nullptr;
+    buffer.v1_4.isOriginalImageValid = false;
+    buffer.v1_4.isAuxiliaryInfoValid = false;
+    buffer.isExtendedGainMapValid = true;
+    buffer.extendedGainMapHandle = nullptr;
+    std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7> buffers = {buffer};
+
+    int32_t ret = processResult.ProcessPictureInfoV1_7(imageId, buffers);
+    EXPECT_EQ(ret, DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
+/*
+ * Feature: DeferredProcessing
+ * Function: Test PhotoProcessResult::ProcessPictureInfoV1_7 with multiple buffers
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessPictureInfoV1_7 with multiple buffers
+ *     where the first buffer is invalid, verifies correct error handling
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, ProcessPictureInfo_V1_7_006, TestSize.Level0)
+{
+    int32_t userId = 0;
+    PhotoProcessResult processResult(userId);
+
+    std::string imageId = "test_image_id";
+    HDI::Camera::V1_7::ImageBufferInfo_V1_7 buffer1;
+    buffer1.v1_4.v1_3.imageHandle = nullptr;
+    buffer1.v1_4.v1_3.metadata = nullptr;
+
+    HDI::Camera::V1_7::ImageBufferInfo_V1_7 buffer2;
+    buffer2.v1_4.v1_3.imageHandle = nullptr;
+    buffer2.v1_4.v1_3.metadata = nullptr;
+
+    std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7> buffers = {buffer1, buffer2};
+
+    int32_t ret = processResult.ProcessPictureInfoV1_7(imageId, buffers);
+    EXPECT_EQ(ret, DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
+/*
+ * Feature: DeferredProcessing
+ * Function: Test PhotoProcessResult::ProcessPictureInfoV1_7 with only extendedGainMapHandle set
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessPictureInfoV1_7 with imageHandle nullptr but
+ *     extendedGainMapHandle set and isExtendedGainMapValid true, verifies no crash
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, ProcessPictureInfo_V1_7_007, TestSize.Level0)
+{
+    int32_t userId = 0;
+    PhotoProcessResult processResult(userId);
+
+    std::string imageId = "test_image_id";
+    HDI::Camera::V1_7::ImageBufferInfo_V1_7 buffer;
+    buffer.v1_4.v1_3.imageHandle = nullptr;
+    buffer.v1_4.v1_3.metadata = nullptr;
+    buffer.v1_4.isOriginalImageValid = false;
+    buffer.v1_4.isAuxiliaryInfoValid = false;
+    buffer.isExtendedGainMapValid = true;
+    buffer.extendedGainMapHandle =
+        sptr<HDI::Camera::V1_0::BufferHandleSequenceable>::MakeSptr();
+    std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7> buffers = {buffer};
+
+    int32_t ret = processResult.ProcessPictureInfoV1_7(imageId, buffers);
+    EXPECT_EQ(ret, DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
+/*
+ * Feature: DeferredProcessing
+ * Function: Test PhotoProcessResult::ProcessPictureInfoV1_7 with isOriginalImageValid
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ProcessPictureInfoV1_7 with isOriginalImageValid=true
+ *     but originalImageHandle is null, verifies error handling
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, ProcessPictureInfo_V1_7_008, TestSize.Level0)
+{
+    int32_t userId = 0;
+    PhotoProcessResult processResult(userId);
+
+    std::string imageId = "test_image_id";
+    HDI::Camera::V1_7::ImageBufferInfo_V1_7 buffer;
+    buffer.v1_4.v1_3.imageHandle = nullptr;
+    buffer.v1_4.v1_3.metadata = nullptr;
+    buffer.v1_4.isOriginalImageValid = true;
+    buffer.v1_4.isAuxiliaryInfoValid = false;
+    buffer.v1_4.originalImageHandle = nullptr;
+    std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7> buffers = {buffer};
+
+    int32_t ret = processResult.ProcessPictureInfoV1_7(imageId, buffers);
+    EXPECT_EQ(ret, DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
 class MockImageProcessSession : public HDI::Camera::V1_2::IImageProcessSession {
 public:
     MOCK_METHOD(int32_t, GetCoucurrency,
@@ -1146,6 +1352,5 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_043, Te
     postProcessor->Reset();
     EXPECT_EQ(postProcessor->runningId_.empty(), true);
 }
-
 } // CameraStandard
 } // OHOS

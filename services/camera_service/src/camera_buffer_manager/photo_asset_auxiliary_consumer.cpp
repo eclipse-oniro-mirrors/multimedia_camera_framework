@@ -85,6 +85,8 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
         surface = streamCapture->exifSurface_.Get();
     } else if (surfaceName_ == S_DEBUG) {
         surface = streamCapture->debugSurface_.Get();
+    } else if (surfaceName_ == S_LHDR_GAINMAP) {
+        surface = streamCapture->lhdrGainmapSurface_.Get();
     }
     // acquire copy release buffer
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
@@ -131,6 +133,9 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
         } else if (surfaceName_ == S_DEBUG) {
             streamCapture->captureIdDebugMap_[captureId] = newSurfaceBuffer;
             MEDIA_INFO_LOG("AuxiliaryBufferConsumer debugSurfaceBuffer_, captureId=%{public}d", captureId);
+        } else if (surfaceName_ == S_LHDR_GAINMAP) {
+            streamCapture->captureIdLhdrGainmapMap_[captureId] = newSurfaceBuffer;
+            MEDIA_INFO_LOG("AuxiliaryBufferConsumer lhdrGainmapSurfaceBuffer_, captureId=%{public}d", captureId);
         }
         MEDIA_INFO_LOG("AuxiliaryBufferConsumer auxiliaryPhotoCount = %{public}d, captureCount = %{public}d, "
                        "surfaceName=%{public}s, captureId=%{public}d",

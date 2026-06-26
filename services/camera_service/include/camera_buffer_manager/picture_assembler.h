@@ -29,6 +29,7 @@ public:
     ~PictureAssembler();
     void RegisterAuxiliaryConsumers();
 private:
+    void RegisterAuxiliaryConsumersForLhdr(sptr<HStreamCapture> streamCapture, std::string &retStr);
     wptr<HStreamCapture> streamCapture_ = nullptr;
 };
 

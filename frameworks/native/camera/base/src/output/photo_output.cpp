@@ -2011,6 +2011,15 @@ int32_t PhotoOutput::EnableAutoExtendedGainmapDelivery(bool enabled)
     int32_t ret = IsAutoExtendedGainmapDeliverySupported(isAutoExtendedGainmapDeliverySupported);
     CHECK_RETURN_RET_ELOG(isAutoExtendedGainmapDeliverySupported == false, OPERATION_NOT_ALLOWED,
         "PhotoOutput EnableAutoExtendedGainmapDelivery not supported, ret = %{public}d", ret);
+    auto photoProfile = GetPhotoProfile();
+    CHECK_RETURN_RET_ELOG(photoProfile == nullptr, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "PhotoOutput EnableAutoExtendedGainmapDelivery error!, photoProfile is nullptr");
+    bool isYuvCapture = photoProfile->GetCameraFormat() == CAMERA_FORMAT_YUV_420_SP;
+    if (isYuvCapture) {
+        ret = captureSession->ExpandLhdrGainmapStream(enabled);
+        CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
+            "PhotoOutput EnableAutoExtendedGainmapDelivery ExpandLhdrGainmapStream error");
+    }
     int32_t res = captureSession->EnableAutoExtendedGainmapDelivery(enabled);
     return res;
 }

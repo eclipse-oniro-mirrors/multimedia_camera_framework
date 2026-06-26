@@ -200,6 +200,7 @@ ohos_shared_library("deferred_processing_service") {
     "drivers_interface_camera:libcamera_proxy_1.4",
     "drivers_interface_camera:libcamera_proxy_1.5",
     "drivers_interface_camera:libcamera_proxy_1.6",
+    "drivers_interface_camera:libcamera_proxy_1.7",
     "drivers_interface_camera:metadata",
     "graphic_2d:librender_service_client",
     "graphic_surface:buffer_handle",
