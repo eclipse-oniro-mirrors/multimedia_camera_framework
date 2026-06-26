@@ -396,6 +396,7 @@ private:
     void OnZoomInfoChange(const ZoomInfo& zoomInfo);
     void OnMechMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
     void OnSessionStatusChange(bool status);
+    int32_t SetBeautyValueByType(int32_t type, int32_t value, bool needPersist);
 
     std::mutex cbMutex_;
     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}

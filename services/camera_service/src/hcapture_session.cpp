@@ -138,6 +138,176 @@ static int32_t GenerateSessionId()
 }
 }  // namespace
 
+namespace MultiBeautyType {
+
+constexpr int32_t PER_BEAUTY_VAL_NUM = 6;
+constexpr int32_t SUPPORT_BEAUTY_START = SKIN_SMOOTH;
+constexpr int32_t SUPPORT_BEAUTY_END = NOSE_SLENDER;
+constexpr int32_t BEAUTY_TYPE_NUM = SUPPORT_BEAUTY_END - SUPPORT_BEAUTY_START + 1;
+static int32_t g_beautyShareMax = (std::pow)(PER_BEAUTY_VAL_NUM, BEAUTY_TYPE_NUM) - 1;
+
+const std::unordered_map<BeautyType, camera_device_metadata_tag_t> h_fwkBeautyControlMap_ = {
+    {AUTO_TYPE, OHOS_CONTROL_BEAUTY_AUTO_VALUE},
+    {SKIN_SMOOTH, OHOS_CONTROL_BEAUTY_SKIN_SMOOTH_VALUE},
+    {FACE_SLENDER, OHOS_CONTROL_BEAUTY_FACE_SLENDER_VALUE},
+    {SKIN_TONE, OHOS_CONTROL_BEAUTY_SKIN_TONE_VALUE},
+    {SKIN_TONEBRIGHT, OHOS_CONTROL_BEAUTY_SKIN_TONEBRIGHT_VALUE},
+    {EYE_BIGEYES, OHOS_CONTROL_BEAUTY_EYE_BIGEYES_VALUE},
+    {HAIR_HAIRLINE, OHOS_CONTROL_BEAUTY_HAIR_HAIRLINE_VALUE},
+    {FACE_MAKEUP, OHOS_CONTROL_BEAUTY_FACE_MAKEUP_VALUE},
+    {HEAD_SHRINK, OHOS_CONTROL_BEAUTY_HEAD_SHRINK_VALUE},
+    {NOSE_SLENDER, OHOS_CONTROL_BEAUTY_NOSE_SLENDER_VALUE},
+};
+
+const std::unordered_map<BeautyType, camera_device_metadata_tag_t> h_fwkBeautyAbilityMap_ = {
+    {AUTO_TYPE, OHOS_ABILITY_BEAUTY_AUTO_VALUES},
+    {SKIN_SMOOTH, OHOS_ABILITY_BEAUTY_SKIN_SMOOTH_VALUES},
+    {FACE_SLENDER, OHOS_ABILITY_BEAUTY_FACE_SLENDER_VALUES},
+    {SKIN_TONE, OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES},
+    {SKIN_TONEBRIGHT, OHOS_ABILITY_BEAUTY_SKIN_TONEBRIGHT_VALUES},
+    {EYE_BIGEYES, OHOS_ABILITY_BEAUTY_EYE_BIGEYES_VALUES},
+    {HAIR_HAIRLINE, OHOS_ABILITY_BEAUTY_HAIR_HAIRLINE_VALUES},
+    {FACE_MAKEUP, OHOS_ABILITY_BEAUTY_FACE_MAKEUP_VALUES},
+    {HEAD_SHRINK, OHOS_ABILITY_BEAUTY_HEAD_SHRINK_VALUES},
+    {NOSE_SLENDER, OHOS_ABILITY_BEAUTY_NOSE_SLENDER_VALUES},
+};
+
+static bool IsSupportedType(int32_t type)
+{
+    if (type < static_cast<int32_t>(SUPPORT_BEAUTY_START) ||
+        type > static_cast<int32_t>(SUPPORT_BEAUTY_END)) {
+        MEDIA_ERR_LOG("type:%d not support", type);
+        return false;
+    }
+    return true;
+}
+
+static int32_t UpdateBeauty(const sptr<HCameraDevice>& device, int32_t type, int32_t value)
+{
+    CHECK_RETURN_RET_ELOG(device == nullptr, CAMERA_INVALID_STATE, "device is nullptr");
+    if (!IsSupportedType(type)) {
+        return CAMERA_INVALID_ARG;
+    }
+    uint8_t beautyType = static_cast<uint8_t>(type);
+    auto metaItr = h_fwkBeautyControlMap_.find(static_cast<BeautyType>(beautyType));
+    CHECK_RETURN_RET_WLOG(metaItr == h_fwkBeautyControlMap_.end(),
+        CAMERA_INVALID_ARG, "beautyType:%d not support", type);
+    camera_device_metadata_tag_t metadata = metaItr->second;
+    constexpr int32_t defaultItems = 1;
+    constexpr int32_t defaultDataLength = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> beautyMetaData =
+        make_shared<OHOS::Camera::CameraMetadata>(defaultItems, defaultDataLength);
+    uint32_t dataCount = 1;
+    AddOrUpdateMetadata(beautyMetaData, OHOS_CONTROL_BEAUTY_TYPE, &beautyType, dataCount);
+    AddOrUpdateMetadata(beautyMetaData, metadata, &value, dataCount);
+
+    int32_t errCode = device->UpdateSetting(beautyMetaData);
+    return errCode;
+}
+
+static int32_t GetBeautyRangeByType(const sptr<HCameraDevice>& device,
+    int32_t type, std::vector<int32_t> &range)
+{
+    CHECK_RETURN_RET_ELOG(device == nullptr, CAMERA_INVALID_STATE, "device is nullptr");
+    auto itAbility = h_fwkBeautyAbilityMap_.find(static_cast<BeautyType>(type));
+    CHECK_RETURN_RET_ELOG(itAbility == h_fwkBeautyAbilityMap_.end(), CAMERA_INVALID_ARG, "Unknown beauty Type");
+    int32_t beautyTypeAbility = itAbility->second;
+    auto settings = device->GetDeviceAbility();
+    CHECK_RETURN_RET_ELOG(settings == nullptr, CAMERA_INVALID_STATE, "deviceAbility is null");
+    camera_metadata_item_t item;
+    int32_t errCode = OHOS::Camera::FindCameraMetadataItem(settings->get(), beautyTypeAbility, &item);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "GetBeautyRange abilityId error");
+    std::vector<int32_t> beautyRange = {};
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (beautyTypeAbility == OHOS_ABILITY_BEAUTY_SKIN_TONE_VALUES) {
+            beautyRange.emplace_back(item.data.i32[i]);
+        } else {
+            beautyRange.emplace_back(item.data.u8[i]);
+        }
+    }
+    range = beautyRange;
+    return CAMERA_OK;
+}
+
+static int32_t SwitchBeautyValToDataShareVal(const sptr<HCameraDevice>& device,
+    int32_t type, int32_t beautyVal, int32_t &shareVal)
+{
+    CHECK_RETURN_RET_ELOG(device == nullptr, CAMERA_INVALID_STATE, "device is nullptr");
+    int32_t errCode = CAMERA_OK;
+    if (!IsSupportedType(type)) {
+        return CAMERA_INVALID_ARG;
+    }
+
+    int32_t basePlaceVal = 1;
+    for (int32_t i = 0; i < (type - 1); i++) {
+        basePlaceVal = basePlaceVal * PER_BEAUTY_VAL_NUM;
+    }
+    int32_t valbasePlaceOld = (shareVal / basePlaceVal) % PER_BEAUTY_VAL_NUM;
+
+    std::vector<int32_t> range = {};
+    errCode = GetBeautyRangeByType(device, type, range);
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "GetBeautyRange failed.");
+    int32_t valbasePlaceDiff = 0;
+    auto it = std::find(range.begin(), range.end(), beautyVal);
+    if (it == range.end()) {
+        MEDIA_ERR_LOG("SwitchBeautyValToDataShareVal failed, beautyVal:%{public}d not support", beautyVal);
+        return CAMERA_INVALID_ARG;
+    }
+    valbasePlaceDiff = std::distance(range.begin(), it) * (PER_BEAUTY_VAL_NUM - 1) /
+        static_cast<int32_t>(range.size() - 1) - valbasePlaceOld;
+    valbasePlaceDiff = std::clamp(valbasePlaceDiff, -PER_BEAUTY_VAL_NUM + 1, PER_BEAUTY_VAL_NUM - 1);
+    shareVal += valbasePlaceDiff * basePlaceVal;
+    shareVal = std::clamp(shareVal, 0, g_beautyShareMax);
+    return errCode;
+}
+
+static int32_t SwitchDataShareValToBeautyVal(const sptr<HCameraDevice>& device,
+    int32_t type, int32_t shareVal, int32_t &beautyVal)
+{
+    CHECK_RETURN_RET_ELOG(device == nullptr, CAMERA_INVALID_STATE, "device is nullptr");
+    int32_t errCode = CAMERA_OK;
+    if (!IsSupportedType(type)) {
+        return CAMERA_INVALID_ARG;
+    }
+
+    int basePlaceVal = 1;
+    for (int32_t i = 0; i < (type - 1); i++) {
+        basePlaceVal = basePlaceVal * PER_BEAUTY_VAL_NUM;
+    }
+    std::vector<int32_t> range{};
+    errCode = GetBeautyRangeByType(device, type, range);
+    int32_t valbasePlace = (shareVal / basePlaceVal) % PER_BEAUTY_VAL_NUM;
+    valbasePlace = valbasePlace * static_cast<int32_t>(range.size() - 1) / (PER_BEAUTY_VAL_NUM - 1);  // [0-5] -> [0-10]
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "GetBeautyRange failed.");
+    if (valbasePlace >= 0 && valbasePlace < static_cast<int32_t>(range.size())) {
+        beautyVal = range[valbasePlace];
+    } else {
+        MEDIA_ERR_LOG("valbasePlace not in range,shareVal:%{public}d", shareVal);
+        errCode = CAMERA_INVALID_ARG;
+    }
+    return errCode;
+}
+
+static bool IsMultiBeautyTypeCase(const sptr<HCameraDevice>& device)
+{
+    if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "false") {
+        return false;
+    }
+    CHECK_RETURN_RET_ELOG(device == nullptr, CAMERA_INVALID_STATE, "device is nullptr");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = device->GetDeviceAbility();
+    CHECK_RETURN_RET_WLOG(ability == nullptr, false, "ability null");
+    camera_metadata_item_t item;
+    int32_t size = 0;
+    int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_BEAUTY_HAIR_HAIRLINE_VALUES, &item);
+    if (ret == CAM_META_SUCCESS) {
+        size = static_cast<int32_t>(item.count);
+    }
+    MEDIA_ERR_LOG("IsMultiBeautyTypeCase:%{public}d", size > 0);
+    return size > 0;
+}
+
+}
+
 static const std::map<CaptureSessionState, std::string> SESSION_STATE_STRING_MAP = {
     { CaptureSessionState::SESSION_INIT, "Init" },
     { CaptureSessionState::SESSION_CONFIG_INPROGRESS, "Config_In-progress" },
@@ -1015,6 +1185,12 @@ int32_t HCaptureSession::GetBeautyRange(std::vector<int32_t>& range, int32_t typ
 
 int32_t HCaptureSession::GetBeautyValue(int32_t type, int32_t& value)
 {
+    if (MultiBeautyType::IsMultiBeautyTypeCase(GetCameraDevice())) {
+        int32_t shareVal = 0;
+        int32_t retCode = GetBeautyFromDataShareHelper(shareVal);
+        CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode, "GetBeautyFromDataShareHelper failed.");
+        return MultiBeautyType::SwitchDataShareValToBeautyVal(GetCameraDevice(), type, shareVal, value);
+    }
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
         "GetBeautyValue HCaptureSession::CheckSystemApp fail");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
@@ -1028,6 +1204,9 @@ int32_t HCaptureSession::GetBeautyValue(int32_t type, int32_t& value)
 
 int32_t HCaptureSession::SetBeautyValue(int32_t type, int32_t value, bool needPersist)
 {
+    if (MultiBeautyType::IsMultiBeautyTypeCase(GetCameraDevice())) {
+        return SetBeautyValueByType(type, value, needPersist);
+    }
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
         "HCaptureSession::SetBeautyValue controlCenterPrecondition false");
     MEDIA_INFO_LOG("HCaptureSession::SetBeautyValue: %{public}d", value);
@@ -1058,6 +1237,47 @@ int32_t HCaptureSession::SetBeautyValue(int32_t type, int32_t value, bool needPe
         isBeautyActive = true;
     }
     if (isBeautyActive == true && value == 0 ) {
+        ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::BEAUTY, false};
+        SetControlCenterEffectCallbackStatus(statusInfo);
+        isBeautyActive = false;
+    }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::SetBeautyValueByType(int32_t type, int32_t value, bool needPersist)
+{
+    int32_t errCode = CAMERA_OK;
+    int32_t shareVal = 0;
+    auto device = GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(device == nullptr, CAMERA_INVALID_ARG, "device is null.");
+    // start up case from UpdateDataShareAndTag
+    if (type == static_cast<int32_t>(AUTO_TYPE) && false == needPersist) {
+        shareVal = value;
+        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "GetBeautyFromDataShareHelper Failed");
+        for (int32_t type = MultiBeautyType::SUPPORT_BEAUTY_START;
+            type < MultiBeautyType::SUPPORT_BEAUTY_END + 1; type++) {
+            errCode = MultiBeautyType::SwitchDataShareValToBeautyVal(device, type, shareVal, value);
+            CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "SwitchDataShareValToBeautyVal Failed");
+            errCode = MultiBeautyType::UpdateBeauty(device, type, value);
+            CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "UpdateBeauty type:%d Failed", type);
+        }
+    } else {
+        errCode = MultiBeautyType::UpdateBeauty(device, type, value);
+        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "UpdateBeauty type:%d Failed", type);
+    }
+    if (needPersist) {
+        errCode = GetBeautyFromDataShareHelper(shareVal);
+        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "GetBeautyFromDataShareHelper Failed");
+        errCode = MultiBeautyType::SwitchBeautyValToDataShareVal(device, type, value, shareVal);
+        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "SwitchBeautyValToDataShareVal Failed");
+        SetBeautyToDataShareHelper(shareVal);
+    }
+    if (isBeautyActive == false && shareVal > 0) {
+        ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::BEAUTY, true};
+        SetControlCenterEffectCallbackStatus(statusInfo);
+        isBeautyActive = true;
+    }
+    if (isBeautyActive == true && shareVal == 0) {
         ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::BEAUTY, false};
         SetControlCenterEffectCallbackStatus(statusInfo);
         isBeautyActive = false;
@@ -1242,8 +1462,6 @@ int32_t HCaptureSession::GetAutoFramingFromDataShareHelper(bool &value)
 
 int32_t HCaptureSession::IsAutoFramingSupported(bool& support)
 {
-    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
-        "IsAutoFramingSupported HCaptureSession::CheckSystemApp fail");
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "check permission failed.");
@@ -2352,6 +2570,10 @@ int32_t HCaptureSession::Release(CaptureSessionReleaseType type)
         // Clear current session
         if (type != CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED) {
             HCameraSessionManager::GetInstance().RemoveSession(this);
+            if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
+                // for the case in default active control center,need update enable
+                UpdateCameraControl(false);
+            }
             MEDIA_DEBUG_LOG("HCaptureSession::Release clear pid left sessions(%{public}zu).",
                 HCameraSessionManager::GetInstance().GetTotalSessionSize());
         }
