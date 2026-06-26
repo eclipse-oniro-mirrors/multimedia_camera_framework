@@ -29,21 +29,26 @@ DeferredVideoJob::DeferredVideoJob(const std::string& videoId, std::unique_ptr<V
 DpsFdPtr DeferredVideoJob::GetInputFd()
 {
     DP_INFO_LOG("GetInputFd start.");
-    std::vector<std::string> srcPaths = info_->GetSrcPaths();
-    if (!srcPaths.empty()) {
-        for (const auto& path : srcPaths) {
-            char* canonicalPath = realpath(path.c_str(), nullptr);
-            if (canonicalPath == nullptr) {
-                DP_ERR_LOG("Invalid path: %{public}s", path.c_str());
-                continue;
-            }
-            int fd = open(canonicalPath, O_RDONLY);
-            if (fd >= 0) {
-                DP_DEBUG_LOG("Open srcPaths file success: %{public}s", canonicalPath);
-                free(canonicalPath);
-                return std::make_shared<DpsFd>(fd);
-            }
-            free(canonicalPath);
+    const auto srcPaths = info_->GetSrcPaths();
+    if (srcPaths.empty()) {
+        DP_ERR_LOG("Failed to open srcPath file: empty srcPaths");
+        return nullptr;
+    }
+    for (const auto& path : srcPaths) {
+        std::unique_ptr<char, decltype(&free)> canonicalPath{ realpath(path.c_str(), nullptr), &free };
+        if (!canonicalPath) {
+            DP_ERR_LOG("Invalid path");
+            continue;
+        }
+        if (srcPath_ == canonicalPath.get()) {
+            return srcFd_;
+        }
+        int fd = open(canonicalPath.get(), O_RDONLY);
+        if (fd >= 0) {
+            srcFd_ = std::make_shared<DpsFd>(fd);
+            srcPath_ = canonicalPath.get();
+            DP_DEBUG_LOG("Open srcPaths file success: %{public}s", srcPath_.c_str());
+            return srcFd_;
         }
     }
 

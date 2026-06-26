@@ -166,6 +166,7 @@ private:
 
     const std::string videoId_;
     std::unique_ptr<VideoInfo> info_;
+    std::string srcPath_;
     DpsFdPtr srcFd_ {nullptr};
     JobPriority priority_ {JobPriority::NORMAL};
     VideoJobState preStatus_ {VideoJobState::NONE};
