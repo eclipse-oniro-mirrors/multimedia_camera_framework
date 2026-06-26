@@ -44,6 +44,7 @@ enum PluginParameter {
     PLUGIN_VIDEO_SURFACE_TRANSFORM, // video
     PLUGIN_VIDEO_MIRROR, // video
     PLUGIN_PREVIEW_TRANSFORM, // preview
+    PLUGIN_ORIENTATION_VARIABLE, // ability
 };
 class HCaptureSession;
 
@@ -56,7 +57,7 @@ class CameraRotatePlugin : public RefBase {
         std::shared_ptr<OHOS::Camera::CameraMetadata> inputCapability, const std::string& cameraId);
     bool HookCloseDeviceForRotate(const std::string& bundleName,
         std::shared_ptr<OHOS::Camera::CameraMetadata> inputCapability, const std::string& cameraId);
-    bool HookCreatePreviewFormat(const std::string& bundleName, int32_t& format);
+    bool HookCreatePreviewFormat(const std::string& bundleName, int32_t& format, const bool isVariable);
     bool HookPreviewStreamStart(ParameterMap basicInfoMap, const sptr<OHOS::IBufferProducer>& producer,
         int32_t& rotateAngle);
     bool HookPreviewTransform(ParameterMap basicInfoMap, const sptr<OHOS::IBufferProducer>& producer,

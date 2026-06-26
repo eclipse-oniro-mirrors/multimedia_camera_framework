@@ -1305,6 +1305,27 @@ int32_t HCameraService::CreateDeferredPreviewOutput(
     return CAMERA_OK;
 }
 
+#ifdef HOOK_CAMERA_OPERATOR
+bool HCameraService::IsOrientationVariable()
+{
+    bool isVariable = false;
+    std::vector<std::string> cameraIds;
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    int32_t retCode = GetCameras(cameraIds, cameraAbilityList);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, isVariable, "HCameraService::IsOrientationVariable GetCameras failed");
+    CHECK_RETURN_RET_ELOG(cameraAbilityList.empty(), isVariable,
+        "HCameraService::IsOrientationVariable GetCameras is empty");
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(
+        cameraAbilityList[0]->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
+    CHECK_RETURN_RET_DLOG(ret != CAM_META_SUCCESS, isVariable,
+        "HCameraService::IsOrientationVariable not support variable orientation");
+    isVariable =  item.count > 0 && item.data.u8[0];
+    MEDIA_DEBUG_LOG("HCameraService::IsOrientationVariable success. isVariable: %{public}d", isVariable);
+    return isVariable;
+}
+#endif
+
 int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& producer, int32_t format, int32_t width,
     int32_t height, sptr<IStreamRepeat>& previewOutput)
 {
@@ -1322,7 +1343,7 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
     }
 #ifdef HOOK_CAMERA_OPERATOR
     if (!CameraRotatePlugin::GetInstance()->
-        HookCreatePreviewFormat(GetClientBundle(IPCSkeleton::GetCallingUid()), format)) {
+        HookCreatePreviewFormat(GetClientBundle(IPCSkeleton::GetCallingUid()), format, IsOrientationVariable())) {
         MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput HookCreatePreviewFormat is failed");
     }
 #endif
