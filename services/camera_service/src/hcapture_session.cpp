@@ -560,7 +560,10 @@ int32_t HCaptureSession::AddMultiStreamOutput(const sptr<IRemoteObject>& multiSt
 {
 #ifdef CAMERA_MOVIE_FILE
     MEDIA_INFO_LOG("HCaptureSession::AddMultiStreamOutput opMode:%{public}d", opMode);
-    sptr<HCameraMovieFileOutput> hMovieFileoutput = static_cast<HCameraMovieFileOutput*>(multiStreamOutput.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(
+        multiStreamOutput && multiStreamOutput->IsProxyObject(), CAMERA_INVALID_ARG,
+        "Please use cameraDevice created by service");
+    sptr<HCameraMovieFileOutput> hMovieFileoutput = iface_cast<HCameraMovieFileOutput>(multiStreamOutput);
     CHECK_RETURN_RET_ELOG(hMovieFileoutput == nullptr, CAMERA_UNKNOWN_ERROR,
         "HCaptureSession::AddMultiStreamOutput hMovieFileoutput is null");
     int retCode = hMovieFileoutput->InitConfig(opMode);
@@ -580,7 +583,10 @@ int32_t HCaptureSession::RemoveMultiStreamOutput(const sptr<IRemoteObject>& mult
 {
 #ifdef CAMERA_MOVIE_FILE
     MEDIA_INFO_LOG("HCaptureSession::RemoveMultiStreamOutput");
-    sptr<HCameraMovieFileOutput> hMovieFileoutput = static_cast<HCameraMovieFileOutput*>(multiStreamOutput.GetRefPtr());
+    CHECK_RETURN_RET_ELOG(
+        multiStreamOutput && multiStreamOutput->IsProxyObject(), CAMERA_INVALID_ARG,
+        "Please use cameraDevice created by service");
+    sptr<HCameraMovieFileOutput> hMovieFileoutput = iface_cast<HCameraMovieFileOutput>(multiStreamOutput);
     CHECK_RETURN_RET_ELOG(hMovieFileoutput == nullptr, CAMERA_UNKNOWN_ERROR,
         "HCaptureSession::RemoveMultiStreamOutput hMovieFileoutput is null");
     auto tempMovieFileOutput = weakCameraMovieFileOutput_.promote();
@@ -1323,6 +1329,8 @@ int32_t HCaptureSession::CreateRecorder(const sptr<IRemoteObject>& remoteObj, sp
 {
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     MEDIA_INFO_LOG("HCameraService::CreateRecorder start");
+    CHECK_RETURN_RET_ELOG(
+        remoteObj && remoteObj->IsProxyObject(), CAMERA_INVALID_ARG, "Please use stream created by service");
     sptr<IStreamCommon> stream = iface_cast<IStreamRepeat>(remoteObj);
     CHECK_RETURN_RET_ELOG(stream == nullptr, CAMERA_INVALID_ARG, "stream is null");
     constexpr int32_t cinematicVideoMode = 24;
