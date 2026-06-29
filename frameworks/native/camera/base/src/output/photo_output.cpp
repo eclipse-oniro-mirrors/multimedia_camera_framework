@@ -1872,10 +1872,8 @@ int32_t PhotoOutput::IsAutoExtendedGainmapDeliverySupported(bool &isAutoExtended
     MEDIA_INFO_LOG("PhotoOutput IsAutoExtendedGainmapDeliverySupported is called");
     isAutoExtendedGainmapDeliverySupported = false;
     auto session = GetSession();
-    CHECK_RETURN_RET(session == nullptr, SERVICE_FATL_ERROR);
-    CHECK_RETURN_RET_ELOG(!(session->IsSessionConfiged() || session->IsSessionCommited()),
-        CameraErrorCode::SESSION_NOT_CONFIG,
-        "PhotoOutput Failed check IsAutoExtendedGainmapDeliverySupported!, session not configed");
+    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), SESSION_NOT_CONFIG,
+        "PhotoOutput Failed check IsAutoExtendedGainmapDeliverySupported!, session is nullptr or not commited");
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoExtendedGainmapDeliverySupported error!, inputDevice is nullptr");
@@ -1887,7 +1885,7 @@ int32_t PhotoOutput::IsAutoExtendedGainmapDeliverySupported(bool &isAutoExtended
         "PhotoOutput IsAutoExtendedGainmapDeliverySupported error!, metadata is nullptr");
     camera_metadata_item_t item;
     int32_t ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_AUTO_EXTENDED_GAINMAP_DELIVERY, &item);
-    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoExtendedGainmapDeliverySupported failed with return code %{public}d", ret);
     auto mode = session->GetMode();
     MEDIA_INFO_LOG("PhotoOutput IsAutoExtendedGainmapDeliverySupported current mode: %{public}d", mode);
@@ -1906,21 +1904,18 @@ int32_t PhotoOutput::IsAutoExtendedGainmapDeliverySupported(bool &isAutoExtended
 int32_t PhotoOutput::EnableAutoExtendedGainmapDelivery(bool enabled)
 {
     MEDIA_INFO_LOG("PhotoOutput EnableAutoExtendedGainmapDelivery is called");
-    bool isAutoExtendedGainmapDeliverySupported = false;
-    int32_t ret = IsAutoExtendedGainmapDeliverySupported(isAutoExtendedGainmapDeliverySupported);
-    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
-        "PhotoOutput EnableAutoExtendedGainmapDelivery error");
-    CHECK_RETURN_RET_ELOG(isAutoExtendedGainmapDeliverySupported == false, OPERATION_NOT_ALLOWED,
-        "PhotoOutput EnableAutoExtendedGainmapDelivery not supported");
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput EnableAutoExtendedGainmapDelivery error!, captureSession is nullptr");
-    CHECK_RETURN_RET_ELOG(!(captureSession->IsSessionConfiged() || captureSession->IsSessionCommited()),
-        CameraErrorCode::SESSION_NOT_CONFIG,
-        "PhotoOutput EnableAutoExtendedGainmapDelivery error!, session not configed");
     auto inputDevice = captureSession->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput EnableAutoExtendedGainmapDelivery error!, inputDevice is nullptr");
+    CHECK_RETURN_RET_ELOG(!captureSession->IsSessionCommited(), SESSION_NOT_CONFIG,
+        "PhotoOutput EnableAutoExtendedGainmapDelivery error!, captureSession not commited");
+    bool isAutoExtendedGainmapDeliverySupported = false;
+    int32_t ret = IsAutoExtendedGainmapDeliverySupported(isAutoExtendedGainmapDeliverySupported);
+    CHECK_RETURN_RET_ELOG(isAutoExtendedGainmapDeliverySupported == false, OPERATION_NOT_ALLOWED,
+        "PhotoOutput EnableAutoExtendedGainmapDelivery not supported, ret = %{public}d", ret);
     int32_t res = captureSession->EnableAutoExtendedGainmapDelivery(enabled);
     return res;
 }
