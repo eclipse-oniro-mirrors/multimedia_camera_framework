@@ -198,7 +198,7 @@ public:
     std::shared_ptr<DeferredProcessing::TaskManager> photoSubTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> thumbnailTask_ = nullptr;
 
-    std::mutex g_photoImageMutex;
+    std::recursive_mutex g_photoImageMutex;
     std::mutex g_assembleImageMutex;
     std::map<int32_t, int32_t> captureIdAuxiliaryCountMap_;
     std::map<int32_t, int32_t> captureIdCountMap_;
