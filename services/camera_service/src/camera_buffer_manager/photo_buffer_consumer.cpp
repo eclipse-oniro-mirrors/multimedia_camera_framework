@@ -111,7 +111,7 @@ void PhotoBufferConsumer::StartWaitAuxiliaryTask(
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
     {
-        std::lock_guard<std::mutex> lock(streamCapture->g_photoImageMutex);
+        std::lock_guard<std::recursive_mutex> lock{streamCapture->g_photoImageMutex};
         streamCapture->captureIdCountMap_[captureId] = auxiliaryCount;
         streamCapture->captureIdAuxiliaryCountMap_[captureId]++;
         MEDIA_INFO_LOG("PhotoBufferConsumer StartWaitAuxiliaryTask captureId = %{public}d", captureId);
@@ -184,6 +184,7 @@ void PhotoBufferConsumer::CleanAfterTransPicture(int32_t captureId)
     MEDIA_INFO_LOG("CleanAfterTransPicture E, captureId:%{public}d", captureId);
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    std::lock_guard<std::recursive_mutex> lock{streamCapture->g_photoImageMutex};
 
     streamCapture->captureIdPictureMap_.erase(captureId);
     streamCapture->captureIdGainmapMap_.erase(captureId);
