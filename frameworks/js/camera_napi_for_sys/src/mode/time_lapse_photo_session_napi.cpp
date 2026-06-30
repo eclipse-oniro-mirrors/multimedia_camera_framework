@@ -778,7 +778,7 @@ napi_value TimeLapsePhotoSessionNapi::GetIsoRange(napi_env env, napi_callback_in
         MEDIA_ERR_LOG("%{public}s: getIsoRange() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value result = nullptr;
+    napi_value result;
     if (napi_create_array_with_length(env, range.size(), &result) == napi_ok) {
         napi_value value;
         for (uint32_t i = 0; i < range.size(); i++) {
@@ -787,7 +787,6 @@ napi_value TimeLapsePhotoSessionNapi::GetIsoRange(napi_env env, napi_callback_in
         }
     } else {
         MEDIA_ERR_LOG("%{public}s: Napi Create Array With Length Failed", __FUNCTION__);
-        napi_get_undefined(env, &result);
     }
     return result;
 }
