@@ -188,9 +188,9 @@ MetadataObjectType Camera_MetadataOutput::convert(Camera_MetadataObjectType type
 class InnerMetadataOutputCallbackExt : public MetadataStateCallback {
 public:
     InnerMetadataOutputCallbackExt(Camera_MetadataOutput* metadataOutput,
-                                   OH_MetadataOutput_OnErrorExt* callback,
+                                   OH_MetadataOutput_OnErrorExt callback,
                                    void* context)
-        : metadataOutput_(metadataOutput), callback_(*callback), context_(context) {}
+        : metadataOutput_(metadataOutput), callback_(callback), context_(context) {}
     ~InnerMetadataOutputCallbackExt() = default;
 
     void OnError(const int32_t errorCode) const override
@@ -209,9 +209,9 @@ private:
 class InnerMetadataObjectCallbackExt : public MetadataObjectCallback {
 public:
     InnerMetadataObjectCallbackExt(Camera_MetadataOutput* metadataOutput,
-                                   OH_MetadataOutput_OnMetadataObjectExtAvailable* callback,
+                                   OH_MetadataOutput_OnMetadataObjectExtAvailable callback,
                                    void* context)
-        : metadataOutput_(metadataOutput), callback_(*callback), context_(context) {}
+        : metadataOutput_(metadataOutput), callback_(callback), context_(context) {}
     ~InnerMetadataObjectCallbackExt() = default;
 
     void OnMetadataObjectsAvailable(std::vector<sptr<MetadataObject>> metaObjects) const override
@@ -237,7 +237,7 @@ private:
 
 
 Camera_ErrorCode Camera_MetadataOutput::RegisterMetadataObjectExtAvailableCallback(
-    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback)
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable callback)
 {
     shared_ptr<InnerMetadataObjectCallbackExt> innerMetadataObjectCallbackExt =
         make_shared<InnerMetadataObjectCallbackExt>(this, callback, context);
@@ -246,14 +246,14 @@ Camera_ErrorCode Camera_MetadataOutput::RegisterMetadataObjectExtAvailableCallba
 }
 
 Camera_ErrorCode Camera_MetadataOutput::UnregisterMetadataObjectExtAvailableCallback(
-    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback)
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable callback)
 {
     shared_ptr<InnerMetadataObjectCallbackExt> innerMetadataObjectCallbackExt = nullptr;
     innerMetadataOutput_->SetCallbackExt(innerMetadataObjectCallbackExt);
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_MetadataOutput::RegisterErrorCallback(void* context, OH_MetadataOutput_OnErrorExt* callback)
+Camera_ErrorCode Camera_MetadataOutput::RegisterErrorCallback(void* context, OH_MetadataOutput_OnErrorExt callback)
 {
     shared_ptr<InnerMetadataOutputCallbackExt> innerMetadataOutputCallbackExt =
         make_shared<InnerMetadataOutputCallbackExt>(this, callback, context);
@@ -261,7 +261,7 @@ Camera_ErrorCode Camera_MetadataOutput::RegisterErrorCallback(void* context, OH_
     return CAMERA_OK;
 }
 
-Camera_ErrorCode Camera_MetadataOutput::UnregisterErrorCallback(void* context, OH_MetadataOutput_OnErrorExt* callback)
+Camera_ErrorCode Camera_MetadataOutput::UnregisterErrorCallback(void* context, OH_MetadataOutput_OnErrorExt callback)
 {
     shared_ptr<InnerMetadataOutputCallbackExt> innerMetadataOutputCallbackExt = nullptr;
     innerMetadataOutput_->SetCallbackExt(innerMetadataOutputCallbackExt);

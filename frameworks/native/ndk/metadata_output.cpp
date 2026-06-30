@@ -186,7 +186,7 @@ Camera_ErrorCode OH_MetadataOutput_UnlockMetadataObjectTracking(
 }
 
 Camera_ErrorCode OH_MetadataOutput_RegisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
-    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback)
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable callback)
 {
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
@@ -195,7 +195,7 @@ Camera_ErrorCode OH_MetadataOutput_RegisterMetadataObjectExtAvailableCallback(Ca
 }
 
 Camera_ErrorCode OH_MetadataOutput_UnregisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
-    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback)
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable callback)
 {
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
@@ -204,7 +204,7 @@ Camera_ErrorCode OH_MetadataOutput_UnregisterMetadataObjectExtAvailableCallback(
 }
 
 Camera_ErrorCode OH_MetadataOutput_RegisterErrorExtCallback(Camera_MetadataOutput* metadataOutput,
-    void* context, OH_MetadataOutput_OnErrorExt* callback)
+    void* context, OH_MetadataOutput_OnErrorExt callback)
 {
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
@@ -213,7 +213,7 @@ Camera_ErrorCode OH_MetadataOutput_RegisterErrorExtCallback(Camera_MetadataOutpu
 }
 
 Camera_ErrorCode OH_MetadataOutput_UnregisterErrorExtCallback(Camera_MetadataOutput* metadataOutput,
-    void* context, OH_MetadataOutput_OnErrorExt* callback)
+    void* context, OH_MetadataOutput_OnErrorExt callback)
 {
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
