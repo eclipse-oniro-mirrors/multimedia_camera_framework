@@ -210,7 +210,7 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
     // create pixelMap
     std::unique_ptr<Media::PixelMap> pixelMap = CreatePixelMapFromSurfaceBuffer(surfaceBuffer,
         thumbnailWidth, thumbnailHeight, isHdr);
-    CHECK_RETURN_RET_ELOG(pixelMap == nullptr, CAMERA_OK, "ThumbnailListener create pixelMap is nullptr");
+    CHECK_PRINT_ELOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
     ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
 
     std::shared_ptr<WatermarkExifMetadataIntf> watermarkExifMetadataProxy =
