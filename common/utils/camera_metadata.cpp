@@ -31,7 +31,7 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> CopyMetadata(
     auto newMetadata = result->get();
     CHECK_RETURN_RET(newMetadata == nullptr, nullptr);
     int32_t ret = OHOS::Camera::CopyCameraMetadataItems(newMetadata, oldMetadata);
-    CHECK_PRINT_ELOG(ret != CAM_META_SUCCESS, nullptr, "CopyCameraMetadataItems failed ret:%{public}d", ret);
+    CHECK_PRINT_ELOG(ret != CAM_META_SUCCESS, "CopyCameraMetadataItems failed ret:%{public}d", ret);
     return result;
 }
 
