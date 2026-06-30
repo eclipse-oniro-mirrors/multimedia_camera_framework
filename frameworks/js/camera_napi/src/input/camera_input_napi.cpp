@@ -101,10 +101,6 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
 void ErrorCallbackListener::OnErrorCallback(const int32_t errorType, const int32_t errorMsg) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
-    if (env_ == nullptr) {
-        MEDIA_ERR_LOG("OnErrorCallback env_ is nullptr");
-        return;
-    }
     napi_value result;
     napi_value retVal;
     napi_value propValue;
