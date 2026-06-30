@@ -213,6 +213,11 @@ ohos_shared_library("camera_service") {
     defines += [ "DEVICE_MANAGER" ]
   }
 
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.multidevicecompatibility_compatibility_config_center)) {
+    defines += [ "COMPATIBILITY_CONFIG_CENTER_ENABLE" ]
+  }
+
   if (use_memmgr_override) {
     external_deps += [ "memmgr:memmgrclient" ]
     defines += [ "MEMMGR_OVERRID" ]

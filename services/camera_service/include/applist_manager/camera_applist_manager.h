@@ -18,19 +18,15 @@
 
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include "safe_map.h"
+#include "camera_log.h"
 #include "datashare_helper.h"
 #include "data_ability_observer_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
-
-static const std::string SETTING_URI_PROXY =
-    "datashare:///com.ohos.settingsdata/entry/settingsdata/SETTINGSDATA?Proxy=true";
-static const std::string SETTINGS_DATA_EXTRA_URI = "datashare:///com.ohos.settingsdata.DataAbility";
-static const std::string SETTINGS_DATA_KEY_URI = "&key=";
-static const std::string SETTINGS_DATA_COLUMN_KEYWORD = "KEYWORD";
-static const std::string SETTINGS_DATA_COLUMN_VALUE = "VALUE";
-static const std::string APP_LOGICAL_DEVICE_CONFIGURATION = "APP_LOGICAL_DEVICE_CONFIGURATION";
+static const std::string USE_LOGIC_CAMERA_STRING = "useLogicCamera";
+static const std::string CUSTOM_LOGIC_DIRECTION_STRING = "customLogicDirection";
 
 struct ApplistConfigure {
     std::string bundleName;
@@ -38,41 +34,56 @@ struct ApplistConfigure {
     std::map<int32_t, int32_t> customLogicDirection;
 };
 
-class CameraApplistManager : public AAFwk::DataAbilityObserverStub {
+class CameraApplistManager : public RefBase {
 public:
     static sptr<CameraApplistManager> &GetInstance();
     ~CameraApplistManager();
     bool Init();
-    ApplistConfigure* GetConfigureByBundleName(const std::string& bundleName);
+    std::shared_ptr<ApplistConfigure> GetConfigureByBundleName(const std::string& bundleName);
     bool GetNaturalDirectionCorrectByBundleName(const std::string& bundleName,
         bool& exemptNaturalDirectionCorrect);
     void GetCustomLogicDirection(const std::string& bundleName, int32_t& customLogicDirection);
     void GetAppNaturalDirectionByBundleName(const std::string& bundleName, int32_t& naturalDirection);
-    void OnChange() override;
 
 private:
     CameraApplistManager();
 
     int32_t GetLogicCameraScreenStatus();
-    std::shared_ptr<DataShare::DataShareHelper> CreateCameraDataShareHelper();
-    bool RegisterCameraApplistManagerObserver();
-    void UnregisterCameraApplistManagerObserver();
-    bool GetApplistConfigure();
-    void ParseApplistConfigureJsonStr(const std::string& cfgJsonStr);
-    void UpdateApplistConfigure(const ApplistConfigure& appConfigure);
-    void ClearApplistManager();
+
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
+    std::shared_ptr<ApplistConfigure> GetApplistConfigure(const std::string& bundleName);
+    std::shared_ptr<ApplistConfigure> GetConfigureFromCompConfigRead(const std::string& bundleName);
+    std::shared_ptr<ApplistConfigure> GetApplistConfigureFromJson(const nlohmann::json& json);
+
+    template<typename Fn>
+    Fn GetFunction(const std::string& functionName)
+    {
+        CHECK_EXECUTE(!initResult_, Init());
+        CHECK_RETURN_RET_ELOG(!initResult_ || handle_ == nullptr, nullptr,
+            "CameraApplistManager::GetFunction Init failed, function: %{public}s", functionName.c_str());
+        void* func = nullptr;
+        CHECK_RETURN_RET(functionMap_.Find(functionName, func), reinterpret_cast<Fn>(func));
+
+        func = dlsym(handle_, functionName.c_str());
+        CHECK_RETURN_RET_DLOG(func == nullptr, nullptr,
+            "CameraApplistManager::GetFunction function %{public}s not found", functionName.c_str());
+        functionMap_.EnsureInsert(functionName, func);
+        return reinterpret_cast<Fn>(func);
+    }
+#endif
 
 private:
     static sptr<CameraApplistManager> cameraApplistManager_;
-    std::map<std::string, ApplistConfigure*> applistConfigures_;
     std::map<int32_t, int32_t> displayModeToNaturalDirectionMap_;
+    std::map<std::string, std::shared_ptr<ApplistConfigure>> applistConfigureMap_;
 
-    bool initResult_ = false;
-    bool registerResult_ = false;
-    sptr<IRemoteObject> remoteObj_;
-
+    std::atomic<bool> initResult_ = false;
     static std::mutex instanceMutex_;
-    std::mutex applistConfigureMutex_;
+
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
+    void *handle_ = nullptr;
+    SafeMap<std::string, void*> functionMap_;
+#endif
 };
 } // namespace CameraStandard
 } // namespace OHOS

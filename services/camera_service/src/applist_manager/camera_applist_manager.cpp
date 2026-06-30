@@ -15,20 +15,36 @@
 // LCOV_EXCL_START
 #include "applist_manager/camera_applist_manager.h"
 
+#include <cstring>
+#include <dlfcn.h>
 #include <parameters.h>
-
-#include "camera_log.h"
 #include "camera_util.h"
-#include "ipc_skeleton.h"
-#include "iservice_registry.h"
-#include "system_ability_definition.h"
 #include "display_manager_lite.h"
 
 namespace OHOS {
 namespace CameraStandard {
 sptr<CameraApplistManager> CameraApplistManager::cameraApplistManager_;
-
 std::mutex CameraApplistManager::instanceMutex_;
+
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
+constexpr int32_t COMP_CONFIG_OK = 0;
+constexpr char LOGIC_DEVICE[] = "logic_device";
+const std::string COMPCONFIG_CLIENT_SO_PATH = "/system/lib64/platformsdk/libcompconfigclient.z.so";
+constexpr char COMP_CONFIG_READ_UTIL_GET_CONFIG_BY_APP[] = "CompConfigReadUtil_GetConfigByApp";
+
+typedef struct {
+    const char* key;
+    const char* value;
+} CompConfigKvEntry;
+
+typedef struct {
+    int32_t ret;
+    CompConfigKvEntry* entries;
+    int32_t entryCount;
+} CompConfigPropertyValueMapResult;
+
+using CompConfigReadUtilGetConfigByAppFunc = CompConfigPropertyValueMapResult (*)(const char* bundleName);
+#endif
 
 sptr<CameraApplistManager> &CameraApplistManager::GetInstance()
 {
@@ -44,16 +60,19 @@ sptr<CameraApplistManager> &CameraApplistManager::GetInstance()
 
 CameraApplistManager::CameraApplistManager()
 {
-    MEDIA_INFO_LOG("CameraApplistManager construct");
+    MEDIA_DEBUG_LOG("CameraApplistManager construct");
     bool isLogicCamera = system::GetParameter("const.system.sensor_correction_enable", "0") == "1";
     CHECK_EXECUTE(isLogicCamera, GetLogicCameraScreenStatus());
 }
 
 CameraApplistManager::~CameraApplistManager()
 {
-    MEDIA_INFO_LOG("CameraApplistManager::~CameraApplistManager");
-    ClearApplistManager();
-    UnregisterCameraApplistManagerObserver();
+    MEDIA_DEBUG_LOG("CameraApplistManager::~CameraApplistManager");
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
+    CHECK_RETURN(!handle_);
+    dlclose(handle_);
+    handle_ = nullptr;
+#endif
 }
 
 int32_t CameraApplistManager::GetLogicCameraScreenStatus()
@@ -78,201 +97,121 @@ int32_t CameraApplistManager::GetLogicCameraScreenStatus()
 
 bool CameraApplistManager::Init()
 {
-    CHECK_EXECUTE(!registerResult_, registerResult_ = RegisterCameraApplistManagerObserver());
-    CHECK_EXECUTE(!initResult_, initResult_ = GetApplistConfigure());
-    CHECK_RETURN_RET(registerResult_ && initResult_, true);
-    return false;
-}
-
-std::shared_ptr<DataShare::DataShareHelper> CameraApplistManager::CreateCameraDataShareHelper()
-{
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_RET_ELOG(samgr == nullptr, nullptr, "CameraApplistManager GetSystemAbilityManager failed.");
-    sptr<IRemoteObject> remoteObj = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_RET_ELOG(remoteObj == nullptr, nullptr, "CameraApplistManager GetSystemAbility Service Failed.");
-    return DataShare::DataShareHelper::Creator(remoteObj, SETTING_URI_PROXY, SETTINGS_DATA_EXTRA_URI);
-}
-
-bool CameraApplistManager::RegisterCameraApplistManagerObserver()
-{
-    MEDIA_INFO_LOG("CameraApplistManager::RegisterCameraApplistManagerObserver is called");
-    auto dataShareHelper = CreateCameraDataShareHelper();
-    CHECK_RETURN_RET_ELOG(dataShareHelper == nullptr, false,
-        "CameraApplistManager::RegisterCameraApplistManagerObserver DataShareHelper is nullptr");
-    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + APP_LOGICAL_DEVICE_CONFIGURATION;
-    int ret = dataShareHelper->RegisterObserver(Uri(uriApplistStr), this);
-    dataShareHelper->Release();
-    CHECK_RETURN_RET_ELOG(ret != DataShare::E_OK, false,
-        "CameraApplistManager::RegisterCameraApplistManagerObserver Failed");
-    return true;
-}
-
-void CameraApplistManager::UnregisterCameraApplistManagerObserver()
-{
-    MEDIA_INFO_LOG("CameraApplistManager::UnregisterCameraApplistManagerObserver is called");
-    auto dataShareHelper = CreateCameraDataShareHelper();
-    CHECK_RETURN_ELOG(dataShareHelper == nullptr,
-        "CameraApplistManager::RegisterCameraApplistManagerObserver DataShareHelper is nullptr");
-    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + APP_LOGICAL_DEVICE_CONFIGURATION;
-    int ret = dataShareHelper->UnregisterObserver(Uri(uriApplistStr), this);
-    dataShareHelper->Release();
-    CHECK_RETURN_ELOG(ret != DataShare::E_OK,
-        "CameraApplistManager::UnregisterCameraApplistManagerObserver Failed");
-}
-
-bool CameraApplistManager::GetApplistConfigure()
-{
-    ClearApplistManager();
-    std::string jsonStr;
-    auto dataShareHelper = CreateCameraDataShareHelper();
-    CHECK_RETURN_RET_ELOG(dataShareHelper == nullptr, false,
-        "CameraApplistManager::GetApplistConfigure dataShareHelper is nullptr");
-    std::string uriApplistStr = SETTING_URI_PROXY + SETTINGS_DATA_KEY_URI + APP_LOGICAL_DEVICE_CONFIGURATION;
-    Uri uri(uriApplistStr);
-    DataShare::DataSharePredicates predicates;
-    predicates.EqualTo(SETTINGS_DATA_COLUMN_KEYWORD, APP_LOGICAL_DEVICE_CONFIGURATION);
-    std::vector<std::string> columns = { SETTINGS_DATA_COLUMN_VALUE };
-    auto resultSet = dataShareHelper->Query(uri, predicates, columns);
-    CHECK_RETURN_RET_ELOG(resultSet == nullptr, false,
-        "CameraApplistManager::GetApplistConfigure dataShareHelper Query failed");
-
-    int32_t count = 0;
-    resultSet->GetRowCount(count);
-    if (count == 0) {
-        MEDIA_ERR_LOG("CameraApplistManager::GetApplistConfigure DataShareHelper query none result");
-        resultSet->Close();
-        dataShareHelper->Release();
-        return false;
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
+    CHECK_RETURN_RET(initResult_, true);
+    if (!handle_) {
+        handle_ = ::dlopen(COMPCONFIG_CLIENT_SO_PATH.c_str(), RTLD_NOW);
+        CHECK_RETURN_RET_ELOG(handle_ == nullptr, false, "CameraApplistManager::Init dlopen failed");
+        initResult_ = true;
     }
-
-    resultSet->GoToRow(0);
-    int32_t ret = resultSet->GetString(0, jsonStr);
-    if (ret != DataShare::E_OK) {
-        MEDIA_ERR_LOG("CameraApplistManager::GetApplistConfigure DataShareHelper query result GetString failed, "
-            "ret: %{public}d", ret);
-        resultSet->Close();
-        dataShareHelper->Release();
-        return false;
-    }
-    resultSet->Close();
-    dataShareHelper->Release();
-
-    ParseApplistConfigureJsonStr(jsonStr);
-    return true;
+#endif
+    return initResult_;
 }
 
-void CameraApplistManager::ParseApplistConfigureJsonStr(const std::string& cfgJsonStr)
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
+std::shared_ptr<ApplistConfigure> CameraApplistManager::GetApplistConfigure(const std::string& bundleName)
 {
-    nlohmann::json jsonParsed = nlohmann::json::parse(cfgJsonStr, nullptr, false);
-    CHECK_RETURN_ELOG(jsonParsed.is_discarded(), "CameraApplistManager::ParseApplistConfigureJsonStr Parse Failed");
+    auto itr = applistConfigureMap_.find(bundleName);
+    CHECK_RETURN_RET(itr != applistConfigureMap_.end(), itr->second);
 
-    std::lock_guard<std::mutex> lock(applistConfigureMutex_);
-    for (auto& [bundleName, info] : jsonParsed.items()) {
-        ApplistConfigure appConfigure;
-        appConfigure.bundleName = bundleName;
+    std::shared_ptr<ApplistConfigure> config = GetConfigureFromCompConfigRead(bundleName);
+    applistConfigureMap_[bundleName] = config;
+    return config;
+}
 
-        std::map<int32_t, int32_t> useLogicCamera = {};
-        if (info.contains("useLogicCamera") && info["useLogicCamera"].is_object()) {
-            for (const auto &[key, value] : info["useLogicCamera"].items()) {
-                CHECK_CONTINUE(key.empty() || !isIntegerRegex(key) || !value.is_number_integer());
-                useLogicCamera[std::stoi(key)] = value.get<int>();
-            }
+std::shared_ptr<ApplistConfigure> CameraApplistManager::GetConfigureFromCompConfigRead(const std::string& bundleName)
+{
+    MEDIA_INFO_LOG("CameraApplistManager::GetConfigureFromCompConfigRead is Called");
+    auto fnGetConfigByApp = GetFunction<CompConfigReadUtilGetConfigByAppFunc>(COMP_CONFIG_READ_UTIL_GET_CONFIG_BY_APP);
+    CHECK_RETURN_RET_ELOG(fnGetConfigByApp == nullptr, nullptr,
+        "CameraApplistManager::GetConfigureFromCompConfigRead GetFunction fnGetConfigByApp failed");
+    auto appResult = fnGetConfigByApp(bundleName.c_str());
+    CHECK_RETURN_RET_ELOG(appResult.ret != COMP_CONFIG_OK || !appResult.entryCount || appResult.entries == nullptr,
+        nullptr, "CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp failed");
+
+    for (int i = 0; i < appResult.entryCount; ++i) {
+        auto entry = appResult.entries[i];
+        CHECK_RETURN_RET_ELOG(entry.key == nullptr || entry.value == nullptr, nullptr,
+            "CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp entry key or value is nullptr");
+        CHECK_CONTINUE(strcmp(entry.key, LOGIC_DEVICE) != 0);
+        MEDIA_INFO_LOG("CameraApplistManager::GetConfigureFromCompConfigRead bundleName: %{public}s, key: %{public}s, "
+            "value: %{public}s", bundleName.c_str(), entry.key, entry.value);
+        nlohmann::json whiteListJson = nlohmann::json::parse(entry.value, nullptr, false);
+        CHECK_RETURN_RET_ELOG(whiteListJson.is_discarded(), nullptr,
+            "CameraApplistManager::GetConfigureFromCompConfigRead json Parse Failed");
+        return GetApplistConfigureFromJson(whiteListJson);
+    }
+    return nullptr;
+}
+
+std::shared_ptr<ApplistConfigure> CameraApplistManager::GetApplistConfigureFromJson(const nlohmann::json& json)
+{
+    CHECK_RETURN_RET_ELOG(json.is_null() || !json.is_object(), nullptr,
+        "CameraApplistManager::GetApplistConfigureFromJson invalid json object");
+    
+    std::shared_ptr<ApplistConfigure> config = std::make_unique<ApplistConfigure>();
+    std::map<int32_t, int32_t> useLogicCamera = {};
+    if (json.contains(USE_LOGIC_CAMERA_STRING) && json[USE_LOGIC_CAMERA_STRING].is_object()) {
+        for (const auto &[key, value] : json[USE_LOGIC_CAMERA_STRING].items()) {
+            CHECK_CONTINUE(key.empty() || !isIntegerRegex(key) || !value.is_number_integer());
+            useLogicCamera[std::stoi(key)] = value.get<int>();
         }
-        appConfigure.useLogicCamera = useLogicCamera;
+    }
+    config->useLogicCamera = useLogicCamera;
 
-        std::map<int32_t, int32_t> customLogicDirection = {};
-        if (info.contains("customLogicDirection") && info["customLogicDirection"].is_object()) {
-            for (const auto &[key, value] : info["customLogicDirection"].items()) {
-                CHECK_CONTINUE(key.empty() || !isIntegerRegex(key) || !value.is_number_integer());
-                customLogicDirection[std::stoi(key)] = value.get<int>();
-            }
+    std::map<int32_t, int32_t> customLogicDirection = {};
+    if (json.contains(CUSTOM_LOGIC_DIRECTION_STRING) && json[CUSTOM_LOGIC_DIRECTION_STRING].is_object()) {
+        for (const auto &[key, value] : json[CUSTOM_LOGIC_DIRECTION_STRING].items()) {
+            CHECK_CONTINUE(key.empty() || !isIntegerRegex(key) || !value.is_number_integer());
+            customLogicDirection[std::stoi(key)] = value.get<int>();
         }
-        appConfigure.customLogicDirection = customLogicDirection;
-
-        UpdateApplistConfigure(appConfigure);
     }
-    MEDIA_INFO_LOG("CameraApplistManager::ParseApplistConfigureJsonStr Success");
+    config->customLogicDirection = customLogicDirection;
+    return config;
 }
+#endif
 
-void CameraApplistManager::UpdateApplistConfigure(const ApplistConfigure& appConfigure)
+std::shared_ptr<ApplistConfigure> CameraApplistManager::GetConfigureByBundleName(const std::string& bundleName)
 {
-    auto item = applistConfigures_.find(appConfigure.bundleName);
-    if (item != applistConfigures_.end()) {
-        *(item->second) = appConfigure;
-    } else {
-        ApplistConfigure* applistConfigure = new (std::nothrow) ApplistConfigure(appConfigure);
-        CHECK_RETURN_ELOG(applistConfigure == nullptr,
-            "CameraApplistManager::UpdateApplistConfigure Alloc ApplistConfigure failed");
-        applistConfigures_.emplace(applistConfigure->bundleName, applistConfigure);
-    }
-}
-
-void CameraApplistManager::OnChange()
-{
-    MEDIA_INFO_LOG("CameraApplistManager::OnChange is called");
-    GetApplistConfigure();
-}
-
-void CameraApplistManager::ClearApplistManager()
-{
-    std::lock_guard<std::mutex> lock(applistConfigureMutex_);
-    for (auto& [key, appCfg] : applistConfigures_) {
-        delete appCfg;
-    }
-    applistConfigures_.clear();
-}
-
-ApplistConfigure* CameraApplistManager::GetConfigureByBundleName(const std::string& bundleName)
-{
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
     CHECK_RETURN_RET_ELOG(bundleName.empty(), nullptr, "CameraApplistManager::GetConfigureByBundleName bundleName "
         "is empty");
-    CHECK_EXECUTE(!initResult_ || !registerResult_, Init());
-    ApplistConfigure* appConfigure = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(applistConfigureMutex_);
-        auto item = applistConfigures_.find(bundleName);
-        CHECK_EXECUTE(item != applistConfigures_.end(), appConfigure = item->second);
-    }
+    std::shared_ptr<ApplistConfigure> appConfigure = GetApplistConfigure(bundleName);
     MEDIA_INFO_LOG("CameraApplistManager::GetConfigureByBundleName BundleName: %{public}s", bundleName.c_str());
     return appConfigure;
+#else
+    return nullptr;
+#endif
 }
 
 bool CameraApplistManager::GetNaturalDirectionCorrectByBundleName(const std::string& bundleName,
     bool& exemptNaturalDirectionCorrect)
 {
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
     CHECK_RETURN_RET_ELOG(bundleName.empty(), false,
         "CameraApplistManager::GetNaturalDirectionCorrectByBundleName bundleName is empty");
-    CHECK_EXECUTE(!initResult_ || !registerResult_, Init());
-    ApplistConfigure* appConfigure = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(applistConfigureMutex_);
-        auto item = applistConfigures_.find(bundleName);
-        CHECK_EXECUTE(item != applistConfigures_.end(), appConfigure = item->second);
-    }
+    std::shared_ptr<ApplistConfigure> appConfigure = GetApplistConfigure(bundleName);
     CHECK_RETURN_RET_DLOG(appConfigure == nullptr, true,
         "CameraApplistManager::GetNaturalDirectionCorrectByBundleName appConfigure is nullptr");
 
     std::map<int32_t, int32_t> useLogicCamera = appConfigure->useLogicCamera;
     exemptNaturalDirectionCorrect = (!useLogicCamera.empty() &&
         (std::all_of(useLogicCamera.begin(), useLogicCamera.end(), [](const auto& pair) { return pair.second == 0; })));
-    MEDIA_INFO_LOG("CameraApplistManager::GetNaturalDirectionCorrectByBundleName BundleName: %{public}s, "
+    MEDIA_DEBUG_LOG("CameraApplistManager::GetNaturalDirectionCorrectByBundleName BundleName: %{public}s, "
         "exemptNaturalDirectionCorrect: %{public}d", bundleName.c_str(), exemptNaturalDirectionCorrect);
+#endif
     return true;
 }
 
 void CameraApplistManager::GetCustomLogicDirection(const std::string& bundleName,
     int32_t& customLogicDirection)
 {
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
     auto displayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
     CHECK_RETURN_ELOG(bundleName.empty(), "CameraApplistManager::GetCustomLogicDirection bundleName is empty");
-    CHECK_EXECUTE(!initResult_ || !registerResult_, Init());
-    ApplistConfigure* appConfigure = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(applistConfigureMutex_);
-        auto item = applistConfigures_.find(bundleName);
-        CHECK_EXECUTE(item != applistConfigures_.end(), appConfigure = item->second);
-    }
+    std::shared_ptr<ApplistConfigure> appConfigure = GetApplistConfigure(bundleName);
     CHECK_RETURN_DLOG(appConfigure == nullptr, "CameraApplistManager::GetCustomLogicDirection appConfigure is nullptr");
+    
     auto innerLogicDirection = appConfigure->customLogicDirection;
     CHECK_RETURN_DLOG(innerLogicDirection.empty(),
         "CameraApplistManager::GetCustomLogicDirection customLogicDirection is empty");
@@ -282,11 +221,13 @@ void CameraApplistManager::GetCustomLogicDirection(const std::string& bundleName
     customLogicDirection = item->second;
     MEDIA_DEBUG_LOG("CameraApplistManager::GetCustomLogicDirection BundleName: %{public}s, displayMode: %{public}d, "
         "customLogicDirection: %{public}d", bundleName.c_str(), displayMode, customLogicDirection);
+#endif
 }
 
 void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string& bundleName,
     int32_t& naturalDirection)
 {
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
     naturalDirection = 0;
     auto displayMode = static_cast<int32_t>(OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode());
     if (!displayModeToNaturalDirectionMap_.empty()) {
@@ -297,13 +238,7 @@ void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string&
     }
     CHECK_RETURN_ELOG(bundleName.empty(),
         "CameraApplistManager::GetAppNaturalDirectionByBundleName bundleName is empty");
-    CHECK_EXECUTE(!initResult_ || !registerResult_, Init());
-    ApplistConfigure* appConfigure = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(applistConfigureMutex_);
-        auto item = applistConfigures_.find(bundleName);
-        CHECK_EXECUTE(item != applistConfigures_.end(), appConfigure = item->second);
-    }
+    std::shared_ptr<ApplistConfigure> appConfigure = GetApplistConfigure(bundleName);
     CHECK_RETURN_DLOG(appConfigure == nullptr,
         "CameraApplistManager::GetAppNaturalDirectionByBundleName appConfigure is nullptr");
 
@@ -321,6 +256,7 @@ void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string&
     naturalDirection = (naturalDirection + item->second) % SIZE_FOUR;
     MEDIA_DEBUG_LOG("CameraApplistManager::GetAppNaturalDirectionByBundleName BundleName: %{public}s, "
         "displayMode: %{public}d, naturalDirection: %{public}d", bundleName.c_str(), displayMode, naturalDirection);
+#endif
 }
 } // namespace CameraStandard
 } // namespace OHOS
