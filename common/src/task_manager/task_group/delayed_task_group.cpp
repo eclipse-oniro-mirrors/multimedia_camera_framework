@@ -43,9 +43,6 @@ void DelayedTaskGroup::Initialize()
     MEDIA_DEBUG_LOG("(%s) Initialize entered.", GetName().c_str());
     BaseTaskGroup::Initialize();
     timeBroker_ = TimeBroker::Create("DelayedTaskGroup");
-    if (!timeBroker_) {
-        MEDIA_ERR_LOG("(%s) Failed to create TimeBroker.", GetName().c_str());
-    }
 }
 
 bool DelayedTaskGroup::SubmitTask(std::any param)
