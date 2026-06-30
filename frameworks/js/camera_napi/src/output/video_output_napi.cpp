@@ -359,7 +359,7 @@ napi_value VideoOutputNapi::GetSupportedVideoMetaTypes(napi_env env, napi_callba
     napi_get_undefined(env, &result);
     VideoOutputNapi* videoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&videoOutputNapi));
-    if (status == napi_ok && videoOutputNapi != nullptr) {
+    if (status == napi_ok && videoOutputNapi != nullptr && videoOutputNapi->videoOutput_ != nullptr) {
         std::vector<VideoMetaType> videoMetaType = videoOutputNapi->videoOutput_->GetSupportedVideoMetaTypes();
         result = CreateJSArray(env, status, videoMetaType);
     } else {
@@ -808,6 +808,7 @@ napi_value VideoOutputNapi::Release(napi_env env, napi_callback_info info)
 void VideoOutputNapi::RegisterFrameStartCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "VideoOutput is null!");
     if (videoCallback_ == nullptr) {
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
@@ -829,6 +830,7 @@ void VideoOutputNapi::UnregisterFrameStartCallbackListener(
 void VideoOutputNapi::RegisterFrameEndCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "VideoOutput is null!");
     if (videoCallback_ == nullptr) {
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
@@ -849,6 +851,7 @@ void VideoOutputNapi::UnregisterFrameEndCallbackListener(
 void VideoOutputNapi::RegisterErrorCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "VideoOutput is null!");
     if (videoCallback_ == nullptr) {
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);
@@ -872,6 +875,7 @@ void VideoOutputNapi::RegisterDeferredVideoCallbackListener(const std::string& e
 {
     CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env),
         "VideoOutputNapi::RegisterDeferredVideoCallbackListener:SystemApi is called");
+    CHECK_RETURN_ELOG(videoOutput_ == nullptr, "VideoOutput is null!");
     if (videoCallback_ == nullptr) {
         videoCallback_ = make_shared<VideoCallbackListener>(env);
         videoOutput_->SetCallback(videoCallback_);

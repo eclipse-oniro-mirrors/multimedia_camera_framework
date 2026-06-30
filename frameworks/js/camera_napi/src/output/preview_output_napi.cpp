@@ -406,7 +406,7 @@ napi_value PreviewOutputNapi::CreatePreviewOutput(napi_env env, std::string surf
 
     status = napi_get_reference_value(env, sConstructor_, &constructor);
     if (status == napi_ok) {
-        uint64_t iSurfaceId;
+        uint64_t iSurfaceId = 0;
         std::istringstream iss(surfaceId);
         iss >> iSurfaceId;
         sptr<Surface> surface = SurfaceUtils::GetInstance()->GetSurface(iSurfaceId);
@@ -886,6 +886,10 @@ napi_value PreviewOutputNapi::GetSketchRatio(napi_env env, napi_callback_info in
         return nullptr;
     }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
+    if (previewOutputNapi->previewOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PreviewOutputNapi::GetSketchRatio previewOutput_ is nullptr");
+        return result;
+    }
     float ratio = previewOutputNapi->previewOutput_->GetSketchRatio();
     napi_create_double(env, ratio, &result);
     return result;

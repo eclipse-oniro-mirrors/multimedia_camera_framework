@@ -229,7 +229,7 @@ class InnerCameraSwitchRequestCallback : public CameraSwitchRequestCallback {
 public:
     InnerCameraSwitchRequestCallback(
         Camera_CaptureSession *captureSession, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
-        : captureSession_(captureSession), cameraSwitchRequest_(*cameraSwitchRequest){};
+        : captureSession_(captureSession), cameraSwitchRequest_(cameraSwitchRequest){};
     ~InnerCameraSwitchRequestCallback() = default;
 
     void OnAppCameraSwitch(const std::string &cameraId) override
@@ -454,6 +454,7 @@ Camera_ErrorCode Camera_CaptureSession::AddSecureOutput(Camera_PreviewOutput* pr
 
 Camera_ErrorCode Camera_CaptureSession::BeginConfig()
 {
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     int32_t ret = innerCaptureSession_->BeginConfig();
     return FrameworkToNdkCameraError(ret);
 }
@@ -611,6 +612,7 @@ Camera_ErrorCode Camera_CaptureSession::GetFocusMode(Camera_FocusMode* focusMode
 Camera_ErrorCode Camera_CaptureSession::SetFocusMode(Camera_FocusMode focusMode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetFocusMode is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
 
     FocusMode innerFocusMode = static_cast<FocusMode>(focusMode);
     innerCaptureSession_->LockForControl();
@@ -665,6 +667,8 @@ Camera_ErrorCode Camera_CaptureSession::HasFlash(bool* hasFlash)
 Camera_ErrorCode Camera_CaptureSession::IsFlashModeSupported(Camera_FlashMode flashMode, bool* isSupported)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsFlashModeSupported is called");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "isSupported is null");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     FlashMode innerFlashMode = static_cast<FlashMode>(flashMode);
 
     *isSupported = innerCaptureSession_->IsFlashModeSupported(innerFlashMode);
@@ -790,6 +794,7 @@ Camera_ErrorCode Camera_CaptureSession::IsExposureMeteringModeSupported(
     OH_Camera_ExposureMeteringMode exposureMeteringMode, bool* isSupported) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsExposureMeteringModeSupported is called");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "isSupported is null");
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
@@ -1061,6 +1066,7 @@ Camera_ErrorCode Camera_CaptureSession::EnableControlCenter(bool enabled)
 Camera_ErrorCode Camera_CaptureSession::GetActiveColorSpace(OH_NativeBuffer_ColorSpace* colorSpace)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetActiveColorSpace is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
 
     ColorSpace innerColorSpace;
     int32_t ret = innerCaptureSession_->GetActiveColorSpace(innerColorSpace);
@@ -1075,6 +1081,7 @@ Camera_ErrorCode Camera_CaptureSession::GetActiveColorSpace(OH_NativeBuffer_Colo
 Camera_ErrorCode Camera_CaptureSession::SetActiveColorSpace(OH_NativeBuffer_ColorSpace colorSpace)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::SetActiveColorSpace is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
 
     auto itr = g_ndkToFwColorSpace_.find(colorSpace);
     CHECK_RETURN_RET_ELOG(
@@ -1152,8 +1159,9 @@ Camera_ErrorCode Camera_CaptureSession::RegisterCameraSwitchRequestCallback(
     OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::RegisterCameraSwitchRequestCallback");
-    CHECK_PRINT_ELOG(cameraSwitchRequest == nullptr,
+    CHECK_RETURN_RET_ELOG(cameraSwitchRequest == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::RegisterCameraSwitchRequestCallback cameraSwitchRequest is null.");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     shared_ptr<InnerCameraSwitchRequestCallback> innerCameraSwitchRequestCallback =
         make_shared<InnerCameraSwitchRequestCallback>(this, cameraSwitchRequest);
     CHECK_RETURN_RET_ELOG(
@@ -1188,6 +1196,7 @@ Camera_ErrorCode Camera_CaptureSession::IsControlCenterSupported(bool* isSupport
 Camera_ErrorCode Camera_CaptureSession::EnableAutoDeviceSwitch(bool enabled)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::EnableAutoDeviceSwitch is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     int32_t ret = innerCaptureSession_->EnableAutoDeviceSwitch(enabled);
     return FrameworkToNdkCameraError(ret);
 }
@@ -1231,6 +1240,8 @@ Camera_ErrorCode Camera_CaptureSession::IsWhiteBalanceModeSupported(Camera_White
     bool* isSupported)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsWhiteBalanceModeSupported is called");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "isSupported is null");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     CHECK_RETURN_RET_ELOG(
         innerCaptureSession_->IsWhiteBalanceModeSupported(
             static_cast<WhiteBalanceMode>(whiteBalanceMode), *isSupported) != CameraErrorCode::SUCCESS,
@@ -1241,6 +1252,9 @@ Camera_ErrorCode Camera_CaptureSession::IsWhiteBalanceModeSupported(Camera_White
 Camera_ErrorCode Camera_CaptureSession::GetWhiteBalanceMode(Camera_WhiteBalanceMode *whiteBalanceMode)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetWhiteBalanceMode is called");
+    CHECK_RETURN_RET_ELOG(whiteBalanceMode == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_CaptureSession::GetWhiteBalanceMode whiteBalanceMode is null");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     WhiteBalanceMode mode;
     int32_t ret = innerCaptureSession_->GetWhiteBalanceMode(mode);
     CHECK_RETURN_RET_ELOG(ret == CameraErrorCode::SESSION_NOT_CONFIG, CAMERA_SESSION_NOT_CONFIG,
@@ -1254,6 +1268,9 @@ Camera_ErrorCode Camera_CaptureSession::GetWhiteBalanceMode(Camera_WhiteBalanceM
 Camera_ErrorCode Camera_CaptureSession::GetWhiteBalanceRange(int32_t *minColorTemperature, int32_t *maxColorTemperature)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetWhiteBalanceRange is called");
+    CHECK_RETURN_RET_ELOG(minColorTemperature == nullptr || maxColorTemperature == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, minColorTemperature or maxColorTemperature is null!");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     std::vector<int32_t> whiteBalanceRange;
     CHECK_RETURN_RET_ELOG(
         innerCaptureSession_->GetManualWhiteBalanceRange(whiteBalanceRange) != CameraErrorCode::SUCCESS,

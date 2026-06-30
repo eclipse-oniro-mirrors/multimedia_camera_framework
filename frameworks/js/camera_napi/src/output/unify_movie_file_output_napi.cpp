@@ -787,6 +787,12 @@ napi_value UnifyMovieFileOutputNapi::AddVideoFilter(napi_env env, napi_callback_
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->status = true;
                 sptr<UnifyMovieFileOutput> movieFileOutput = context->nativeNapiObj->GetMovieFileOutput();
+                if (movieFileOutput == nullptr) {
+                    MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::AddVideoFilter movieFileOutput is null");
+                    context->errorCode = SERVICE_FATL_ERROR;
+                    context->status = false;
+                    return;
+                }
                 context->errorCode = movieFileOutput->AddVideoFilter(context->filter, context->filterParam);
                 context->status = context->errorCode == 0;
             });
@@ -835,6 +841,12 @@ napi_value UnifyMovieFileOutputNapi::RemoveVideoFilter(napi_env env, napi_callba
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->status = true;
                 sptr<UnifyMovieFileOutput> movieFileOutput = context->nativeNapiObj->GetMovieFileOutput();
+                if (movieFileOutput == nullptr) {
+                    MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::RemoveVideoFilter movieFileOutput is null");
+                    context->errorCode = SERVICE_FATL_ERROR;
+                    context->status = false;
+                    return;
+                }
                 context->errorCode = movieFileOutput->RemoveVideoFilter(context->filter);
                 context->status = context->errorCode == 0;
             });
@@ -1035,6 +1047,12 @@ napi_value UnifyMovieFileOutputNapi::Resume(napi_env env, napi_callback_info inf
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->status = true;
                 sptr<UnifyMovieFileOutput> movieFileOutput = context->nativeNapiObj->GetMovieFileOutput();
+                if (movieFileOutput == nullptr) {
+                    MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::Resume movieFileOutput is null");
+                    context->errorCode = SERVICE_FATL_ERROR;
+                    context->status = false;
+                    return;
+                }
                 context->errorCode = movieFileOutput->Resume();
                 context->status = context->errorCode == 0;
             });
@@ -1163,6 +1181,11 @@ napi_value UnifyMovieFileOutputNapi::IsAutoDeferredVideoEnhancementSupported(nap
         MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::IsAutoDeferredVideoEnhancementSupported parse parameter occur error");
         return result;
     }
+    if (unifyMovieFileOutputNapi->unifyMovieFileOutput_ == nullptr) {
+        MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::IsAutoDeferredVideoEnhancementSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
+        return result;
+    }
     bool isSupported = false;
     int32_t res = unifyMovieFileOutputNapi->unifyMovieFileOutput_->IsAutoDeferredVideoEnhancementSupported(isSupported);
 
@@ -1186,6 +1209,11 @@ napi_value UnifyMovieFileOutputNapi::IsAutoDeferredVideoEnhancementEnabled(napi_
     CameraNapiParamParser jsParamParser(env, info, unifyMovieFileOutputNapi);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
         MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::IsAutoDeferredVideoEnhancementEnabled parse parameter occur error");
+        return result;
+    }
+    if (unifyMovieFileOutputNapi->unifyMovieFileOutput_ == nullptr) {
+        MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::IsAutoDeferredVideoEnhancementEnabled get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
         return result;
     }
 
@@ -1214,6 +1242,11 @@ napi_value UnifyMovieFileOutputNapi::EnableAutoDeferredVideoEnhancement(napi_env
         MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::EnableAutoDeferredVideoEnhancement parse parameter occur error");
         return result;
     }
+    if (unifyMovieFileOutputNapi->unifyMovieFileOutput_ == nullptr) {
+        MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::EnableAutoDeferredVideoEnhancement get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
+        return result;
+    }
     int32_t res = unifyMovieFileOutputNapi->unifyMovieFileOutput_->EnableAutoDeferredVideoEnhancement(isEnable);
     if (!CameraNapiUtils::CheckError(env, res)) {
         MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::EnableAutoDeferredVideoEnhancement error");
@@ -1234,6 +1267,11 @@ napi_value UnifyMovieFileOutputNapi::IsAutoVideoFrameRateSupported(napi_env env,
     CameraNapiParamParser jsParamParser(env, info, unifyMovieFileOutputNapi);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
         MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::IsAutoVideoFrameRateSupported parse parameter occur error");
+        return result;
+    }
+    if (unifyMovieFileOutputNapi->unifyMovieFileOutput_ == nullptr) {
+        MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::IsAutoVideoFrameRateSupported get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
         return result;
     }
     bool isAutoVideoFrameRateSupported =
@@ -1262,6 +1300,11 @@ napi_value UnifyMovieFileOutputNapi::EnableAutoVideoFrameRate(napi_env env, napi
         MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::EnableAutoVideoFrameRate parse parameter occur error");
         return result;
     }
+    if (unifyMovieFileOutputNapi->unifyMovieFileOutput_ == nullptr) {
+        MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::EnableAutoVideoFrameRate get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
+        return result;
+    }
     int32_t retCode = unifyMovieFileOutputNapi->unifyMovieFileOutput_->EnableAutoVideoFrameRate(isEnable);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::EnableAutoVideoFrameRate fail %{public}d", retCode);
@@ -1282,6 +1325,11 @@ napi_value UnifyMovieFileOutputNapi::GetVideoRotation(napi_env env, napi_callbac
     CameraNapiParamParser jsParamParser(env, info, unifyMovieFileOutputNapi, deviceDegree);
     if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
         MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::GetVideoRotation parse parameter occur error");
+        return nullptr;
+    }
+    if (unifyMovieFileOutputNapi->unifyMovieFileOutput_ == nullptr) {
+        MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::GetVideoRotation get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
         return nullptr;
     }
 

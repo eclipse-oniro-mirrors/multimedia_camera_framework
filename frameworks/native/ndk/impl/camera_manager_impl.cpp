@@ -424,10 +424,13 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
         return CAMERA_INVALID_ARGUMENT;
     }
     outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType* [metadataTypeList.size()];
-    CHECK_PRINT_ELOG(
-        !outCapability->supportedMetadataObjectTypes, "Failed to allocate memory for supportedMetadataObjectTypes");
+    CHECK_RETURN_RET_ELOG(
+        outCapability->supportedMetadataObjectTypes == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Failed to allocate memory for supportedMetadataObjectTypes");
     for (size_t index = 0; index < metadataTypeList.size(); index++) {
-        Camera_MetadataObjectType* outmetadataObject = new Camera_MetadataObjectType {};
+        Camera_MetadataObjectType* outmetadataObject = new (std::nothrow) Camera_MetadataObjectType {};
+        CHECK_RETURN_RET_ELOG(outmetadataObject == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+            "Failed to allocate memory for Camera_MetadataObjectType");
         *outmetadataObject = static_cast<Camera_MetadataObjectType>(metadataTypeList[index]);
         outCapability->supportedMetadataObjectTypes[index] = outmetadataObject;
     }

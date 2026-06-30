@@ -725,6 +725,7 @@ Camera_ErrorCode OH_CaptureSession_IsWhiteBalanceModeSupported(
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_IsWhiteBalanceModeSupported is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
 
     return session->IsWhiteBalanceModeSupported(whiteBalanceMode, isSupported);
 }
@@ -734,6 +735,8 @@ Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceMode(
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetWhiteBalanceMode is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(whiteBalanceMode == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, whiteBalanceMode is null!");
 
     return session->GetWhiteBalanceMode(whiteBalanceMode);
 }
@@ -743,6 +746,8 @@ Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceRange(Camera_CaptureSession* s
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetWhiteBalanceRange is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(minColorTemperature == nullptr || maxColorTemperature == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, minColorTemperature or maxColorTemperature is null!");
     return session->GetWhiteBalanceRange(minColorTemperature, maxColorTemperature);
 }
 
@@ -824,6 +829,7 @@ Camera_ErrorCode OH_CaptureSession_IsExposureMeteringModeSupported(
     MEDIA_DEBUG_LOG("OH_CaptureSession_IsExposureMeteringModeSupported is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT,
         "Invalid argument, argument is null!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isSupported is null!");
     return session->IsExposureMeteringModeSupported(exposureMeteringMode, isSupported);
 }
 

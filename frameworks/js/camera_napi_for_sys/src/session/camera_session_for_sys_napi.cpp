@@ -1914,6 +1914,7 @@ void CameraSessionForSysNapi::UnregisterLcdFlashStatusCallbackListener(
 void CameraSessionForSysNapi::RegisterEffectSuggestionCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(cameraSessionForSys_ == nullptr, "cameraSession is null!");
     if (effectSuggestionCallback_ == nullptr) {
         auto effectSuggestionCallback = std::make_shared<EffectSuggestionCallbackListener>(env);
         effectSuggestionCallback_ = effectSuggestionCallback;
@@ -1945,6 +1946,7 @@ void CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener(const std::
         return;
     }
 
+    CHECK_RETURN_ELOG(cameraSessionForSys_ == nullptr, "cameraSession is null!");
     if (featureDetectionStatusCallback_ == nullptr) {
         featureDetectionStatusCallback_ = std::make_shared<FeatureDetectionStatusCallbackListener>(env);
         cameraSessionForSys_->SetFeatureDetectionStatusCallback(featureDetectionStatusCallback_);

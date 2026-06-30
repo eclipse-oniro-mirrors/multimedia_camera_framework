@@ -598,7 +598,7 @@ napi_value TimeLapsePhotoSessionNapi::GetSupportedMeteringModes(napi_env env, na
         MEDIA_ERR_LOG("%{public}s: GetSupportedMeteringModes() Failed", __FUNCTION__);
         return nullptr;
     }
-    napi_value result;
+    napi_value result = nullptr;
     if (napi_create_array_with_length(env, modes.size(), &result) == napi_ok) {
         napi_value value;
         for (uint32_t i = 0; i < modes.size(); i++) {
@@ -607,6 +607,7 @@ napi_value TimeLapsePhotoSessionNapi::GetSupportedMeteringModes(napi_env env, na
         }
     } else {
         MEDIA_ERR_LOG("%{public}s: Napi Create Array With Length Failed", __FUNCTION__);
+        return nullptr;
     }
     return result;
 }

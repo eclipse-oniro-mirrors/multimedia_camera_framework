@@ -161,7 +161,7 @@ napi_value QuickThumbnailNapi::GetCaptureId(napi_env env, napi_callback_info inf
     napi_get_undefined(env, &result);
     QuickThumbnailNapi* obj = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&obj));
-    if (status == napi_ok && obj != nullptr) {
+    if (status == napi_ok && obj != nullptr && obj->captureId_ != nullptr) {
         napi_value captureIdValue;
         napi_get_reference_value(env, obj->captureId_, &captureIdValue);
         result = captureIdValue;

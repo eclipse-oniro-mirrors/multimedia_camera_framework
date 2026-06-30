@@ -122,6 +122,10 @@ void CacheSupportedCameras(napi_env env, const std::vector<sptr<CameraDevice>>& 
 {
     std::string key = "SupportedCameras:";
     for (auto& camera : cameras) {
+        if (camera == nullptr) {
+            MEDIA_ERR_LOG("CacheSupportedCameras camera is null");
+            continue;
+        }
         if (camera->GetConnectionType() != CAMERA_CONNECTION_BUILT_IN) {
             // Exist none built_in camera. Give up cache.
             MEDIA_DEBUG_LOG("CacheSupportedCameras exist none built_in camera. Give up cache");
@@ -138,6 +142,10 @@ napi_value GetCachedSupportedCameras(napi_env env, const std::vector<sptr<Camera
 {
     std::string key = "SupportedCameras:";
     for (auto& camera : cameras) {
+        if (camera == nullptr) {
+            MEDIA_ERR_LOG("GetCachedSupportedCameras camera is null");
+            continue;
+        }
         if (camera->GetConnectionType() != CAMERA_CONNECTION_BUILT_IN) {
             // Exist none built_in camera. Give up cache.
             MEDIA_DEBUG_LOG("GetCachedSupportedCameras exist none built_in camera. Give up cache");
@@ -1505,6 +1513,12 @@ napi_value CameraManagerNapi::GetCameraStorageSize(napi_env env, napi_callback_i
                 context->objectInfo == nullptr, "CameraManagerNapi::GetCameraStorageSize async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+                if (context->objectInfo->cameraManager_ == nullptr) {
+                    MEDIA_ERR_LOG("GetCameraStorageSize cameraManager_ is nullptr");
+                    context->errorCode = CameraErrorCode::SERVICE_FATL_ERROR;
+                    context->status = false;
+                    return;
+                }
                 int64_t storageSize = 0;
                 context->errorCode = context->objectInfo->cameraManager_->GetCameraStorageSize(storageSize);
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
@@ -1876,6 +1890,11 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
             MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance invalid argument");
             return nullptr;
         }
+        if (cameraManagerNapi == nullptr || cameraManagerNapi->cameraManager_ == nullptr) {
+            MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance cameraManager is null");
+            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "Camera manager is null.");
+            return nullptr;
+        }
         cameraInfo = cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraId);
     } else if (argSize == ARGS_TWO) {
         int32_t cameraPosition = 0;
@@ -1883,6 +1902,11 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
         CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, cameraPosition, cameraType);
         if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Create cameraInput with 2 invalid arguments!")) {
             MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance 2 invalid arguments");
+            return nullptr;
+        }
+        if (cameraManagerNapi == nullptr || cameraManagerNapi->cameraManager_ == nullptr) {
+            MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance cameraManager is null");
+            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "Camera manager is null.");
             return nullptr;
         }
         ProcessCameraInfo(cameraManagerNapi->cameraManager_, static_cast<const CameraPosition>(cameraPosition),
