@@ -229,7 +229,7 @@ class InnerCameraSwitchRequestCallback : public CameraSwitchRequestCallback {
 public:
     InnerCameraSwitchRequestCallback(
         Camera_CaptureSession *captureSession, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
-        : captureSession_(captureSession), cameraSwitchRequest_(cameraSwitchRequest){};
+        : captureSession_(captureSession), cameraSwitchRequest_(*cameraSwitchRequest){};
     ~InnerCameraSwitchRequestCallback() = default;
 
     void OnAppCameraSwitch(const std::string &cameraId) override
