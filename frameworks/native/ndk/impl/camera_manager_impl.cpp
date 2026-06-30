@@ -230,7 +230,6 @@ Camera_Manager::~Camera_Manager()
 
 Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
-    CHECK_RETURN_RET(cameraManager_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
     auto innerCallback = make_shared<InnerCameraManagerCameraStatusCallback>(this, cameraStatusCallback);
     if (cameraStatusCallbackMap_.SetMapValue(cameraStatusCallback, innerCallback)) {
         cameraManager_->RegisterCameraStatusCallback(innerCallback);
@@ -240,7 +239,6 @@ Camera_ErrorCode Camera_Manager::RegisterCallback(CameraManager_Callbacks* camer
 
 Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cameraStatusCallback)
 {
-    CHECK_RETURN_RET(cameraManager_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
     auto callback = cameraStatusCallbackMap_.RemoveValue(cameraStatusCallback);
     CHECK_RETURN_RET(callback == nullptr, CAMERA_OK);
     cameraManager_->UnregisterCameraStatusCallback(callback);
@@ -249,7 +247,6 @@ Camera_ErrorCode Camera_Manager::UnregisterCallback(CameraManager_Callbacks* cam
 
 Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
-    CHECK_RETURN_RET(cameraManager_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
     auto innerTorchStatusCallback = make_shared<InnerCameraManagerTorchStatusCallback>(this, torchStatusCallback);
     if (torchStatusCallbackMap_.SetMapValue(torchStatusCallback, innerTorchStatusCallback)) {
         cameraManager_->RegisterTorchListener(innerTorchStatusCallback);
@@ -259,7 +256,6 @@ Camera_ErrorCode Camera_Manager::RegisterTorchStatusCallback(OH_CameraManager_To
 
 Camera_ErrorCode Camera_Manager::UnregisterTorchStatusCallback(OH_CameraManager_TorchStatusCallback torchStatusCallback)
 {
-    CHECK_RETURN_RET(cameraManager_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
     auto callback = torchStatusCallbackMap_.RemoveValue(torchStatusCallback);
     CHECK_RETURN_RET(callback == nullptr, CAMERA_OK);
     cameraManager_->UnregisterTorchListener(callback);
@@ -316,7 +312,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapability(const Camera
     sptr<CameraDevice> cameraDevice = CameraManager::GetInstance()->GetCameraDeviceFromId(camera->cameraId);
     CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedCameraOutputCapability get cameraDevice fail!");
-    Camera_OutputCapability* outCapability = new Camera_OutputCapability{};
+    Camera_OutputCapability* outCapability = new Camera_OutputCapability;
     CHECK_RETURN_RET_ELOG(outCapability == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::GetSupportedCameraOutputCapability failed to allocate memory for outCapability!");
     sptr<CameraOutputCapability> innerCameraOutputCapability =
@@ -428,13 +424,10 @@ Camera_ErrorCode Camera_Manager::GetSupportedMetadataTypeList(Camera_OutputCapab
         return CAMERA_INVALID_ARGUMENT;
     }
     outCapability->supportedMetadataObjectTypes = new Camera_MetadataObjectType* [metadataTypeList.size()];
-    CHECK_RETURN_RET_ELOG(
-        outCapability->supportedMetadataObjectTypes == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-        "Failed to allocate memory for supportedMetadataObjectTypes");
+    CHECK_PRINT_ELOG(
+        !outCapability->supportedMetadataObjectTypes, "Failed to allocate memory for supportedMetadataObjectTypes");
     for (size_t index = 0; index < metadataTypeList.size(); index++) {
-        Camera_MetadataObjectType* outmetadataObject = new (std::nothrow) Camera_MetadataObjectType {};
-        CHECK_RETURN_RET_ELOG(outmetadataObject == nullptr, CAMERA_SERVICE_FATAL_ERROR,
-            "Failed to allocate memory for Camera_MetadataObjectType");
+        Camera_MetadataObjectType* outmetadataObject = new Camera_MetadataObjectType {};
         *outmetadataObject = static_cast<Camera_MetadataObjectType>(metadataTypeList[index]);
         outCapability->supportedMetadataObjectTypes[index] = outmetadataObject;
     }
@@ -460,7 +453,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode
     CHECK_RETURN_RET_ELOG(innerCameraOutputCapability == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode innerCameraOutputCapability is null!");
 
-    Camera_OutputCapability* outCapability = new Camera_OutputCapability{};
+    Camera_OutputCapability* outCapability = new Camera_OutputCapability;
     CHECK_RETURN_RET_ELOG(outCapability == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::GetSupportedCameraOutputCapabilityWithSceneMode failed to allocate memory for outCapability!");
     std::vector<Profile> previewProfiles = innerCameraOutputCapability->GetPreviewProfiles();
@@ -501,7 +494,7 @@ Camera_ErrorCode Camera_Manager::GetSupportedFullCameraOutputCapabilityWithScene
     CHECK_RETURN_RET_ELOG(innerCameraOutputCapability == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_Manager::GetSupportedFullCameraOutputCapabilityWithSceneMode innerCameraOutputCapability is null!");
 
-    Camera_OutputCapability* outCapability = new Camera_OutputCapability{};
+    Camera_OutputCapability* outCapability = new Camera_OutputCapability;
     CHECK_RETURN_RET_ELOG(outCapability == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_Manager::GetSupportedFullCameraOutputCapabilityWithSceneMode "
         "failed to allocate memory for outCapability!");
@@ -571,7 +564,6 @@ Camera_ErrorCode Camera_Manager::DeleteSupportedCameraOutputCapability(Camera_Ou
 Camera_ErrorCode Camera_Manager::IsCameraMuted(bool* isCameraMuted)
 {
     MEDIA_ERR_LOG("Camera_Manager IsCameraMuted is called");
-    CHECK_RETURN_RET_ELOG(isCameraMuted == nullptr, CAMERA_INVALID_ARGUMENT, "isCameraMuted is null!");
     *isCameraMuted = CameraManager::GetInstance()->IsCameraMuted();
     MEDIA_ERR_LOG("IsCameraMuted is %{public}d", *isCameraMuted);
     return CAMERA_OK;
@@ -801,8 +793,6 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
 
 Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uint32_t* orientation)
 {
-    CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "camera is null!");
-    CHECK_RETURN_RET_ELOG(camera->cameraId == nullptr, CAMERA_INVALID_ARGUMENT, "cameraId is null!");
     sptr<CameraDevice> cameraDevice = nullptr;
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
     MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu",
@@ -827,7 +817,6 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceName(Camera_Device* camera, char**
     auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
     MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu", cameras.size());
     for (auto& innerCamera : cameras) {
-        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetHostDeviceName failed, innerCamera is nullptr");
         if (innerCamera->GetID() == std::string(camera->cameraId)) {
             device = innerCamera;
             break;
@@ -852,7 +841,6 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceType(Camera_Device* camera, Camera
     auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
     MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu", cameras.size());
     for (auto& innerCamera : cameras) {
-        CHECK_CONTINUE_DLOG(!innerCamera, "Camera_Manager::GetHostDeviceType failed, innerCamera is nullptr");
         if (innerCamera->GetID() == std::string(camera->cameraId)) {
             device = innerCamera;
             break;
@@ -1474,7 +1462,7 @@ Camera_ErrorCode Camera_Manager::SetCameraConcurrentInfothis(const Camera_Device
         }
         CameraConcurrentInfothis[i].sceneModes = newmodes;
         CameraConcurrentInfothis[i].modeAndCapabilitySize = outputCapabilities[i].size();
-        Camera_OutputCapability* newOutputCapability = new Camera_OutputCapability[outputCapabilities[i].size()]();
+        Camera_OutputCapability* newOutputCapability = new Camera_OutputCapability[outputCapabilities[i].size()];
         for (uint32_t j = 0; j < outputCapabilities[i].size(); j++) {
             std::vector<Profile> previewProfiles = outputCapabilities[i][j]->GetPreviewProfiles();
             std::vector<Profile> photoProfiles = outputCapabilities[i][j]->GetPhotoProfiles();
