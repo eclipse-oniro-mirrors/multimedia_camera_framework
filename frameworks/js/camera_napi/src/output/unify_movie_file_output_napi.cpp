@@ -789,12 +789,6 @@ napi_value UnifyMovieFileOutputNapi::AddVideoFilter(napi_env env, napi_callback_
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->status = true;
                 sptr<UnifyMovieFileOutput> movieFileOutput = context->nativeNapiObj->GetMovieFileOutput();
-                if (movieFileOutput == nullptr) {
-                    MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::AddVideoFilter movieFileOutput is null");
-                    context->errorCode = SERVICE_FATL_ERROR;
-                    context->status = false;
-                    return;
-                }
                 context->errorCode = movieFileOutput->AddVideoFilter(context->filter, context->filterParam);
                 context->status = context->errorCode == 0;
             });
@@ -843,12 +837,6 @@ napi_value UnifyMovieFileOutputNapi::RemoveVideoFilter(napi_env env, napi_callba
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->status = true;
                 sptr<UnifyMovieFileOutput> movieFileOutput = context->nativeNapiObj->GetMovieFileOutput();
-                if (movieFileOutput == nullptr) {
-                    MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::RemoveVideoFilter movieFileOutput is null");
-                    context->errorCode = SERVICE_FATL_ERROR;
-                    context->status = false;
-                    return;
-                }
                 context->errorCode = movieFileOutput->RemoveVideoFilter(context->filter);
                 context->status = context->errorCode == 0;
             });
@@ -1049,12 +1037,6 @@ napi_value UnifyMovieFileOutputNapi::Resume(napi_env env, napi_callback_info inf
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
                 context->status = true;
                 sptr<UnifyMovieFileOutput> movieFileOutput = context->nativeNapiObj->GetMovieFileOutput();
-                if (movieFileOutput == nullptr) {
-                    MEDIA_ERR_LOG("UnifyMovieFileOutputNapi::Resume movieFileOutput is null");
-                    context->errorCode = SERVICE_FATL_ERROR;
-                    context->status = false;
-                    return;
-                }
                 context->errorCode = movieFileOutput->Resume();
                 context->status = context->errorCode == 0;
             });
