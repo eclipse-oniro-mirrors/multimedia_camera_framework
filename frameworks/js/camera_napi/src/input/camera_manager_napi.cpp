@@ -1884,11 +1884,6 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
             MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance invalid argument");
             return nullptr;
         }
-        if (cameraManagerNapi == nullptr || cameraManagerNapi->cameraManager_ == nullptr) {
-            MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance cameraManager is null");
-            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "Camera manager is null.");
-            return nullptr;
-        }
         cameraInfo = cameraManagerNapi->cameraManager_->GetCameraDeviceFromId(cameraId);
     } else if (argSize == ARGS_TWO) {
         int32_t cameraPosition = 0;
@@ -1896,11 +1891,6 @@ napi_value CameraManagerNapi::CreateCameraInputInstance(napi_env env, napi_callb
         CameraNapiParamParser jsParamParser(env, info, cameraManagerNapi, cameraPosition, cameraType);
         if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "Create cameraInput with 2 invalid arguments!")) {
             MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance 2 invalid arguments");
-            return nullptr;
-        }
-        if (cameraManagerNapi == nullptr || cameraManagerNapi->cameraManager_ == nullptr) {
-            MEDIA_ERR_LOG("CameraManagerNapi::CreateCameraInputInstance cameraManager is null");
-            CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "Camera manager is null.");
             return nullptr;
         }
         ProcessCameraInfo(cameraManagerNapi->cameraManager_, static_cast<const CameraPosition>(cameraPosition),
