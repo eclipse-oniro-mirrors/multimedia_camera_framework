@@ -219,7 +219,7 @@ typedef void (*OH_MetadataOutput_OnErrorExt)(void* context, Camera_ErrorCode err
  * @since 26.0.0
  */
 Camera_ErrorCode OH_MetadataOutput_RegisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
-    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback);
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable callback);
 
 /**
  * @brief Unregisters the callback used to listen for metadata object ext events.
@@ -232,7 +232,7 @@ Camera_ErrorCode OH_MetadataOutput_RegisterMetadataObjectExtAvailableCallback(Ca
  * @since 26.0.0
  */
 Camera_ErrorCode OH_MetadataOutput_UnregisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
-    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable* callback);
+    void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable callback);
     
 /**
  * @brief Registers a callback to listen for error ext events.
@@ -246,7 +246,7 @@ Camera_ErrorCode OH_MetadataOutput_UnregisterMetadataObjectExtAvailableCallback(
  * @since 26.0.0
  */
 Camera_ErrorCode OH_MetadataOutput_RegisterErrorExtCallback(Camera_MetadataOutput* metadataOutput, void* context,
-    OH_MetadataOutput_OnErrorExt* callback);
+    OH_MetadataOutput_OnErrorExt callback);
 
 /**
  * @brief Unregisters the callback used to listen for error ext events.
@@ -259,7 +259,7 @@ Camera_ErrorCode OH_MetadataOutput_RegisterErrorExtCallback(Camera_MetadataOutpu
  * @since 26.0.0
  */
 Camera_ErrorCode OH_MetadataOutput_UnregisterErrorExtCallback(Camera_MetadataOutput* metadataOutput, void* context,
-    OH_MetadataOutput_OnErrorExt* callback);
+    OH_MetadataOutput_OnErrorExt callback);
 
 /**
  * @brief Checks whether the lock metadata object tracking is supported.
