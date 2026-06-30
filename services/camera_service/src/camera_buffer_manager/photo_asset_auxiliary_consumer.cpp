@@ -91,7 +91,7 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
     int32_t captureId = CameraSurfaceBufferUtil::GetMaskCaptureId(newSurfaceBuffer);
     MEDIA_INFO_LOG("AuxiliaryBufferConsumer captureId:%{public}d", captureId);
     {
-        std::lock_guard<std::mutex> lock(streamCapture->g_photoImageMutex);
+        std::lock_guard<std::recursive_mutex> lock{streamCapture->g_photoImageMutex};
         if (streamCapture->captureIdAuxiliaryCountMap_.count(captureId)) {
             int32_t auxiliaryCount = streamCapture->captureIdAuxiliaryCountMap_[captureId];
             int32_t expectCount = streamCapture->captureIdCountMap_[captureId];
