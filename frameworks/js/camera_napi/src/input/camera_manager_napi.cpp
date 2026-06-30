@@ -1458,10 +1458,8 @@ void CameraManagerNapi::ParseGetCameraConcurrentInfos(napi_env env, napi_value a
         napi_value res = nullptr;
         if (napi_get_named_property(env, value, "cameraId", &res) == napi_ok) {
             size_t sizeofres;
-            char buffer[PATH_MAX] = {0};
-            if (napi_get_value_string_utf8(env, res, buffer, PATH_MAX, &sizeofres) != napi_ok) {
-                continue;
-            }
+            char buffer[PATH_MAX];
+            napi_get_value_string_utf8(env, res, buffer, PATH_MAX, &sizeofres);
             std::string cameraidonly = std::string(buffer);
             cameraIdv.push_back(cameraidonly);
         }
@@ -1515,12 +1513,6 @@ napi_value CameraManagerNapi::GetCameraStorageSize(napi_env env, napi_callback_i
                 context->objectInfo == nullptr, "CameraManagerNapi::GetCameraStorageSize async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
-                if (context->objectInfo->cameraManager_ == nullptr) {
-                    MEDIA_ERR_LOG("GetCameraStorageSize cameraManager_ is nullptr");
-                    context->errorCode = CameraErrorCode::SERVICE_FATL_ERROR;
-                    context->status = false;
-                    return;
-                }
                 int64_t storageSize = 0;
                 context->errorCode = context->objectInfo->cameraManager_->GetCameraStorageSize(storageSize);
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
