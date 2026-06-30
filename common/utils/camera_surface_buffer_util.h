@@ -57,7 +57,6 @@ public:
         if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
             surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
             MEDIA_ERR_LOG("DeepCopyBuffer memcpy_s failed");
-            return nullptr;
         }
 
         // deep copy buffer extData
