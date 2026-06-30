@@ -702,6 +702,7 @@ void PreviewOutputNapi::RegisterFrameStartCallbackListener(const std::string& ev
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterFrameStartCallbackListener listener is null");
     listener->SetIsAsyncMap(eventName, isAsync);
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr, "PreviewOutputNapi::RegisterFrameStartCallbackListener previewOutput_ is null");
     previewOutput_->SetCallback(listener);
 }
 
@@ -711,6 +712,7 @@ void PreviewOutputNapi::RegisterFrameEndCallbackListener(const std::string& even
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterFrameEndCallbackListener listener is null");
     listener->SetIsAsyncMap(eventName, isAsync);
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr, "PreviewOutputNapi::RegisterFrameEndCallbackListener previewOutput_ is null");
     previewOutput_->SetCallback(listener);
 }
 
@@ -720,6 +722,7 @@ void PreviewOutputNapi::RegisterErrorCallbackListener(const std::string& eventNa
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterErrorCallbackListener listener is null");
     listener->SetIsAsyncMap(eventName, isAsync);
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr, "PreviewOutputNapi::RegisterErrorCallbackListener previewOutput_ is null");
     previewOutput_->SetCallback(listener);
 }
 
@@ -745,6 +748,8 @@ void PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener(const std::s
     CHECK_RETURN_ELOG(
         listener == nullptr, "PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener listener is null");
     listener->SetIsAsyncMap(eventName, isAsync);
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "PreviewOutputNapi::RegisterSketchStatusChangedCallbackListener previewOutput_ is null");
     previewOutput_->SetCallback(listener);
     previewOutput_->OnNativeRegisterCallback(eventName);
 }
@@ -777,6 +782,8 @@ void PreviewOutputNapi::RegisterFramePauseCallbackListener(const std::string& ev
     auto listener = RegisterCallbackListener(eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "PreviewOutputNapi::RegisterFramePauseCallbackListener listener is null");
     listener->SetIsAsyncMap(eventName, isAsync);
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "PreviewOutputNapi::RegisterFramePauseCallbackListener previewOutput_ is null");
     previewOutput_->SetCallback(listener);
     previewOutput_->OnNativeRegisterCallback(eventName);
 }
@@ -809,6 +816,8 @@ void PreviewOutputNapi::RegisterFrameResumeChangedCallbackListener(const std::st
     CHECK_RETURN_ELOG(
         listener == nullptr, "PreviewOutputNapi::RegisterFrameResumeChangedCallbackListener listener is null");
     listener->SetIsAsyncMap(eventName, isAsync);
+    CHECK_RETURN_ELOG(previewOutput_ == nullptr,
+        "PreviewOutputNapi::RegisterFrameResumeChangedCallbackListener previewOutput_ is null");
     previewOutput_->SetCallback(listener);
     previewOutput_->OnNativeRegisterCallback(eventName);
 }

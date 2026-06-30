@@ -319,6 +319,7 @@ void MovingPhotoManager::ExpandMovingPhoto(VideoType videoType, int32_t width, i
         size->width = static_cast<uint32_t>(width);
         size->height = static_cast<uint32_t>(height);
         avcodecTaskManager = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
+        CHECK_RETURN_ELOG(avcodecTaskManager == nullptr, "Failed to create AvcodecTaskManagerProxy");
         avcodecTaskManager->CreateAvcodecTaskManagerForAudio(videoSurface,
             size, streamStruct.audioTaskManagerProxy_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC, colorspace);
         avcodecTaskManager->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);

@@ -285,6 +285,8 @@ int32_t MovieFileOutput::EnableMirror(bool isEnable)
 int32_t MovieFileOutput::GetSupportedVideoFilters(std::vector<std::string> &supportedVideoFilters)
 {
     MEDIA_DEBUG_LOG("MovieFileOutput::GetSupportedVideoFilters is called");
+    CHECK_RETURN_RET_ELOG(recorder_ == nullptr, SERVICE_FATL_ERROR,
+        "failed to GetSupportedVideoFilters, recorder_ is null");
     supportedVideoFilters.clear();
     supportedVideoFilters.push_back("origin");
     std::vector<std::string> videoFilters;

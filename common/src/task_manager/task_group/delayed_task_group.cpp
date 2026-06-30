@@ -43,6 +43,9 @@ void DelayedTaskGroup::Initialize()
     MEDIA_DEBUG_LOG("(%s) Initialize entered.", GetName().c_str());
     BaseTaskGroup::Initialize();
     timeBroker_ = TimeBroker::Create("DelayedTaskGroup");
+    if (!timeBroker_) {
+        MEDIA_ERR_LOG("(%s) Failed to create TimeBroker.", GetName().c_str());
+    }
 }
 
 bool DelayedTaskGroup::SubmitTask(std::any param)
@@ -52,6 +55,10 @@ bool DelayedTaskGroup::SubmitTask(std::any param)
         return false;
     }
     std::lock_guard<std::mutex> lock(mutex_);
+    if (!timeBroker_) {
+        MEDIA_ERR_LOG("(%s) SubmitTask failed due to timeBroker_ is null.", GetName().c_str());
+        return false;
+    }
     auto&& [delayTimeMs, task] = std::any_cast<std::tuple<uint32_t, std::function<void()>>&&>(std::move(param));
     MEDIA_DEBUG_LOG("(%s) SubmitTask, delayTimeMs %{public}d ,expiring timestamp: %{public}d",
         GetName().c_str(),

@@ -69,6 +69,7 @@ void DepthDataListener::OnBufferAvailable()
 void DepthDataListener::ExecuteDepthData(sptr<SurfaceBuffer> surfaceBuffer) const
 {
     MEDIA_INFO_LOG("ExecuteDepthData");
+    CHECK_RETURN_ELOG(surfaceBuffer == nullptr, "ExecuteDepthData surfaceBuffer is null");
     napi_value result[ARGS_TWO] = {nullptr, nullptr};
     napi_value retVal;
 
@@ -127,7 +128,7 @@ void DepthDataListener::UpdateJSCallback(sptr<Surface> depthSurface) const
     OHOS::Rect damage;
 
     SurfaceError surfaceRet = depthSurface->AcquireBuffer(surfaceBuffer, fence, timestamp, damage);
-    if (surfaceRet != SURFACE_ERROR_OK) {
+    if (surfaceRet != SURFACE_ERROR_OK || surfaceBuffer == nullptr) {
         MEDIA_ERR_LOG("DepthDataListener Failed to acquire surface buffer");
         return;
     }
@@ -615,6 +616,10 @@ void DepthDataOutputNapi::RegisterDepthDataAvailableCallbackListener(const std::
         MEDIA_INFO_LOG("new depthDataListener_ and register surface consumer listener");
         sptr<DepthDataListener> depthDataListener = new (std::nothrow) DepthDataListener(env, sDepthDataSurface_,
             depthDataOutput_);
+        if (depthDataListener == nullptr) {
+            MEDIA_ERR_LOG("Failed to create DepthDataListener!");
+            return;
+        }
         SurfaceError ret = sDepthDataSurface_->RegisterConsumerListener((
             sptr<IBufferConsumerListener>&)depthDataListener);
         if (ret != SURFACE_ERROR_OK) {

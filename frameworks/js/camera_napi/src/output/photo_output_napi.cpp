@@ -1198,7 +1198,7 @@ napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    if (status == napi_ok && photoOutputNapi != nullptr) {
+    if (status == napi_ok && photoOutputNapi != nullptr && photoOutputNapi->photoOutput_ != nullptr) {
         int32_t retCode = photoOutputNapi->photoOutput_->ConfirmCapture();
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return result;

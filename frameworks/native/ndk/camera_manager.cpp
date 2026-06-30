@@ -186,6 +186,8 @@ Camera_ErrorCode OH_CameraManager_IsCameraMuted(Camera_Manager* cameraManager, b
     MEDIA_DEBUG_LOG("OH_CameraManager_IsCameraMuted is called");
     CHECK_RETURN_RET_ELOG(
         cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
+    CHECK_RETURN_RET_ELOG(
+        isCameraMuted == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isCameraMuted is null!");
 
     return cameraManager->IsCameraMuted(isCameraMuted);
 }
@@ -452,6 +454,7 @@ Camera_ErrorCode OH_CameraDevice_GetMinimumFocusDistance(const Camera_Device* ca
 Camera_ErrorCode OH_CameraDevice_GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size)
 {
     CHECK_RETURN_RET_ELOG(camera == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraDevice is null!");
+    CHECK_RETURN_RET_ELOG(camera->cameraId == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraId is null!");
     CHECK_RETURN_RET_ELOG(lens == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, lens is null!");
     CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is null!");
     return Camera_Manager::GetLensDistortion(camera, lens, size);

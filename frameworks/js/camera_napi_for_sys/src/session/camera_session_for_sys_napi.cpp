@@ -726,7 +726,8 @@ napi_value CameraSessionForSysNapi::GetZoomPointInfos(napi_env env, napi_callbac
 
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
-    if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
+    if (status == napi_ok && cameraSessionForSysNapi != nullptr &&
+        cameraSessionForSysNapi->cameraSessionForSys_ != nullptr) {
         std::vector<ZoomPointInfo> vecZoomPointInfoList;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetZoomPointInfos(vecZoomPointInfoList);
         CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
@@ -1973,6 +1974,7 @@ void CameraSessionForSysNapi::RegisterFeatureDetectionStatusListener(const std::
 void CameraSessionForSysNapi::UnregisterFeatureDetectionStatusListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
+    CHECK_RETURN_ELOG(cameraSessionForSys_ == nullptr, "cameraSession is null!");
     CHECK_RETURN_ELOG(featureDetectionStatusCallback_ == nullptr, "featureDetectionStatusCallback_ is null");
     int32_t featureType = SceneFeature::FEATURE_ENUM_MAX;
     CameraNapiParamParser jsParamParser(env, args, featureType);

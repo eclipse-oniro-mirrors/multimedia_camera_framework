@@ -1380,7 +1380,7 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status != napi_ok) {
+    if (status != napi_ok || cameraManagerNapi == nullptr) {
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
             "CameraManagerNapi::GetCameraConcurrentInfos can not get thisVar");
         return nullptr;
@@ -1458,8 +1458,10 @@ void CameraManagerNapi::ParseGetCameraConcurrentInfos(napi_env env, napi_value a
         napi_value res = nullptr;
         if (napi_get_named_property(env, value, "cameraId", &res) == napi_ok) {
             size_t sizeofres;
-            char buffer[PATH_MAX];
-            napi_get_value_string_utf8(env, res, buffer, PATH_MAX, &sizeofres);
+            char buffer[PATH_MAX] = {0};
+            if (napi_get_value_string_utf8(env, res, buffer, PATH_MAX, &sizeofres) != napi_ok) {
+                continue;
+            }
             std::string cameraidonly = std::string(buffer);
             cameraIdv.push_back(cameraidonly);
         }

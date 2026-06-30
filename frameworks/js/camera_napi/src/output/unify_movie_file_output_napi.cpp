@@ -357,6 +357,8 @@ void UnifyMovieFileOutputNapi::RegisterRecordingPauseCallbackListener(const std:
     CHECK_RETURN_ELOG(
         listener == nullptr, "UnifyMovieFileOutputNapi::RegisterRecordingPauseCallbackListener listener is null");
     listener->SetIsAsyncMap(eventName, isAsync);
+    CHECK_RETURN_ELOG(unifyMovieFileOutput_ == nullptr,
+        "UnifyMovieFileOutputNapi::RegisterRecordingPauseCallbackListener unifyMovieFileOutput_ is null");
     unifyMovieFileOutput_->AddUnifyMovieFileOutputStateCallback(listener);
 }
 

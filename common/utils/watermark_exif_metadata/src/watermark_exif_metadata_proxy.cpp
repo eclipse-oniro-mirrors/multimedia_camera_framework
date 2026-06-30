@@ -53,6 +53,7 @@ void WatermarkExifMetadataProxy::SetWatermarkExifMetadata(
 {
     MEDIA_DEBUG_LOG("WatermarkExifMetadataProxy::SetWatermarkExifMetadata");
     CHECK_RETURN_ELOG(watermarkExifMetadataIntf_ == nullptr, "watermarkExifMetadataIntf_ is nullptr");
+    CHECK_RETURN_ELOG(pixelMap == nullptr, "pixelMap is nullptr");
     watermarkExifMetadataIntf_->SetWatermarkExifMetadata(pixelMap, info);
 }
 

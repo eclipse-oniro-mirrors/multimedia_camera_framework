@@ -101,6 +101,10 @@ void ErrorCallbackListener::OnErrorCallbackAsync(const int32_t errorType, const 
 void ErrorCallbackListener::OnErrorCallback(const int32_t errorType, const int32_t errorMsg) const
 {
     MEDIA_DEBUG_LOG("OnErrorCallback is called");
+    if (env_ == nullptr) {
+        MEDIA_ERR_LOG("OnErrorCallback env_ is nullptr");
+        return;
+    }
     napi_value result;
     napi_value retVal;
     napi_value propValue;
@@ -358,6 +362,7 @@ void CameraInputNapi::UvWorkAsyncCompleted(uv_work_t* work, int status)
     if (!context->status) {
         CameraNapiUtils::CreateNapiErrorObject(context->env, context->errorCode, context->errorMsg.c_str(), jsContext);
     } else {
+        napi_get_undefined(context->env, &jsContext->error);
         if (context->isEnableSecCam) {
             napi_create_bigint_uint64(context->env, context->secureCameraSeqId, &jsContext->data);
         } else {

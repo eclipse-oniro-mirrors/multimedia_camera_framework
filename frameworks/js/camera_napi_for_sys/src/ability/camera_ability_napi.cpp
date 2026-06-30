@@ -652,8 +652,11 @@ napi_value CameraFunctionsNapi::IsVideoStabilizationModeSupported(napi_env env, 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
 
     return HandleQuery(env, info, thisVar, [env, argv](auto ability) {
-        int32_t value;
-        napi_get_value_int32(env, argv[PARAM0], &value);
+        int32_t value = 0;
+        napi_status status = napi_get_value_int32(env, argv[PARAM0], &value);
+        if (status != napi_ok) {
+            return false;
+        }
         VideoStabilizationMode stabilizationMode = (VideoStabilizationMode)value;
         return ability->IsVideoStabilizationModeSupported(stabilizationMode);
     });

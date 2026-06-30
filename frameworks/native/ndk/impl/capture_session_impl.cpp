@@ -441,12 +441,15 @@ Camera_ErrorCode Camera_CaptureSession::SetSessionMode(Camera_SceneMode sceneMod
             MEDIA_ERR_LOG("Camera_CaptureSession::SetSessionMode sceneMode = %{public}d not supported", sceneMode);
             return CAMERA_INVALID_ARGUMENT;
     }
+    CHECK_RETURN_RET_ELOG(innerCaptureSession_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_CaptureSession::SetSessionMode create innerCaptureSession fail!");
     return CAMERA_OK;
 }
 
 Camera_ErrorCode Camera_CaptureSession::AddSecureOutput(Camera_PreviewOutput* previewOutput)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::AddSecureOutput is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     sptr<CaptureOutput> innerPreviewOutput = previewOutput->GetInnerPreviewOutput();
     int32_t ret = innerCaptureSession_->AddSecureOutput(innerPreviewOutput);
     return FrameworkToNdkCameraError(ServiceToCameraError(ret));
@@ -481,6 +484,7 @@ Camera_ErrorCode Camera_CaptureSession::RemoveInput(Camera_Input* cameraInput)
 
 Camera_ErrorCode Camera_CaptureSession::AddPreviewOutput(Camera_PreviewOutput* previewOutput)
 {
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     sptr<CaptureOutput> innerPreviewOutput = previewOutput->GetInnerPreviewOutput();
     int32_t ret = innerCaptureSession_->AddOutput(innerPreviewOutput);
     return FrameworkToNdkCameraError(ret);
@@ -488,6 +492,7 @@ Camera_ErrorCode Camera_CaptureSession::AddPreviewOutput(Camera_PreviewOutput* p
 
 Camera_ErrorCode Camera_CaptureSession::RemovePreviewOutput(Camera_PreviewOutput* previewOutput)
 {
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     sptr<CaptureOutput> innerPreviewOutput = previewOutput->GetInnerPreviewOutput();
     int32_t ret = innerCaptureSession_->RemoveOutput(innerPreviewOutput);
     return FrameworkToNdkCameraError(ret);
@@ -504,6 +509,7 @@ Camera_ErrorCode Camera_CaptureSession::AddPhotoOutput(Camera_PhotoOutput* photo
 Camera_ErrorCode Camera_CaptureSession::RemovePhotoOutput(Camera_PhotoOutput* photoOutput)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::RemovePhotoOutput is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     sptr<CaptureOutput> innerPhotoOutput = photoOutput->GetInnerPhotoOutput();
     int32_t ret = innerCaptureSession_->RemoveOutput(innerPhotoOutput);
     return FrameworkToNdkCameraError(ret);
@@ -648,6 +654,7 @@ Camera_ErrorCode Camera_CaptureSession::GetFocusDistance(float* focusDistance) c
 Camera_ErrorCode Camera_CaptureSession::GetFocusPoint(Camera_Point* focusPoint)
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetFocusPoint is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_INVALID_ARGUMENT);
     Point innerFocusPoint = innerCaptureSession_->GetFocusPoint();
     (*focusPoint).x = innerFocusPoint.x;
     (*focusPoint).y = innerFocusPoint.y;
@@ -1112,7 +1119,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterSystemPressureLevelCallback(
     OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::RegisterSystemPressureLevelCallback");
-    CHECK_PRINT_ELOG(systemPressureLevel == nullptr,
+    CHECK_RETURN_RET_ELOG(systemPressureLevel == nullptr, CAMERA_INVALID_ARGUMENT,
         "Camera_CaptureSession::RegisterSystemPressureLevelCallback systemPressureLevel is null.");
     shared_ptr<InnerPressureStatusCallback> innerPressureStatusCallback =
         make_shared<InnerPressureStatusCallback>(this, systemPressureLevel);
@@ -1131,6 +1138,7 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterSystemPressureLevelCallback(
     OH_CaptureSession_OnSystemPressureLevelChange systemPressureLevel)
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterSystemPressureLevelCallback");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     innerCaptureSession_->UnSetPressureCallback();
     return CAMERA_OK;
 }

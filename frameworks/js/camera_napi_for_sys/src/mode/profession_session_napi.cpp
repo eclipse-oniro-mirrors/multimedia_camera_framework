@@ -562,7 +562,7 @@ napi_value ProfessionSessionNapi::GetIsoRange(napi_env env, napi_callback_info i
 
     ProfessionSessionNapi* professionSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&professionSessionNapi));
-    if (status == napi_ok && professionSessionNapi != nullptr) {
+    if (status == napi_ok && professionSessionNapi != nullptr && professionSessionNapi->professionSession_ != nullptr) {
         std::vector<int32_t> vecIsoList;
         int32_t retCode = professionSessionNapi->professionSession_->GetIsoRange(vecIsoList);
         if (!CameraNapiUtils::CheckError(env, retCode)) {

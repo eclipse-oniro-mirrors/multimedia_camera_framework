@@ -3208,7 +3208,7 @@ napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info
 
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<ZoomPointInfo> vecZoomPointInfoList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomPointInfos(vecZoomPointInfoList);
         CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
