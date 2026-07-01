@@ -31,6 +31,7 @@ constexpr int32_t COMP_CONFIG_OK = 0;
 constexpr char LOGIC_DEVICE[] = "logic_device";
 const std::string COMPCONFIG_CLIENT_SO_PATH = "/system/lib64/platformsdk/libcompconfigclient.z.so";
 constexpr char COMP_CONFIG_READ_UTIL_GET_CONFIG_BY_APP[] = "CompConfigReadUtil_GetConfigByApp";
+constexpr char COMP_CONFIG_FREE_APP_PROPERTY_VALUE_MAP_RESULT[] = "CompConfigFreeAppPropertyValueMapResult";
 
 typedef struct {
     const char* key;
@@ -44,6 +45,7 @@ typedef struct {
 } CompConfigPropertyValueMapResult;
 
 using CompConfigReadUtilGetConfigByAppFunc = CompConfigPropertyValueMapResult (*)(const char* bundleName);
+using CompConfigFreeAppPropertyValueMapResultFunc = void (*)(CompConfigPropertyValueMapResult*);
 #endif
 
 sptr<CameraApplistManager> &CameraApplistManager::GetInstance()
@@ -125,22 +127,39 @@ std::shared_ptr<ApplistConfigure> CameraApplistManager::GetConfigureFromCompConf
     auto fnGetConfigByApp = GetFunction<CompConfigReadUtilGetConfigByAppFunc>(COMP_CONFIG_READ_UTIL_GET_CONFIG_BY_APP);
     CHECK_RETURN_RET_ELOG(fnGetConfigByApp == nullptr, nullptr,
         "CameraApplistManager::GetConfigureFromCompConfigRead GetFunction fnGetConfigByApp failed");
+    auto fnFreePvm =
+        GetFunction<CompConfigFreeAppPropertyValueMapResultFunc>(COMP_CONFIG_FREE_APP_PROPERTY_VALUE_MAP_RESULT);
+    CHECK_RETURN_RET_ELOG(fnFreePvm == nullptr, nullptr,
+        "CameraApplistManager::GetConfigureFromCompConfigRead GetFunction fnFreePvm failed");
+
     auto appResult = fnGetConfigByApp(bundleName.c_str());
-    CHECK_RETURN_RET_ELOG(appResult.ret != COMP_CONFIG_OK || !appResult.entryCount || appResult.entries == nullptr,
-        nullptr, "CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp failed");
+    if (appResult.ret != COMP_CONFIG_OK || !appResult.entryCount || appResult.entries == nullptr) {
+        MEDIA_ERR_LOG("CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp failed");
+        fnFreePvm(&appResult);
+        return nullptr;
+    }
 
     for (int i = 0; i < appResult.entryCount; ++i) {
         auto entry = appResult.entries[i];
-        CHECK_RETURN_RET_ELOG(entry.key == nullptr || entry.value == nullptr, nullptr,
-            "CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp entry key or value is nullptr");
+        if (entry.key == nullptr || entry.value == nullptr) {
+            MEDIA_ERR_LOG(
+                "CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp entry key or value is nullptr");
+            fnFreePvm(&appResult);
+            return nullptr;
+        }
         CHECK_CONTINUE(strcmp(entry.key, LOGIC_DEVICE) != 0);
         MEDIA_INFO_LOG("CameraApplistManager::GetConfigureFromCompConfigRead bundleName: %{public}s, key: %{public}s, "
             "value: %{public}s", bundleName.c_str(), entry.key, entry.value);
         nlohmann::json whiteListJson = nlohmann::json::parse(entry.value, nullptr, false);
-        CHECK_RETURN_RET_ELOG(whiteListJson.is_discarded(), nullptr,
-            "CameraApplistManager::GetConfigureFromCompConfigRead json Parse Failed");
+        if (whiteListJson.is_discarded()) {
+            MEDIA_ERR_LOG("CameraApplistManager::GetConfigureFromCompConfigRead json Parse Failed");
+            fnFreePvm(&appResult);
+            return nullptr;
+        }
+        fnFreePvm(&appResult);
         return GetApplistConfigureFromJson(whiteListJson);
     }
+    fnFreePvm(&appResult);
     return nullptr;
 }
 
