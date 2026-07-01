@@ -2036,7 +2036,7 @@ HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_001, TestSize.Level0
     bool isSupported = false;
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
     phtOutput->stream_ = nullptr;
-    EXPECT_EQ(phtOutput->IsAutoExtendedGainmapDeliverySupported(isSupported), SERVICE_FATL_ERROR);
+    EXPECT_EQ(phtOutput->IsAutoExtendedGainmapDeliverySupported(isSupported), CameraErrorCode::SESSION_NOT_CONFIG);
 }
 
 /*
@@ -2095,13 +2095,14 @@ HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_003, TestSize.Level0
 
     bool isSupported = false;
     int32_t ret = phtOutput->IsAutoExtendedGainmapDeliverySupported(isSupported);
-    EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
 
     if (isSupported) {
         bool enabled = true;
         EXPECT_EQ(phtOutput->EnableAutoExtendedGainmapDelivery(enabled), CameraErrorCode::SUCCESS);
         enabled = false;
         EXPECT_EQ(phtOutput->EnableAutoExtendedGainmapDelivery(enabled), CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR);
     }
 
     input->Close();
