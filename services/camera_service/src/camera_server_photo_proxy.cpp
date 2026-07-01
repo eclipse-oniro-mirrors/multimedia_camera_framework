@@ -245,8 +245,11 @@ void* CameraServerPhotoProxy::GetFileDataAddr()
     if (!isMmaped_) {
         MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap");
         fileDataAddr_ = mmap(nullptr, bufferHandle_->size, PROT_READ, MAP_SHARED, bufferHandle_->fd, 0);
-        CHECK_RETURN_RET_ELOG(
-            fileDataAddr_ == MAP_FAILED, fileDataAddr_, "CameraServerPhotoProxy::GetFileDataAddr mmap failed");
+        if (fileDataAddr_ == MAP_FAILED) {
+            MEDIA_ERR_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap failed");
+            fileDataAddr_ = nullptr;
+            return nullptr;
+        }
         isMmaped_ = true;
     } else {
         MEDIA_ERR_LOG("CameraServerPhotoProxy::GetFileDataAddr mmap failed");

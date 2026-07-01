@@ -128,6 +128,10 @@ void MetadataOutputCallback::AddMetadataObjExtending(napi_env env, sptr<Metadata
         MEDIA_DEBUG_LOG("AddMetadataObjExtending got null metadataObj");
         return;
     }
+    if (metadataNapiObj == nullptr) {
+        MEDIA_DEBUG_LOG("AddMetadataObjExtending got null metadataNapiObj");
+        return;
+    }
     auto type = metadataObj->GetType();
     switch (type) {
         case MetadataObjectType::FACE:
@@ -155,7 +159,7 @@ void MetadataOutputCallback::CreateHumanBodyMetaData(napi_env env, sptr<Metadata
     napi_value numberNapiObj = nullptr;
 
     napi_get_undefined(env, &metadataObjResult);
-    if (metadataObj == nullptr && metadataNapiObj == nullptr) {
+    if (metadataObj == nullptr || metadataNapiObj == nullptr) {
         return;
     }
     MetadataHumanBodyObject* humanBodyObjectPtr = static_cast<MetadataHumanBodyObject*>(metadataObj.GetRefPtr());
@@ -176,7 +180,7 @@ void MetadataOutputCallback::CreateHumanFaceMetaData(napi_env env, sptr<Metadata
     napi_value numberNapiObj = nullptr;
 
     napi_get_undefined(env, &metadataObjResult);
-    if (metadataObj == nullptr && metadataNapiObj == nullptr) {
+    if (metadataObj == nullptr || metadataNapiObj == nullptr) {
         return;
     }
     MetadataFaceObject* faceObjectPtr = static_cast<MetadataFaceObject*>(metadataObj.GetRefPtr());
@@ -205,7 +209,7 @@ void MetadataOutputCallback::CreateCatFaceMetaData(napi_env env, sptr<MetadataOb
     napi_value metadataObjResult = nullptr;
 
     napi_get_undefined(env, &metadataObjResult);
-    if (metadataObj == nullptr && metadataNapiObj == nullptr) {
+    if (metadataObj == nullptr || metadataNapiObj == nullptr) {
         return;
     }
     MetadataCatFaceObject* faceObjectPtr = static_cast<MetadataCatFaceObject*>(metadataObj.GetRefPtr());
@@ -223,7 +227,7 @@ void MetadataOutputCallback::CreateDogFaceMetaData(napi_env env, sptr<MetadataOb
     napi_value metadataObjResult = nullptr;
 
     napi_get_undefined(env, &metadataObjResult);
-    if (metadataObj == nullptr && metadataNapiObj == nullptr) {
+    if (metadataObj == nullptr || metadataNapiObj == nullptr) {
         return;
     }
     MetadataDogFaceObject* faceObjectPtr = static_cast<MetadataDogFaceObject*>(metadataObj.GetRefPtr());

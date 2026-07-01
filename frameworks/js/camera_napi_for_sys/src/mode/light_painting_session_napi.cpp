@@ -153,7 +153,11 @@ napi_value LightPaintingSessionNapi::GetSupportedLightPaintings(napi_env env, na
  
     LightPaintingSessionNapi* lightPaintingSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, lightPaintingSessionNapi);
-    if (lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("GetSupportedLightPaintings parse parameter occur error");
+        return result;
+    }
+    if (lightPaintingSessionNapi == nullptr || lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
         MEDIA_ERR_LOG("GetSupportedLightPaintings get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return result;
@@ -184,7 +188,11 @@ napi_value LightPaintingSessionNapi::GetLightPainting(napi_env env, napi_callbac
  
     LightPaintingSessionNapi* lightPaintingSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, lightPaintingSessionNapi);
-    if (lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("GetSupportedLightPaintings parse parameter occur error");
+        return result;
+    }
+    if (lightPaintingSessionNapi == nullptr || lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
         MEDIA_ERR_LOG("GetSupportedLightPaintings get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return result;
@@ -213,7 +221,7 @@ napi_value LightPaintingSessionNapi::SetLightPainting(napi_env env, napi_callbac
         MEDIA_ERR_LOG("SetLightPainting parse parameter occur error");
         return result;
     }
-    if (lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
+    if (lightPaintingSessionNapi == nullptr || lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
         MEDIA_ERR_LOG("SetLightPainting get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return result;
@@ -236,7 +244,11 @@ napi_value LightPaintingSessionNapi::TriggerLighting(napi_env env, napi_callback
  
     LightPaintingSessionNapi* lightPaintingSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, lightPaintingSessionNapi);
-    if (lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("GetSupportedLightPaintings parse parameter occur error");
+        return result;
+    }
+    if (lightPaintingSessionNapi == nullptr || lightPaintingSessionNapi->lightPaintingSession_ == nullptr) {
         MEDIA_ERR_LOG("TriggerLighting get native object fail");
         CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
         return result;

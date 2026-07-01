@@ -768,6 +768,10 @@ napi_value TimeLapsePhotoSessionNapi::GetIsoRange(napi_env env, napi_callback_in
         MEDIA_ERR_LOG("%{public}s: Unwrap Napi Object Failed", __FUNCTION__);
         return nullptr;
     }
+    if (obj->timeLapsePhotoSession_ == nullptr) {
+        MEDIA_ERR_LOG("%{public}s: timeLapsePhotoSession_ is null", __FUNCTION__);
+        return nullptr;
+    }
     vector<int32_t> range;
     int32_t ret = obj->timeLapsePhotoSession_->GetIsoRange(range);
     if (ret != CameraErrorCode::SUCCESS) {

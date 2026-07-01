@@ -31,6 +31,10 @@ int32_t SecureCameraSessionForSys::AddSecureOutput(sptr<CaptureOutput> &output)
         "SecureCameraSessionForSys::CanAddOutput operation is not allowed!");
     sptr<IStreamCommon> stream = output->GetStream();
     IStreamRepeat* repeatStream = static_cast<IStreamRepeat*>(stream.GetRefPtr());
+    if (repeatStream == nullptr) {
+        MEDIA_ERR_LOG("SecureCameraSessionForSys::AddSecureOutput repeatStream is nullptr");
+        return CAMERA_INVALID_ARG;
+    }
     repeatStream->EnableSecure(true);
     isSetSecureOutput_ = true;
     return CAMERA_OK;

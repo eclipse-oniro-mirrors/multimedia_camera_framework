@@ -253,7 +253,11 @@ napi_value StitchingPhotoSessionNapi::GetMovingClockwise(napi_env env, napi_call
     MEDIA_INFO_LOG("%{public}s is called", __PRETTY_FUNCTION__);
     StitchingPhotoSessionNapi* stitchingPhotoSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, stitchingPhotoSessionNapi);
-    if (stitchingPhotoSessionNapi->stitchingPhotoSession_ == nullptr) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("%{public}s parse parameter occur error", __PRETTY_FUNCTION__);
+        return nullptr;
+    }
+    if (stitchingPhotoSessionNapi == nullptr || stitchingPhotoSessionNapi->stitchingPhotoSession_ == nullptr) {
         MEDIA_ERR_LOG("%{public}s get native object fail", __PRETTY_FUNCTION__);
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
         return nullptr;
@@ -264,6 +268,7 @@ napi_value StitchingPhotoSessionNapi::GetMovingClockwise(napi_env env, napi_call
     int32_t retCode = stitchingPhotoSessionNapi->stitchingPhotoSession_->GetMovingClockwise(clockWise);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("%{public}s fail! %{public}d", __PRETTY_FUNCTION__, retCode);
+        stitchingPhotoSessionNapi->stitchingPhotoSession_->UnlockForControl();
         return nullptr;
     }
     napi_value result = nullptr;
@@ -277,7 +282,11 @@ napi_value StitchingPhotoSessionNapi::GetStitchingDirection(napi_env env, napi_c
     MEDIA_INFO_LOG("%{public}s is called", __PRETTY_FUNCTION__);
     StitchingPhotoSessionNapi* stitchingPhotoSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, stitchingPhotoSessionNapi);
-    if (stitchingPhotoSessionNapi->stitchingPhotoSession_ == nullptr) {
+    if (!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("%{public}s parse parameter occur error", __PRETTY_FUNCTION__);
+        return nullptr;
+    }
+    if (stitchingPhotoSessionNapi == nullptr || stitchingPhotoSessionNapi->stitchingPhotoSession_ == nullptr) {
         MEDIA_ERR_LOG("%{public}s get native object fail", __PRETTY_FUNCTION__);
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
         return nullptr;
@@ -288,6 +297,7 @@ napi_value StitchingPhotoSessionNapi::GetStitchingDirection(napi_env env, napi_c
     int32_t retCode = stitchingPhotoSessionNapi->stitchingPhotoSession_->GetStitchingDirection(direction);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("%{public}s fail! %{public}d", __PRETTY_FUNCTION__, retCode);
+        stitchingPhotoSessionNapi->stitchingPhotoSession_->UnlockForControl();
         return nullptr;
     }
     napi_value result = nullptr;

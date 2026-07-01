@@ -539,6 +539,7 @@ std::vector<std::vector<int32_t>> PreviewOutput::GetSupportedFrameRates()
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET(inputDevice == nullptr, {});
     sptr<CameraDevice> camera = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET(camera == nullptr, {});
     SceneMode curMode = session->GetMode();
 
     sptr<CameraOutputCapability> cameraOutputCapability = CameraManager::GetInstance()->

@@ -122,6 +122,10 @@ void CacheSupportedCameras(napi_env env, const std::vector<sptr<CameraDevice>>& 
 {
     std::string key = "SupportedCameras:";
     for (auto& camera : cameras) {
+        if (camera == nullptr) {
+            MEDIA_ERR_LOG("CacheSupportedCameras camera is null");
+            continue;
+        }
         if (camera->GetConnectionType() != CAMERA_CONNECTION_BUILT_IN) {
             // Exist none built_in camera. Give up cache.
             MEDIA_DEBUG_LOG("CacheSupportedCameras exist none built_in camera. Give up cache");
@@ -138,6 +142,10 @@ napi_value GetCachedSupportedCameras(napi_env env, const std::vector<sptr<Camera
 {
     std::string key = "SupportedCameras:";
     for (auto& camera : cameras) {
+        if (camera == nullptr) {
+            MEDIA_ERR_LOG("GetCachedSupportedCameras camera is null");
+            continue;
+        }
         if (camera->GetConnectionType() != CAMERA_CONNECTION_BUILT_IN) {
             // Exist none built_in camera. Give up cache.
             MEDIA_DEBUG_LOG("GetCachedSupportedCameras exist none built_in camera. Give up cache");
@@ -1372,7 +1380,7 @@ napi_value CameraManagerNapi::GetCameraConcurrentInfos(napi_env env, napi_callba
 
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
     napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraManagerNapi));
-    if (status != napi_ok) {
+    if (status != napi_ok || cameraManagerNapi == nullptr) {
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
             "CameraManagerNapi::GetCameraConcurrentInfos can not get thisVar");
         return nullptr;

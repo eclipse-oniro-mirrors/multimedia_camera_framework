@@ -899,6 +899,10 @@ napi_value PhotoOutputNapi::PhotoOutputNapiConstructor(napi_env env, napi_callba
     CAMERA_NAPI_GET_JS_OBJ_WITH_ZERO_ARGS(env, info, status, thisVar);
 
     if (status == napi_ok && thisVar != nullptr) {
+        if (sPhotoOutput_ == nullptr) {
+            MEDIA_ERR_LOG("PhotoOutputNapiConstructor sPhotoOutput_ is null");
+            return result;
+        }
         std::unique_ptr<PhotoOutputNapi> obj = std::make_unique<PhotoOutputNapi>();
         obj->photoOutput_ = sPhotoOutput_;
         obj->profile_ = sPhotoOutput_->GetPhotoProfile();
@@ -1194,7 +1198,7 @@ napi_value PhotoOutputNapi::ConfirmCapture(napi_env env, napi_callback_info info
     napi_get_undefined(env, &result);
     PhotoOutputNapi* photoOutputNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
-    if (status == napi_ok && photoOutputNapi != nullptr) {
+    if (status == napi_ok && photoOutputNapi != nullptr && photoOutputNapi->photoOutput_ != nullptr) {
         int32_t retCode = photoOutputNapi->photoOutput_->ConfirmCapture();
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return result;
@@ -1499,6 +1503,10 @@ napi_value PhotoOutputNapi::EnableMovingPhoto(napi_env env, napi_callback_info i
         MEDIA_ERR_LOG("EnableMovingPhoto photoOutputNapi is null!");
         return result;
     }
+    if (photoOutputNapi->GetPhotoOutput() == nullptr) {
+        MEDIA_ERR_LOG("EnableMovingPhoto photoOutput_ is null!");
+        return result;
+    }
     auto session = photoOutputNapi->GetPhotoOutput()->GetSession();
     if (session != nullptr) {
         bool isEnableMovingPhoto;
@@ -1796,6 +1804,7 @@ void PhotoOutputNapi::UnregisterPhotoAssetAvailableCallbackListener(
 void PhotoOutputNapi::RegisterCaptureStartCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1817,6 +1826,7 @@ void PhotoOutputNapi::UnregisterCaptureStartCallbackListener(
 void PhotoOutputNapi::RegisterCaptureStartWithInfoCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1838,6 +1848,7 @@ void PhotoOutputNapi::UnregisterCaptureStartWithInfoCallbackListener(
 void PhotoOutputNapi::RegisterCaptureEndCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1859,6 +1870,7 @@ void PhotoOutputNapi::UnregisterCaptureEndCallbackListener(
 void PhotoOutputNapi::RegisterFrameShutterCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1880,6 +1892,7 @@ void PhotoOutputNapi::UnregisterFrameShutterCallbackListener(
 void PhotoOutputNapi::RegisterErrorCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1901,6 +1914,7 @@ void PhotoOutputNapi::UnregisterErrorCallbackListener(
 void PhotoOutputNapi::RegisterFrameShutterEndCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1922,6 +1936,7 @@ void PhotoOutputNapi::UnregisterFrameShutterEndCallbackListener(
 void PhotoOutputNapi::RegisterReadyCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1943,6 +1958,7 @@ void PhotoOutputNapi::UnregisterReadyCallbackListener(
 void PhotoOutputNapi::RegisterEstimatedCaptureDurationCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1964,6 +1980,7 @@ void PhotoOutputNapi::UnregisterEstimatedCaptureDurationCallbackListener(
 void PhotoOutputNapi::RegisterConstellationDrawingStateChangeCallbackListener(const std::string& eventName,
     napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);
@@ -1987,6 +2004,7 @@ void PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener(const std:
 {
     CHECK_RETURN_ELOG(!CameraNapiSecurity::CheckSystemApp(env),
         "PhotoOutputNapi::RegisterOfflineDeliveryFinishedCallbackListener:SystemApi is called");
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "PhotoOutput is null!");
     if (photoOutputCallback_ == nullptr) {
         photoOutputCallback_ = std::make_shared<PhotoOutputCallback>(env);
         photoOutput_->SetCallback(photoOutputCallback_);

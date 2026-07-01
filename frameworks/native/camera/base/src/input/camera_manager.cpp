@@ -3055,13 +3055,13 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
     MEDIA_DEBUG_LOG("GetSupportedOutputCapability mode = %{public}d", modeName);
     auto camera = cameraDevice;
     auto innerCamera = GetInnerCamera();
+    CHECK_RETURN_RET(camera == nullptr, nullptr);
     if (!foldScreenType_.empty() && foldScreenType_[0] == '4' &&
         camera->GetPosition() == CAMERA_POSITION_FRONT && innerCamera && !GetIsInWhiteList() &&
         (GetFoldStatus() == FoldStatus::EXPAND || GetFoldStatus() == FoldStatus::UNKNOWN_FOLD)) {
         MEDIA_DEBUG_LOG("GetSupportedOutputCapability innerCamera Position = %{public}d", innerCamera->GetPosition());
         camera = innerCamera;
     }
-    CHECK_RETURN_RET(camera == nullptr, nullptr);
     sptr<CameraOutputCapability> cameraOutputCapability = new (std::nothrow) CameraOutputCapability();
     CHECK_RETURN_RET(cameraOutputCapability == nullptr, nullptr);
     std::vector<Profile> curPhotoProfiles = camera->modePhotoProfiles_[modeName];

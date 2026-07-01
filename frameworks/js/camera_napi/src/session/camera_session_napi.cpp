@@ -1929,6 +1929,12 @@ void CameraSessionNapi::StartAsync(uv_work_t *work)
     CHECK_RETURN_ELOG(context->objectInfo == nullptr, "StartAsync async info is nullptr");
     CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
     CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+        if (context->objectInfo->cameraSession_ == nullptr) {
+            MEDIA_ERR_LOG("StartAsync cameraSession is null");
+            context->errorCode = CameraErrorCode::SERVICE_FATL_ERROR;
+            context->status = false;
+            return;
+        }
         context->errorCode = context->objectInfo->cameraSession_->Start();
         context->status = context->errorCode == CameraErrorCode::SUCCESS;
         MEDIA_INFO_LOG("StartAsync errorCode:%{public}d", context->errorCode);
@@ -2333,7 +2339,7 @@ napi_value CameraSessionNapi::GetFlashMode(napi_env env, napi_callback_info info
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         FlashMode flashMode;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFlashMode(flashMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -2805,7 +2811,7 @@ napi_value CameraSessionNapi::GetFocusMode(napi_env env, napi_callback_info info
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         FocusMode focusMode;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetFocusMode(focusMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
@@ -3202,7 +3208,7 @@ napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info
 
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
-    if (status == napi_ok && cameraSessionNapi != nullptr) {
+    if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<ZoomPointInfo> vecZoomPointInfoList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomPointInfos(vecZoomPointInfoList);
         CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
@@ -6346,7 +6352,7 @@ napi_value CameraSessionNapi::SetExposureDuration(napi_env env, napi_callback_in
         exposureDurationValue = 0; // use default value
         MEDIA_ERR_LOG("CameraSessionNapi::SetExposureDuration get input fail");
     }
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         MEDIA_DEBUG_LOG("SetExposureDuration : exposureDuration = %{public}d", exposureDurationValue);
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode =
@@ -6458,7 +6464,7 @@ napi_value CameraSessionNapi::IsOISModeSupported(napi_env env, napi_callback_inf
         MEDIA_ERR_LOG("CameraSessionNapi::IsOISModeSupported get oisMode fail");
     }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported = false;
         int32_t retCode =
             cameraSessionNapi->cameraSession_->IsOISModeSupported(static_cast<OISMode>(oisMode), isSupported);
@@ -6506,7 +6512,7 @@ napi_value CameraSessionNapi::SetOISMode(napi_env env, napi_callback_info info)
         MEDIA_ERR_LOG("CameraSessionNapi::SetOISMode get oisMode fail");
     }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode =
             cameraSessionNapi->cameraSession_->SetOISMode(static_cast<OISMode>(oisMode));
@@ -6532,7 +6538,7 @@ napi_value CameraSessionNapi::GetSupportedOISBiasRange(napi_env env, napi_callba
         MEDIA_ERR_LOG("GetSupportedOISBiasRange get oisAxis fail");
     }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<float> biasRange;
         float step = 0.0f;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedOISBiasRangeAndStep(
@@ -6567,7 +6573,7 @@ napi_value CameraSessionNapi::GetSupportedOISBiasStep(napi_env env, napi_callbac
         MEDIA_ERR_LOG("GetSupportedOISBiasRange get oisAxis fail");
     }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<float> biasRange;
         float step = 0.0f;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetSupportedOISBiasRangeAndStep(
@@ -6594,7 +6600,7 @@ napi_value CameraSessionNapi::GetCurrentCustomOISBias(napi_env env, napi_callbac
         MEDIA_ERR_LOG("GetSupportedOISBiasRange get oisAxis fail");
     }
     auto result = CameraNapiUtils::GetUndefinedValue(env);
-    if (cameraSessionNapi->cameraSession_ != nullptr) {
+    if (cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         float biasValue = 0.0f;
         int32_t retCode =
             cameraSessionNapi->cameraSession_->GetCurrentCustomOISBias(static_cast<OISAxes>(oisAxis), biasValue);

@@ -114,6 +114,7 @@ sptr<VideoOutput> Camera_VideoOutput::GetInnerVideoOutput()
 
 Camera_ErrorCode Camera_VideoOutput::GetVideoProfile(Camera_VideoProfile** profile)
 {
+    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "innerVideoOutput_ is nullptr");
     auto videoOutputProfile = innerVideoOutput_->GetVideoProfile();
     CHECK_RETURN_RET_ELOG(videoOutputProfile == nullptr, CAMERA_SERVICE_FATAL_ERROR,
         "Camera_VideoOutput::GetVideoProfile failed to get video profile!");
@@ -143,6 +144,7 @@ Camera_ErrorCode Camera_VideoOutput::GetVideoProfile(Camera_VideoProfile** profi
 
 Camera_ErrorCode Camera_VideoOutput::GetSupportedFrameRates(Camera_FrameRateRange** frameRateRange, uint32_t* size)
 {
+    CHECK_RETURN_RET_ELOG(innerVideoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR, "innerVideoOutput_ is nullptr");
     std::vector<std::vector<int32_t>> frameRate = innerVideoOutput_->GetSupportedFrameRates();
     if (frameRate.size() == 0) {
         *size = 0;

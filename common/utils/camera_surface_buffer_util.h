@@ -53,6 +53,7 @@ public:
         sptr<SurfaceBuffer> newSurfaceBuffer = SurfaceBuffer::Create();
         auto allocErrorCode = newSurfaceBuffer->Alloc(requestConfig);
         MEDIA_DEBUG_LOG("DeepCopyBuffer alloc ret: %{public}d", allocErrorCode);
+        CHECK_RETURN_RET_ELOG(allocErrorCode != 0, nullptr, "DeepCopyBuffer alloc failed: %{public}d", allocErrorCode);
         if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(),
             surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
             MEDIA_ERR_LOG("DeepCopyBuffer memcpy_s failed");
@@ -61,9 +62,11 @@ public:
         // deep copy buffer extData
         MessageParcel extParcl;
         sptr<BufferExtraData> bufferExtraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(bufferExtraData == nullptr, nullptr, "DeepCopyBuffer bufferExtraData is null");
         GSError gsErr = bufferExtraData->WriteToParcel(extParcl);
         MEDIA_DEBUG_LOG("DeepCopyBuffer WriteToParcel gsErr=%{public}d", gsErr);
         sptr<BufferExtraData> newBufferExtraData = newSurfaceBuffer->GetExtraData();
+        CHECK_RETURN_RET_ELOG(newBufferExtraData == nullptr, nullptr, "DeepCopyBuffer newBufferExtraData is null");
         gsErr = newBufferExtraData->ReadFromParcel(extParcl);
         MEDIA_DEBUG_LOG("DeepCopyBuffer ReadFromParcel gsErr=%{public}d", gsErr);
 

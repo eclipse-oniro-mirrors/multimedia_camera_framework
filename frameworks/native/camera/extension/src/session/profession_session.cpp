@@ -394,6 +394,8 @@ int32_t ProfessionSession::GetSupportedExposureHintModes(std::vector<ExposureHin
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "ProfessionSession::GetSupportedExposureHintModes camera deviceInfo is null");
     std::shared_ptr<Camera::CameraMetadata> metadata = inputDeviceInfo->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "ProfessionSession::GetSupportedExposureHintModes camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_EXPOSURE_HINT_SUPPORTED, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
