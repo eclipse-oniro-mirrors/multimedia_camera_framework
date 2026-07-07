@@ -31,7 +31,7 @@ constexpr int32_t COMP_CONFIG_OK = 0;
 constexpr char LOGIC_DEVICE[] = "logic_device";
 const std::string COMPCONFIG_CLIENT_SO_PATH = "/system/lib64/platformsdk/libcompconfigclient.z.so";
 constexpr char COMP_CONFIG_READ_UTIL_GET_CONFIG_BY_APP[] = "CompConfigReadUtil_GetConfigByApp";
-constexpr char COMP_CONFIG_FREE_APP_PROPERTY_VALUE_MAP_RESULT[] = "CompConfigFreeAppPropertyValueMapResult";
+constexpr char COMP_CONFIG_FREE_PROPERTY_VALUE_MAP_RESULT[] = "CompConfigFreePropertyValueMapResult";
 
 typedef struct {
     const char* key;
@@ -45,7 +45,7 @@ typedef struct {
 } CompConfigPropertyValueMapResult;
 
 using CompConfigReadUtilGetConfigByAppFunc = CompConfigPropertyValueMapResult (*)(const char* bundleName);
-using CompConfigFreeAppPropertyValueMapResultFunc = void (*)(CompConfigPropertyValueMapResult*);
+using CompConfigFreePropertyValueMapResultFunc = void (*)(CompConfigPropertyValueMapResult*);
 #endif
 
 sptr<CameraApplistManager> &CameraApplistManager::GetInstance()
@@ -121,14 +121,14 @@ std::shared_ptr<ApplistConfigure> CameraApplistManager::GetApplistConfigure(cons
     return config;
 }
 
-std::shared_ptr<ApplistConfigure> CameraApplistManager::GetConfigureFromCompConfigRead(const std::string& bundleName)
+std::shared_ptr<ApplistConfigure> CameraApplistManager::GetConfigureFromCompConfigRead(
+    const std::string& bundleName) __attribute__((no_sanitize("cfi")))
 {
     MEDIA_INFO_LOG("CameraApplistManager::GetConfigureFromCompConfigRead is Called");
     auto fnGetConfigByApp = GetFunction<CompConfigReadUtilGetConfigByAppFunc>(COMP_CONFIG_READ_UTIL_GET_CONFIG_BY_APP);
     CHECK_RETURN_RET_ELOG(fnGetConfigByApp == nullptr, nullptr,
         "CameraApplistManager::GetConfigureFromCompConfigRead GetFunction fnGetConfigByApp failed");
-    auto fnFreePvm =
-        GetFunction<CompConfigFreeAppPropertyValueMapResultFunc>(COMP_CONFIG_FREE_APP_PROPERTY_VALUE_MAP_RESULT);
+    auto fnFreePvm = GetFunction<CompConfigFreePropertyValueMapResultFunc>(COMP_CONFIG_FREE_PROPERTY_VALUE_MAP_RESULT);
     CHECK_RETURN_RET_ELOG(fnFreePvm == nullptr, nullptr,
         "CameraApplistManager::GetConfigureFromCompConfigRead GetFunction fnFreePvm failed");
 
