@@ -121,7 +121,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_001, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
 }
 
@@ -131,7 +131,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_002, 
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
     auto manager = DPS_GetSessionManager();
     manager->DeletePhotoSession(USER_ID);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
 }
 
@@ -141,7 +141,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_003, 
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
     auto info = std::make_unique<ImageInfo>();
     process_->result_->RecordResult(TEST_IMAGE_1, std::move(info), false);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 0);
 }
 
@@ -149,7 +149,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_004, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     process_->RemoveImage(TEST_IMAGE_1, true);
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
 }
@@ -158,7 +158,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_005, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     process_->RemoveImage(TEST_IMAGE_1, false);
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 0);
 }
@@ -174,7 +174,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_007, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     process_->RemoveImage(TEST_IMAGE_1, true);
     process_->RestoreImage(TEST_IMAGE_1);
     EXPECT_EQ(process_->repository_->GetOfflineJobSize(), 1);
@@ -184,7 +184,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_008, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     process_->ProcessImage("testApp", TEST_IMAGE_1);
     EXPECT_EQ(process_->result_->highImages_.size(), 1);
     process_->CancelProcessImage(TEST_IMAGE_1);
@@ -195,7 +195,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_009, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     process_->ProcessImage("testApp", TEST_IMAGE_2);
     EXPECT_EQ(process_->result_->highImages_.size(), 0);
     process_->CancelProcessImage(TEST_IMAGE_2);
@@ -206,7 +206,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_010, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_BACKGROUND);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     process_->ProcessImage("testApp", TEST_IMAGE_1);
     EXPECT_EQ(process_->result_->highImages_.size(), 0);
     process_->CancelProcessImage(TEST_IMAGE_1);
@@ -217,7 +217,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_011, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     auto job = process_->repository_->GetJob();
     process_->DoProcess(job);
     ASSERT_NE(job, nullptr);
@@ -227,7 +227,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_012, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     auto info = std::make_unique<ImageInfo>();
     process_->OnProcessSuccess(USER_ID, TEST_IMAGE_1, std::move(info));
 
@@ -250,7 +250,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_013, 
     process_->result_->cacheMap_.clear();
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     process_->OnProcessError(USER_ID, TEST_IMAGE_1, DPS_ERROR_VIDEO_PROC_INVALID_VIDEO_ID);
     process_->OnProcessError(USER_ID, TEST_IMAGE_1, DPS_ERROR_VIDEO_PROC_FAILED);
     process_->OnProcessError(USER_ID, TEST_IMAGE_1, DPS_ERROR_VIDEO_PROC_TIMEOUT);
@@ -311,9 +311,9 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_018, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
-    process_->AddImage(TEST_IMAGE_2, true, metadata);
-    process_->AddImage(TEST_IMAGE_3, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_2, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_3, true, metadata, "");
 
     auto controller = scheduler_->GetPhotoController(USER_ID);
     ASSERT_NE(controller, nullptr);
@@ -353,9 +353,9 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_019, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
-    process_->AddImage(TEST_IMAGE_2, true, metadata);
-    process_->AddImage(TEST_IMAGE_3, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_2, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_3, true, metadata, "");
 
     auto controller = scheduler_->GetPhotoController(USER_ID);
     ASSERT_NE(controller, nullptr);
@@ -396,9 +396,9 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_020, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
-    process_->AddImage(TEST_IMAGE_2, true, metadata);
-    process_->AddImage(TEST_IMAGE_3, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_2, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_3, true, metadata, "");
 
     auto controller = scheduler_->GetPhotoController(USER_ID);
     ASSERT_NE(controller, nullptr);
@@ -444,9 +444,9 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_021, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
-    process_->AddImage(TEST_IMAGE_2, true, metadata);
-    process_->AddImage(TEST_IMAGE_3, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_2, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_3, true, metadata, "");
 
     auto controller = scheduler_->GetPhotoController(USER_ID);
     ASSERT_NE(controller, nullptr);
@@ -490,7 +490,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_022, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_3, true, metadata);
+    process_->AddImage(TEST_IMAGE_3, true, metadata, "");
 
     // 模拟请求高优先级任务场景：TEST_IMAGE_3
     process_->ProcessImage("deferred_photo_processor_unittest_022", TEST_IMAGE_3);
@@ -502,7 +502,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_022, 
     ASSERT_EQ(EventsInfo::GetInstance().IsMediaBusy(), true);
 
     // 模拟请求高优先级任务场景：TEST_IMAGE_2
-    process_->AddImage(TEST_IMAGE_2, true, metadata);
+    process_->AddImage(TEST_IMAGE_2, true, metadata, "");
     process_->ProcessImage("deferred_photo_processor_unittest_022", TEST_IMAGE_2);
     sleep(1);
     info = std::make_unique<ImageInfo>();
@@ -513,7 +513,7 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_022, 
         EXPECT_TRUE(logDetector.IsLogContains("HandleSuccess"));
     }
 
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
     // 模拟请求普通优先级任务场景：TEST_IMAGE_1
     auto controller = scheduler_->GetPhotoController(USER_ID);
     ASSERT_NE(controller, nullptr);
@@ -533,9 +533,9 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_023, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
-    process_->AddImage(TEST_IMAGE_2, true, metadata);
-    process_->AddImage(TEST_IMAGE_3, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_2, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_3, true, metadata, "");
 
     // 模拟请求高优先级任务场景：TEST_IMAGE_3
     process_->ProcessImage("deferred_photo_processor_unittest_023", TEST_IMAGE_3);
@@ -574,9 +574,9 @@ HWTEST_F(DeferredPhotoProcessorUnittest, deferred_photo_processor_unittest_024, 
 {
     DpsMetadata metadata;
     metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
-    process_->AddImage(TEST_IMAGE_1, true, metadata);
-    process_->AddImage(TEST_IMAGE_2, true, metadata);
-    process_->AddImage(TEST_IMAGE_3, true, metadata);
+    process_->AddImage(TEST_IMAGE_1, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_2, true, metadata, "");
+    process_->AddImage(TEST_IMAGE_3, true, metadata, "");
 
     // 模拟请求高优先级任务场景：TEST_IMAGE_3
     process_->ProcessImage("deferred_photo_processor_unittest_024", TEST_IMAGE_3);

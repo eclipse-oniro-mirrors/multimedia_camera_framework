@@ -71,7 +71,7 @@ int32_t PhotoSyncCommand::Executing()
     bool isSuccess = processor->GetPendingImages(hdiImageIds);
     if (!isSuccess) {
         for (const auto& it : imageIds_) {
-            processor->AddImage(it.first, it.second->discardable_, it.second->metadata_);
+            processor->AddImage(it.first, it.second->discardable_, it.second->metadata_, it.second->bundleName_);
         }
         return DP_OK;
     }
@@ -79,7 +79,8 @@ int32_t PhotoSyncCommand::Executing()
     for (const auto& photoId : hdiImageIds) {
         auto item = imageIds_.find(photoId);
         if (item != imageIds_.end()) {
-            processor->AddImage(photoId, item->second->discardable_, item->second->metadata_);
+            processor->AddImage(photoId, item->second->discardable_, item->second->metadata_,
+                item->second->bundleName_);
             imageIds_.erase(photoId);
         }
     }
