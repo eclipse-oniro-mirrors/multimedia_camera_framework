@@ -26,13 +26,14 @@ class DeferredPhotoProcessingSession : public DeferredPhotoProcessingSessionStub
 public:
     class PhotoInfo {
     public:
-        PhotoInfo(bool discardable, DpsMetadata metadata)
-            : discardable_(discardable), metadata_(metadata)
+        PhotoInfo(bool discardable, DpsMetadata metadata, std::string bundleName)
+            : discardable_(discardable), metadata_(metadata), bundleName_(bundleName)
         {}
         ~PhotoInfo() = default;
 
         bool discardable_;
         DpsMetadata metadata_;
+        std::string bundleName_;
     };
 
     DeferredPhotoProcessingSession(const int32_t userId);

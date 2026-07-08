@@ -69,7 +69,7 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, con
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
         DP_DEBUG_LOG("AddImage inSync!");
-        auto info = std::make_shared<PhotoInfo>(discardable, metadata);
+        auto info = std::make_shared<PhotoInfo>(discardable, metadata, bundleName);
         imageIds_.emplace(imageId, info);
     } else {
         auto ret = DPS_SendCommand<AddPhotoCommand>(userId_, imageId, metadata, discardable, bundleName);
