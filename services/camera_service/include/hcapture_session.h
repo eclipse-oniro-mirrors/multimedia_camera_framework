@@ -107,6 +107,8 @@ class HCameraMovieFileOutput;
 #endif
 
 class EXPORT_API HCaptureSession : public CaptureSessionStub, public IHCameraCloseListener, public ICameraIpcChecker {
+    friend class HSharedCaptureSession;
+    friend class HCaptureSessionWrapper;
 public:
     static CamServiceError NewInstance(const uint32_t callerToken, int32_t opMode, sptr<HCaptureSession>& outSession);
     virtual ~HCaptureSession();
