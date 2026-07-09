@@ -59,6 +59,10 @@
 #include "hcamera_session_manager.h"
 #include "icamera_service_callback.h"
 #include "hcamera_switch_session.h"
+#include "hcamera_device_wrapper.h"
+#include "hcapture_session_wrapper.h"
+#include "hshared_camera_device.h"
+#include "hshared_capture_session.h"
 
 #ifdef DEVICE_MANAGER
 #include "device_manager_impl.h"
@@ -990,11 +994,46 @@ int32_t HCameraService::GetOnBoardDisplayId(int32_t& displayId)
     return GetDisplayId(displayId);
 }
 
+void HCameraService::MigrateOpenedClientsToSharedMode(const std::string& cameraId,
+    const sptr<HSharedCameraDevice>& sharedDevice, const sptr<HSharedCaptureSession>& sharedSession, pid_t ownerPid)
+{
+    CHECK_RETURN_ELOG(sharedDevice == nullptr || sharedSession == nullptr,
+        "HCameraService::MigrateOpenedClientsToSharedMode shared target is null");
+
+    std::vector<sptr<HCameraDeviceWrapper>> deviceWrappers;
+    CollectDevicesForMigration(cameraId, ownerPid, deviceWrappers);
+
+    std::vector<sptr<HCaptureSessionWrapper>> sessionWrappers;
+    CollectSessionsForMigration(cameraId, ownerPid, sessionWrappers);
+
+    for (const auto& wrapper : sessionWrappers) {
+        if (wrapper == nullptr) {
+            continue;
+        }
+        wrapper->SwitchShareSession(sharedSession);
+    }
+
+    for (const auto& wrapper : deviceWrappers) {
+        if (wrapper == nullptr) {
+            continue;
+        }
+        sptr<HCameraDevice> switchedDevice = wrapper->SwitchToSharedMode(sharedDevice);
+        CHECK_PRINT_ELOG(switchedDevice == nullptr,
+            "HCameraService::MigrateOpenedClientsToSharedMode switch device failed, cameraId:%{public}s",
+            cameraId.c_str());
+    }
+
+    MEDIA_INFO_LOG("HCameraService::MigrateOpenedClientsToSharedMode cameraId:%{public}s, devices:%{public}zu, "
+        "sessions:%{public}zu", cameraId.c_str(), deviceWrappers.size(), sessionWrappers.size());
+}
+
 int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device)
 {
     CAMERA_SYNC_TRACE;
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice prepare execute, cameraId:%{public}s", cameraId.c_str());
+    pid_t callerPid = IPCSkeleton::GetCallingPid();
+    MEDIA_INFO_LOG("HCameraService::CreateCameraDevice prepare execute, cameraId:%{public}s, pid:%{public}d",
+        cameraId.c_str(), callerPid);
 
     string permissionName = OHOS_PERMISSION_CAMERA;
     int32_t ret = CheckPermission(permissionName, callerToken);
@@ -1003,29 +1042,62 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     // if callerToken is invalid, will not call IsAllowedUsingPermission
     CHECK_RETURN_RET_ELOG(
         !IsInForeGround(callerToken), CAMERA_ALLOC_ERROR, "HCameraService::CreateCameraDevice is not allowed!");
-    sptr<HCameraDevice> cameraDevice = new (nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
-    CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, CAMERA_ALLOC_ERROR,
-        "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
+
+    bool isPrivilegeApp = (CheckPermission(OHOS_PERMISSION_CAMERA_SHARED, callerToken) == CAMERA_OK);
+    sptr<HCameraDevice> deviceForWrapper = nullptr;
+    bool isSharedDevice = false;
+
+    if (isPrivilegeApp) {
+        sptr<HSharedCameraDevice> sharedDevice =
+            HSharedCameraDevice::GetOrCreateSharedDevice(cameraId, cameraHostManager_, callerToken);
+        CHECK_RETURN_RET_ELOG(sharedDevice == nullptr, CAMERA_ALLOC_ERROR,
+            "HCameraService::CreateCameraDevice GetOrCreateSharedDevice failed");
+        deviceForWrapper = sharedDevice;
+        isSharedDevice = true;
+        MEDIA_INFO_LOG("HCameraService::CreateCameraDevice privilege app, using shared device");
+    } else {
+        sptr<HSharedCameraDevice> sharedDevice = HSharedCameraDevice::GetSharedDevice(cameraId);
+        sptr<HSharedCaptureSession> sharedSession = HSharedCaptureSession::GetExistingSession(cameraId);
+        if (sharedDevice != nullptr && sharedSession != nullptr) {
+            deviceForWrapper = sharedDevice;
+            isSharedDevice = true;
+            MEDIA_INFO_LOG("HCameraService::CreateCameraDevice non-privilege app, using ready shared device");
+        } else {
+            deviceForWrapper = new (nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+            CHECK_RETURN_RET_ELOG(deviceForWrapper == nullptr, CAMERA_ALLOC_ERROR,
+                "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
+            MEDIA_INFO_LOG("HCameraService::CreateCameraDevice non-privilege app, using independent device");
+        }
+    }
+
+    sptr<HCameraDeviceWrapper> wrapper = new (std::nothrow) HCameraDeviceWrapper(
+        cameraId, callerPid, deviceForWrapper, isSharedDevice);
+    CHECK_RETURN_RET_ELOG(wrapper == nullptr, CAMERA_ALLOC_ERROR,
+        "HCameraService::CreateCameraDevice HCameraDeviceWrapper allocation failed");
+
     {
         std::lock_guard<std::mutex> lock(camerasMutex_);
-        cameras_.emplace_back(cameraDevice);
+        cameras_.emplace_back(wrapper);
     }
     CHECK_RETURN_RET_ELOG(GetServiceStatus() != CameraServiceStatus::SERVICE_READY, CAMERA_INVALID_STATE,
         "HCameraService::CreateCameraDevice CameraService not ready!");
     {
         lock_guard<mutex> lock(g_dataShareHelperMutex);
         // when create camera device, update mute setting truely.
-        if (IsCameraMuteSupported(cameraId)) {
-            CHECK_PRINT_ELOG(UpdateMuteSetting(cameraDevice, muteModeStored_) != CAMERA_OK,
+        sptr<HCameraDevice> realDevice = wrapper->GetRealDevice();
+        if (realDevice != nullptr && IsCameraMuteSupported(cameraId)) {
+            CHECK_PRINT_ELOG(UpdateMuteSetting(realDevice, muteModeStored_) != CAMERA_OK,
                 "UpdateMuteSetting Failed, cameraId: %{public}s", cameraId.c_str());
         } else {
             MEDIA_ERR_LOG("HCameraService::CreateCameraDevice MuteCamera not Supported");
         }
-        device = cameraDevice;
-        cameraDevice->SetDeviceMuteMode(muteModeStored_);
+        device = wrapper;
+        if (realDevice != nullptr) {
+            realDevice->SetDeviceMuteMode(muteModeStored_);
+        }
 #ifdef CAMERA_ROTATE_PARAM_UPDATE
         if (g_isFoldScreen) {
-            cameraDevice->SetCameraRotateStrategyInfos(
+            realDevice->SetCameraRotateStrategyInfos(
                 CameraRoateParamManager::GetInstance().GetCameraRotateStrategyInfos());
         }
 #endif
@@ -1033,6 +1105,42 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     CAMERA_SYSEVENT_STATISTIC(CreateMsg("CameraManager_CreateCameraInput CameraId:%s", cameraId.c_str()));
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
     return CAMERA_OK;
+}
+
+void HCameraService::CollectSessionsForMigration(const std::string& cameraId, pid_t ownerPid,
+    std::vector<sptr<HCaptureSessionWrapper>>& sessionWrappers)
+{
+    std::lock_guard<std::mutex> lock(sessionsMutex_);
+    auto it = sessions_.begin();
+    while (it != sessions_.end()) {
+        sptr<HCaptureSessionWrapper> wrapper = it->promote();
+        if (wrapper == nullptr) {
+            it = sessions_.erase(it);
+            continue;
+        }
+        if (wrapper->GetCameraId() == cameraId && !wrapper->IsSharedMode() && wrapper->GetOwnerPid() != ownerPid) {
+            sessionWrappers.emplace_back(wrapper);
+        }
+        ++it;
+    }
+}
+
+void HCameraService::CollectDevicesForMigration(const std::string& cameraId, pid_t ownerPid,
+    std::vector<sptr<HCameraDeviceWrapper>>& deviceWrappers)
+{
+    std::lock_guard<std::mutex> lock(camerasMutex_);
+    auto it = cameras_.begin();
+    while (it != cameras_.end()) {
+        sptr<HCameraDeviceWrapper> wrapper = it->promote();
+        if (wrapper == nullptr) {
+            it = cameras_.erase(it);
+            continue;
+        }
+        if (wrapper->GetCameraId() == cameraId && !wrapper->IsSharedMode() && wrapper->GetOwnerPid() != ownerPid) {
+            deviceWrappers.emplace_back(wrapper);
+        }
+        ++it;
+    }
 }
 
 void HCameraService::SetControlCenterInVideo(sptr<HCaptureSession>& captureSession)
@@ -1082,43 +1190,76 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     CameraReportUtils::GetInstance().updateModeChangePerfInfo(opMode, CameraReportUtils::GetCallerInfo());
 
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
-    sptr<HCaptureSession> captureSession = nullptr;
-    rc = HCaptureSession::NewInstance(callerToken, opMode, captureSession);
-    if (rc != CAMERA_OK) { // LCOV_EXCL_LINE
-        MEDIA_ERR_LOG("HCameraService::CreateCaptureSession allocation failed");
-        CameraReportUtils::ReportCameraError(
-            "HCameraService::CreateCaptureSession", rc, false, CameraReportUtils::GetCallerInfo());
-        return rc;
-    }
-    pressurePid_ = IPCSkeleton::GetCallingPid();
-    session = captureSession;
-    if (opMode == SceneMode::VIDEO) {
-        SetControlCenterInVideo(captureSession);
+    pid_t callerPid = IPCSkeleton::GetCallingPid();
+    bool isPrivilegeApp = (CheckPermission(OHOS_PERMISSION_CAMERA_SHARED, callerToken) == CAMERA_OK);
+
+    sptr<HCaptureSession> sessionForWrapper = nullptr;
+
+    if (isPrivilegeApp) {
+        sptr<HSharedCaptureSession> sharedSession = nullptr;
+        CamServiceError ret = HSharedCaptureSession::NewInstance(callerToken, opMode, sharedSession);
+        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK || sharedSession == nullptr, ret,
+            "HCameraService::CreateCaptureSession HSharedCaptureSession allocation failed");
+        sessionForWrapper = sharedSession;
+
+        MEDIA_INFO_LOG("HCameraService::CreateCaptureSession privilege app, using shared session");
     } else {
-        SetSessionForControlCenter(nullptr);
-        MEDIA_INFO_LOG("Clear videoSession of controlCenter");
+        sptr<HCaptureSession> independentSession = nullptr;
+        CamServiceError ret = HCaptureSession::NewInstance(callerToken, opMode, independentSession);
+        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
+            "HCameraService::CreateCaptureSession HCaptureSession allocation failed");
+        sessionForWrapper = independentSession;
+        MEDIA_INFO_LOG("HCameraService::CreateCaptureSession non-privilege app, using independent session");
+    }
+    sptr<HCaptureSessionWrapper> wrapper = new (std::nothrow) HCaptureSessionWrapper(
+        opMode, callerPid, isPrivilegeApp, sessionForWrapper);
+    CHECK_RETURN_RET_ELOG(wrapper == nullptr, CAMERA_ALLOC_ERROR,
+        "HCaptureSessionWrapper allocation failed");
+    pressurePid_ = callerPid;
+    session = wrapper;
+
+    wrapper->SetSharedSessionReadyCallback([this](const std::string& cameraId,
+        const sptr<HSharedCameraDevice>& sharedDevice, const sptr<HSharedCaptureSession>& sharedSession,
+        pid_t ownerPid) {
+        MigrateOpenedClientsToSharedMode(cameraId, sharedDevice, sharedSession, ownerPid);
+    });
+
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        sessions_.emplace_back(wrapper);
+    }
+    sptr<HCaptureSession> realSession = wrapper->GetRealSession();
+    sptr<HCaptureSession> oldControlCenterSession = nullptr;
+    if (opMode == SceneMode::VIDEO) {
+        SetControlCenterInVideo(realSession);
+    } else {
+        oldControlCenterSession = ClearSessionForControlCenter();
+        MEDIA_INFO_LOG("Clear videoSession of controlCenter, hasOldSession: %{public}d",
+            oldControlCenterSession != nullptr);
     }
     #ifdef HOOK_CAMERA_OPERATOR
         std::string clientName = GetClientBundle(IPCSkeleton::GetCallingUid());
-        CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName, captureSession);
+        CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName, realSession);
     #endif
     int32_t uid = IPCSkeleton::GetCallingUid();
     int32_t userId;
     AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, userId);
     MEDIA_INFO_LOG("HCameraService::CreateCaptureSession userId= %{public}d", userId);
-    captureSession->SetUserId(userId);
+    if (realSession != nullptr) {
+        realSession->SetUserId(userId);
 
-    auto &sessionManager = HCameraSessionManager::GetInstance();
-    auto mechSession = sessionManager.GetMechSession(userId);
-    if (mechSession != nullptr && mechSession->IsEnableMech()) {
-        captureSession->SetMechDeliveryState(MechDeliveryState::NEED_ENABLE);
+        auto &sessionManager = HCameraSessionManager::GetInstance();
+        auto mechSession = sessionManager.GetMechSession(userId);
+        if (mechSession != nullptr && mechSession->IsEnableMech()) {
+            realSession->SetMechDeliveryState(MechDeliveryState::NEED_ENABLE);
+        }
+        realSession->registerSessionStartCallback([this](std::string bundleName) {
+            std::lock_guard<std::mutex> lock(preCameraMutex_);
+            SetPrelaunchScanCameraConfig(bundleName);
+            clearPreScanConfig();
+            SetControlCenterDefaultActiveCase();
+        });
     }
-    captureSession->registerSessionStartCallback([this](string bundleName) {
-        std::lock_guard<std::mutex> lock(preCameraMutex_);
-        SetPrelaunchScanCameraConfig(bundleName);
-        clearPreScanConfig();
-        SetControlCenterDefaultActiveCase();
-    });
     return rc;
 }
 
@@ -1707,11 +1848,11 @@ int32_t HCameraService::CloseCameraForDestroy(pid_t pid)
     {
         std::lock_guard<std::mutex> lock(camerasMutex_);
         cameras_.erase(std::remove_if(cameras_.begin(), cameras_.end(),
-            [pid](const wptr<HCameraDevice> &cameraDevice) {
-                auto cameraDeviceSptr = cameraDevice.promote();
-                CHECK_EXECUTE(cameraDeviceSptr != nullptr && cameraDeviceSptr->GetPid() == pid,
-                    cameraDeviceSptr->Close());
-                return cameraDeviceSptr == nullptr || cameraDeviceSptr->GetPid() == pid;
+            [pid](const wptr<HCameraDeviceWrapper> &wrapper) {
+                sptr<HCameraDeviceWrapper> wrapperSptr = wrapper.promote();
+                CHECK_EXECUTE(wrapperSptr != nullptr && wrapperSptr->GetOwnerPid() == pid,
+                    wrapperSptr->Close());
+                return wrapperSptr == nullptr || wrapperSptr->GetOwnerPid() == pid;
             }), cameras_.end());
     }
     return CAMERA_OK;
@@ -3614,7 +3755,7 @@ void HCameraService::SetPrelaunchScanCameraConfig(const std::string& bundleName)
       OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     string permissionName = OHOS_PERMISSION_CAMERA;
     int32_t ret = CheckPermission(permissionName, callerToken);
-     CHECK_RETURN_ELOG(ret != CAMERA_OK, "HCameraService::SetPrelaunchScanCameraConfig failed permission is: %{public}s",
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "HCameraService::SetPrelaunchScanCameraConfig failed permission is: %{public}s",
         permissionName.c_str());
     string preCameraId = PRE_CAMERA_DEFAULT_ID;
     int activeTime = ACTIVE_TIME_DEFAULT;

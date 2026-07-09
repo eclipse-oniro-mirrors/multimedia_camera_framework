@@ -97,6 +97,8 @@ ohos_unittest("camera_service_unittest") {
       "hdi_camera_test/src/hcamera_device_unittest.cpp",
       "hdi_camera_test/src/hcamera_preconfig_unittest.cpp",
       "hdi_camera_test/src/hcamera_service_unittest.cpp",
+      "hdi_camera_test/src/hshared_camera_device_unittest.cpp",
+      "hdi_stream_test/src/hshared_capture_session_unittest.cpp",
       "hdi_stream_test/src/hstream_operator_unittest.cpp",
       "pipeline/src/camera_common_pipeline_unittest.cpp",
       "smooth_zoom/src/cubic_bezier_unittest.cpp",

@@ -58,6 +58,7 @@ static const int32_t DISPLAY_ROTATE_3 = 3;
 static const int32_t CAMERA_ORIENTATION_0 = 0;
 static const int32_t CAMERA_FRONT_ORIENTATION = 270;
 static const std::string OHOS_PERMISSION_CAMERA = "ohos.permission.CAMERA";
+static const std::string OHOS_PERMISSION_CAMERA_SHARED = "ohos.permission.CAMERA_SHARED";
 static const std::string OHOS_PERMISSION_MICROPHONE = "ohos.permission.MICROPHONE";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
 static const std::string OHOS_PERMISSION_CAMERA_CONTROL = "ohos.permission.CAMERA_CONTROL";

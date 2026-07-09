@@ -255,7 +255,17 @@ void HCaptureSessionWrapper::RemoveSavedOutputsFromSharedSession()
     }
 
     int32_t rc = sharedSession->CommitConfig();
-    sharedSession->Start();
+    if (rc != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCaptureSessionWrapper::RemoveSavedOutputsFromSharedSession CommitConfig failed, rc:%{public}d",
+            rc);
+        return;
+    }
+    int32_t startRc = sharedSession->Start();
+    if (startRc != CAMERA_OK) {
+        MEDIA_ERR_LOG("HCaptureSessionWrapper::RemoveSavedOutputsFromSharedSession Start failed, rc:%{public}d",
+            startRc);
+        return;
+    }
     MEDIA_INFO_LOG("HCaptureSessionWrapper::RemoveSavedOutputsFromSharedSession removed %{public}zu outputs, "
         "CommitConfig returned %{public}d", removedCount, rc);
     savedOutputs_.clear();
