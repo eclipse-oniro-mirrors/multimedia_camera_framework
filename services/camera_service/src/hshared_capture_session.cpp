@@ -325,12 +325,10 @@ int32_t HSharedCaptureSession::Stop()
 
 int32_t HSharedCaptureSession::Release()
 {
-    {
-        std::lock_guard<std::mutex> lock(refMutex_);
-        if (!refCount_.empty()) {
-            MEDIA_INFO_LOG("HSharedCaptureSession::Release skipped, refCount not empty");
-            return CAMERA_OK;
-        }
+    std::lock_guard<std::mutex> lock(refMutex_);
+    if (!refCount_.empty()) {
+        MEDIA_INFO_LOG("HSharedCaptureSession::Release skipped, refCount not empty");
+        return CAMERA_OK;
     }
 
     if (realSession_ != nullptr) {

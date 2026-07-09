@@ -37,9 +37,13 @@
 #include "common_event_manager.h"
 #include "display_manager_lite.h"
 #include "hcamera_device.h"
+#include "hcamera_device_wrapper.h"
+#include "hcapture_session_wrapper.h"
 #include "hcamera_host_manager.h"
 #include "camera_service_stub.h"
 #include "hcapture_session.h"
+#include "hshared_camera_device.h"
+#include "hshared_capture_session.h"
 #include "hmech_session.h"
 #include "hstream_capture.h"
 #include "hstream_operator.h"
@@ -275,6 +279,16 @@ public:
         std::lock_guard<std::mutex> lock(videoSessionMutex_);
         return videoSessionForControlCenter_;
     }
+    inline sptr<HCaptureSession> ClearSessionForControlCenter()
+    {
+        sptr<HCaptureSession> oldSession;
+        {
+            std::lock_guard<std::mutex> lock(videoSessionMutex_);
+            oldSession = videoSessionForControlCenter_;
+            videoSessionForControlCenter_ = nullptr;
+        }
+        return oldSession;
+    }
     int32_t SetParameters(const std::unordered_map<std::string, std::string>& kvPairs) override;
     int32_t GetParameters(const std::string& key, std::vector<std::string>& values) override;
     int32_t GetSupportedKeys(std::vector<std::string>& keys) override;
@@ -429,6 +443,14 @@ private:
         std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     int32_t UpdateParameterSetting(const uint32_t& tagId, const uint8_t& tagType, const std::string& valueStr);
     void UpdateScanSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& changedMetadata);
+    void MigrateOpenedClientsToSharedMode(const std::string& cameraId,
+        const sptr<HSharedCameraDevice>& sharedDevice,
+        const sptr<HSharedCaptureSession>& sharedSession, pid_t ownerPid);
+
+    void CollectSessionsForMigration(const std::string& cameraId, pid_t ownerPid,
+        std::vector<sptr<HCaptureSessionWrapper>>& sessionWrappers);
+    void CollectDevicesForMigration(const std::string& cameraId, pid_t ownerPid,
+        std::vector<sptr<HCameraDeviceWrapper>>& deviceWrappers);
 
     mutex mutex_;
     mutex cameraCbMutex_;
@@ -505,7 +527,9 @@ private:
     std::once_flag initParameterFlag_;
     std::mutex parameterMutex_;
     std::mutex camerasMutex_;
-    std::vector<wptr<HCameraDevice>> cameras_;
+    std::vector<wptr<HCameraDeviceWrapper>> cameras_;
+    std::mutex sessionsMutex_;
+    std::vector<wptr<HCaptureSessionWrapper>> sessions_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

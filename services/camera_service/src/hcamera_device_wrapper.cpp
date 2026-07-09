@@ -92,10 +92,15 @@ sptr<HCameraDevice> HCameraDeviceWrapper::SwitchToSharedMode(const sptr<HCameraD
         return nullptr;
     }
 
-    // Save reference to old independent device
-    sptr<HCameraDevice> oldDevice = device_;
-    device_ = sharedDevice;
-    isSharedMode_ = true;
+    sptr<HCameraDevice> oldDevice = nullptr;
+    sptr<ICameraDeviceServiceCallback> savedCallback = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        oldDevice = device_;
+        savedCallback = savedCallback_;
+        device_ = sharedDevice;
+        isSharedMode_ = true;
+    }
 
     // Add ref to shared device
     HSharedCameraDevice* sharedDev = static_cast<HSharedCameraDevice*>(sharedDevice.GetRefPtr());
@@ -105,15 +110,18 @@ sptr<HCameraDevice> HCameraDeviceWrapper::SwitchToSharedMode(const sptr<HCameraD
     }
 
     // Migrate already registered callback to shared device
-    if (savedCallback_ != nullptr && sharedDev != nullptr) {
+    if (savedCallback != nullptr && sharedDev != nullptr) {
         MEDIA_INFO_LOG("HCameraDeviceWrapper::SwitchToSharedMode migrating callback for pid: %{public}d", ownerPid_);
-        sharedDev->RegisterAppCallback(ownerPid_, savedCallback_);
+        sharedDev->RegisterAppCallback(ownerPid_, savedCallback);
     }
 
     // Close the old independent device
     if (oldDevice != nullptr) {
         MEDIA_INFO_LOG("HCameraDeviceWrapper::SwitchToSharedMode closing old independent device");
-        oldDevice->Close();
+        int32_t rc = oldDevice->Close();
+        if (rc != CAMERA_OK) {
+            MEDIA_ERR_LOG("HCameraDeviceWrapper::SwitchToSharedMode old device Close failed, rc:%{public}d", rc);
+        }
     }
 
     MEDIA_INFO_LOG("HCameraDeviceWrapper::SwitchToSharedMode success");

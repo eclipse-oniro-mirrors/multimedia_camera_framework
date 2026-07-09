@@ -140,7 +140,10 @@ HSharedCameraDevice::~HSharedCameraDevice()
 {
     MEDIA_INFO_LOG("HSharedCameraDevice::Destructor cameraId: %{public}s", cameraId_.c_str());
     if (realDevice_ != nullptr) {
-        realDevice_->Close();
+        int32_t rc = realDevice_->Close();
+        if (rc != CAMERA_OK) {
+            MEDIA_ERR_LOG("HSharedCameraDevice::Destructor Close failed, rc:%{public}d", rc);
+        }
     }
 
     UnregisterFromMap();
@@ -184,7 +187,6 @@ void HSharedCameraDevice::ReleaseRef(pid_t pid)
         return;
     }
 
-    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
     {
         std::lock_guard<std::mutex> lock(refMutex_);
         if (!refCount_.empty()) {
@@ -194,9 +196,13 @@ void HSharedCameraDevice::ReleaseRef(pid_t pid)
     }
 
     MEDIA_INFO_LOG("HSharedCameraDevice::ReleaseRef all clients closed, closing device");
+    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
     isOpened_.store(false);
     if (realDevice_ != nullptr) {
-        realDevice_->Close();
+        int32_t rc = realDevice_->Close();
+        if (rc != CAMERA_OK) {
+            MEDIA_ERR_LOG("HSharedCameraDevice::ReleaseRef Close failed, rc:%{public}d", rc);
+        }
     }
     UnregisterFromMap();
 }
@@ -312,7 +318,6 @@ int32_t HSharedCameraDevice::Open(const CallerDeviceInfo& callerInfo)
 
 int32_t HSharedCameraDevice::Close()
 {
-    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
     {
         std::lock_guard<std::mutex> lock(refMutex_);
         if (!refCount_.empty()) {
@@ -321,7 +326,7 @@ int32_t HSharedCameraDevice::Close()
             return CAMERA_OK;
         }
     }
-
+    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
     isOpened_.store(false);
     if (realDevice_ != nullptr) {
         MEDIA_INFO_LOG("HSharedCameraDevice::Close closing real device, cameraId: %{public}s",

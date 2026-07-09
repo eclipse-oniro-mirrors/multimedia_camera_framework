@@ -108,9 +108,6 @@ private:
 
     std::map<pid_t, uint32_t> refCount_;
     std::mutex refMutex_;
-
-    int32_t CommitReconfiguredSession(CaptureSessionState currentState);
-    int32_t CommitDynamicSession(CaptureSessionState currentState);
 };
 
 } // namespace CameraStandard
