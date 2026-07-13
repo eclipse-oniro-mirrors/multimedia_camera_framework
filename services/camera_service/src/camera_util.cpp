@@ -200,9 +200,9 @@ int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret)
     return err;
 }
 
-int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret)
+int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret, CamServiceError defaultError)
 {
-    enum CamServiceError err = CAMERA_UNKNOWN_ERROR;
+    enum CamServiceError err = defaultError;
 
     switch (ret) {
         case HDI::Camera::V1_2::NO_ERROR:
