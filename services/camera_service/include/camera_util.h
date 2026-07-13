@@ -269,8 +269,10 @@ bool RemoveFile(const std::string& path);
 bool CheckPathExist(const char *path);
 
 bool isIntegerRegex(const std::string& input);
-bool IsDoubleRegex(const std::string& input);
 bool IsUint8Regex(const std::string& input);
+bool IsValidNumberRegex(const std::string& str);
+template <typename T>
+bool ParseAndCheckNumber(const std::string& str, T& outValue);
 std::string GetValidCameraId(std::string& cameraId);
 std::string ControlCenterMapToString(const std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> &data);
 std::map<std::string, std::array<float, CONTROL_CENTER_DATA_SIZE>> StringToControlCenterMap(const std::string& str);
