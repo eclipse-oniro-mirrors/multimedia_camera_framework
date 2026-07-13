@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "camera_util.h"
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <regex>
@@ -558,19 +559,110 @@ bool isIntegerRegex(const std::string& input)
     return true;
 }
 
-bool IsDoubleRegex(const std::string& input)
-{
-    std::istringstream iss(input);
-    double val;
-    iss >> val;
-    return iss.eof() && !iss.fail();
-}
-
 bool IsUint8Regex(const std::string& input)
 {
     CHECK_RETURN_RET(!isIntegerRegex(input), false);
     int number = std::stoi(input);
     return (number >= MIN_UINT8) && (number <= MAX_UINT8);
+}
+
+bool IsValidNumberRegex(const std::string& str)
+{
+    static const std::regex rule(R"(^-?(?:\d+\.?\d*|\.\d+)$)");
+    return std::regex_match(str, rule);
+}
+
+template <>
+bool ParseAndCheckNumber<uint8_t>(const std::string& str, uint8_t& outValue)
+{
+    CHECK_RETURN_RET(!IsValidNumberRegex(str), false);
+    char* endPtr = nullptr;
+    errno = 0;
+    const char* start = str.c_str();
+    unsigned long val = strtoul(start, &endPtr, 10);
+    if (errno != ERANGE && endPtr == str.c_str() + str.length() && val <= UINT8_MAX) {
+        outValue = static_cast<uint8_t>(val);
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool ParseAndCheckNumber<int32_t>(const std::string& str, int32_t& outValue)
+{
+    CHECK_RETURN_RET(!IsValidNumberRegex(str), false);
+    char* endPtr = nullptr;
+    errno = 0;
+    const char* start = str.c_str();
+    long val = strtol(start, &endPtr, 10);
+    if (errno != ERANGE && endPtr == str.c_str() + str.length() &&
+        val >= INT32_MIN && val <= INT32_MAX) {
+        outValue = static_cast<int32_t>(val);
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool ParseAndCheckNumber<uint32_t>(const std::string& str, uint32_t& outValue)
+{
+    CHECK_RETURN_RET(!IsValidNumberRegex(str), false);
+    char* endPtr = nullptr;
+    errno = 0;
+    const char* start = str.c_str();
+    unsigned long val = strtoul(start, &endPtr, 10);
+    if (errno != ERANGE && endPtr == str.c_str() + str.length() &&
+        val <= UINT32_MAX) {
+        outValue = static_cast<uint32_t>(val);
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool ParseAndCheckNumber<float>(const std::string& str, float& outValue)
+{
+    CHECK_RETURN_RET(!IsValidNumberRegex(str), false);
+    char* endPtr = nullptr;
+    errno = 0;
+    const char* start = str.c_str();
+    float val = strtof(start, &endPtr);
+    if (errno != ERANGE && endPtr == str.c_str() + str.length() && !std::isnan(val) && !std::isinf(val)) {
+        outValue = val;
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool ParseAndCheckNumber<int64_t>(const std::string& str, int64_t& outValue)
+{
+    CHECK_RETURN_RET(!IsValidNumberRegex(str), false);
+    char* endPtr = nullptr;
+    errno = 0;
+    const char* start = str.c_str();
+    long long val = strtoll(start, &endPtr, 10);
+    if (errno != ERANGE && endPtr == str.c_str() + str.length() &&
+        val >= INT64_MIN && val <= INT64_MAX) {
+        outValue = static_cast<int64_t>(val);
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool ParseAndCheckNumber<double>(const std::string& str, double& outValue)
+{
+    CHECK_RETURN_RET(!IsValidNumberRegex(str), false);
+    char* endPtr = nullptr;
+    errno = 0;
+    const char* start = str.c_str();
+    double val = strtod(start, &endPtr);
+    if (errno != ERANGE && endPtr == str.c_str() + str.length() && !std::isnan(val) && !std::isinf(val)) {
+        outValue = val;
+        return true;
+    }
+    return false;
 }
 
 std::string GetValidCameraId(std::string& cameraId)

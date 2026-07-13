@@ -439,7 +439,7 @@ private:
         RestoreParamTypeOhos restoreParamType, int activeTime, EffectParam effectParam,
         sptr<HCaptureSession> captureSession);
     void SetPrelaunchScanCameraConfig(const std::string& bundleName);
-    void SetParameterSetting(const uint32_t& tagId, const uint8_t& tagType, const std::string& valueStr,
+    bool SetParameterSetting(const uint32_t& tagId, const uint8_t& tagType, const std::string& valueStr,
         std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata);
     int32_t UpdateParameterSetting(const uint32_t& tagId, const uint8_t& tagType, const std::string& valueStr);
     void UpdateScanSetting(std::shared_ptr<OHOS::Camera::CameraMetadata>& changedMetadata);

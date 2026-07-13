@@ -1877,9 +1877,6 @@ int32_t HCameraService::SetParameters(const std::unordered_map<std::string, std:
         uint8_t tagType = std::get<1>(iterator->second);
         std::map<std::string, std::string> kvPairs = std::get<NUMBER_TWO>(iterator->second);
         std::string valueStr = kvPairs[value];
-        CHECK_CONTINUE_ELOG(!IsDoubleRegex(valueStr)
-            || ((tagType == META_TYPE_BYTE) && (std::stoi(valueStr) < MIN_UINT8 || std::stoi(valueStr) > MAX_UINT8)),
-            "HCameraService::SetParameters invalid config, value:%{public}s", valueStr.c_str());
         MEDIA_INFO_LOG("HCameraService::SetParameters key:%{public}s, value:%{public}s", key.c_str(), value.c_str());
         int32_t ret = UpdateParameterSetting(tagId, tagType, valueStr);
         MEDIA_INFO_LOG("HCameraService::SetParameters UpdateParameterSetting ret:%{public}d", ret);
@@ -3424,46 +3421,54 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraService::CreateDefaultSetti
     return defaultSettings;
 }
 
-void HCameraService::SetParameterSetting(const uint32_t& tagId, const uint8_t& tagType,  const std::string& valueStr,
+bool HCameraService::SetParameterSetting(const uint32_t& tagId, const uint8_t& tagType,  const std::string& valueStr,
     std::shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata)
 {
     switch (tagType) {
         case META_TYPE_BYTE: {
-            auto valueByte = static_cast<uint8_t>(std::stoi(valueStr));
-            AddOrUpdateMetadata(changedMetadata, tagId, &valueByte, DEFAULT_COUNT);
+            uint8_t valueByte;
+            CHECK_EXECUTE_RETURN_RET(ParseAndCheckNumber<uint8_t>(valueStr, valueByte),
+                AddOrUpdateMetadata(changedMetadata, tagId, &valueByte, DEFAULT_COUNT), true);
             break;
         }
         case META_TYPE_INT32: {
-            auto valueInt32 = static_cast<int32_t>(std::stoi(valueStr));
-            AddOrUpdateMetadata(changedMetadata, tagId, &valueInt32, DEFAULT_COUNT);
+            int32_t valueInt32;
+            CHECK_EXECUTE_RETURN_RET(ParseAndCheckNumber<int32_t>(valueStr, valueInt32),
+                AddOrUpdateMetadata(changedMetadata, tagId, &valueInt32, DEFAULT_COUNT), true);
             break;
         }
         case META_TYPE_UINT32: {
-            auto valueUint32 = static_cast<uint32_t>(std::stoi(valueStr));
-            AddOrUpdateMetadata(changedMetadata, tagId, &valueUint32, DEFAULT_COUNT);
+            uint32_t valueUint32;
+            CHECK_EXECUTE_RETURN_RET(ParseAndCheckNumber<uint32_t>(valueStr, valueUint32),
+                AddOrUpdateMetadata(changedMetadata, tagId, &valueUint32, DEFAULT_COUNT), true);
             break;
         }
         case META_TYPE_FLOAT: {
-            auto valueFloat = static_cast<float>(std::stof(valueStr));
-            AddOrUpdateMetadata(changedMetadata, tagId, &valueFloat, DEFAULT_COUNT);
+            float valueFloat;
+            CHECK_EXECUTE_RETURN_RET(ParseAndCheckNumber<float>(valueStr, valueFloat),
+                AddOrUpdateMetadata(changedMetadata, tagId, &valueFloat, DEFAULT_COUNT), true);
             break;
         }
         case META_TYPE_INT64: {
-            auto valueInt64 = static_cast<int64_t>(std::stoll(valueStr));
-            AddOrUpdateMetadata(changedMetadata, tagId, &valueInt64, DEFAULT_COUNT);
+            int64_t valueInt64;
+            CHECK_EXECUTE_RETURN_RET(ParseAndCheckNumber<int64_t>(valueStr, valueInt64),
+                AddOrUpdateMetadata(changedMetadata, tagId, &valueInt64, DEFAULT_COUNT), true);
             break;
         }
         case META_TYPE_DOUBLE: {
-            auto valueDouble = static_cast<double>(std::stod(valueStr));
-            AddOrUpdateMetadata(changedMetadata, tagId, &valueDouble, DEFAULT_COUNT);
+            double valueDouble;
+            CHECK_EXECUTE_RETURN_RET(ParseAndCheckNumber<double>(valueStr, valueDouble),
+                AddOrUpdateMetadata(changedMetadata, tagId, &valueDouble, DEFAULT_COUNT), true);
             break;
         }
         default: {
-            auto value = std::stoi(valueStr);
-            AddOrUpdateMetadata(changedMetadata, tagId, &value, DEFAULT_COUNT);
+            int32_t valueInt32;
+            CHECK_EXECUTE_RETURN_RET(ParseAndCheckNumber<int32_t>(valueStr, valueInt32),
+                AddOrUpdateMetadata(changedMetadata, tagId, &valueInt32, DEFAULT_COUNT), true);
             break;
         }
     }
+    return false;
 }
 
 int32_t HCameraService::UpdateParameterSetting(const uint32_t& tagId, const uint8_t& tagType,
@@ -3472,7 +3477,8 @@ int32_t HCameraService::UpdateParameterSetting(const uint32_t& tagId, const uint
     int32_t ret = -1;
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
         make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
-    SetParameterSetting(tagId, tagType, valueStr, changedMetadata);
+    CHECK_RETURN_RET_ELOG(!SetParameterSetting(tagId, tagType, valueStr, changedMetadata), ret,
+        "HCameraService::SetParameters invalid config, value:%{public}s", valueStr.c_str());
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     std::vector<sptr<HCameraDeviceHolder>> deviceHolderVector = deviceManager->GetActiveCameraHolders();
     for (sptr<HCameraDeviceHolder> activeDeviceHolder : deviceHolderVector) {
