@@ -2057,7 +2057,7 @@ HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_002, TestSize.Level0
     bool enabled = false;
     sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
     phtOutput->stream_ = nullptr;
-    EXPECT_EQ(phtOutput->EnableAutoExtendedGainmapDelivery(enabled), SERVICE_FATL_ERROR);
+    EXPECT_EQ(phtOutput->EnableAutoExtendedGainmapDelivery(enabled), CameraErrorCode::SESSION_NOT_CONFIG);
 }
 
 /*
