@@ -268,6 +268,7 @@ void TrimString(std::string &inputStr);
 bool RemoveFile(const std::string& path);
 bool CheckPathExist(const char *path);
 
+bool SafeStoi(const std::string& str, int& out);
 bool isIntegerRegex(const std::string& input);
 bool IsUint8Regex(const std::string& input);
 bool IsValidNumberRegex(const std::string& str);

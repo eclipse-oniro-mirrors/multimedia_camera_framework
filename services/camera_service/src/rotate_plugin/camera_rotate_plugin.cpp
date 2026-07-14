@@ -276,8 +276,14 @@ bool CameraRotatePlugin::GetCameraAbility(ParameterMap basicInfoMap,
     result = isIntegerRegex(updateParameter[PLUGIN_CAMERA_POSITION]) &&
         isIntegerRegex(updateParameter[PLUGIN_SENSOR_ORIENTATION]);
     CHECK_RETURN_RET_ELOG(!result, false, "updateParameter result not valid number");
-    cameraPosition = std::stoi(updateParameter[PLUGIN_CAMERA_POSITION]);
-    sensorOrientation = std::stoi(updateParameter[PLUGIN_SENSOR_ORIENTATION]);
+    int tmpCameraPosition = 0;
+    int tmpSensorOrientation = 0;
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_CAMERA_POSITION], tmpCameraPosition), false,
+        "updateParameter PLUGIN_CAMERA_POSITION invalid");
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_SENSOR_ORIENTATION], tmpSensorOrientation), false,
+        "updateParameter PLUGIN_SENSOR_ORIENTATION invalid");
+    cameraPosition = tmpCameraPosition;
+    sensorOrientation = tmpSensorOrientation;
     return result;
 }
 
@@ -321,7 +327,10 @@ bool CameraRotatePlugin::CreatePreviewOutput(ParameterMap basicInfoMap, int32_t&
     result = updateParameter.find(PLUGIN_PREVIEW_FORMAT) != updateParameter.end() &&
         isIntegerRegex(updateParameter[PLUGIN_PREVIEW_FORMAT]);
     CHECK_RETURN_RET_ELOG(!result, false, "CreatePreviewOutput updateParameter result not valid number");
-    format = std::stoi(updateParameter[PLUGIN_PREVIEW_FORMAT]);
+    int tmpFormat = 0;
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_PREVIEW_FORMAT], tmpFormat), false,
+        "CreatePreviewOutput PLUGIN_PREVIEW_FORMAT invalid");
+    format = tmpFormat;
     return true;
 }
 
@@ -333,15 +342,22 @@ bool CameraRotatePlugin::PreviewStreamStart(ParameterMap basicInfoMap, int32_t& 
     CHECK_RETURN_RET_ELOG((updateParameter.size() < 1 || !result), false, "PreviewStreamStart is failed");
     result = updateParameter.find(PLUGIN_CAMERA_HAL_ROTATE_ANGLE) != updateParameter.end();
     CHECK_RETURN_RET_ELOG(!result, false, "PreviewStreamStart result not include needed parameter");
+    int tmpFrameGravity = 0;
+    int tmpFixedRotation = 0;
     CHECK_EXECUTE(updateParameter.find(PLUGIN_SURFACE_FRAME_GRAVITY) != updateParameter.end() &&
-            isIntegerRegex(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]),
-        frameGravity = std::stoi(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]));
+            isIntegerRegex(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]) &&
+            safe_stoi(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY], tmpFrameGravity),
+        frameGravity = tmpFrameGravity);
     CHECK_EXECUTE(updateParameter.find(PLUGIN_SURFACE_FIXED_ROTATION) != updateParameter.end() &&
-            isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]),
-        fixedRotation = std::stoi(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]));
+            isIntegerRegex(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]) &&
+            safe_stoi(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION], tmpFixedRotation),
+        fixedRotation = tmpFixedRotation);
     result = isIntegerRegex(updateParameter[PLUGIN_CAMERA_HAL_ROTATE_ANGLE]);
     CHECK_RETURN_RET_ELOG(!result, false, "PreviewStreamStart isIntegerRegex failed");
-    rotateAngle = std::stoi(updateParameter[PLUGIN_CAMERA_HAL_ROTATE_ANGLE]);
+    int tmpRotateAngle = 0;
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_CAMERA_HAL_ROTATE_ANGLE], tmpRotateAngle), false,
+        "PreviewStreamStart PLUGIN_CAMERA_HAL_ROTATE_ANGLE invalid");
+    rotateAngle = tmpRotateAngle;
     return true;
 }
 
@@ -361,10 +377,22 @@ bool CameraRotatePlugin::PreviewTransform(ParameterMap basicInfoMap, int32_t& fr
         isIntegerRegex(updateParameter[PLUGIN_CAMERA_POSITION]) &&
         isIntegerRegex(updateParameter[PLUGIN_SENSOR_ORIENTATION]);
     CHECK_RETURN_RET_ELOG(!result, false, "PreviewTransform isIntegerRegex failed");
-    frameGravity = std::stoi(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY]);
-    fixedRotation = std::stoi(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION]);
-    cameraPosition = std::stoi(updateParameter[PLUGIN_CAMERA_POSITION]);
-    sensorOrientation = std::stoi(updateParameter[PLUGIN_SENSOR_ORIENTATION]);
+    int tmpFrameGravity = 0;
+    int tmpFixedRotation = 0;
+    int tmpCameraPosition = 0;
+    int tmpSensorOrientation = 0;
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_SURFACE_FRAME_GRAVITY], tmpFrameGravity), false,
+        "PreviewTransform PLUGIN_SURFACE_FRAME_GRAVITY invalid");
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_SURFACE_FIXED_ROTATION], tmpFixedRotation), false,
+        "PreviewTransform PLUGIN_SURFACE_FIXED_ROTATION invalid");
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_CAMERA_POSITION], tmpCameraPosition), false,
+        "PreviewTransform PLUGIN_CAMERA_POSITION invalid");
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_SENSOR_ORIENTATION], tmpSensorOrientation), false,
+        "PreviewTransform PLUGIN_SENSOR_ORIENTATION invalid");
+    frameGravity = tmpFrameGravity;
+    fixedRotation = tmpFixedRotation;
+    cameraPosition = tmpCameraPosition;
+    sensorOrientation = tmpSensorOrientation;
     return true;
 }
 
@@ -381,11 +409,16 @@ bool CameraRotatePlugin::CaptureStreamStart(ParameterMap basicInfoMap, int32_t& 
     result = isIntegerRegex(updateParameter[PLUGIN_JPEG_ORIENTATION]) &&
         isIntegerRegex(updateParameter[PLUGIN_CAPTURE_MIRROR]);
     CHECK_RETURN_RET_ELOG(!result, false, "CaptureStreamStart result not valid parameter");
-    result = (std::stoi(updateParameter[PLUGIN_CAPTURE_MIRROR]) == 0 ||
-        std::stoi(updateParameter[PLUGIN_CAPTURE_MIRROR]) == 1);
+    int tmpCaptureMirror = 0;
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_CAPTURE_MIRROR], tmpCaptureMirror), false,
+        "CaptureStreamStart PLUGIN_CAPTURE_MIRROR invalid");
+    result = (tmpCaptureMirror == 0 || tmpCaptureMirror == 1);
     CHECK_RETURN_RET_ELOG(!result, false, "CaptureStreamStart result not valid bool parameter");
-    jpegOrientation = std::stoi(updateParameter[PLUGIN_JPEG_ORIENTATION]);
-    mirror = std::stoi(updateParameter[PLUGIN_CAPTURE_MIRROR]);
+    int tmpJpegOrientation = 0;
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_JPEG_ORIENTATION], tmpJpegOrientation), false,
+        "CaptureStreamStart PLUGIN_JPEG_ORIENTATION invalid");
+    jpegOrientation = tmpJpegOrientation;
+    mirror = tmpCaptureMirror;
     return true;
 }
 
@@ -402,7 +435,10 @@ bool CameraRotatePlugin::CreateVideoOutput(ParameterMap basicInfoMap, std::strin
     result = isIntegerRegex(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]);
     CHECK_RETURN_RET_ELOG(!result, false, "CreateVideoOutput result not valid parameter");
     surfaceAppFwkType = updateParameter[PLUGIN_SURFACE_APP_FWK_TYPE];
-    transform = static_cast<uint32_t>(std::stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]));
+    int tmpTransform = 0;
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM], tmpTransform), false,
+        "CreateVideoOutput PLUGIN_VIDEO_SURFACE_TRANSFORM invalid");
+    transform = static_cast<uint32_t>(tmpTransform);
     return true;
 }
 
@@ -421,8 +457,14 @@ bool CameraRotatePlugin::VideoStreamStart(ParameterMap basicInfoMap, std::string
         isIntegerRegex(updateParameter[PLUGIN_VIDEO_MIRROR]);
     CHECK_RETURN_RET_ELOG(!result, false, "VideoStreamStart result not valid parameter");
     surfaceAppFwkType = updateParameter[PLUGIN_SURFACE_APP_FWK_TYPE];
-    transform = static_cast<uint32_t>(std::stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM]));
-    mirror = std::stoi(updateParameter[PLUGIN_VIDEO_MIRROR]);
+    int tmpTransform = 0;
+    int tmpMirror = 0;
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_VIDEO_SURFACE_TRANSFORM], tmpTransform), false,
+        "VideoStreamStart PLUGIN_VIDEO_SURFACE_TRANSFORM invalid");
+    CHECK_RETURN_RET_ELOG(!safe_stoi(updateParameter[PLUGIN_VIDEO_MIRROR], tmpMirror), false,
+        "VideoStreamStart PLUGIN_VIDEO_MIRROR invalid");
+    transform = static_cast<uint32_t>(tmpTransform);
+    mirror = tmpMirror;
     return true;
 }
 }
