@@ -3008,20 +3008,22 @@ void HCaptureSession::UpdateBasicInfoForStream(ParameterMap ParameterMap, sptr<O
         MEDIA_DEBUG_LOG("UpdateBasicInfoForStream code is %{public}d, value is %{public}s",
             code, (pair.second).c_str());
         CHECK_CONTINUE(code != PLUGIN_SURFACE_APP_FWK_TYPE && !isIntegerRegex(pair.second));
+        int value = 0;
+        CHECK_CONTINUE(!safe_stoi(pair.second, value));
         switch (code) {
             case PLUGIN_PREVIEW_FORMAT: {
                 CHECK_EXECUTE(previewProducer != nullptr,
-                    previewProducer->SetTransform(static_cast<OHOS::GraphicTransformType>(std::stoi(pair.second))));
+                    previewProducer->SetTransform(static_cast<OHOS::GraphicTransformType>(value)));
                 break;
             }
             case PLUGIN_SURFACE_FRAME_GRAVITY: {
                 CHECK_EXECUTE(previewProducer != nullptr,
-                    previewProducer->SetFrameGravity(std::stoi(pair.second)));
+                    previewProducer->SetFrameGravity(value));
                 break;
             }
             case PLUGIN_SURFACE_FIXED_ROTATION:{
                 CHECK_EXECUTE(previewProducer != nullptr,
-                    previewProducer->SetFixedRotation(std::stoi(pair.second)));
+                    previewProducer->SetFixedRotation(value));
                 break;
             }
             case PLUGIN_SURFACE_APP_FWK_TYPE: {
@@ -3030,11 +3032,11 @@ void HCaptureSession::UpdateBasicInfoForStream(ParameterMap ParameterMap, sptr<O
             }
             case PLUGIN_VIDEO_SURFACE_TRANSFORM: {
                 CHECK_EXECUTE(videoProducer != nullptr,
-                    videoProducer->SetTransform(static_cast<OHOS::GraphicTransformType>(std::stoi(pair.second))));
+                    videoProducer->SetTransform(static_cast<OHOS::GraphicTransformType>(value)));
                 break;
             }
             default: {
-                DealPluginCode(ParameterMap, settings, code, std::stoi(pair.second));
+                DealPluginCode(ParameterMap, settings, code, value);
                 break;
             }
         }

@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "camera_util.h"
+#include <charconv>
 #include <cmath>
 #include <cstdint>
 #include <fstream>
@@ -544,6 +545,14 @@ bool CheckPathExist(const char *path)
     std::ifstream profileStream(canonicalPath);
     free(canonicalPath);
     return profileStream.good();
+}
+
+bool safe_stoi(const std::string& str, int& out) {
+    CHECK_RETURN_RET(str.empty(), false);
+    const char* first = str.data();
+    const char* last = first + str.size();
+    auto [ptr, ec] = std::from_chars(first, last, out);
+    return ec == std::errc{} && ptr == last;
 }
 
 bool isIntegerRegex(const std::string& input)
