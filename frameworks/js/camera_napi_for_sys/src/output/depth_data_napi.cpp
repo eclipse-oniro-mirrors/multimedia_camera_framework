@@ -31,6 +31,9 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
     napi_get_undefined(env, &result);
     napi_resolve_deferred(env, context->deferred, result);
     napi_delete_async_work(env, context->work);
+    // 告警原因：配套 Release 中 HoldNapiValue；不释放会泄漏 held napi_ref。
+    // 修改理由：删除 context 前释放持有的 JS 引用。
+    context->FreeHeldNapiValue(env);
     delete context;
 }
 } // namespace
@@ -262,6 +265,9 @@ napi_value DepthDataNapi::Release(napi_env env, napi_callback_info info)
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Release");
 
+        // 告警原因：异步 Release 仅存 objectInfo 裸指针，未 Hold；JS GC 后 worker 访问悬空指针 UAF。
+        // 修改理由：HoldNapiValue 保证异步期间 native 对象存活。
+        asyncContext->HoldNapiValue(env, thisVar);
         status = napi_create_async_work(
             env, nullptr, resource,
             [](napi_env env, void* data) {
@@ -282,6 +288,9 @@ napi_value DepthDataNapi::Release(napi_env env, napi_callback_info info)
             AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DepthDataNapi::Release");
+            // 告警原因：创建失败时已 Hold，须成对释放，否则 napi_ref 泄漏。
+            // 修改理由：失败路径 FreeHeldNapiValue。
+            asyncContext->FreeHeldNapiValue(env);
             napi_get_undefined(env, &result);
         } else {
             napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);

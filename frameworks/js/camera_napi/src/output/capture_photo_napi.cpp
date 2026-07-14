@@ -220,18 +220,22 @@ napi_value CapturePhotoNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "CapturePhotoNapi::Release";
                 context->taskId = CameraNapiUtils::IncrementAndGet(photoTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+                // 告警原因：原逻辑在此将 mainImageRef_/pictureRef_ 置 nullptr，导致 complete 无法 napi_delete_reference。
+                // 修改理由：删除提前置空；在 complete 中再 SafeDeleteReference。
                 if (context->objectInfo != nullptr) {
                     context->status = true;
-                    context->objectInfo->mainImageRef_ = nullptr;
-                    context->objectInfo->pictureRef_ = nullptr;
                 }
             },
             [](napi_env env, napi_status status, void* data) {
                 auto context = static_cast<CapturePhotoAsyncContext*>(data);
                 CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
                 napi_value result = nullptr;
-                CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->mainImageRef_);
-                CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->pictureRef_);
+                // 告警原因：见 execute 侧；原 complete 未判 objectInfo 空。
+                // 修改理由：判空后删除 napi_ref，修复泄漏并避免空指针解引用。
+                if (context->objectInfo != nullptr) {
+                    CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->mainImageRef_);
+                    CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->pictureRef_);
+                }
                 napi_get_undefined(env, &result);
                 napi_resolve_deferred(env, context->deferred, result);
                 napi_delete_async_work(env, context->work);

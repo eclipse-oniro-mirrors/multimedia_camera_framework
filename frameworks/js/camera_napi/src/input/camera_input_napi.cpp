@@ -412,10 +412,17 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
     MEDIA_DEBUG_LOG("CameraInputNapi::Open Qos level: %{public}d", uvQos);
     uv_loop_s *loop = CameraInputNapi::GetEventLoop(env);
     if (!loop) {
+        // 告警原因：Open 失败提前返回时未 Reset/未释放 Hold，napi_deferred/napi_ref 泄漏，Promise 永久 pending。
+        // 修改理由：与 uv_queue 失败路径一致，释放 held 引用并 Reset（reject deferred / 删 callbackRef）。
+        asyncContext->FreeHeldNapiValue(env);
+        asyncFunction->Reset();
         return nullptr;
     }
     uv_work_t *work = new(std::nothrow) uv_work_t;
     if (work == nullptr) {
+        // 告警原因/修改理由：同上，work 分配失败为提前返回错误路径。
+        asyncContext->FreeHeldNapiValue(env);
+        asyncFunction->Reset();
         return nullptr;
     }
     work->data = static_cast<void*>(asyncContext.get());

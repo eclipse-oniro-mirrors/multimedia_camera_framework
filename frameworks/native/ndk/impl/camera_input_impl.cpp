@@ -68,6 +68,14 @@ Camera_Input::Camera_Input(sptr<CameraInput> &innerCameraInput) : innerCameraInp
 Camera_Input::~Camera_Input()
 {
     MEDIA_DEBUG_LOG("~Camera_Input is called");
+    // 告警原因：OH_CameraInput_Release 删除 Camera_Input 后未注销回调，Inner*Callback 仍持有裸 this，
+    //          异步错误/遮挡回调触发时构成 Use-After-Free。
+    // 修改理由：析构时主动清空 error/occlusion 回调，切断对已释放 Camera_Input* 的访问；
+    //          调用方已 Unregister 时为幂等空操作，不影响正常路径。
+    if (innerCameraInput_ != nullptr) {
+        innerCameraInput_->SetErrorCallback(nullptr);
+        innerCameraInput_->SetOcclusionDetectCallback(nullptr);
+    }
     innerCameraInput_ = nullptr;
 }
 

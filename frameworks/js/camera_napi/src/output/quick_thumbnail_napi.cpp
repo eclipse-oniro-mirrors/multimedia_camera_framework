@@ -21,18 +21,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-namespace {
-void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
-{
-    auto context = static_cast<QuickThumbnailAsyncContext*>(data);
-    CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
-    napi_value result = nullptr;
-    napi_get_undefined(env, &result);
-    napi_resolve_deferred(env, context->deferred, result);
-    napi_delete_async_work(env, context->work);
-    delete context;
-}
-} // namespace
 
 thread_local napi_ref QuickThumbnailNapi::sConstructor_ = nullptr;
 thread_local napi_ref QuickThumbnailNapi::sCaptureIdRef_ = nullptr;
@@ -197,6 +185,31 @@ napi_value QuickThumbnailNapi::GetThumbnailImage(napi_env env, napi_callback_inf
     return result;
 }
 
+// 告警原因：Release 在 execute 中仅将 captureId_/pixelMap_ 置 nullptr，未调用 napi_delete_reference，
+//          导致 napi_ref 泄漏，关联 JS 对象无法被 GC；原匿名命名空间 AsyncCompleteCallback 也不释放 ref。
+// 修改理由：将 AsyncCompleteCallback 改为类静态成员以便访问私有成员；在 complete（JS 线程）中
+//          先 napi_delete_reference 再置空，修复泄漏且不改变 Release 业务语义。
+void QuickThumbnailNapi::AsyncCompleteCallback(napi_env env, napi_status status, void* data)
+{
+    auto context = static_cast<QuickThumbnailAsyncContext*>(data);
+    CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
+    if (context->objectInfo != nullptr) {
+        if (context->objectInfo->captureId_ != nullptr) {
+            napi_delete_reference(env, context->objectInfo->captureId_);
+            context->objectInfo->captureId_ = nullptr;
+        }
+        if (context->objectInfo->pixelMap_ != nullptr) {
+            napi_delete_reference(env, context->objectInfo->pixelMap_);
+            context->objectInfo->pixelMap_ = nullptr;
+        }
+    }
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    napi_resolve_deferred(env, context->deferred, result);
+    napi_delete_async_work(env, context->work);
+    delete context;
+}
+
 napi_value QuickThumbnailNapi::Release(napi_env env, napi_callback_info info)
 {
     MEDIA_INFO_LOG("QuickThumbnailNapi::Release is called");
@@ -225,10 +238,10 @@ napi_value QuickThumbnailNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "QuickThumbnailNapi::Release";
                 context->taskId = CameraNapiUtils::IncrementAndGet(quickThumbnailTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
+                // 告警原因：原逻辑在此将 captureId_/pixelMap_ 置 nullptr，未 napi_delete_reference，且 complete 无法再释放。
+                // 修改理由：删除此处置空；改由 AsyncCompleteCallback 在 JS 线程 delete_reference 后再置空。
                 if (context->objectInfo != nullptr) {
                     context->status = true;
-                    context->objectInfo->captureId_ = nullptr;
-                    context->objectInfo->pixelMap_ = nullptr;
                 }
             },
             AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
