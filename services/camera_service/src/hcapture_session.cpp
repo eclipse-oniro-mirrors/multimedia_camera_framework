@@ -253,8 +253,11 @@ static int32_t SwitchBeautyValToDataShareVal(const sptr<HCameraDevice>& device,
         MEDIA_ERR_LOG("SwitchBeautyValToDataShareVal failed, beautyVal:%{public}d not support", beautyVal);
         return CAMERA_INVALID_ARG;
     }
-    valbasePlaceDiff = std::distance(range.begin(), it) * (PER_BEAUTY_VAL_NUM - 1) /
-        static_cast<int32_t>(range.size() - 1) - valbasePlaceOld;
+    if (range.size() > 1) {
+        valbasePlaceDiff =
+            std::distance(range.begin(), it) * (PER_BEAUTY_VAL_NUM - 1) / static_cast<int32_t>(range.size() - 1) -
+            valbasePlaceOld;
+    }
     valbasePlaceDiff = std::clamp(valbasePlaceDiff, -PER_BEAUTY_VAL_NUM + 1, PER_BEAUTY_VAL_NUM - 1);
     shareVal += valbasePlaceDiff * basePlaceVal;
     shareVal = std::clamp(shareVal, 0, g_beautyShareMax);
@@ -277,7 +280,10 @@ static int32_t SwitchDataShareValToBeautyVal(const sptr<HCameraDevice>& device,
     std::vector<int32_t> range{};
     errCode = GetBeautyRangeByType(device, type, range);
     int32_t valbasePlace = (shareVal / basePlaceVal) % PER_BEAUTY_VAL_NUM;
-    valbasePlace = valbasePlace * static_cast<int32_t>(range.size() - 1) / (PER_BEAUTY_VAL_NUM - 1);  // [0-5] -> [0-10]
+    if (range.size() > 1) {
+        valbasePlace =
+            valbasePlace * static_cast<int32_t>(range.size() - 1) / (PER_BEAUTY_VAL_NUM - 1); // [0-5] -> [0-10]
+    }
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "GetBeautyRange failed.");
     if (valbasePlace >= 0 && valbasePlace < static_cast<int32_t>(range.size())) {
         beautyVal = range[valbasePlace];
