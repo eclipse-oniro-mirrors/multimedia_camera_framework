@@ -547,7 +547,8 @@ bool CheckPathExist(const char *path)
     return profileStream.good();
 }
 
-bool safe_stoi(const std::string& str, int& out) {
+bool SafeStoi(const std::string& str, int& out)
+{
     CHECK_RETURN_RET(str.empty(), false);
     const char* first = str.data();
     const char* last = first + str.size();
