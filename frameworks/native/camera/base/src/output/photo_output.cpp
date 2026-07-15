@@ -1872,8 +1872,10 @@ int32_t PhotoOutput::IsAutoExtendedGainmapDeliverySupported(bool &isAutoExtended
     MEDIA_INFO_LOG("PhotoOutput IsAutoExtendedGainmapDeliverySupported is called");
     isAutoExtendedGainmapDeliverySupported = false;
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr || !session->IsSessionCommited(), SESSION_NOT_CONFIG,
-        "PhotoOutput Failed check IsAutoExtendedGainmapDeliverySupported!, session is nullptr or not commited");
+    CHECK_RETURN_RET(session == nullptr, SESSION_NOT_CONFIG);
+    CHECK_RETURN_RET_ELOG(!(session->IsSessionConfiged() || session->IsSessionCommited()),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput Failed check IsAutoExtendedGainmapDeliverySupported!, session not configed or not commited");
     auto inputDevice = session->GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
         "PhotoOutput IsAutoExtendedGainmapDeliverySupported error!, inputDevice is nullptr");
@@ -1905,13 +1907,14 @@ int32_t PhotoOutput::EnableAutoExtendedGainmapDelivery(bool enabled)
 {
     MEDIA_INFO_LOG("PhotoOutput EnableAutoExtendedGainmapDelivery is called");
     auto captureSession = GetSession();
-    CHECK_RETURN_RET_ELOG(captureSession == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(captureSession == nullptr, SESSION_NOT_CONFIG,
         "PhotoOutput EnableAutoExtendedGainmapDelivery error!, captureSession is nullptr");
+    CHECK_RETURN_RET_ELOG(!(captureSession->IsSessionConfiged() || captureSession->IsSessionCommited()),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput EnableAutoExtendedGainmapDelivery error!, session not configed or not commited");
     auto inputDevice = captureSession->GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SESSION_NOT_CONFIG,
         "PhotoOutput EnableAutoExtendedGainmapDelivery error!, inputDevice is nullptr");
-    CHECK_RETURN_RET_ELOG(!captureSession->IsSessionCommited(), SESSION_NOT_CONFIG,
-        "PhotoOutput EnableAutoExtendedGainmapDelivery error!, captureSession not commited");
     bool isAutoExtendedGainmapDeliverySupported = false;
     int32_t ret = IsAutoExtendedGainmapDeliverySupported(isAutoExtendedGainmapDeliverySupported);
     CHECK_RETURN_RET_ELOG(isAutoExtendedGainmapDeliverySupported == false, OPERATION_NOT_ALLOWED,
