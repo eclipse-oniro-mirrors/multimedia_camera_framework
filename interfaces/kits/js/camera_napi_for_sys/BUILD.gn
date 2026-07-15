@@ -69,6 +69,8 @@ ohos_shared_library("camera_napi_ex") {
     "ipc:ipc_core",
     "media_library:medialibrary_nutils",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
   ]
 
   public_external_deps = [

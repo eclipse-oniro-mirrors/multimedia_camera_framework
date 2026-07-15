@@ -93,6 +93,7 @@ ohos_shared_library("ohcamera") {
     "media_library:media_library_manager",
     "media_library:native_media_asset_manager",
     "napi:ace_napi",
+    "node:node_header_notice",
     "resource_management:librawfile",
     "samgr:samgr_proxy",
   ]
