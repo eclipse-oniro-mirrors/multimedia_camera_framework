@@ -161,8 +161,6 @@ napi_value DeferredPhotoProxyNapi::GetThumbnail(napi_env env, napi_callback_info
             DeferredPhotoAsyncTaskComplete, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DeferredPhotoProxyNapi::GetThumbnail");
-            // 告警原因：创建 async_work 失败时已 Hold，若不释放则 napi_ref 泄漏。
-            // 修改理由：失败路径配对 FreeHeldNapiValue，与成功路径 complete 中释放对称。
             asyncContext->FreeHeldNapiValue(env);
             napi_get_undefined(env, &result);
         } else {
@@ -193,8 +191,6 @@ void DeferredPhotoProxyNapi::DeferredPhotoAsyncTaskComplete(napi_env env, napi_s
     napi_value thumbnail = Media::PixelMapNapi::CreatePixelMap(env, std::move(pixelMap));
     napi_resolve_deferred(env, context->deferred, thumbnail);
     napi_delete_async_work(env, context->work);
-    // 告警原因：配套 HoldNapiValue；不释放会泄漏 held napi_ref。
-    // 修改理由：删除 context 前释放持有的 JS 引用。
     context->FreeHeldNapiValue(env);
     delete context;
 }
