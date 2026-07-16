@@ -1923,10 +1923,9 @@ int32_t HCameraDevice::OnResult(const uint64_t timestamp, const std::vector<uint
     if (callback != nullptr) {
         callback->OnResult(timestamp, cameraResult);
     }
-    auto spectrumInfoCallback = GetSpectrumCallback();
-        if (spectrumInfoCallback != nullptr) {
-            OnSpectrumInfoChange(cameraResult, timestamp);
-        }
+    
+    OnSpectrumInfoChange(cameraResult, timestamp);
+
     ReportDeviceProtectionStatus(cameraResult);
     if (IsCameraDebugOn()) {
         CheckOnResultData(cameraResult);
@@ -2381,13 +2380,15 @@ void HCameraDevice::OnSpectrumInfoChange(
     } else {
         MEDIA_DEBUG_LOG("HCameraDevice::OnSpectrumInfoChange the spectrum data is null");
     }
-    if (spectrumInfo.size() > 0) {
-        spectrumInfoCallback_->OnCameraSpectrumInfo(userId_, spectrumInfo, timestamp);
+    auto spectrumInfoCallback = GetSpectrumCallback();
+    if (spectrumInfo.size() > 0 && spectrumInfoCallback) {
+        spectrumInfoCallback->OnCameraSpectrumInfo(userId_, spectrumInfo, timestamp);
     }
 }
 
 void HCameraDevice::SetSpectrumCallback(int32_t userId, sptr<ICameraSpectrumInfoCallback> callback)
 {
+    std::lock_guard<std::mutex> lock(spectrumInfoCallbackMutex_);
     if (callback && userId) {
         spectrumInfoCallback_ = callback;
         userId_ = userId;
@@ -2396,13 +2397,13 @@ void HCameraDevice::SetSpectrumCallback(int32_t userId, sptr<ICameraSpectrumInfo
 
 void HCameraDevice::UnsetSpectrumCallback()
 {
-    if (spectrumInfoCallback_ != nullptr) {
-        spectrumInfoCallback_ = nullptr;
-    }
+    std::lock_guard<std::mutex> lock(spectrumInfoCallbackMutex_);
+    spectrumInfoCallback_ = nullptr;
 }
 
 sptr<ICameraSpectrumInfoCallback> HCameraDevice::GetSpectrumCallback()
 {
+    std::lock_guard<std::mutex> lock(spectrumInfoCallbackMutex_);
     return spectrumInfoCallback_;
 }
 } // namespace CameraStandard
