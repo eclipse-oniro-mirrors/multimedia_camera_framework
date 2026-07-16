@@ -80,8 +80,6 @@ CameraServerPhotoProxy::~CameraServerPhotoProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("~CameraServerPhotoProxy");
-    // 告警原因：GetFileDataAddr 可能 mmap，析构仅置空指针未 munmap，导致映射内存泄漏。
-    // 修改理由：对齐 DeferredPhotoProxy 析构；在释放前对已映射区域 munmap，并清 isMmaped_ 防重复释放。
     if (isMmaped_ && bufferHandle_ != nullptr && fileDataAddr_ != nullptr) {
         munmap(fileDataAddr_, bufferHandle_->size);
         isMmaped_ = false;
@@ -334,8 +332,6 @@ void CameraServerPhotoProxy::Release()
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("CameraServerPhotoProxy release enter");
-    // 告警原因：析构补 munmap 后，若 Release 已 munmap 却未清 isMmaped_，析构会二次 munmap（UB）。
-    // 修改理由：加锁保护 isMmaped_/fileDataAddr_；munmap 成功后清标志与指针，保证析构幂等。
     std::lock_guard<std::mutex> lock(mutex_);
     bool isMmappedAndBufferValid = isMmaped_ && bufferHandle_ != nullptr;
     if (isMmappedAndBufferValid) {
