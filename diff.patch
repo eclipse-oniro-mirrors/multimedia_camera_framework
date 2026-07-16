@@ -1,0 +1,275 @@
+From 0eec5efbe6ceac88b7c6adff224d8e71242b794b Mon Sep 17 00:00:00 2001
+From: m00939602 <mengzhe5@huawei.com>
+Date: Thu, 16 Jul 2026 14:11:02 +0800
+Subject: [PATCH] =?UTF-8?q?TicketNo:DTS2026071620565=20Description:thrower?=
+ =?UTF-8?q?ror=E7=B1=BB=E5=9E=8B=E9=94=99=E8=AF=AF=E7=A0=81=E6=94=B9?=
+ =?UTF-8?q?=E4=B8=BANumber=20Team:EMUI=20Feature=20or=20Bugfix:Bugfix=20Bi?=
+ =?UTF-8?q?nary=20Source:No=20PrivateCode(Yes/No):=20Co-Authored-By:agent?=
+ =?UTF-8?q?=20cherry=20picked=20from=20commit=205c9ec2e0f2794dc50af2336255?=
+ =?UTF-8?q?dcfe13c286d2b1?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: I70eb051129718fb22ebe8b8f6fa75a8a24587f41
+Reviewed-by: w30076694
+Approved-by: w00670199
+Merged-on: https://open.codehub.huawei.com/OpenSourceCenter_CR/openharmony/multimedia_camera_framework/-/change_requests/13619
+Merged-by: public hisicitools
+---
+ .../js/camera_napi/src/camera_napi_utils.cpp  | 35 +++++++++++++++++++
+ .../src/input/camera_manager_napi.cpp         |  6 ++--
+ .../src/output/metadata_output_napi.cpp       |  4 +--
+ .../src/output/preview_output_napi.cpp        |  2 +-
+ .../src/session/camera_session_napi.cpp       | 22 ++++++------
+ .../camera_napi/include/camera_napi_utils.h   |  7 ++++
+ 6 files changed, 59 insertions(+), 17 deletions(-)
+
+diff --git a/frameworks/js/camera_napi/src/camera_napi_utils.cpp b/frameworks/js/camera_napi/src/camera_napi_utils.cpp
+index 30cf7efc4d..7d35cb7a43 100644
+--- a/frameworks/js/camera_napi/src/camera_napi_utils.cpp
++++ b/frameworks/js/camera_napi/src/camera_napi_utils.cpp
+@@ -70,6 +70,22 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
+     {7400801, "801"}
+ };
+ 
++static const std::map<int32_t, int32_t> errorCodeToNumberCode = {
++    {7400102, 7400102},
++    {74001021, 7400102},
++    {74001022, 7400102},
++    {74001023, 7400102},
++    {74001024, 7400102},
++    {7400103, 7400103},
++    {7400201, 7400201},
++    {74002011, 7400201},
++    {74002012, 7400201},
++    {74002013, 7400201},
++    {74002014, 7400201},
++    {74002015, 7400201},
++    {7400801, 801}
++};
++
+ std::string CameraNapiUtils::GetJSErrorCode(int32_t errorCode)
+ {
+     auto it = errorCodeToJSErrorCode.find(errorCode);
+@@ -80,6 +96,16 @@ std::string CameraNapiUtils::GetJSErrorCode(int32_t errorCode)
+     }
+ }
+ 
++int32_t CameraNapiUtils::GetJSErrorCodeToNumber(int32_t errorCode)
++{
++    auto it = errorCodeToNumberCode.find(errorCode);
++    if (it != errorCodeToNumberCode.end()) {
++        return it->second;
++    } else {
++        return errorCode;
++    }
++}
++
+ std::string CameraNapiUtils::GetErrorMessage(int32_t errorCode)
+ {
+     auto it = errorCodeToMessage.find(errorCode);
+@@ -337,6 +363,15 @@ bool CameraNapiUtils::CheckErrorV2(napi_env env, int32_t retCode)
+     return true;
+ }
+ 
++bool CameraNapiUtils::CheckBusinessError(napi_env env, int32_t retCode)
++{
++    if ((retCode != 0)) {
++        napi_throw_business_error(env, GetJSErrorCodeToNumber(retCode), GetErrorMessageV2(retCode).c_str());
++        return false;
++    }
++    return true;
++}
++
+ double CameraNapiUtils::FloatToDouble(float val)
+ {
+     const double precision = 1000000.0;
+diff --git a/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp b/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
+index f5c1119535..d8d4a1c1b3 100644
+--- a/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
++++ b/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
+@@ -3048,13 +3048,13 @@ napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callbac
+         status = napi_get_value_double(env, argv[PARAM0], &level);
+         if (status != napi_ok) {
+             MEDIA_ERR_LOG("SetTorchModeOnWithLevel: failed to get level value from JS");
+-            CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
++            CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR,
+                 "CameraManagerNapi::SetTorchModeOnWithLevel can not get thisVar");
+             return result;
+         }
+         if (level < 0 || level > 1) {
+             MEDIA_ERR_LOG("SetTorchModeOnWithLevel: level value is out of range");
+-            CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
++            CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR,
+                 "CameraManagerNapi::SetTorchModeOnWithLevel level value is out of range ");
+             return result;
+         }
+@@ -3066,7 +3066,7 @@ napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callbac
+         }
+         TorchMode torchMode = (TorchMode)mode;
+         int32_t retCode = CameraManager::GetInstance()->SetTorchModeOnWithLevel(torchMode, level);
+-        if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
++        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+             MEDIA_DEBUG_LOG("SetTorchModeOnWithLevel fail throw error");
+         }
+     } else {
+diff --git a/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp b/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp
+index f068b3a793..3d2119d0aa 100644
+--- a/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/metadata_output_napi.cpp
+@@ -659,7 +659,7 @@ napi_value MetadataOutputNapi::LockMetadataObjectTracking(napi_env env, napi_cal
+         return result;
+     }
+     int32_t retCode = metadataOutputNapi->metadataOutput_->LockMetadataObjectTracking(point);
+-    if (!CameraNapiUtils::CheckError(env, retCode)) {
++    if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+         MEDIA_ERR_LOG("LockMetadataObjectTracking failure!");
+     }
+     MEDIA_INFO_LOG("LockMetadataObjectTracking: point = [%{public}f, %{public}f]", point.x, point.y);
+@@ -686,7 +686,7 @@ napi_value MetadataOutputNapi::UnlockMetadataObjectTracking(napi_env env, napi_c
+     }
+ 
+     int32_t retCode = metadataOutputNapi->metadataOutput_->UnlockMetadataObjectTracking();
+-    if (!CameraNapiUtils::CheckError(env, retCode)) {
++    if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+         MEDIA_ERR_LOG("UnlockMetadataObjectTracking failure!");
+     }
+     MEDIA_INFO_LOG("UnlockMetadataObjectTracking: success");
+diff --git a/frameworks/js/camera_napi/src/output/preview_output_napi.cpp b/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
+index 37ba0176e9..9c5fa904bf 100644
+--- a/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
+@@ -1214,7 +1214,7 @@ napi_value PreviewOutputNapi::SetLogViewAssistEnable(napi_env env, napi_callback
+     }
+ 
+     int32_t retCode = previewOutputNapi->previewOutput_->SetLogViewAssistEnable(isEnableLogAssistance);
+-    if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
++    if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+         MEDIA_ERR_LOG("PreviewOutputNapi::SetLogViewAssistEnable fail! %{public}d", retCode);
+         return nullptr;
+     }
+diff --git a/frameworks/js/camera_napi/src/session/camera_session_napi.cpp b/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
+index 5bd2e4db71..17ee8f5627 100644
+--- a/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
++++ b/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
+@@ -2980,13 +2980,13 @@ napi_value CameraSessionNapi::IsLockFocusTrackingSupported(napi_env env, napi_ca
+     if (cameraSessionNapi->cameraSession_ != nullptr) {
+         bool isSupported = false;
+         int32_t retCode = cameraSessionNapi->cameraSession_->IsLockFocusTrackingSupported(isSupported);
+-        if (!CameraNapiUtils::CheckError(env, retCode)) {
++        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+             return nullptr;
+         }
+         napi_get_boolean(env, isSupported, &result);
+     } else {
+         MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
+-        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
++        CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR, "get native object fail");
+         return nullptr;
+     }
+     return result;
+@@ -3008,12 +3008,12 @@ napi_value CameraSessionNapi::LockFocusTracking(napi_env env, napi_callback_info
+         cameraSessionNapi->cameraSession_->LockForControl();
+         int32_t retCode = cameraSessionNapi->cameraSession_->LockFocusTracking(focusPoint);
+         cameraSessionNapi->cameraSession_->UnlockForControl();
+-        if (!CameraNapiUtils::CheckError(env, retCode)) {
++        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+             return nullptr;
+         }
+     } else {
+         MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
+-        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
++        CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR, "get native object fail");
+         return nullptr;
+     }
+     return result;
+@@ -3032,12 +3032,12 @@ napi_value CameraSessionNapi::UnlockFocusTracking(napi_env env, napi_callback_in
+         cameraSessionNapi->cameraSession_->LockForControl();
+         int32_t retCode = cameraSessionNapi->cameraSession_->UnlockFocusTracking();
+         cameraSessionNapi->cameraSession_->UnlockForControl();
+-        if (!CameraNapiUtils::CheckError(env, retCode)) {
++        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+             return nullptr;
+         }
+     } else {
+         MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
+-        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
++        CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR, "get native object fail");
+         return nullptr;
+     }
+     return result;
+@@ -3341,7 +3341,7 @@ napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info
+     if (status == napi_ok && cameraSessionNapi != nullptr) {
+         std::vector<ZoomPointInfo> vecZoomPointInfoList;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomPointInfos(vecZoomPointInfoList);
+-        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
++        CHECK_RETURN_RET(!CameraNapiUtils::CheckBusinessError(env, retCode), nullptr);
+         MEDIA_INFO_LOG("CameraSessionNapi::GetZoomPointInfos len = %{public}zu",
+             vecZoomPointInfoList.size());
+         for (size_t i = 0; i < vecZoomPointInfoList.size(); i++) {
+@@ -4199,7 +4199,7 @@ napi_value CameraSessionNapi::GetColorTintRange(napi_env env, napi_callback_info
+     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+         std::vector<int32_t> colorTintRange = {};
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetColorTintRange(colorTintRange);
+-        if (!CameraNapiUtils::CheckError(env, retCode)) {
++        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+             return nullptr;
+         }
+         MEDIA_INFO_LOG("CameraSessionNapi::GetColorTintRange len = %{public}zu", colorTintRange.size());
+@@ -4237,7 +4237,7 @@ napi_value CameraSessionNapi::GetColorTint(napi_env env, napi_callback_info info
+     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+         int32_t colorTintValue;
+         int32_t retCode = cameraSessionNapi->cameraSession_->GetColorTint(colorTintValue);
+-        if (!CameraNapiUtils::CheckError(env, retCode)) {
++        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+             return nullptr;
+         }
+         napi_create_int32(env, colorTintValue, &result);
+@@ -4275,9 +4275,9 @@ napi_value CameraSessionNapi::SetColorTint(napi_env env, napi_callback_info info
+         
+         cameraSessionNapi->cameraSession_->LockForControl();
+         int32_t retCode = cameraSessionNapi->cameraSession_->SetColorTint(colorTintValue);
+-        if (!CameraNapiUtils::CheckError(env, retCode)) {
++        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+             cameraSessionNapi->cameraSession_->UnlockForControl();
+-            CameraNapiUtils::ThrowError(env, CameraErrorCode::INVALID_ARGUMENT, "Failed to set color tint");
++            CameraNapiUtils::ThrowBusinessError(env, CameraErrorCode::INVALID_ARGUMENT, "Failed to set color tint");
+             return nullptr;
+         }
+         MEDIA_INFO_LOG("CameraSessionNapi::SetColorTint set colorTintValue:%{public}d", colorTintValue);
+diff --git a/interfaces/kits/js/camera_napi/include/camera_napi_utils.h b/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
+index 4821b84991..856a6005d6 100644
+--- a/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
++++ b/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
+@@ -148,6 +148,7 @@ public:
+ 
+     static bool CheckError(napi_env env, int32_t retCode);
+     static bool CheckErrorV2(napi_env env, int32_t retCode);
++    static bool CheckBusinessError(napi_env env, int32_t retCode);
+ 
+     static double FloatToDouble(float val);
+ 
+@@ -376,6 +377,11 @@ public:
+         napi_throw_error(env, errorCode.c_str(), message);
+     }
+ 
++    inline static void ThrowBusinessError(napi_env env, int32_t code, const char* message)
++    {
++        napi_throw_business_error(env, code, message);
++    }
++
+     inline static std::string GetTaskName(const std::string& func,
+         const std::unordered_map<std::string, std::string>& params)
+     {
+@@ -407,6 +413,7 @@ public:
+     static std::string GetErrorMessage(int32_t errorCode);
+     static std::string GetErrorMessageV2(int32_t errorCode);
+     static std::string GetJSErrorCode(int32_t errorCode);
++    static int32_t GetJSErrorCodeToNumber(int32_t errorCode);
+ 
+     static bool ParseCameraTypesArray(napi_env env, napi_value typesValue, std::vector<CameraType>& outTypes);
+     static napi_value CreateObjectWithMap(napi_env env,
+-- 
+2.51.2.huawei.11
+
