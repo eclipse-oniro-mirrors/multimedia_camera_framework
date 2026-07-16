@@ -125,6 +125,7 @@ taihe_shared_library("camera_taihe") {
     "media_library:media_library_camera_helper",
     "media_library:medialibrary_ani_utils",
     "napi:ace_napi",
+    "node:node_header_notice",
     "runtime_core:ani_helpers",
   ]
 
@@ -212,6 +213,7 @@ taihe_shared_library("camera_picker_taihe") {
     "hitrace:hitrace_meter",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "node:node_header_notice",
   ]
 
   sanitize = {

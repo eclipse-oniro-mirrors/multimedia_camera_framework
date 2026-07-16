@@ -61,6 +61,8 @@ ohos_shared_library("camera_napi") {
     "image_framework:image_native",
     "ipc:ipc_core",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
     "samgr:samgr_proxy",
     "c_utils:utils",
   ]
@@ -161,6 +163,8 @@ if (gen_camera_picker) {
       "hitrace:hitrace_meter",
       "init:libbegetutil",  # parameters.h
       "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
+      "node:node_header_notice",
+      "libuv:uv",
       "samgr:samgr_proxy",
       "window_manager:libwm",  # windows.h
     ]
@@ -252,6 +256,8 @@ ohos_shared_library("camera_napi_base") {
     "ipc:ipc_core",
     "media_library:medialibrary_nutils",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
     "qos_manager:qos",
     "samgr:samgr_proxy",
   ]
@@ -324,6 +330,8 @@ ohos_shared_library("resourcemanager_napi") {
     "hitrace:hitrace_meter",
     "init:libbegetutil",  # parameters.h
     "napi:ace_napi",  # native_reference <-- camera_napi_utils.h
+    "node:node_header_notice",
+    "libuv:uv",
     "samgr:samgr_proxy",
     "window_manager:libwm",  # windows.h
   ]
