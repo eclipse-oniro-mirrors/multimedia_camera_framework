@@ -85,7 +85,8 @@
               "libxml2",
               "openssl",
               "icu",
-              "storage_service"
+              "storage_service",
+              "taihe_ffi_gen"
             ]
         },
         "build": {
