@@ -1340,29 +1340,38 @@ int32_t HCameraDevice::UpdateRotateAngleForSpecialBundle(bool isResetDegree)
     return retCode;
 }
 
+int32_t HCameraDevice::JudgeLogicCameraStatus(int32_t retCode)
+{
+    if (retCode == CAMERA_OK) {
+        MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle Use HAL Rotate WhiteList");
+        return CAMERA_OK;
+    }
+    if (!isLogicCamera_ || !IsPhysicalCameraOrientationVariable()) {
+        MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle not support Logic Device");
+        return CAMERA_OK;
+    }
+    if (GetUsePhysicalCameraOrientation()) {
+        MEDIA_INFO_LOG("HCameraDevice::UpdateCameraRotateAngle not use Logic Device");
+        return CAMERA_OK;
+    }
+    return CAMERA_INVALID_ARG;
+}
+
 int32_t HCameraDevice::UpdateRotateAngleJudge(int32_t displayMode)
 {
-    CHECK_RETURN_RET_ILOG(!isLogicCamera_ || !IsPhysicalCameraOrientationVariable(), CAMERA_OK,
-        "HCameraDevice::UpdateCameraRotateAngle not support Logic Device");
-    bool isUsed = GetUsePhysicalCameraOrientation();
     if (!foldScreenType_.empty() && foldScreenType_[0] == '7') {
         bool isResetDegree = !(displayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::FULL) ||
             displayMode == static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::COORDINATION));
         int32_t retCode = UpdateRotateAngleForSpecialBundle(isResetDegree);
-        CHECK_RETURN_RET_ILOG(
-            retCode == CAMERA_OK, CAMERA_OK, "HCameraDevice::UpdateCameraRotateAngle Use HAL Rotate WhiteList");
-        CHECK_RETURN_RET_ILOG(isUsed, CAMERA_OK, "HCameraDevice::UpdateCameraRotateAngle not use Logic Device");
-        return CAMERA_INVALID_ARG;
-    } else if (!foldScreenType_.empty() && (foldScreenType_[0] == '6' || foldScreenType_[0] == '8')) {
+        return JudgeLogicCameraStatus(retCode);
+    }
+    if (!foldScreenType_.empty() && (foldScreenType_[0] == '6' || foldScreenType_[0] == '8')) {
         bool isResetDegree = (displayMode != static_cast<int32_t>(OHOS::Rosen::FoldDisplayMode::GLOBAL_FULL));
         int32_t retCode = UpdateRotateAngleForSpecialBundle(isResetDegree);
-        CHECK_RETURN_RET_ILOG(
-            retCode == CAMERA_OK, CAMERA_OK, "HCameraDevice::UpdateCameraRotateAngle Use HAL Rotate WhiteList");
-        CHECK_RETURN_RET_ILOG(isUsed, CAMERA_OK, "HCameraDevice::UpdateCameraRotateAngle not use Logic Device");
-        return CAMERA_INVALID_ARG;
-    } else if (isLogicCamera_) {
-        CHECK_RETURN_RET_ILOG(isUsed, CAMERA_OK, "HCameraDevice::UpdateCameraRotateAngle not use Logic Device");
-        return CAMERA_INVALID_ARG;
+        return JudgeLogicCameraStatus(retCode);
+    }
+    if (isLogicCamera_) {
+        return JudgeLogicCameraStatus();
     }
     return CAMERA_OK;
 }

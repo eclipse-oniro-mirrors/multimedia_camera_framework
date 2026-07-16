@@ -286,6 +286,7 @@ private:
     void UpdateDeviceOpenLifeCycleSettings(std::shared_ptr<OHOS::Camera::CameraMetadata> changedSettings);
     void ResetDeviceOpenLifeCycleSettings();
     int32_t UpdateRotateAngleForSpecialBundle(bool isResetDegree);
+    int32_t JudgeLogicCameraStatus(int32_t retCode = CAMERA_INVALID_ARG);
     int32_t UpdateRotateAngleJudge(int32_t displayMode);
     bool GetUseLogicCamera(int32_t displayMode);
 
