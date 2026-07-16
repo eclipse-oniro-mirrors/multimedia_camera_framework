@@ -1227,7 +1227,7 @@ napi_value PreviewOutputNapi::SetLogViewAssistEnable(napi_env env, napi_callback
     }
 
     int32_t retCode = previewOutputNapi->previewOutput_->SetLogViewAssistEnable(isEnableLogAssistance);
-    if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
+    if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
         MEDIA_ERR_LOG("PreviewOutputNapi::SetLogViewAssistEnable fail! %{public}d", retCode);
         return nullptr;
     }

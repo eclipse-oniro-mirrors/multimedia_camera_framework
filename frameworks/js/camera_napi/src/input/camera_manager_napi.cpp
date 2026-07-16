@@ -2522,13 +2522,13 @@ napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callbac
         status = napi_get_value_double(env, argv[PARAM0], &level);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("SetTorchModeOnWithLevel: failed to get level value from JS");
-            CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+            CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR,
                 "CameraManagerNapi::SetTorchModeOnWithLevel can not get thisVar");
             return result;
         }
         if (level < 0 || level > 1) {
             MEDIA_ERR_LOG("SetTorchModeOnWithLevel: level value is out of range");
-            CameraNapiUtils::ThrowError(env, PARAMETER_ERROR,
+            CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR,
                 "CameraManagerNapi::SetTorchModeOnWithLevel level value is out of range ");
             return result;
         }
@@ -2540,7 +2540,7 @@ napi_value CameraManagerNapi::SetTorchModeOnWithLevel(napi_env env, napi_callbac
         }
         TorchMode torchMode = (TorchMode)mode;
         int32_t retCode = CameraManager::GetInstance()->SetTorchModeOnWithLevel(torchMode, level);
-        if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
+        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
             MEDIA_DEBUG_LOG("SetTorchModeOnWithLevel fail throw error");
         }
     } else {

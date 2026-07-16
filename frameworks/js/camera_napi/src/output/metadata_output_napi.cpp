@@ -608,7 +608,7 @@ napi_value MetadataOutputNapi::LockMetadataObjectTracking(napi_env env, napi_cal
         return result;
     }
     int32_t retCode = metadataOutputNapi->metadataOutput_->LockMetadataObjectTracking(point);
-    if (!CameraNapiUtils::CheckError(env, retCode)) {
+    if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
         MEDIA_ERR_LOG("LockMetadataObjectTracking failure!");
     }
     MEDIA_INFO_LOG("LockMetadataObjectTracking: point = [%{public}f, %{public}f]", point.x, point.y);
@@ -635,7 +635,7 @@ napi_value MetadataOutputNapi::UnlockMetadataObjectTracking(napi_env env, napi_c
     }
 
     int32_t retCode = metadataOutputNapi->metadataOutput_->UnlockMetadataObjectTracking();
-    if (!CameraNapiUtils::CheckError(env, retCode)) {
+    if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
         MEDIA_ERR_LOG("UnlockMetadataObjectTracking failure!");
     }
     MEDIA_INFO_LOG("UnlockMetadataObjectTracking: success");
