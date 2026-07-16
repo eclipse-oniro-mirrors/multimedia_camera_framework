@@ -209,6 +209,8 @@ void VideoSessionForSysNapi::RegisterLightStatusCallbackListener(const std::stri
     napi_env env, napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     MEDIA_INFO_LOG("VideoSessionForSysNapi::RegisterLightStatusCallbackListener called");
+    CHECK_RETURN_ELOG(videoSessionForSys_ == nullptr,
+        "RegisterLightStatusCallbackListener videoSessionForSys_ is null");
     if (lightStatusCallback_ == nullptr) {
         lightStatusCallback_ = std::make_shared<LightStatusCallbackListener>(env);
         videoSessionForSys_->SetLightStatusCallback(lightStatusCallback_);

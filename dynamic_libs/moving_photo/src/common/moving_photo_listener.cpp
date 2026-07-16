@@ -167,6 +167,7 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
     MEDIA_DEBUG_LOG("OnBufferArrival timestamp %{public}llu", (long long unsigned)timestamp);
     if (recorderBufferQueue_.Full()) {
         MEDIA_DEBUG_LOG("surface_ release surface buffer");
+        CHECK_RETURN_ELOG(popFrame == nullptr, "MovingPhotoListener::OnBufferAvailable popFrame is nullptr.");
         sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
         popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
         sptr<Surface> metaSurface = metaSurface_.promote();
@@ -280,6 +281,7 @@ bool MovingPhotoListener::RefillMeta(sptr<SurfaceBuffer> buffer, int64_t timesta
 
 void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback)
 {
+    CHECK_RETURN_ELOG(drainImageCallback == nullptr, "drainImageCallback is null");
     // Convert recorderBufferQueue_ to a vector
     MEDIA_INFO_LOG("MovingPhotoListener DrainOutImage E %{public}d", static_cast<int32_t>(listenerXtStyleType_));
     std::vector<sptr<FrameRecord>> frameList = recorderBufferQueue_.GetAllElements();

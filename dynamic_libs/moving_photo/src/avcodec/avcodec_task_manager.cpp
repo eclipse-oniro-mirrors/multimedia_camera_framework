@@ -269,6 +269,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     if (isHevcAndHdrSupported) {
         formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_IS_HDR_VIVID, IS_HDR_VIVID);
     }
+    CHECK_RETURN_RET_ELOG(frameRecords.empty(), nullptr, "frameRecords is empty");
     CHECK_RETURN_RET_ELOG(frameRecords[0] == nullptr || frameRecords[0]->GetFrameSize() == nullptr, nullptr,
         "AvcodecTaskManager::CreateAVMuxer GetFrameSize is null");
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);

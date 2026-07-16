@@ -264,6 +264,10 @@ Camera_ErrorCode Camera_Manager::UnregisterTorchStatusCallback(OH_CameraManager_
 
 Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, uint32_t* size)
 {
+    if (cameras == nullptr || size == nullptr) {
+        MEDIA_ERR_LOG("cameras or size is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     std::vector<sptr<CameraDevice>> cameraObjList = CameraManager::GetInstance()->GetSupportedCameras();
     uint32_t cameraSize = cameraObjList.size();
     uint32_t cameraMaxSize = 32;
@@ -271,6 +275,9 @@ Camera_ErrorCode Camera_Manager::GetSupportedCameras(Camera_Device** cameras, ui
         cameraSize == 0 || cameraSize > cameraMaxSize, CAMERA_INVALID_ARGUMENT, "Invalid camera size.");
     Camera_Device* outCameras = new Camera_Device[cameraSize];
     for (size_t index = 0; index < cameraSize; index++) {
+        if (cameraObjList[index] == nullptr) {
+            continue;
+        }
         const string cameraGetID = cameraObjList[index]->GetID();
         size_t dstSize = cameraGetID.size() + 1;
         char* dst = new char[dstSize];
@@ -813,6 +820,10 @@ Camera_ErrorCode Camera_Manager::GetCameraOrientation(Camera_Device* camera, uin
 
 Camera_ErrorCode Camera_Manager::GetHostDeviceName(Camera_Device* camera, char** hostDeviceName)
 {
+    if (camera == nullptr) {
+        MEDIA_ERR_LOG("camera is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
     MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu", cameras.size());
@@ -826,6 +837,10 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceName(Camera_Device* camera, char**
     CHECK_RETURN_RET(device == nullptr, CAMERA_SERVICE_FATAL_ERROR);
     std::string deviceName = device->GetHostName();
     *hostDeviceName = (char*)malloc(deviceName.size() + 1);
+    if (*hostDeviceName == nullptr) {
+        MEDIA_ERR_LOG("hostDeviceName malloc failed");
+        return CAMERA_SERVICE_FATAL_ERROR;
+    }
     if (memcpy_s(*hostDeviceName, deviceName.size() + 1, deviceName.c_str(), deviceName.size()) != EOK) {
         free(*hostDeviceName);
         *hostDeviceName = nullptr;
@@ -886,6 +901,14 @@ Camera_ErrorCode Camera_Manager::GetHostDeviceType(Camera_Device* camera, Camera
 Camera_ErrorCode Camera_Manager::GetAutomotiveCameraPosition(const Camera_Device* camera,
     OH_Camera_AutomotiveCameraPosition* automotiveCameraPosition)
 {
+    if (camera == nullptr) {
+        MEDIA_ERR_LOG("camera is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    if (automotiveCameraPosition == nullptr) {
+        MEDIA_ERR_LOG("automotiveCameraPosition is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetSupportedCameras();
     MEDIA_DEBUG_LOG("the cameraObjList size is %{public}zu", cameras.size());
@@ -907,6 +930,14 @@ Camera_ErrorCode Camera_Manager::GetAutomotiveCameraPosition(const Camera_Device
 
 Camera_ErrorCode Camera_Manager::IsLogicalCamera(const Camera_Device* camera, bool* isLogicalCamera)
 {
+    if (camera == nullptr) {
+        MEDIA_ERR_LOG("camera is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    if (isLogicalCamera == nullptr) {
+        MEDIA_ERR_LOG("isLogicalCamera is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
     for (auto& innerCamera : cameras) {
@@ -926,6 +957,8 @@ Camera_ErrorCode Camera_Manager::IsLogicalCamera(const Camera_Device* camera, bo
 Camera_ErrorCode Camera_Manager::GetLogicalCameraConstituentCameraDevices(
     const Camera_Device* logicalCamera, Camera_Device** constituentCameras, uint32_t* size)
 {
+    CHECK_RETURN_RET_ELOG(constituentCameras == nullptr || logicalCamera == nullptr, CAMERA_INVALID_ARGUMENT,
+        "constituentCameras is null");
     *size = 0;
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
@@ -1006,6 +1039,10 @@ Camera_ErrorCode Camera_Manager::DeleteConstituentCameras(
 
 Camera_ErrorCode Camera_Manager::GetLensFocalLength(const Camera_Device* camera, float* lensFocalLength)
 {
+    if (lensFocalLength == nullptr) {
+        MEDIA_ERR_LOG("lensFocalLength is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
     for (auto& innerCamera : cameras) {
@@ -1048,6 +1085,14 @@ Camera_ErrorCode Camera_Manager::GetMinimumFocusDistance(const Camera_Device* ca
 
 Camera_ErrorCode Camera_Manager::GetLensDistortion(const Camera_Device* camera, float** lens, uint32_t* size)
 {
+    if (lens == nullptr) {
+        MEDIA_ERR_LOG("lens is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
+    if (size == nullptr) {
+        MEDIA_ERR_LOG("size is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     *size = 0;
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
@@ -1108,6 +1153,10 @@ Camera_ErrorCode Camera_Manager::GetLensEquivalentFocalLengths(
 Camera_ErrorCode Camera_Manager::GetIntrinsicCalibration(
     const Camera_Device* camera, float** intrinsicCalibration, uint32_t* size)
 {
+    if (camera == nullptr) {
+        MEDIA_ERR_LOG("camera is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     *size = 0;
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
@@ -1135,6 +1184,10 @@ Camera_ErrorCode Camera_Manager::GetIntrinsicCalibration(
 
 Camera_ErrorCode Camera_Manager::GetSensorPhysicalSize(const Camera_Device* camera, float* width, float* height)
 {
+    if (width == nullptr || height == nullptr) {
+        MEDIA_ERR_LOG("width or height is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
     for (auto& innerCamera : cameras) {
@@ -1159,6 +1212,10 @@ Camera_ErrorCode Camera_Manager::GetSensorPhysicalSize(const Camera_Device* came
 
 Camera_ErrorCode Camera_Manager::GetSensorPixelArraySize(const Camera_Device* camera, uint32_t* width, uint32_t* height)
 {
+    if (width == nullptr || height == nullptr) {
+        MEDIA_ERR_LOG("width or height is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     CameraDevice* device = nullptr;
     auto cameras = CameraManager::GetInstance()->GetCameraDevices();
     for (auto& innerCamera : cameras) {

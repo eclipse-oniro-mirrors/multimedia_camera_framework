@@ -1105,6 +1105,10 @@ napi_value PreviewOutputNapi::SetFrameRate(napi_env env, napi_callback_info info
     if (status == napi_ok && previewOutputNapi != nullptr) {
         int32_t minFrameRate;
         napi_get_value_int32(env, argv[PARAM0], &minFrameRate);
+        if (previewOutputNapi->previewOutput_ == nullptr) {
+            MEDIA_ERR_LOG("SetFrameRate previewOutput_ is null");
+            return result;
+        }
         int32_t maxFrameRate;
         napi_get_value_int32(env, argv[PARAM1], &maxFrameRate);
         int32_t retCode = previewOutputNapi->previewOutput_->SetFrameRate(minFrameRate, maxFrameRate);

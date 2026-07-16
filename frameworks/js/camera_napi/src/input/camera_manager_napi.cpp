@@ -2018,6 +2018,8 @@ void CameraManagerNapi::RegisterCameraStatusCallbackListener(const std::string& 
     auto listener = CameraNapiEventListener<CameraManagerCallbackNapi>::RegisterCallbackListener(
         eventName, env, callback, args, isOnce);
     CHECK_RETURN_ELOG(listener == nullptr, "CameraManagerNapi::RegisterCameraStatusCallbackListener listener is null");
+    CHECK_RETURN_ELOG(cameraManager_ == nullptr,
+        "CameraManagerNapi::RegisterCameraStatusCallbackListener cameraManager_ is null");
     listener->SetIsAsync(isAsync);
     cameraManager_->RegisterCameraStatusCallback(listener);
 }

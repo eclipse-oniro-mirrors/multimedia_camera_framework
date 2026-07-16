@@ -560,6 +560,8 @@ Camera_ErrorCode Camera_CaptureSession::SetVideoStabilizationMode(Camera_VideoSt
 
 Camera_ErrorCode Camera_CaptureSession::GetZoomRatioRange(float* minZoom, float* maxZoom)
 {
+    CHECK_RETURN_RET(minZoom == nullptr, CAMERA_INVALID_ARGUMENT);
+    CHECK_RETURN_RET(maxZoom == nullptr, CAMERA_INVALID_ARGUMENT);
     std::vector<float> vecZoomRatioList = innerCaptureSession_->GetZoomRatioRange();
     if (vecZoomRatioList.empty()) {
         MEDIA_ERR_LOG("Camera_CaptureSession::GetZoomRatioRange vecZoomRatioList  size is null ");
@@ -1665,6 +1667,10 @@ Camera_ErrorCode Camera_CaptureSession::SetPhysicalAperture(float aperture) cons
 Camera_ErrorCode Camera_CaptureSession::IsOISModeSupported(OH_Camera_OISMode oisMode, bool* isSupported) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsOISModeSupported is called");
+    if (isSupported == nullptr) {
+        MEDIA_ERR_LOG("isSupported is nullptr");
+        return CAMERA_INVALID_ARGUMENT;
+    }
     CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OK);
     SceneMode mode = innerCaptureSession_->GetMode();
     CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);

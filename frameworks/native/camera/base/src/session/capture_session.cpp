@@ -2958,7 +2958,7 @@ void CaptureSession::ProcessAutoExposureUpdates(const std::shared_ptr<Camera::Ca
 {
     camera_metadata_item_t item;
     common_metadata_header_t* metadata = result->get();
-
+    CHECK_RETURN(metadata == nullptr);
     int ret = Camera::FindCameraMetadataItem(metadata, OHOS_CONTROL_EXPOSURE_MODE, &item);
     CHECK_PRINT_DLOG(ret == CAM_META_SUCCESS, "exposure mode: %{public}d", item.data.u8[0]);
 
@@ -3483,6 +3483,7 @@ void CaptureSession::CaptureSessionMetadataResultProcessor::ProcessCallbacks(
     const uint64_t timestamp, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result)
 {
     MEDIA_DEBUG_LOG("CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks");
+    CHECK_RETURN_ELOG(result == nullptr, "ProcessCallbacks result is nullptr");
     auto session = session_.promote();
     CHECK_RETURN_ELOG(session == nullptr,
         "CaptureSession::CaptureSessionMetadataResultProcessor ProcessCallbacks but session is null");
