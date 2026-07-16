@@ -37,7 +37,6 @@ public:
 private:
     static napi_value QuickThumbnailNapiConstructor(napi_env env, napi_callback_info info);
     static void QuickThumbnailNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    static void AsyncCompleteCallback(napi_env env, napi_status status, void* data);
 
 private:
     napi_env env_;
