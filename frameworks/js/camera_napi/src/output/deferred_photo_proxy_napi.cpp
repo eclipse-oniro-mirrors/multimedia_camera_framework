@@ -142,8 +142,6 @@ napi_value DeferredPhotoProxyNapi::GetThumbnail(napi_env env, napi_callback_info
     if (status == napi_ok && asyncContext->objectInfo != nullptr) {
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetThumbnail");
-        // 告警原因：异步 GetThumbnail 仅保存 objectInfo 裸指针，未 Hold JS 对象；GC 回收后 complete 访问悬空指针 UAF。
-        // 修改理由：HoldNapiValue 持有 this，保证异步期间 native 对象存活（与同模块其他异步 API 一致）。
         asyncContext->HoldNapiValue(env, thisVar);
         status = napi_create_async_work(
             env, nullptr, resource,
