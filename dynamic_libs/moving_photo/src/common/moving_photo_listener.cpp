@@ -167,8 +167,8 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
     MEDIA_DEBUG_LOG("OnBufferArrival timestamp %{public}llu", (long long unsigned)timestamp);
     if (recorderBufferQueue_.Full()) {
         MEDIA_DEBUG_LOG("surface_ release surface buffer");
-        CHECK_RETURN_ELOG(popFrame == nullptr, "MovingPhotoListener::OnBufferAvailable popFrame is nullptr.");
         sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
+        CHECK_RETURN_ELOG(popFrame == nullptr, "MovingPhotoListener::OnBufferAvailable popFrame is nullptr.");
         popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
         sptr<Surface> metaSurface = metaSurface_.promote();
         if (metaSurface) {
