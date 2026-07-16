@@ -371,8 +371,6 @@ static void CommonCompleteCallback(napi_env env, napi_status status, void* data)
     if (context->work != nullptr) {
         CameraNapiUtils::InvokeJSAsyncMethod(env, context->deferred, context->callbackRef, context->work, *jsContext);
     }
-    // 告警原因：配套 Start/Stop/Release 中 HoldNapiValue；不释放会泄漏 held napi_ref。
-    // 修改理由：删除 context 前释放持有的 JS 引用。
     context->FreeHeldNapiValue(env);
     delete context;
 }
@@ -472,8 +470,6 @@ napi_value DepthDataOutputNapi::Release(napi_env env, napi_callback_info info)
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Release");
 
-        // 告警原因：异步回调通过 objectInfo 裸指针访问，未 Hold JS 对象；GC 后 Destruct 删除 native，UAF。
-        // 修改理由：HoldNapiValue 阻止异步期间 GC，与 movie_file_output 等模块一致。
         asyncContext->HoldNapiValue(env, thisVar);
         status = napi_create_async_work(
             env, nullptr, resource, [](napi_env env, void* data) {
@@ -492,8 +488,6 @@ napi_value DepthDataOutputNapi::Release(napi_env env, napi_callback_info info)
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DepthDataOutputNapi::Release");
-            // 告警原因：创建失败时已 Hold，须成对释放。
-            // 修改理由：失败路径 FreeHeldNapiValue。
             asyncContext->FreeHeldNapiValue(env);
             napi_get_undefined(env, &result);
         } else {
@@ -531,8 +525,6 @@ napi_value DepthDataOutputNapi::Start(napi_env env, napi_callback_info info)
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Start");
 
-        // 告警原因：同 Release，异步 Start 缺 Hold 存在 UAF。
-        // 修改理由：HoldNapiValue 保证异步期间对象存活。
         asyncContext->HoldNapiValue(env, thisVar);
         status = napi_create_async_work(
             env, nullptr, resource,
@@ -552,7 +544,6 @@ napi_value DepthDataOutputNapi::Start(napi_env env, napi_callback_info info)
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DepthDataOutputNapi::Release");
-            // 告警原因/修改理由：创建失败时配对释放 Hold。
             asyncContext->FreeHeldNapiValue(env);
             napi_get_undefined(env, &result);
         } else {
@@ -590,8 +581,6 @@ napi_value DepthDataOutputNapi::Stop(napi_env env, napi_callback_info info)
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Stop");
 
-        // 告警原因：同 Release/Start，异步 Stop 缺 Hold 存在 UAF。
-        // 修改理由：HoldNapiValue 保证异步期间对象存活。
         asyncContext->HoldNapiValue(env, thisVar);
         status = napi_create_async_work(
             env, nullptr, resource,
@@ -611,7 +600,6 @@ napi_value DepthDataOutputNapi::Stop(napi_env env, napi_callback_info info)
             CommonCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DepthDataOutputNapi::Release");
-            // 告警原因/修改理由：创建失败时配对释放 Hold。
             asyncContext->FreeHeldNapiValue(env);
             napi_get_undefined(env, &result);
         } else {

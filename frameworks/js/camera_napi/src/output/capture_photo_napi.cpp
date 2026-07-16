@@ -220,8 +220,6 @@ napi_value CapturePhotoNapi::Release(napi_env env, napi_callback_info info)
                 context->funcName = "CapturePhotoNapi::Release";
                 context->taskId = CameraNapiUtils::IncrementAndGet(photoTaskId);
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
-                // 告警原因：原逻辑在此将 mainImageRef_/pictureRef_ 置 nullptr，导致 complete 无法 napi_delete_reference。
-                // 修改理由：删除提前置空；在 complete 中再 SafeDeleteReference。
                 if (context->objectInfo != nullptr) {
                     context->status = true;
                     context->objectInfo->mainImageRef_ = nullptr;

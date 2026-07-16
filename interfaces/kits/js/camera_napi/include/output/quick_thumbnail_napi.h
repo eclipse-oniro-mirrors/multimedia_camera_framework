@@ -37,8 +37,6 @@ public:
 private:
     static napi_value QuickThumbnailNapiConstructor(napi_env env, napi_callback_info info);
     static void QuickThumbnailNapiDestructor(napi_env env, void* nativeObject, void* finalize_hint);
-    // 告警原因：Release 仅将 captureId_/pixelMap_ 置空，未 napi_delete_reference，导致 napi_ref 泄漏。
-    // 修改理由：complete 需访问私有成员删除 ref；声明为类静态函数以便恢复 AsyncCompleteCallback 结构并安全访问私有成员。
     static void AsyncCompleteCallback(napi_env env, napi_status status, void* data);
 
 private:
