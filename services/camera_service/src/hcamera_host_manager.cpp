@@ -465,8 +465,7 @@ int32_t HCameraHostManager::CameraHostInfo::SetTorchLevel(float level)
         MEDIA_ERR_LOG("CameraHostInfo::SetTorchLevel failed with error Code:%{public}d", rc);
         CameraReportUtils::ReportCameraError(
             "CameraHostInfo::SetTorchLevel", rc, true, CameraReportUtils::GetCallerInfo());
-        return HdiToServiceErrorV1_2(rc,
-            rc == HDI::Camera::V1_2::METHOD_NOT_SUPPORTED? CAMERA_OPERATION_NOT_ALLOWED : CAMERA_UNKNOWN_ERROR);
+        return HdiToServiceErrorV1_2(rc);
     }
     return CAMERA_OK;
 }

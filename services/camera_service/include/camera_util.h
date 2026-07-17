@@ -185,7 +185,7 @@ int32_t HdiToCameraErrorType(OHOS::HDI::Camera::V1_3::ErrorType type);
 
 EXPORT_API int32_t HdiToServiceError(OHOS::HDI::Camera::V1_0::CamRetCode ret);
 
-int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret, CamServiceError defaultError = CAMERA_UNKNOWN_ERROR);
+int32_t HdiToServiceErrorV1_2(HDI::Camera::V1_2::CamRetCode ret);
 
 EXPORT_API std::string CreateMsg(const char* format, ...);
 
