@@ -350,21 +350,14 @@ bool UnifiedPipelineAudioCaptureWrap::BuildSuperListeningBufferData(
 
     bufferData.processBuffer.assign(processBufSize, 0);
     bufferData.micInBuffer.assign(micInBufSize, 0);
-    AudioStandard::BufferDesc processBufDesc = {
-        .buffer = bufferData.processBuffer.data(),
-        .bufLength = processBufSize,
-    };
-    AudioStandard::BufferDesc micInBufDesc = {
-        .buffer = bufferData.micInBuffer.data(),
-        .bufLength = micInBufSize,
-    };
-    AudioStandard::BufferDesc ecBufDesc = {
-        .buffer = nullptr,
-        .bufLength = 0,
-    };
-    ret = audioCapture->DeinterleaveBuffer(bufDesc, processBufDesc, micInBufDesc, ecBufDesc);
-    if (ret != AudioStandard::SUCCESS) {
-        MEDIA_ERR_LOG("DeinterleaveBuffer failed, ret:%{public}d", ret);
+    if (bufDesc.buffer != nullptr && bufDesc.bufLength >= processBufSize + micInBufSize) {
+        uint8_t* src = static_cast<uint8_t*>(bufDesc.buffer);
+        ret = memcpy_s(bufferData.processBuffer.data(), processBufSize, src, processBufSize);
+        CHECK_RETURN_RET_ELOG(ret == EOK, false, "memcpy_s failed for processBuffer");
+        ret = memcpy_s(bufferData.micInBuffer.data(), micInBufSize, src + processBufSize, micInBufSize);
+        CHECK_RETURN_RET_ELOG(ret == EOK, false, "memcpy_s failed for micInBuffer");
+    } else {
+        MEDIA_ERR_LOG("bufDesc buffer is null or insufficient size");
         return false;
     }
 
