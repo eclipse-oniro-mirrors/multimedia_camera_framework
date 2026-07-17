@@ -169,9 +169,10 @@ void HStreamOperator::InitDefaultColortSpace(SceneMode opMode)
 ColorStylePhotoType HStreamOperator::GetSupportRedoXtStyle()
 {
     CHECK_RETURN_RET(supportXtStyleRedoFlag_ != ColorStylePhotoType::UNSET, supportXtStyleRedoFlag_);
-    CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, supportXtStyleRedoFlag_,
+    auto cameraDevice = GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, supportXtStyleRedoFlag_,
         "HStreamOperator::GetSupportRedoXtStyle cameraDevice is nullptr");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice_->GetDeviceAbility();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
     CHECK_RETURN_RET(!ability, supportXtStyleRedoFlag_);
     camera_metadata_item_t item;
     int retFindMeta =
@@ -386,9 +387,10 @@ int32_t HStreamOperator::GetMovingPhotoBufferDuration()
 
 void HStreamOperator::GetMovingPhotoStartAndEndTime()
 {
-    CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "HCaptureSession::GetMovingPhotoStartAndEndTime device is null");
+    auto cameraDevice = GetCameraDevice();
+    CHECK_RETURN_ELOG(cameraDevice == nullptr, "HCaptureSession::GetMovingPhotoStartAndEndTime device is null");
     auto thisPtr = wptr<HStreamOperator>(this);
-    cameraDevice_->SetMovingPhotoStartTimeCallback([thisPtr](int32_t captureId, int64_t startTimeStamp) {
+    cameraDevice->SetMovingPhotoStartTimeCallback([thisPtr](int32_t captureId, int64_t startTimeStamp) {
         auto ptr = thisPtr.promote();
         CHECK_RETURN(ptr == nullptr);
         MEDIA_INFO_LOG("SetMovingPhotoStartTimeCallback function enter");
@@ -396,7 +398,7 @@ void HStreamOperator::GetMovingPhotoStartAndEndTime()
         CHECK_EXECUTE(manager, manager->InsertStartTime(captureId, startTimeStamp));
     });
 
-    cameraDevice_->SetMovingPhotoEndTimeCallback([thisPtr](int32_t captureId, int64_t endTimeStamp) {
+    cameraDevice->SetMovingPhotoEndTimeCallback([thisPtr](int32_t captureId, int64_t endTimeStamp) {
         auto ptr = thisPtr.promote();
         CHECK_RETURN(ptr == nullptr);
         auto manager = ptr->movingPhotoManagerProxy_.Get();
@@ -695,10 +697,11 @@ int32_t HStreamOperator::GetStreamsSize()
 
 void HStreamOperator::GetStreamOperator()
 {
-    CHECK_RETURN_ILOG(cameraDevice_ == nullptr, "HStreamOperator::GetStreamOperator cameraDevice_ is nullptr");
+    auto cameraDevice = GetCameraDevice();
+    CHECK_RETURN_ILOG(cameraDevice == nullptr, "HStreamOperator::GetStreamOperator cameraDevice is nullptr");
     std::lock_guard<std::mutex> lock(streamOperatorLock_);
     CHECK_RETURN(streamOperator_ != nullptr);
-    cameraDevice_->GetStreamOperator(this, streamOperator_);
+    cameraDevice->GetStreamOperator(this, streamOperator_);
 }
 
 bool HStreamOperator::IsOfflineCapture()
@@ -714,8 +717,9 @@ bool HStreamOperator::IsOfflineCapture()
 
 bool HStreamOperator::GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item_t* metadataItem)
 {
-    CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, false, "cameraDevice is nullptr.");
-    auto ability = cameraDevice_->GetDeviceAbility();
+    auto cameraDevice = GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, false, "cameraDevice is nullptr.");
+    auto ability = cameraDevice->GetDeviceAbility();
     CHECK_RETURN_RET(ability == nullptr, false);
     int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), item, metadataItem);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, false, "get ability failed.");
@@ -725,9 +729,10 @@ bool HStreamOperator::GetDeviceAbilityByMeta(uint32_t item, camera_metadata_item
 bool HStreamOperator::GetDeferredImageDeliveryEnabled()
 {
     bool isDeferredImageDeliveryEnabled = false;
-    CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, isDeferredImageDeliveryEnabled,
+    auto cameraDevice = GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, isDeferredImageDeliveryEnabled,
         "HStreamOperator::GetDeviceCachedSetting cameraDevice is nullptr");
-    auto ability = cameraDevice_->CloneCachedSettings();
+    auto ability = cameraDevice->CloneCachedSettings();
     CHECK_RETURN_RET(!ability, isDeferredImageDeliveryEnabled);
     camera_metadata_item_t item;
     int retFindMeta =
@@ -746,10 +751,11 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
     int32_t rc;
     std::vector<StreamInfo_V1_5> allStreamInfos;
     auto allStream = streamContainer_.GetAllStreams();
+    auto cameraDevice = GetCameraDevice();
     for (auto& stream : allStream) {
-        CHECK_RETURN_RET_ELOG(cameraDevice_ == nullptr, 0, "HStreamOperator::LinkInputAndOutputs cameraDevice is null");
-        stream->SetUsePhysicalCameraOrientation(cameraDevice_->GetUsePhysicalCameraOrientation());
-        stream->SetClientName(cameraDevice_->GetClientName());
+        CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, 0, "HStreamOperator::LinkInputAndOutputs cameraDevice is null");
+        stream->SetUsePhysicalCameraOrientation(cameraDevice->GetUsePhysicalCameraOrientation());
+        stream->SetClientName(cameraDevice->GetClientName());
         SetBasicInfo(stream);
         rc = stream->LinkInput(streamOperator_, settings);
         CHECK_RETURN_RET_ELOG(rc != CAMERA_OK, rc, "HStreamOperator::LinkInputAndOutputs IsValidMode false");
@@ -767,7 +773,7 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
         }
         stream->SetStreamInfo(curStreamInfo);
         CHECK_EXECUTE(stream->GetStreamType() != StreamType::METADATA, allStreamInfos.push_back(curStreamInfo));
-        auto weakDevice = wptr<HCameraDevice>(cameraDevice_);
+        auto weakDevice = wptr<HCameraDevice>(cameraDevice);
         stream->SetCameraPermissionUsedRecordFunction([weakDevice]() {
             if (auto device = weakDevice.promote()) {
                 device->AddCameraPermissionUsedRecord();
@@ -783,14 +789,15 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
 void HStreamOperator::SetBasicInfo(sptr<HStreamCommon> stream)
 {
 #ifdef HOOK_CAMERA_OPERATOR
-    CHECK_RETURN_DLOG(cameraDevice_ == nullptr, "HStreamOperator::SetBasicInfo() cameraDevice is null");
+    auto cameraDevice = GetCameraDevice();
+    CHECK_RETURN_DLOG(cameraDevice == nullptr, "HStreamOperator::SetBasicInfo() cameraDevice is null");
     std::map<int32_t, std::string> basicParam;
-    basicParam[PLUGIN_BUNDLE_NAME] = cameraDevice_->GetClientName();
-    basicParam[PLUGIN_CAMERA_ID] = cameraDevice_->GetCameraId();
-    basicParam[PLUGIN_CAMERA_CONNECTION_TYPE] = to_string(cameraDevice_->GetCameraConnectType());
-    basicParam[PLUGIN_CAMERA_POSITION] = to_string(cameraDevice_->GetCameraPosition());
-    basicParam[PLUGIN_SENSOR_ORIENTATION] = to_string(cameraDevice_->GetSensorOrientation());
-    MEDIA_INFO_LOG("HStreamOperator::SetBasicInfo cameraDevice_ is %{public}s ",
+    basicParam[PLUGIN_BUNDLE_NAME] = cameraDevice->GetClientName();
+    basicParam[PLUGIN_CAMERA_ID] = cameraDevice->GetCameraId();
+    basicParam[PLUGIN_CAMERA_CONNECTION_TYPE] = to_string(cameraDevice->GetCameraConnectType());
+    basicParam[PLUGIN_CAMERA_POSITION] = to_string(cameraDevice->GetCameraPosition());
+    basicParam[PLUGIN_SENSOR_ORIENTATION] = to_string(cameraDevice->GetSensorOrientation());
+    MEDIA_INFO_LOG("HStreamOperator::SetBasicInfo cameraDevice is %{public}s ",
         basicParam[PLUGIN_CAMERA_ID].c_str());
     stream->SetBasicInfo(basicParam);
 #endif
@@ -1389,7 +1396,8 @@ int32_t HStreamOperator::Release()
 #endif
 #ifdef HOOK_CAMERA_OPERATOR
     std::string clientName = "";
-    CHECK_EXECUTE(cameraDevice_ != nullptr, clientName = cameraDevice_->GetClientName());
+    auto cameraDevice = GetCameraDevice();
+    CHECK_EXECUTE(cameraDevice != nullptr, clientName = cameraDevice->GetClientName());
     CameraRotatePlugin::GetInstance()->DeleteCaptureSession(clientName);
 #endif
     MEDIA_INFO_LOG("HStreamOperator::Release execute success");
@@ -1593,9 +1601,10 @@ void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_
     int32_t cameraPosition, int32_t& rotation)
 {
     // LCOV_EXCL_START
-    CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "cameraDevice is nullptr.");
+    auto cameraDevice = GetCameraDevice();
+    CHECK_RETURN_ELOG(cameraDevice == nullptr, "cameraDevice is nullptr.");
     CameraRotateStrategyInfo strategyInfo;
-    CHECK_RETURN_ELOG(!(cameraDevice_->GetSigleStrategyInfo(strategyInfo)), "Update roteta angle not supported");
+    CHECK_RETURN_ELOG(!(cameraDevice->GetSigleStrategyInfo(strategyInfo)), "Update roteta angle not supported");
     OHOS::Rosen::FoldDisplayMode displayMode = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldDisplayMode();
     std::string foldScreenType = system::GetParameter("const.window.foldscreen.type", "");
     bool isValidDisplayStatus = !foldScreenType.empty() && (foldScreenType[0] == '6' || foldScreenType[0] == '8') &&
@@ -1613,7 +1622,7 @@ void HStreamOperator::UpdateOrientationBaseGravity(int32_t rotationValue, int32_
     MEDIA_INFO_LOG("UpdateOrientationBaseGravity sensorOrientation: %{public}d, deviceDegree: %{public}d, "
         "rotation: %{public}d", sensorOrientation, imageRotation, rotation);
 
-    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice_->GetDeviceAbility();
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = cameraDevice->GetDeviceAbility();
     CHECK_RETURN(ability == nullptr);
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &item);
@@ -2231,9 +2240,10 @@ void HStreamOperator::ProcessRepeatStream(const sptr<HStreamRepeat>& repeatStrea
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     if (repeatStream->GetRepeatStreamType() == RepeatStreamType::MOVIE_FILE_RAW_VIDEO) {
         MEDIA_DEBUG_LOG("Process Stream Type of MOVIE_FILE_RAW_VIDEO");
-        CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "cameraDevice is nullptr.");
+        auto cameraDevice = GetCameraDevice();
+        CHECK_RETURN_ELOG(cameraDevice == nullptr, "cameraDevice is nullptr.");
         int64_t firstFrameTimestamp = repeatStream->GetFirstFrameTimestamp();
-        std::vector<uint8_t> keyFrameInfo = cameraDevice_->GetKeyFrameInfoBuffer(firstFrameTimestamp);
+        std::vector<uint8_t> keyFrameInfo = cameraDevice->GetKeyFrameInfoBuffer(firstFrameTimestamp);
         repeatStream->SetRecorderUserMeta("com.openharmony.cinemaKeyFrameInfo", keyFrameInfo);
         if (captureInfo.metadata_) {
             int ret = captureInfo.metadata_->Get("eisStartInfo", extInfo.eisStartInfo);
@@ -2545,7 +2555,8 @@ int32_t HStreamOperator::GetSensorRotation()
     MEDIA_INFO_LOG("GetSensorRotation is called, current sensorRotation: %{public}d", innerRotation);
     if (system::GetParameter("const.system.sensor_correction_enable", "0") == "1") {
         std::string clientName = "";
-        CHECK_EXECUTE(cameraDevice_ != nullptr, clientName = cameraDevice_->GetClientName());
+        auto cameraDevice = GetCameraDevice();
+        CHECK_EXECUTE(cameraDevice != nullptr, clientName = cameraDevice->GetClientName());
         bool isCorrect = false;
         CameraApplistManager::GetInstance()->GetNaturalDirectionCorrectByBundleName(clientName, isCorrect);
         CHECK_RETURN_RET_ILOG(

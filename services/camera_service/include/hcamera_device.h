@@ -386,6 +386,7 @@ private:
     std::shared_mutex mechMetadataCallbackLock_;
     std::function<void(std::shared_ptr<OHOS::Camera::CameraMetadata>)> mechMetadataCallback_;
     sptr<ICameraSpectrumInfoCallback> spectrumInfoCallback_;
+    std::mutex spectrumInfoCallbackMutex_;
     int32_t userId_;
 };
 } // namespace CameraStandard

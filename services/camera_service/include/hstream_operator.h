@@ -208,6 +208,12 @@ public:
         }
     }
 
+    inline sptr<HCameraDevice> GetCameraDevice()
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceLock_);
+        return cameraDevice_;
+    }
+
     inline void SetStreamOperatorId(int32_t& streamOperatorId)
     {
         streamOperatorId_ = streamOperatorId;
