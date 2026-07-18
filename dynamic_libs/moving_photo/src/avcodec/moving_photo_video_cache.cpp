@@ -99,6 +99,9 @@ void MovingPhotoVideoCache::GetFrameCachedResult(std::vector<sptr<FrameRecord>> 
     cachedFrameCallbackHandles_.push_back(cacheFrameHandler);
     callbackVecLock_.unlock();
     for (auto frameRecord : frameRecords) {
+        if (frameRecord == nullptr) {
+            continue;
+        }
         if (frameRecord->IsFinishCache()) {
             cacheFrameHandler->OnCacheFrameFinish(frameRecord, frameRecord->IsEncoded());
         }

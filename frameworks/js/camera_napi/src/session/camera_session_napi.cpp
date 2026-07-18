@@ -2310,6 +2310,10 @@ napi_value CameraSessionNapi::SetFlashMode(napi_env env, napi_callback_info info
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
+        if (cameraSessionNapi->cameraSession_ == nullptr) {
+            MEDIA_ERR_LOG("cameraSession_ is null!");
+            return result;
+        }
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         MEDIA_INFO_LOG("CameraSessionNapi::SetFlashMode mode:%{public}d", value);
@@ -2442,6 +2446,10 @@ napi_value CameraSessionNapi::SetExposureMode(napi_env env, napi_callback_info i
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
+        if (cameraSessionNapi->cameraSession_ == nullptr) {
+            MEDIA_ERR_LOG("cameraSession_ is null!");
+            return result;
+        }
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
         ExposureMode exposureMode = (ExposureMode)value;
@@ -3060,6 +3068,10 @@ napi_value CameraSessionNapi::GetZoomRatioRange(napi_env env, napi_callback_info
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr) {
+        if (cameraSessionNapi->cameraSession_ == nullptr) {
+            MEDIA_ERR_LOG("cameraSession_ is null!");
+            return result;
+        }
         std::vector<float> vecZoomRatioList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomRatioRange(vecZoomRatioList);
         if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
@@ -4403,6 +4415,7 @@ napi_value CameraSessionNapi::OffIsoInfoChange(napi_env env, napi_callback_info 
 void CameraSessionNapi::RegisterIsoInfoCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(cameraSession_ == nullptr, "RegisterIsoInfoCallbackListener cameraSession_ is null");
     if (isoInfoCallback_ == nullptr) {
         isoInfoCallback_ = std::make_shared<IsoInfoCallbackListener>(env);
         cameraSession_->SetIsoInfoCallback(isoInfoCallback_);
@@ -4426,6 +4439,7 @@ void CameraSessionNapi::UnregisterIsoInfoCallbackListener(
 void CameraSessionNapi::RegisterExposureCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(cameraSession_ == nullptr, "RegisterExposureCallbackListener cameraSession_ is null");
     if (exposureCallback_ == nullptr) {
         exposureCallback_ = std::make_shared<ExposureCallbackListener>(env);
         cameraSession_->SetExposureCallback(exposureCallback_);
@@ -4447,6 +4461,7 @@ void CameraSessionNapi::UnregisterExposureCallbackListener(
 void CameraSessionNapi::RegisterFocusCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
+    CHECK_RETURN_ELOG(cameraSession_ == nullptr, "RegisterFocusCallbackListener cameraSession_ is null");
     if (focusCallback_ == nullptr) {
         focusCallback_ = make_shared<FocusCallbackListener>(env);
         cameraSession_->SetFocusCallback(focusCallback_);

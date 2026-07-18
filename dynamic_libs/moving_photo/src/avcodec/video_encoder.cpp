@@ -319,6 +319,8 @@ bool VideoEncoder::ProcessEncodedBuffer(sptr<FrameRecord> frameRecord, sptr<Vide
 bool VideoEncoder::ProcessEncodedBufferWithoutCopy(
     sptr<FrameRecord> frameRecord, sptr<VideoCodecAVBufferInfo> bufferInfo)
 {
+    CHECK_RETURN_RET_ELOG(bufferInfo == nullptr || bufferInfo->buffer == nullptr, false,
+        "bufferInfo or buffer is null!");
     // LCOV_EXCL_START
     {
         std::lock_guard<std::mutex> encodeLock(encoderMutex_);

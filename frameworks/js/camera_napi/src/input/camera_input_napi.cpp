@@ -320,6 +320,8 @@ sptr<CameraInput> CameraInputNapi::GetCameraInput()
 void ConsumeWorkerQueueTask(CameraInputAsyncContext* context)
 {
     CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+        CHECK_RETURN_ELOG(context->objectInfo->GetCameraInput() == nullptr,
+            "ConsumeWorkerQueueTask GetCameraInput is null");
         context->isEnableSecCam = CameraNapiUtils::GetEnableSecureCamera();
         MEDIA_DEBUG_LOG("ConsumeWorkerQueueTask context->isEnableSecCam %{public}d", context->isEnableSecCam);
         if (context->isEnableSecCam) {
@@ -462,6 +464,8 @@ napi_value CameraInputNapi::Close(napi_env env, napi_callback_info info)
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraInputNapi::Close async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+                CHECK_RETURN_ELOG(context->objectInfo->GetCameraInput() == nullptr,
+                    "CameraInputNapi::Close GetCameraInput is null");
                 context->errorCode = context->objectInfo->GetCameraInput()->Close();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
                 CameraNapiUtils::IsEnableSecureCamera(false);
@@ -510,6 +514,8 @@ napi_value CameraInputNapi::closeDelayed(napi_env env, napi_callback_info info)
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraInputNapi::closeDelayed async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+                CHECK_RETURN_ELOG(context->objectInfo->GetCameraInput() == nullptr,
+                    "CameraInputNapi::Close GetCameraInput is null");
                 context->errorCode = context->objectInfo->GetCameraInput()->closeDelayed(context->delayTime);
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
             });
@@ -551,6 +557,8 @@ napi_value CameraInputNapi::Release(napi_env env, napi_callback_info info)
             CHECK_RETURN_ELOG(context->objectInfo == nullptr, "CameraInputNapi::Release async info is nullptr");
             CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
             CameraNapiWorkerQueueKeeper::GetInstance()->ConsumeWorkerQueueTask(context->queueTask, [&context]() {
+                CHECK_RETURN_ELOG(context->objectInfo->GetCameraInput() == nullptr,
+                    "CameraInputNapi::Close GetCameraInput is null");
                 context->errorCode = context->objectInfo->GetCameraInput()->Release();
                 context->status = context->errorCode == CameraErrorCode::SUCCESS;
             });
@@ -806,6 +814,7 @@ bool GetNativeCameraInput(void *cameraInputNapiPtr, sptr<CameraInput> &nativeCam
     CHECK_RETURN_RET_ELOG(cameraInputNapiPtr == nullptr,
         false, "%{public}s cameraInputNapiPtr is nullptr", __func__);
     nativeCameraInput = reinterpret_cast<CameraInputNapi*>(cameraInputNapiPtr)->GetCameraInput();
+    CHECK_RETURN_RET_ELOG(nativeCameraInput == nullptr, false, "GetCameraInput returned nullptr");
     return true;
 }
 }

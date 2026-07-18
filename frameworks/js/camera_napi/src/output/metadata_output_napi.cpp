@@ -607,6 +607,10 @@ napi_value MetadataOutputNapi::LockMetadataObjectTracking(napi_env env, napi_cal
         MEDIA_ERR_LOG("LockMetadataObjectTracking: failed to get point properties");
         return result;
     }
+    if (metadataOutputNapi->metadataOutput_ == nullptr) {
+        MEDIA_ERR_LOG("LockMetadataObjectTracking: metadataOutput_ is nullptr!");
+        return result;
+    }
     int32_t retCode = metadataOutputNapi->metadataOutput_->LockMetadataObjectTracking(point);
     if (!CameraNapiUtils::CheckError(env, retCode)) {
         MEDIA_ERR_LOG("LockMetadataObjectTracking failure!");

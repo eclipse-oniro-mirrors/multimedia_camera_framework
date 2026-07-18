@@ -242,6 +242,8 @@ std::unique_ptr<Media::PixelMap> HStreamCaptureThumbnailCallbackImpl::CreatePixe
     CHECK_RETURN_RET_ELOG(
         pixelMap == nullptr, nullptr, "CamThumbnail::CreatePixelMapFromSurfaceBuffer pixelMap is nullptr");
     void* nativeBuffer = surfaceBuffer.GetRefPtr();
+    CHECK_RETURN_RET_ELOG(
+        nativeBuffer == nullptr, nullptr, "CamThumbnail::CreatePixelMapFromSurfaceBuffer nativeBuffer is nullptr");
     RefBase *ref = reinterpret_cast<RefBase *>(nativeBuffer);
     ref->IncStrongRef(ref);
     if (isHdr) {
