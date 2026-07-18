@@ -222,16 +222,16 @@ napi_value CapturePhotoNapi::Release(napi_env env, napi_callback_info info)
                 CAMERA_START_ASYNC_TRACE(context->funcName, context->taskId);
                 if (context->objectInfo != nullptr) {
                     context->status = true;
-                    context->objectInfo->mainImageRef_ = nullptr;
-                    context->objectInfo->pictureRef_ = nullptr;
                 }
             },
             [](napi_env env, napi_status status, void* data) {
                 auto context = static_cast<CapturePhotoAsyncContext*>(data);
                 CAMERA_FINISH_ASYNC_TRACE(context->funcName, context->taskId);
                 napi_value result = nullptr;
-                CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->mainImageRef_);
-                CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->pictureRef_);
+                if (context->objectInfo != nullptr) {
+                    CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->mainImageRef_);
+                    CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->pictureRef_);
+                }
                 napi_get_undefined(env, &result);
                 napi_resolve_deferred(env, context->deferred, result);
                 napi_delete_async_work(env, context->work);

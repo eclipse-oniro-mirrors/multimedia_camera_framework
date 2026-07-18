@@ -414,10 +414,14 @@ napi_value CameraInputNapi::Open(napi_env env, napi_callback_info info)
     MEDIA_DEBUG_LOG("CameraInputNapi::Open Qos level: %{public}d", uvQos);
     uv_loop_s *loop = CameraInputNapi::GetEventLoop(env);
     if (!loop) {
+        asyncContext->FreeHeldNapiValue(env);
+        asyncFunction->Reset();
         return nullptr;
     }
     uv_work_t *work = new(std::nothrow) uv_work_t;
     if (work == nullptr) {
+        asyncContext->FreeHeldNapiValue(env);
+        asyncFunction->Reset();
         return nullptr;
     }
     work->data = static_cast<void*>(asyncContext.get());

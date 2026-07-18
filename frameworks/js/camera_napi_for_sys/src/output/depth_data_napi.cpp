@@ -31,6 +31,7 @@ void AsyncCompleteCallback(napi_env env, napi_status status, void* data)
     napi_get_undefined(env, &result);
     napi_resolve_deferred(env, context->deferred, result);
     napi_delete_async_work(env, context->work);
+    context->FreeHeldNapiValue(env);
     delete context;
 }
 } // namespace
@@ -262,6 +263,7 @@ napi_value DepthDataNapi::Release(napi_env env, napi_callback_info info)
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "Release");
 
+        asyncContext->HoldNapiValue(env, thisVar);
         status = napi_create_async_work(
             env, nullptr, resource,
             [](napi_env env, void* data) {
@@ -282,6 +284,7 @@ napi_value DepthDataNapi::Release(napi_env env, napi_callback_info info)
             AsyncCompleteCallback, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DepthDataNapi::Release");
+            asyncContext->FreeHeldNapiValue(env);
             napi_get_undefined(env, &result);
         } else {
             napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);

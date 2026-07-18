@@ -80,6 +80,10 @@ CameraServerPhotoProxy::~CameraServerPhotoProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     MEDIA_INFO_LOG("~CameraServerPhotoProxy");
+    if (isMmaped_ && bufferHandle_ != nullptr && fileDataAddr_ != nullptr) {
+        munmap(fileDataAddr_, bufferHandle_->size);
+        isMmaped_ = false;
+    }
     fileDataAddr_ = nullptr;
     fileSize_ = 0;
 }
@@ -328,9 +332,12 @@ void CameraServerPhotoProxy::Release()
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("CameraServerPhotoProxy release enter");
+    std::lock_guard<std::mutex> lock(mutex_);
     bool isMmappedAndBufferValid = isMmaped_ && bufferHandle_ != nullptr;
     if (isMmappedAndBufferValid) {
         munmap(fileDataAddr_, bufferHandle_->size);
+        isMmaped_ = false;
+        fileDataAddr_ = nullptr;
     } else {
         MEDIA_ERR_LOG("CameraServerPhotoProxy munmap failed");
     }

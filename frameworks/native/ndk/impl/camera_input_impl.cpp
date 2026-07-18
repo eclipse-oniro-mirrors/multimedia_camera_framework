@@ -68,6 +68,10 @@ Camera_Input::Camera_Input(sptr<CameraInput> &innerCameraInput) : innerCameraInp
 Camera_Input::~Camera_Input()
 {
     MEDIA_DEBUG_LOG("~Camera_Input is called");
+    if (innerCameraInput_ != nullptr) {
+        innerCameraInput_->SetErrorCallback(nullptr);
+        innerCameraInput_->SetOcclusionDetectCallback(nullptr);
+    }
     innerCameraInput_ = nullptr;
 }
 

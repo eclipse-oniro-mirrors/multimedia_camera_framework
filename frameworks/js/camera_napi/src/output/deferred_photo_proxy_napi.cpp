@@ -142,6 +142,7 @@ napi_value DeferredPhotoProxyNapi::GetThumbnail(napi_env env, napi_callback_info
     if (status == napi_ok && asyncContext->objectInfo != nullptr) {
         CAMERA_NAPI_CREATE_PROMISE(env, asyncContext->callbackRef, asyncContext->deferred, result);
         CAMERA_NAPI_CREATE_RESOURCE_NAME(env, resource, "GetThumbnail");
+        asyncContext->HoldNapiValue(env, thisVar);
         status = napi_create_async_work(
             env, nullptr, resource,
             [](napi_env env, void* data) {
@@ -158,6 +159,7 @@ napi_value DeferredPhotoProxyNapi::GetThumbnail(napi_env env, napi_callback_info
             DeferredPhotoAsyncTaskComplete, static_cast<void*>(asyncContext.get()), &asyncContext->work);
         if (status != napi_ok) {
             MEDIA_ERR_LOG("Failed to create napi_create_async_work for DeferredPhotoProxyNapi::GetThumbnail");
+            asyncContext->FreeHeldNapiValue(env);
             napi_get_undefined(env, &result);
         } else {
             napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_user_initiated);
@@ -187,6 +189,7 @@ void DeferredPhotoProxyNapi::DeferredPhotoAsyncTaskComplete(napi_env env, napi_s
     napi_value thumbnail = Media::PixelMapNapi::CreatePixelMap(env, std::move(pixelMap));
     napi_resolve_deferred(env, context->deferred, thumbnail);
     napi_delete_async_work(env, context->work);
+    context->FreeHeldNapiValue(env);
     delete context;
 }
 
