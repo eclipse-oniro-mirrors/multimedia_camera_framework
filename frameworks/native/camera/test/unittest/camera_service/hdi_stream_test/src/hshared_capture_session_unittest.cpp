@@ -537,7 +537,8 @@ HWTEST_F(HSharedCaptureSessionUnitTest, hcapture_session_wrapper_unittest_016, T
         };
 
     wrapper->SetSharedSessionReadyCallback(callback);
-    EXPECT_NE(wrapper, nullptr);
+    EXPECT_EQ(wrapper->GetOwnerPid(), ownerPid);
+    EXPECT_EQ(wrapper->IsSharedMode(), false);
 }
 
 /*
@@ -720,6 +721,8 @@ HWTEST_F(HSharedCaptureSessionUnitTest, hshared_capture_session_unittest_001, Te
     CamServiceError err = HSharedCaptureSession::NewInstance(callerToken, opMode, sharedSession);
     EXPECT_EQ(err, CAMERA_OK);
     ASSERT_NE(sharedSession, nullptr);
+    int32_t rc = sharedSession->SetHasFitedRotation(true);
+    EXPECT_EQ(rc, CAMERA_OK);
 }
 
 /*
@@ -796,6 +799,8 @@ HWTEST_F(HSharedCaptureSessionUnitTest, hshared_capture_session_unittest_004, Te
     sharedSession->ReleaseRef(pid1);
 
     sharedSession->ReleaseRef(pid2);
+
+    EXPECT_EQ(sharedSession->BeginConfig(), CAMERA_OK);
 }
 
 /*
