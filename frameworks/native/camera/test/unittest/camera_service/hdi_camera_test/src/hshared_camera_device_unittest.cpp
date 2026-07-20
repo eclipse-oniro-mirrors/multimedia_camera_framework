@@ -377,8 +377,10 @@ HWTEST_F(HSharedCameraDeviceUnitTest, hcamera_device_wrapper_unittest_010, TestS
 
     std::vector<int32_t> results;
     int32_t rc = wrapper->GetEnabledResults(results);
+    EXPECT_EQ(rc, CAMERA_OK);
     std::vector<int32_t> enableResults = { 1, 2, 3 };
     rc = wrapper->EnableResult(enableResults);
+    EXPECT_EQ(rc, CAMERA_UNKNOWN_ERROR);
     rc = wrapper->DisableResult(enableResults);
     EXPECT_EQ(rc, CAMERA_UNKNOWN_ERROR);
 }
@@ -644,6 +646,8 @@ HWTEST_F(HSharedCameraDeviceUnitTest, hshared_camera_device_unittest_001, TestSi
     sharedDevice->ReleaseRef(pid1);
 
     sharedDevice->ReleaseRef(pid2);
+
+    EXPECT_EQ(sharedDevice->GetCameraId(), cameraId);
 }
 
 /*
@@ -676,6 +680,8 @@ HWTEST_F(HSharedCameraDeviceUnitTest, hshared_camera_device_unittest_002, TestSi
 
     sharedDevice->RegisterAppCallback(pid, callback);
     sharedDevice->UnregisterAppCallback(pid);
+
+    EXPECT_EQ(sharedDevice->GetCameraId(), cameraId);
 }
 
 /*
@@ -895,8 +901,10 @@ HWTEST_F(HSharedCameraDeviceUnitTest, hshared_camera_device_unittest_009, TestSi
 
     std::vector<int32_t> results;
     int32_t rc = sharedDevice->GetEnabledResults(results);
+    EXPECT_EQ(rc, CAMERA_OK);
     std::vector<int32_t> enableResults = { 1, 2, 3 };
     rc = sharedDevice->EnableResult(enableResults);
+    EXPECT_EQ(rc, CAMERA_UNKNOWN_ERROR);
     rc = sharedDevice->DisableResult(enableResults);
     EXPECT_EQ(rc, CAMERA_UNKNOWN_ERROR);
 }
@@ -1043,6 +1051,7 @@ HWTEST_F(HSharedCameraDeviceUnitTest, hshared_camera_device_unittest_014, TestSi
     EXPECT_EQ(sharedDevice->GetCameraId(), cameraId);
     sptr<HCameraDevice> realDevice = sharedDevice->GetRealDevice();
     ASSERT_NE(realDevice, nullptr);
+    EXPECT_EQ(realDevice->GetCameraId(), cameraId);
 }
 
 /*
