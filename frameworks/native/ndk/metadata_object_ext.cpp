@@ -146,7 +146,7 @@ void OH_MetadataObjectExt_Destroy(
 bool OH_MetadataObjectExt_IsLockFocusTracked(const OH_Camera_MetadataObjectExt* metadataObjectExt)
 {
     CHECK_RETURN_RET_ELOG(
-        metadataObjectExt == nullptr, false, "Invalid argument, metadataObjectExt is null!");
+        metadataObjectExt == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataObjectExt is null!");
 
     return metadataObjectExt->IsLockFocusTracked();
 }
