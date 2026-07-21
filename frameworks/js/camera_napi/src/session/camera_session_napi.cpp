@@ -4151,19 +4151,26 @@ napi_value CameraSessionNapi::SetColorTint(napi_env env, napi_callback_info info
     size_t argc = ARGS_ONE;
     napi_value argv[ARGS_ONE] = {0};
     napi_value thisVar = nullptr;
- 
+
     CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
- 
+
     napi_get_undefined(env, &result);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, argv[PARAM0], &valueType);
+        if (valueType == napi_undefined || valueType == napi_null) {
+            CameraNapiUtils::ThrowError(env, CameraErrorCode::PARAMETER_ERROR,
+                "Parameter missing or parameter type incorrect.");
+            return nullptr;
+        }
         int32_t colorTintValue;
         napi_get_value_int32(env, argv[PARAM0], &colorTintValue);
         
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetColorTint(colorTintValue);
-        if (retCode != CAMERA_OK) {
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
             cameraSessionNapi->cameraSession_->UnlockForControl();
             CameraNapiUtils::ThrowError(env, CameraErrorCode::INVALID_ARGUMENT, "Failed to set color tint");
             return nullptr;
