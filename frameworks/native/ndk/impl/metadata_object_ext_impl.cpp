@@ -160,3 +160,8 @@ Camera_ErrorCode OH_Camera_MetadataObjectExt::GetEmotion(OH_Camera_MetadataObjec
         return CAMERA_OK);
     return CAMERA_ERROR_OPTIONAL_PROPERTY_NOT_EXIST;
 }
+
+bool OH_Camera_MetadataObjectExt::IsLockFocusTracked() const
+{
+    return static_cast<MetadataObject *>(innerObject_.GetRefPtr())->IsLockFocusTracked();
+}

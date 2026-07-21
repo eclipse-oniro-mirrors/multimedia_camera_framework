@@ -174,6 +174,15 @@ Camera_ErrorCode OH_MetadataObjectExt_GetEmotion(const OH_Camera_MetadataObjectE
  */
 void OH_MetadataObjectExt_Destroy(OH_Camera_MetadataObjectExt** metadataObjectExt, uint32_t objectCount);
 
+/**
+ * @brief Checks if focus is locked and tracked.
+ *
+ * @param metadataObjectExt Pointer to a OH_Camera_MetadataObjectExt instance.
+ * @return **true** if locked and tracked, **false** otherwise.
+ * @since 26.0.0
+ */
+bool OH_MetadataObjectExt_IsLockFocusTracked(const OH_Camera_MetadataObjectExt* metadataObjectExt);
+
 #ifdef __cplusplus
 }
 #endif
