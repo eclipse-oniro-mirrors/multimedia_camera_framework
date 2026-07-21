@@ -42,6 +42,8 @@ public:
 
     Camera_ErrorCode GetEmotion(OH_Camera_MetadataObjectEmotion* emotion) const;
 
+    bool IsLockFocusTracked() const;
+
 private:
     OHOS::sptr<OHOS::CameraStandard::MetadataObject> innerObject_;
 };
