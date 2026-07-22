@@ -938,19 +938,26 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
         MEDIA_DEBUG_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d, "
                         "Camera automotive position:%{public}d",
             camera->cameraId.c_str(), camera->position, camera->connectionType, camera->automotivePosition);
-        if (any_of(choosedCameras.begin(), choosedCameras.end(),
-            [camera](const auto& defaultCamera) {
-                return (camera->connectionType == OHOS_CAMERA_CONNECTION_TYPE_BUILTIN &&
-                    defaultCamera->position == camera->position &&
-                    defaultCamera->connectionType == camera->connectionType &&
-                    defaultCamera->foldStatus == camera->foldStatus &&
-                    defaultCamera->automotivePosition == camera->automotivePosition);
-            })
-        ) {
-            MEDIA_DEBUG_LOG("ChooseDeFaultCameras alreadly has default camera");
-        } else {
+        bool skipFilter = CheckSystemApp() && (camera->automotivePosition != OHOS_CAMERA_POSITION_EXTERIOR_OTHER);
+        if (skipFilter) {
             choosedCameras.emplace_back(camera);
-            MEDIA_INFO_LOG("add camera ID:%{public}s", camera->cameraId.c_str());
+            MEDIA_DEBUG_LOG("ChooseDefaultCameras system app skip filter, add camera ID:%{public}s",
+                camera->cameraId.c_str());
+        } else {
+            if (any_of(choosedCameras.begin(), choosedCameras.end(),
+                [camera](const auto& defaultCamera) {
+                    return (camera->connectionType == OHOS_CAMERA_CONNECTION_TYPE_BUILTIN &&
+                        defaultCamera->position == camera->position &&
+                        defaultCamera->connectionType == camera->connectionType &&
+                        defaultCamera->foldStatus == camera->foldStatus &&
+                        defaultCamera->automotivePosition == camera->automotivePosition);
+                })
+            ) {
+                MEDIA_DEBUG_LOG("ChooseDeFaultCameras alreadly has default camera");
+            } else {
+                choosedCameras.emplace_back(camera);
+                MEDIA_INFO_LOG("add camera ID:%{public}s", camera->cameraId.c_str());
+            }
         }
     }
     return choosedCameras;

@@ -5354,6 +5354,106 @@ function getCameraManager(context: Context): CameraManager;
   }
 
   /**
+   * Enumerates the camera imaging modes.
+   *
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @stagemodelonly
+   * @since 26.0.0 dynamic&static
+  */
+  enum CameraImagingMode {
+    /**
+     * Auto imaging mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @stagemodelonly
+     * @since 26.0.0 dynamic&static
+    */
+    AUTO = 0,
+
+    /**
+     * RGB imaging mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @stagemodelonly
+     * @since 26.0.0 dynamic&static
+    */
+    RGB = 1,
+
+    /**
+     * IR imaging mode.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @stagemodelonly
+     * @since 26.0.0 dynamic&static
+    */
+    IR = 2
+  }
+
+  /**
+   * Imaging mode query object.
+   *
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @stagemodelonly
+   * @since 26.0.0 dynamic&static
+  */
+  interface ImagingModeQuery {
+    /**
+     * Checks whether a camera imaging mode is supported.
+     *
+     * @param { CameraImagingMode } mode - Imaging mode.
+     * @returns { boolean } Is the imaging mode supported.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config, only throw in session usage.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @stagemodelonly
+     * @since 26.0.0 dynamic&static
+     */
+    isImagingModeSupported(mode: CameraImagingMode): boolean;
+  }
+
+  /**
+   * Implements imaging mode.
+   *
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @systemapi
+   * @stagemodelonly
+   * @since 26.0.0 dynamic&static
+  */
+  interface ImagingMode extends ImagingModeQuery {
+    /**
+     * Gets current imaging mode.
+     *
+     * @returns { CameraImagingMode } The current imaging mode.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @stagemodelonly
+     * @since 26.0.0 dynamic&static
+     */
+    getImagingMode(): CameraImagingMode;
+
+    /**
+     * Sets imaging mode.
+     *
+     * @param { CameraImagingMode } mode - Target imaging mode.
+     * @throws { BusinessError } 202 - Not System Application.
+     * @throws { BusinessError } 7400103 - Session not config.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @systemapi
+     * @stagemodelonly
+     * @since 26.0.0 dynamic&static
+     */
+    setImagingMode(mode: CameraImagingMode): void;
+  }
+
+  /**
    * Photo session object for system hap.
    *
    * @interface PhotoSessionForSys
@@ -5367,11 +5467,13 @@ function getCameraManager(context: Context): CameraManager;
    *
    * @interface PhotoSessionForSys
    * @extends PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, SceneDetection, EffectSuggestion, DepthFusion
+   * @extends PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, SceneDetection, EffectSuggestion,
+   *     DepthFusion, ImagingMode [since 26.0.0]
    * @syscap SystemCapability.Multimedia.Camera.Core
    * @systemapi
    * @since 14
    */
-  interface PhotoSessionForSys extends PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, SceneDetection, EffectSuggestion, DepthFusion, ColorStyle {
+  interface PhotoSessionForSys extends PhotoSession, Beauty, ColorEffect, ColorManagement, Macro, SceneDetection, EffectSuggestion, DepthFusion, ColorStyle, ImagingMode {
   }
 
   /**
@@ -5671,7 +5773,7 @@ function getCameraManager(context: Context): CameraManager;
    * @systemapi
    * @since 11
    */
-  interface VideoSessionForSys extends VideoSession, Beauty, ColorEffect, ColorManagement, Macro, EffectSuggestion {
+  interface VideoSessionForSys extends VideoSession, Beauty, ColorEffect, ColorManagement, Macro, EffectSuggestion, ImagingMode {
   }
 
   /**
