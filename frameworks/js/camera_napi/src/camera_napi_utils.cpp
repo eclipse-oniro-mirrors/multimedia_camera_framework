@@ -68,6 +68,22 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
     {7400801, "801"}
 };
 
+static const std::map<int32_t, int32_t> errorCodeToNumberCode = {
+    {7400102, 7400102},
+    {74001021, 7400102},
+    {74001022, 7400102},
+    {74001023, 7400102},
+    {74001024, 7400102},
+    {7400103, 7400103},
+    {7400201, 7400201},
+    {74002011, 7400201},
+    {74002012, 7400201},
+    {74002013, 7400201},
+    {74002014, 7400201},
+    {74002015, 7400201},
+    {7400801, 801}
+};
+
 std::string CameraNapiUtils::GetJSErrorCode(int32_t errorCode)
 {
     auto it = errorCodeToJSErrorCode.find(errorCode);
@@ -75,6 +91,16 @@ std::string CameraNapiUtils::GetJSErrorCode(int32_t errorCode)
         return it->second;
     } else {
         return std::to_string(errorCode);
+    }
+}
+
+int32_t CameraNapiUtils::GetJSErrorCodeToNumber(int32_t errorCode)
+{
+    auto it = errorCodeToNumberCode.find(errorCode);
+    if (it != errorCodeToNumberCode.end()) {
+        return it->second;
+    } else {
+        return errorCode;
     }
 }
 
@@ -327,6 +353,15 @@ bool CameraNapiUtils::CheckErrorV2(napi_env env, int32_t retCode)
 {
     if ((retCode != 0)) {
         napi_throw_error(env, GetJSErrorCode(retCode).c_str(), GetErrorMessageV2(retCode).c_str());
+        return false;
+    }
+    return true;
+}
+
+bool CameraNapiUtils::CheckBusinessError(napi_env env, int32_t retCode)
+{
+    if ((retCode != 0)) {
+        napi_throw_business_error(env, GetJSErrorCodeToNumber(retCode), GetErrorMessageV2(retCode).c_str());
         return false;
     }
     return true;

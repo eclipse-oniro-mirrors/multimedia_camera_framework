@@ -2880,13 +2880,13 @@ napi_value CameraSessionNapi::IsLockFocusTrackingSupported(napi_env env, napi_ca
     if (cameraSessionNapi->cameraSession_ != nullptr) {
         bool isSupported = false;
         int32_t retCode = cameraSessionNapi->cameraSession_->IsLockFocusTrackingSupported(isSupported);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
+        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
             return nullptr;
         }
         napi_get_boolean(env, isSupported, &result);
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR, "get native object fail");
         return nullptr;
     }
     return result;
@@ -2908,12 +2908,12 @@ napi_value CameraSessionNapi::LockFocusTracking(napi_env env, napi_callback_info
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->LockFocusTracking(focusPoint);
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
+        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
             return nullptr;
         }
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR, "get native object fail");
         return nullptr;
     }
     return result;
@@ -2932,12 +2932,12 @@ napi_value CameraSessionNapi::UnlockFocusTracking(napi_env env, napi_callback_in
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->UnlockFocusTracking();
         cameraSessionNapi->cameraSession_->UnlockForControl();
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
+        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
             return nullptr;
         }
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::IsLockFocusTrackingSupported get native object fail");
-        CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "get native object fail");
+        CameraNapiUtils::ThrowBusinessError(env, PARAMETER_ERROR, "get native object fail");
         return nullptr;
     }
     return result;
@@ -3227,7 +3227,7 @@ napi_value CameraSessionNapi::GetZoomPointInfos(napi_env env, napi_callback_info
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<ZoomPointInfo> vecZoomPointInfoList;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetZoomPointInfos(vecZoomPointInfoList);
-        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckBusinessError(env, retCode), nullptr);
         MEDIA_INFO_LOG("CameraSessionNapi::GetZoomPointInfos len = %{public}zu",
             vecZoomPointInfoList.size());
 
@@ -4094,7 +4094,7 @@ napi_value CameraSessionNapi::GetColorTintRange(napi_env env, napi_callback_info
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         std::vector<int32_t> colorTintRange = {};
         int32_t retCode = cameraSessionNapi->cameraSession_->GetColorTintRange(colorTintRange);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
+        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
             return nullptr;
         }
         MEDIA_INFO_LOG("CameraSessionNapi::GetColorTintRange len = %{public}zu", colorTintRange.size());
@@ -4132,7 +4132,7 @@ napi_value CameraSessionNapi::GetColorTint(napi_env env, napi_callback_info info
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
         int32_t colorTintValue;
         int32_t retCode = cameraSessionNapi->cameraSession_->GetColorTint(colorTintValue);
-        if (!CameraNapiUtils::CheckError(env, retCode)) {
+        if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
             return nullptr;
         }
         napi_create_int32(env, colorTintValue, &result);
@@ -4165,7 +4165,7 @@ napi_value CameraSessionNapi::SetColorTint(napi_env env, napi_callback_info info
         int32_t retCode = cameraSessionNapi->cameraSession_->SetColorTint(colorTintValue);
         if (retCode != CAMERA_OK) {
             cameraSessionNapi->cameraSession_->UnlockForControl();
-            CameraNapiUtils::ThrowError(env, CameraErrorCode::INVALID_ARGUMENT, "Failed to set color tint");
+            CameraNapiUtils::ThrowBusinessError(env, CameraErrorCode::INVALID_ARGUMENT, "Failed to set color tint");
             return nullptr;
         }
         MEDIA_INFO_LOG("CameraSessionNapi::SetColorTint set colorTintValue:%{public}d", colorTintValue);

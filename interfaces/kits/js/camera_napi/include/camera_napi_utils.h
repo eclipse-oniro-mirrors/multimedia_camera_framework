@@ -147,6 +147,7 @@ public:
 
     static bool CheckError(napi_env env, int32_t retCode);
     static bool CheckErrorV2(napi_env env, int32_t retCode);
+    static bool CheckBusinessError(napi_env env, int32_t retCode);
 
     static double FloatToDouble(float val);
 
@@ -360,6 +361,11 @@ public:
         napi_throw_error(env, errorCode.c_str(), message);
     }
 
+    inline static void ThrowBusinessError(napi_env env, int32_t code, const char* message)
+    {
+        napi_throw_business_error(env, code, message);
+    }
+
     inline static std::string GetTaskName(const std::string& func,
         const std::unordered_map<std::string, std::string>& params)
     {
@@ -391,6 +397,7 @@ public:
     static std::string GetErrorMessage(int32_t errorCode);
     static std::string GetErrorMessageV2(int32_t errorCode);
     static std::string GetJSErrorCode(int32_t errorCode);
+    static int32_t GetJSErrorCodeToNumber(int32_t errorCode);
 
     static bool ParseCameraTypesArray(napi_env env, napi_value typesValue, std::vector<CameraType>& outTypes);
 private:
