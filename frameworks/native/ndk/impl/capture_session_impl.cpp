@@ -1763,11 +1763,11 @@ Camera_ErrorCode Camera_CaptureSession::GetZoomPointInfos(
     std::vector<OHOS::CameraStandard::ZoomPointInfo>& zoomPointInfoList) const
 {
     MEDIA_DEBUG_LOG("Camera_CaptureSession::GetZoomPointInfos is called");
+    CHECK_RETURN_RET(innerCaptureSession_ == nullptr, CAMERA_OPERATION_NOT_ALLOWED);
     int32_t ret = innerCaptureSession_->GetZoomPointInfos(zoomPointInfoList);
     MEDIA_DEBUG_LOG("GetZoomPointInfos ret:[%{public}d]", ret);
     return FrameworkToNdkCameraError(ret);
 }
-
 Camera_ErrorCode Camera_CaptureSession::RegisterExposureStateCallback(
     void* context, OH_CaptureSession_OnExposureStateChange exposureStateChange) const
 {
