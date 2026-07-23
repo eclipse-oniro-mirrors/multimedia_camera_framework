@@ -815,7 +815,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     auto streamOperator = GetStreamOperator();
     CHECK_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
     // LCOV_EXCL_START
-    CHECK_RETURN_RET_ELOG(isCaptureReady_ == false, CAMERA_OPERATION_NOT_ALLOWED,
+    CHECK_RETURN_RET_ELOG(isCaptureReady_ == false, CAMERA_CAPTURE_NOT_READY,
         "HStreamCapture::Capture failed due to capture not ready");
     auto preparedCaptureId = GetPreparedCaptureId();
     CHECK_RETURN_RET_ELOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,

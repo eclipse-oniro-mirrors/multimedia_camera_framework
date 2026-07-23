@@ -35,6 +35,7 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
     {74001022, "Operation not allowed: Feature or mode unsupported."},
     {74001023, "Operation not allowed: Device unavailable."},
     {74001024, "Operation not allowed: Device conflict."},
+    {74001025, "Operation not allowed: Previous Capture Task Not Completed."},
     {7400103, "Session not config."},
     {7400104, "Session not running."},
     {7400105, "Session config locked."},
@@ -49,6 +50,7 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
     {74002013, "Camera service fatal error: Invalid Session Configuration."},
     {74002014, "Camera service fatal error: Invalid Input Device"},
     {74002015, "Camera service fatal error: Camera Service is Null"},
+    {74002016, "Camera service fatal error: Stop Without Start"},
     {7400801, "Capability not supported."},
 };
 
@@ -58,6 +60,7 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
     {74001022, "7400102"},
     {74001023, "7400102"},
     {74001024, "7400102"},
+    {74001025, "7400102"},
     {7400103, "7400103"},
     {7400201, "7400201"},
     {74002011, "7400201"},
@@ -65,22 +68,22 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
     {74002013, "7400201"},
     {74002014, "7400201"},
     {74002015, "7400201"},
+    {74002016, "7400201"},
     {7400801, "801"}
 };
 
 static const std::map<int32_t, int32_t> errorCodeToNumberCode = {
-    {7400102, 7400102},
     {74001021, 7400102},
     {74001022, 7400102},
     {74001023, 7400102},
     {74001024, 7400102},
-    {7400103, 7400103},
-    {7400201, 7400201},
+    {74001025, 7400102},
     {74002011, 7400201},
     {74002012, 7400201},
     {74002013, 7400201},
     {74002014, 7400201},
     {74002015, 7400201},
+    {74002016, 7400201},
     {7400801, 801}
 };
 
@@ -131,11 +134,11 @@ void CameraNapiUtils::CreateNapiErrorObject(napi_env env, int32_t errorCode, con
     napi_value napiErrorCode = nullptr;
     napi_value napiErrorMsg = nullptr;
     if (errString == nullptr || strlen(errString) == 0) {
-        napi_create_string_utf8(env, GetErrorMessage(errorCode).c_str(), NAPI_AUTO_LENGTH, &napiErrorMsg);
+        napi_create_string_utf8(env, GetErrorMessageV2(errorCode).c_str(), NAPI_AUTO_LENGTH, &napiErrorMsg);
     } else {
         napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
     }
-    std::string errorCodeStr = std::to_string(errorCode);
+    std::string errorCodeStr = std::to_string(GetJSErrorCodeToNumber(errorCode));
     napi_create_string_utf8(env, errorCodeStr.c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
 
     napi_create_object(env, &jsContext->error);

@@ -358,9 +358,10 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_010, TestSize.Level0)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
-
-    HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
-    ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
+    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
+    ASSERT_NE(peerCallback, nullptr);
+    pid_t pid = 1234;
+    HCameraDeviceManager::GetInstance()->peerCallbacks_[pid] = peerCallback;
     camDevice -> SetMdmCheck(false);
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
@@ -915,8 +916,10 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_034, TestSize.Level1)
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
-    HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
-    ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
+    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
+    ASSERT_NE(peerCallback, nullptr);
+    pid_t pid = 1234;
+    HCameraDeviceManager::GetInstance()->peerCallbacks_[pid] = peerCallback;
     camDevice->SetMdmCheck(false);
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);
@@ -990,8 +993,10 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_036, TestSize.Level1)
     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
     ASSERT_NE(camDevice, nullptr);
 
-    HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
-    ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
+    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
+    ASSERT_NE(peerCallback, nullptr);
+    pid_t pid = 1234;
+    HCameraDeviceManager::GetInstance()->peerCallbacks_[pid] = peerCallback;
     camDevice->SetMdmCheck(false);
     int32_t ret = camDevice->HCameraDevice::Open();
     EXPECT_EQ(ret, 0);

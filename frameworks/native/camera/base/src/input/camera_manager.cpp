@@ -3781,7 +3781,7 @@ int32_t CameraManager::SetTorchMode(TorchMode mode)
     if (retCode == CAMERA_OK) {
         UpdateTorchMode(mode);
     }
-    return ServiceToCameraError(retCode);
+    return ServiceToCameraErrorV2(retCode);
 }
 
 void CameraManager::UpdateTorchMode(TorchMode mode)
