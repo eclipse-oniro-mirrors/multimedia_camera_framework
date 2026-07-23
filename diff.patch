@@ -1,0 +1,403 @@
+From 45b32247526d5c32e3ae8e33717f46a2219519f4 Mon Sep 17 00:00:00 2001
+From: m00939602 <mengzhe5@huawei.com>
+Date: Tue, 21 Jul 2026 16:22:37 +0800
+Subject: [PATCH] TicketNo:DTS2026070214632 Description:error Message Team:EMUI
+ Feature or Bugfix:Bugfix Binary Source:No PrivateCode(Yes/No):No
+ Co-Authored-By: Agent
+
+Change-Id: Ib0f3204089eb67fe553cdaa17de30cd7f8c27fc5
+---
+ .../js/camera_napi/src/camera_napi_utils.cpp  | 13 ++++++++-----
+ .../src/input/camera_manager_napi.cpp         |  2 +-
+ .../camera/base/src/input/camera_input.cpp    |  2 +-
+ .../camera/base/src/input/camera_manager.cpp  |  2 +-
+ .../camera/base/src/output/photo_output.cpp   |  2 +-
+ .../base/src/session/capture_session.cpp      |  4 ++--
+ .../src/camera_base_function_moduletest.cpp   |  4 ++--
+ .../src/hcamera_device_unittest.cpp           | 19 ++++++++++++-------
+ .../src/hcamera_service_unittest.cpp          |  9 ++++++---
+ frameworks/native/ndk/impl/camera_util.cpp    |  2 ++
+ frameworks/taihe/src/camera_utils_taihe.cpp   |  5 +++++
+ .../native/camera/include/camera_error_code.h |  2 ++
+ .../binder/base/src/icamera_util.cpp          | 10 ++++++----
+ services/camera_service/include/camera_util.h |  3 +++
+ .../camera_service/src/hcapture_session.cpp   |  2 +-
+ .../camera_service/src/hstream_capture.cpp    |  2 +-
+ 16 files changed, 54 insertions(+), 29 deletions(-)
+
+diff --git a/frameworks/js/camera_napi/src/camera_napi_utils.cpp b/frameworks/js/camera_napi/src/camera_napi_utils.cpp
+index 7d35cb7a43..0eaf24b184 100644
+--- a/frameworks/js/camera_napi/src/camera_napi_utils.cpp
++++ b/frameworks/js/camera_napi/src/camera_napi_utils.cpp
+@@ -37,6 +37,7 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
+     {74001022, "Operation not allowed: Feature or mode unsupported."},
+     {74001023, "Operation not allowed: Device unavailable."},
+     {74001024, "Operation not allowed: Device conflict."},
++    {74001025, "Operation not allowed: Previous Capture Task Not Completed."},
+     {7400103, "Session not config."},
+     {7400104, "Session not running."},
+     {7400105, "Session config locked."},
+@@ -51,6 +52,7 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
+     {74002013, "Camera service fatal error: Invalid Session Configuration."},
+     {74002014, "Camera service fatal error: Invalid Input Device"},
+     {74002015, "Camera service fatal error: Camera Service is Null"},
++    {74002016, "Camera service fatal error: Stop Without Start"},
+     {7400801, "Capability not supported."},
+ };
+ 
+@@ -60,6 +62,7 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
+     {74001022, "7400102"},
+     {74001023, "7400102"},
+     {74001024, "7400102"},
++    {74001025, "7400102"},
+     {7400103, "7400103"},
+     {7400201, "7400201"},
+     {74002011, "7400201"},
+@@ -67,22 +70,22 @@ static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
+     {74002013, "7400201"},
+     {74002014, "7400201"},
+     {74002015, "7400201"},
++    {74002016, "7400201"},
+     {7400801, "801"}
+ };
+ 
+ static const std::map<int32_t, int32_t> errorCodeToNumberCode = {
+-    {7400102, 7400102},
+     {74001021, 7400102},
+     {74001022, 7400102},
+     {74001023, 7400102},
+     {74001024, 7400102},
+-    {7400103, 7400103},
+-    {7400201, 7400201},
++    {74001025, 7400102},
+     {74002011, 7400201},
+     {74002012, 7400201},
+     {74002013, 7400201},
+     {74002014, 7400201},
+     {74002015, 7400201},
++    {74002016, 7400201},
+     {7400801, 801}
+ };
+ 
+@@ -135,11 +138,11 @@ void CameraNapiUtils::CreateNapiErrorObject(napi_env env, int32_t errorCode, con
+     napi_value napiErrorCode = nullptr;
+     napi_value napiErrorMsg = nullptr;
+     if (errString == nullptr || strlen(errString) == 0) {
+-        napi_create_string_utf8(env, GetErrorMessage(errorCode).c_str(), NAPI_AUTO_LENGTH, &napiErrorMsg);
++        napi_create_string_utf8(env, GetErrorMessageV2(errorCode).c_str(), NAPI_AUTO_LENGTH, &napiErrorMsg);
+     } else {
+         napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
+     }
+-    std::string errorCodeStr = std::to_string(errorCode);
++    std::string errorCodeStr = std::to_string(GetJSErrorCodeToNumber(errorCode));
+     napi_create_string_utf8(env, errorCodeStr.c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
+ 
+     napi_create_object(env, &jsContext->error);
+diff --git a/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp b/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
+index dfb11064ed..7623469f18 100644
+--- a/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
++++ b/frameworks/js/camera_napi/src/input/camera_manager_napi.cpp
+@@ -3034,7 +3034,7 @@ napi_value CameraManagerNapi::SetTorchMode(napi_env env, napi_callback_info info
+         MEDIA_INFO_LOG("CameraManagerNapi::SetTorchMode mode = %{public}d", mode);
+         TorchMode torchMode = (TorchMode)mode;
+         int32_t retCode = CameraManager::GetInstance()->SetTorchMode(torchMode);
+-        if (!CameraNapiUtils::CheckError(env, retCode)) {
++        if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
+             MEDIA_DEBUG_LOG("SetTorchMode fail throw error");
+         }
+     } else {
+diff --git a/frameworks/native/camera/base/src/input/camera_input.cpp b/frameworks/native/camera/base/src/input/camera_input.cpp
+index 17a5d7cefa..45473dce7b 100644
+--- a/frameworks/native/camera/base/src/input/camera_input.cpp
++++ b/frameworks/native/camera/base/src/input/camera_input.cpp
+@@ -256,7 +256,7 @@ int CameraInput::Open()
+     } else {
+         MEDIA_ERR_LOG("CameraInput::Open() deviceObj is nullptr");
+     }
+-    return ServiceToCameraError(retCode);
++    return ServiceToCameraErrorV2(retCode);
+ }
+ 
+ const std::unordered_map<CameraPosition, camera_position_enum_t> fwToMetaCameraPosition_ = {
+diff --git a/frameworks/native/camera/base/src/input/camera_manager.cpp b/frameworks/native/camera/base/src/input/camera_manager.cpp
+index 74c8819ce1..735c3dd3f5 100644
+--- a/frameworks/native/camera/base/src/input/camera_manager.cpp
++++ b/frameworks/native/camera/base/src/input/camera_manager.cpp
+@@ -4167,7 +4167,7 @@ int32_t CameraManager::SetTorchMode(TorchMode mode)
+     if (retCode == CAMERA_OK) {
+         UpdateTorchMode(mode);
+     }
+-    return ServiceToCameraError(retCode);
++    return ServiceToCameraErrorV2(retCode);
+ }
+ 
+ void CameraManager::UpdateTorchMode(TorchMode mode)
+diff --git a/frameworks/native/camera/base/src/output/photo_output.cpp b/frameworks/native/camera/base/src/output/photo_output.cpp
+index 0cf5ed92c4..2a1f76fb84 100644
+--- a/frameworks/native/camera/base/src/output/photo_output.cpp
++++ b/frameworks/native/camera/base/src/output/photo_output.cpp
+@@ -892,7 +892,7 @@ int32_t PhotoOutput::Capture(std::shared_ptr<PhotoCaptureSetting> photoCaptureSe
+         MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
+     }
+     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
+-    return ServiceToCameraError(errCode);
++    return ServiceToCameraErrorV2(errCode);
+     // LCOV_EXCL_STOP
+ }
+ 
+diff --git a/frameworks/native/camera/base/src/session/capture_session.cpp b/frameworks/native/camera/base/src/session/capture_session.cpp
+index f4b8962972..6484da51a2 100644
+--- a/frameworks/native/camera/base/src/session/capture_session.cpp
++++ b/frameworks/native/camera/base/src/session/capture_session.cpp
+@@ -1617,7 +1617,7 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
+         input == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::RemoveInput input is null");
+     auto device = ((sptr<CameraInput>&)input)->GetCameraDevice();
+     CHECK_RETURN_RET_ELOG(
+-        device == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::RemoveInput device is null");
++        device == nullptr, ServiceToCameraErrorV2(CAMERA_INPUT_DEVICE), "CaptureSession::RemoveInput device is null");
+     supportSpecSearch_ = false;
+     {
+         std::lock_guard<std::mutex> lock(abilityContainerMutex_);
+@@ -1748,7 +1748,7 @@ int32_t CaptureSession::Stop()
+     } else {
+         MEDIA_ERR_LOG("CaptureSession::Stop() captureSession is nullptr");
+     }
+-    return ServiceToCameraError(errCode);
++    return ServiceToCameraErrorV2(errCode);
+ }
+ 
+ int32_t CaptureSession::Release()
+diff --git a/frameworks/native/camera/test/moduletest/camera_base_function/src/camera_base_function_moduletest.cpp b/frameworks/native/camera/test/moduletest/camera_base_function/src/camera_base_function_moduletest.cpp
+index df2b0a99cf..30bc418e54 100755
+--- a/frameworks/native/camera/test/moduletest/camera_base_function/src/camera_base_function_moduletest.cpp
++++ b/frameworks/native/camera/test/moduletest/camera_base_function/src/camera_base_function_moduletest.cpp
+@@ -910,7 +910,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
+     ASSERT_NE(previewOutput, nullptr);
+ 
+     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
+-    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SERVICE_FATL_ERROR);
++    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SERVICE_FATL_ERROR_OF_CONFIG);
+     EXPECT_EQ(captureSession_->CommitConfig(), SERVICE_FATL_ERROR);
+ 
+     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+@@ -1270,7 +1270,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
+         sptr<CameraDevice> device = cameraDevices_[deviceBackIndex];
+         ASSERT_NE(device, nullptr);
+         if (device->GetPosition() == CAMERA_POSITION_BACK) {
+-            EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_ON), OPERATION_NOT_ALLOWED);
++            EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_ON), OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT);
+             EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_OFF), OPERATION_NOT_ALLOWED);
+             EXPECT_EQ(cameraManager_->GetTorchMode(), currentTorchMode);
+         } else if (device->GetPosition() == CAMERA_POSITION_FRONT) {
+diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_unittest.cpp
+index 04bc2918e0..5aa550eacc 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_device_unittest.cpp
+@@ -358,9 +358,10 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_010, TestSize.Level0)
+     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+     ASSERT_NE(camDevice, nullptr);
+-
+-    HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
+-    ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
++    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
++    ASSERT_NE(peerCallback, nullptr);
++    pid_t pid = 1234;
++    HCameraDeviceManager::GetInstance()->peerCallbacks_[pid] = peerCallback;
+     camDevice -> SetMdmCheck(false);
+     int32_t ret = camDevice->HCameraDevice::Open();
+     EXPECT_EQ(ret, 0);
+@@ -915,8 +916,10 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_034, TestSize.Level1)
+     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+     ASSERT_NE(camDevice, nullptr);
+ 
+-    HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
+-    ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
++    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
++    ASSERT_NE(peerCallback, nullptr);
++    pid_t pid = 1234;
++    HCameraDeviceManager::GetInstance()->peerCallbacks_[pid] = peerCallback;
+     camDevice->SetMdmCheck(false);
+     int32_t ret = camDevice->HCameraDevice::Open();
+     EXPECT_EQ(ret, 0);
+@@ -990,8 +993,10 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_036, TestSize.Level1)
+     sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+     ASSERT_NE(camDevice, nullptr);
+ 
+-    HCameraDeviceManager::GetInstance()->peerCallback_ = new (std::nothrow) ICameraBrokerTest();
+-    ASSERT_NE(HCameraDeviceManager::GetInstance()->peerCallback_, nullptr);
++    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
++    ASSERT_NE(peerCallback, nullptr);
++    pid_t pid = 1234;
++    HCameraDeviceManager::GetInstance()->peerCallbacks_[pid] = peerCallback;
+     camDevice->SetMdmCheck(false);
+     int32_t ret = camDevice->HCameraDevice::Open();
+     EXPECT_EQ(ret, 0);
+diff --git a/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_service_unittest.cpp b/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_service_unittest.cpp
+index 5452a18468..4b36c366c0 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_service_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/camera_service/hdi_camera_test/src/hcamera_service_unittest.cpp
+@@ -839,7 +839,10 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_021, TestSize.Level0)
+     device->Open();
+ 
+     cameraService_->cameraMuteServiceCallbacks_ = {};
+-    cameraService_->peerCallback_ = new ICameraBrokerTest();
++    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
++    ASSERT_NE(peerCallback, nullptr);
++    pid_t pid = 1234;
++    cameraService_->peerCallbacks_[pid] = peerCallback;
+     cameraService_->OnMute(true);
+     EXPECT_TRUE(cameraService_->cameraMuteServiceCallbacks_.empty());
+     EXPECT_EQ(cameraService_->UnSetMuteCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
+@@ -849,8 +852,8 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_021, TestSize.Level0)
+     cameraService_->OnMute(true);
+     EXPECT_EQ(cameraService_->cameraMuteServiceCallbacks_.size(), 2);
+ 
+-    if (cameraService_->peerCallback_) {
+-        cameraService_->peerCallback_ = nullptr;
++    if (cameraService_->peerCallbacks_[pid]) {
++        cameraService_->peerCallbacks_[pid] = nullptr;
+     }
+     if (callback) {
+         callback = nullptr;
+diff --git a/frameworks/native/ndk/impl/camera_util.cpp b/frameworks/native/ndk/impl/camera_util.cpp
+index 5d65ced525..59d47531fd 100644
+--- a/frameworks/native/ndk/impl/camera_util.cpp
++++ b/frameworks/native/ndk/impl/camera_util.cpp
+@@ -30,6 +30,7 @@ static const std::unordered_map<int32_t, Camera_ErrorCode> frameworkToNdkErrorMa
+     {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE), CAMERA_OPERATION_NOT_ALLOWED},
+     {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE), CAMERA_OPERATION_NOT_ALLOWED},
+     {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT), CAMERA_OPERATION_NOT_ALLOWED},
++    {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY), CAMERA_OPERATION_NOT_ALLOWED},
+     {static_cast<int32_t>(CameraErrorCode::SESSION_NOT_CONFIG), CAMERA_SESSION_NOT_CONFIG},
+     {static_cast<int32_t>(CameraErrorCode::SESSION_NOT_RUNNING), CAMERA_SESSION_NOT_RUNNING},
+     {static_cast<int32_t>(CameraErrorCode::SESSION_CONFIG_LOCKED), CAMERA_SESSION_CONFIG_LOCKED},
+@@ -43,6 +44,7 @@ static const std::unordered_map<int32_t, Camera_ErrorCode> frameworkToNdkErrorMa
+     {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG), CAMERA_SERVICE_FATAL_ERROR},
+     {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE), CAMERA_SERVICE_FATAL_ERROR},
+     {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_SERVICE_NULL), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START), CAMERA_SERVICE_FATAL_ERROR},
+     {static_cast<int32_t>(CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS),
+      CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS},
+     {static_cast<int32_t>(CameraErrorCode::CAPABILITY_NOT_SUPPORTED),
+diff --git a/frameworks/taihe/src/camera_utils_taihe.cpp b/frameworks/taihe/src/camera_utils_taihe.cpp
+index 8c5e089761..a9f22d5fc9 100644
+--- a/frameworks/taihe/src/camera_utils_taihe.cpp
++++ b/frameworks/taihe/src/camera_utils_taihe.cpp
+@@ -504,9 +504,14 @@ static const std::map<int32_t, int32_t> errorJSCodeMap = {
+     {74001021, 7400102},
+     {74001022, 7400102},
+     {74001023, 7400102},
++    {74001024, 7400102},
++    {74001025, 7400102},
+     {74002011, 7400201},
+     {74002012, 7400201},
+     {74002013, 7400201},
++    {74002014, 7400201},
++    {74002015, 7400201},
++    {74002016, 7400201},
+     {7400801, 801}
+ };
+  
+diff --git a/interfaces/inner_api/native/camera/include/camera_error_code.h b/interfaces/inner_api/native/camera/include/camera_error_code.h
+index 90a185e6fe..a9f03b6959 100644
+--- a/interfaces/inner_api/native/camera/include/camera_error_code.h
++++ b/interfaces/inner_api/native/camera/include/camera_error_code.h
+@@ -39,6 +39,7 @@ enum CameraErrorCode : int32_t {
+     OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE = 74001022,
+     OPERATION_NOT_ALLOWED_OF_DEVICE = 74001023,
+     OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT = 74001024,
++    OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY = 74001025,
+ 
+     SESSION_NOT_CONFIG = 7400103,
+     SESSION_NOT_RUNNING = 7400104,
+@@ -57,6 +58,7 @@ enum CameraErrorCode : int32_t {
+     SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG = 74002013,
+     SERVICE_FATL_ERROR_OF_INPUT_DEVICE = 74002014,
+     SERVICE_FATL_ERROR_OF_SERVICE_NULL = 74002015,
++    SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START = 74002016,
+ 
+     UNSUPPORTED_MULTI_CAMERA_COMBINATION =  7400113,
+     DEVICE_REPLACED = 7400114,
+diff --git a/services/camera_service/binder/base/src/icamera_util.cpp b/services/camera_service/binder/base/src/icamera_util.cpp
+index 1562a967c1..60bd9cd7c9 100644
+--- a/services/camera_service/binder/base/src/icamera_util.cpp
++++ b/services/camera_service/binder/base/src/icamera_util.cpp
+@@ -109,10 +109,12 @@ int32_t ServiceToCameraError(int32_t ret)
+ }
+ 
+ 
+-static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorrMap = {
++static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorMap = {
+     {CAMERA_OK, 0},
+     {CAMERA_ALLOC_ERROR, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC},
+     {CAMERA_INVALID_ARG, CameraErrorCode::SERVICE_FATL_ERROR},
++    {CAMERA_INPUT_DEVICE, CameraErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE},
++    {CAMERA_STOP_WITHOUT_START, CameraErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START},
+     {CAMERA_UNSUPPORTED, CameraErrorCode::DEVICE_DISABLED},
+     {CAMERA_DEVICE_BUSY, CameraErrorCode::CONFLICT_CAMERA},
+     {CAMERA_DEVICE_CLOSED, CameraErrorCode::DEVICE_DISABLED},
+@@ -127,8 +129,8 @@ static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorrMap = {
+     {CAMERA_OPERATION_NOT_ALLOWED, CameraErrorCode::OPERATION_NOT_ALLOWED},
+     {CAMERA_DEVICE_ERROR, CameraErrorCode::OPERATION_NOT_ALLOWED},
+     {CAMERA_NO_PERMISSION, CameraErrorCode::OPERATION_NOT_ALLOWED},
++    {CAMERA_CAPTURE_NOT_READY, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY},
+     {CAMERA_DEVICE_CONFLICT, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT},
+-    {CAMERA_DEVICE_CONFLICT, CameraErrorCode::OPERATION_NOT_ALLOWED},
+     {CAMERA_DEVICE_SWITCH_FREQUENT, CameraErrorCode::DEVICE_SWITCH_FREQUENT},
+     {CAMERA_DEVICE_LENS_RETRACTED, CameraErrorCode::CAMERA_LENS_RETRACTED},
+     {CAMERA_UNSUPPORTED_COMBINATION, CameraErrorCode::UNSUPPORTED_MULTI_CAMERA_COMBINATION},
+@@ -151,8 +153,8 @@ static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorrMap = {
+ 
+ int32_t ServiceToCameraErrorV2(int32_t ret)
+ {
+-    auto it = ServiceToCameraErrorrMap.find(ret);
+-    if (it != ServiceToCameraErrorrMap.end()) {
++    auto it = ServiceToCameraErrorMap.find(ret);
++    if (it != ServiceToCameraErrorMap.end()) {
+         return it->second;
+     }
+     MEDIA_ERR_LOG("ServiceToCameraError() error code from service: %{public}d", ret);
+diff --git a/services/camera_service/include/camera_util.h b/services/camera_service/include/camera_util.h
+index 8454eb5d0e..136b823bab 100644
+--- a/services/camera_service/include/camera_util.h
++++ b/services/camera_service/include/camera_util.h
+@@ -136,6 +136,9 @@ enum CamServiceError {
+     CAMERA_UNSUPPORTED_COMBINATION,
+     CAMERA_DEVICE_REPLACED,
+     CAMERA_SERVICE_NULL,
++    CAMERA_INPUT_DEVICE,
++    CAMERA_STOP_WITHOUT_START, // start/stop 时序错误
++    CAMERA_CAPTURE_NOT_READY,
+ };
+ 
+ enum ClientPriorityLevels {
+diff --git a/services/camera_service/src/hcapture_session.cpp b/services/camera_service/src/hcapture_session.cpp
+index 61ef471df0..0812c112a9 100644
+--- a/services/camera_service/src/hcapture_session.cpp
++++ b/services/camera_service/src/hcapture_session.cpp
+@@ -2849,7 +2849,7 @@ int32_t HCaptureSession::Stop()
+         if (!isTransferSupport) {
+             MEDIA_ERR_LOG("HCaptureSession::Stop() Need to call after Start, "
+                           "sessionID: %{public}d", GetSessionId());
+-            errorCode = CAMERA_INVALID_STATE;
++            errorCode = CAMERA_STOP_WITHOUT_START;
+             return;
+         }
+         MEDIA_INFO_LOG("HCaptureSession::Stop prepare isSessionStarted_: %{public}d", isSessionStarted_);
+diff --git a/services/camera_service/src/hstream_capture.cpp b/services/camera_service/src/hstream_capture.cpp
+index 8cc519ffd7..8740dea630 100644
+--- a/services/camera_service/src/hstream_capture.cpp
++++ b/services/camera_service/src/hstream_capture.cpp
+@@ -950,7 +950,7 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
+     auto streamOperator = GetStreamOperator();
+     CHECK_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
+     // LCOV_EXCL_START
+-    CHECK_RETURN_RET_ELOG(isCaptureReady_ == false, CAMERA_OPERATION_NOT_ALLOWED,
++    CHECK_RETURN_RET_ELOG(isCaptureReady_ == false, CAMERA_CAPTURE_NOT_READY,
+         "HStreamCapture::Capture failed due to capture not ready");
+     auto preparedCaptureId = GetPreparedCaptureId();
+     CHECK_RETURN_RET_ELOG(preparedCaptureId != CAPTURE_ID_UNSET, CAMERA_INVALID_STATE,
+-- 
+2.51.2.huawei.11
+
