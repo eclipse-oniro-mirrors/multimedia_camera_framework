@@ -1298,8 +1298,11 @@ void PhotoOutputImpl::SetPhotoQualityPrioritization(PhotoQualityPrioritization q
 {
     MEDIA_DEBUG_LOG("SetPhotoQualityPrioritization is called");
     CHECK_RETURN_ELOG(photoOutput_ == nullptr, "SetPhotoQualityPrioritization photoOutput_ is nullptr");
-    photoOutput_->SetPhotoQualityPrioritization(
+    int32_t retCode = photoOutput_->SetPhotoQualityPrioritization(
         static_cast<OHOS::CameraStandard::PhotoOutput::PhotoQualityPrioritization>(qualityPrioritization.get_value()));
+    CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PhotoOutputImpl::SetPhotoQualityPrioritization fail %{public}d", retCode);
+    MEDIA_DEBUG_LOG("PhotoOutputImpl::SetPhotoQualityPrioritization success");
 }
 
 void PhotoOutputImpl::EnableAutoExtendedGainmapDelivery(bool enabled)
