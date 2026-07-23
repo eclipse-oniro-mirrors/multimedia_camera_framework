@@ -1080,7 +1080,7 @@ private:
     static void CommitConfigAsync(uv_work_t *work);
     static void StartAsync(uv_work_t *work);
     static void UvWorkAsyncCompleted(uv_work_t* work, int status);
-
+    static napi_value CreateZoomPointInfoObject(napi_env env, const ZoomPointInfo& zoomPointInfo);
 protected:
     typedef enum {
         MATRIX = 0,
