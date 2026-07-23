@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <string>
 #include <map>
+#include <vector>
 #include <refbase.h>
 
 #include "hcapture_session.h"
@@ -100,6 +101,11 @@ public:
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
 
 private:
+    void ClearPendingOutputs();
+    void RecordPendingOutput(StreamType streamType, const sptr<IRemoteObject>& stream);
+    void ForgetPendingOutput(StreamType streamType, const sptr<IRemoteObject>& stream);
+    void RollbackPendingOutputs();
+
     static std::map<std::string, sptr<HSharedCaptureSession>> sharedSessionMap_;
     static std::mutex sharedSessionMutex_;
 
@@ -108,6 +114,8 @@ private:
 
     std::map<pid_t, uint32_t> refCount_;
     std::mutex refMutex_;
+    std::vector<std::pair<StreamType, sptr<IRemoteObject>>> pendingOutputs_;
+    std::mutex pendingOutputMutex_;
 };
 
 } // namespace CameraStandard

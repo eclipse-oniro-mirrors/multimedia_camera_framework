@@ -56,7 +56,7 @@ HCaptureSessionWrapper::~HCaptureSessionWrapper()
     MEDIA_INFO_LOG("HCaptureSessionWrapper::Destructor pid: %{public}d", ownerPid_);
     std::lock_guard<std::mutex> lock(mutex_);
     if (session_ == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionWrapper::Release session is null");
+        MEDIA_INFO_LOG("HCaptureSessionWrapper::Destructor already released");
         return;
     }
 
@@ -452,8 +452,8 @@ int32_t HCaptureSessionWrapper::Release()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (session_ == nullptr) {
-        MEDIA_ERR_LOG("HCaptureSessionWrapper::Release session is null");
-        return CAMERA_INVALID_STATE;
+        MEDIA_INFO_LOG("HCaptureSessionWrapper::Release already released");
+        return CAMERA_OK;
     }
 
     if (isSharedMode_) {
@@ -462,6 +462,8 @@ int32_t HCaptureSessionWrapper::Release()
             "HCaptureSessionWrapper::Release sharedSession is null");
         RemoveSavedOutputsFromSharedSession();
         sharedSession->ReleaseRef(ownerPid_);
+        isSharedMode_ = false;
+        session_ = nullptr;
         return CAMERA_OK;
     }
 

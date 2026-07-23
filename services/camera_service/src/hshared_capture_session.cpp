@@ -178,9 +178,55 @@ HDI::Camera::V1_0::StreamSupportType HSharedCaptureSession::NeedReconfigure()
     return supportType;
 }
 
+void HSharedCaptureSession::ClearPendingOutputs()
+{
+    std::lock_guard<std::mutex> lock(pendingOutputMutex_);
+    pendingOutputs_.clear();
+}
+
+void HSharedCaptureSession::RecordPendingOutput(StreamType streamType, const sptr<IRemoteObject>& stream)
+{
+    std::lock_guard<std::mutex> lock(pendingOutputMutex_);
+    for (const auto& pendingOutput : pendingOutputs_) {
+        if (pendingOutput.first == streamType && pendingOutput.second == stream) {
+            return;
+        }
+    }
+    pendingOutputs_.emplace_back(streamType, stream);
+}
+
+void HSharedCaptureSession::ForgetPendingOutput(StreamType streamType, const sptr<IRemoteObject>& stream)
+{
+    std::lock_guard<std::mutex> lock(pendingOutputMutex_);
+    for (auto it = pendingOutputs_.begin(); it != pendingOutputs_.end(); ++it) {
+        if (it->first == streamType && it->second == stream) {
+            pendingOutputs_.erase(it);
+            return;
+        }
+    }
+}
+
+void HSharedCaptureSession::RollbackPendingOutputs()
+{
+    std::vector<std::pair<StreamType, sptr<IRemoteObject>>> pendingOutputs;
+    {
+        std::lock_guard<std::mutex> lock(pendingOutputMutex_);
+        pendingOutputs.swap(pendingOutputs_);
+    }
+
+    for (auto it = pendingOutputs.rbegin(); it != pendingOutputs.rend(); ++it) {
+        int32_t rc = realSession_->RemoveOutput(it->first, it->second);
+        if (rc != CAMERA_OK) {
+            MEDIA_ERR_LOG("HSharedCaptureSession::RollbackPendingOutputs remove output failed, "
+                "streamType:%{public}d, rc:%{public}d", it->first, rc);
+        }
+    }
+}
+
 int32_t HSharedCaptureSession::BeginConfig()
 {
     if (realSession_ != nullptr) {
+        ClearPendingOutputs();
         CaptureSessionState currentState = CaptureSessionState::SESSION_INIT;
         GetSessionState(currentState);
 
@@ -200,8 +246,27 @@ int32_t HSharedCaptureSession::CommitConfig()
         MEDIA_ERR_LOG("HSharedCaptureSession::CommitConfig realSession is null");
         return CAMERA_INVALID_STATE;
     }
-    realSession_->UnlinkInputAndOutputs();
-    return realSession_->CommitConfig();
+
+    auto supportType = NeedReconfigure();
+    MEDIA_INFO_LOG("HSharedCaptureSession::CommitConfig stream support type: %{public}d",
+        static_cast<int32_t>(supportType));
+    if (supportType == HDI::Camera::V1_0::StreamSupportType::NOT_SUPPORTED) {
+        MEDIA_ERR_LOG("HSharedCaptureSession::CommitConfig stream config not supported");
+        RollbackPendingOutputs();
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+
+    if (supportType == HDI::Camera::V1_0::StreamSupportType::RE_CONFIGURED_REQUIRED) {
+        MEDIA_INFO_LOG("HSharedCaptureSession::CommitConfig stream config requires reconfigure");
+        realSession_->UnlinkInputAndOutputs();
+    } else {
+        MEDIA_INFO_LOG("HSharedCaptureSession::CommitConfig stream config supports dynamic config");
+    }
+    int32_t rc = realSession_->CommitConfig();
+    if (rc == CAMERA_OK) {
+        ClearPendingOutputs();
+    }
+    return rc;
 }
 
 int32_t HSharedCaptureSession::CanAddInput(const sptr<ICameraDeviceService>& cameraDevice, bool& result)
@@ -230,7 +295,11 @@ int32_t HSharedCaptureSession::AddOutput(StreamType streamType, const sptr<IRemo
     CaptureSessionState currentState = CaptureSessionState::SESSION_INIT;
     realSession_->GetSessionState(currentState);
     MEDIA_INFO_LOG("HSharedCaptureSession::AddOutput pre-BeginConfig state: %{public}d", currentState);
-    return realSession_->AddOutput(streamType, stream);
+    int32_t rc = realSession_->AddOutput(streamType, stream);
+    if (rc == CAMERA_OK) {
+        RecordPendingOutput(streamType, stream);
+    }
+    return rc;
 }
 
 int32_t HSharedCaptureSession::AddMultiStreamOutput(const sptr<IRemoteObject>& multiStreamOutput, int32_t opMode)
@@ -289,6 +358,7 @@ int32_t HSharedCaptureSession::RemoveOutput(StreamType streamType, const sptr<IR
     int32_t rc = realSession_->RemoveOutput(streamType, stream);
     CHECK_RETURN_RET_ELOG(rc != CAMERA_OK, rc,
         "HSharedCaptureSession::RemoveOutput realSession RemoveOutput failed, rc:%{public}d", rc);
+    ForgetPendingOutput(streamType, stream);
     if (streamType == StreamType::CAPTURE) {
         HStreamCapture* captureStream = static_cast<HStreamCapture*>(streamCommon.GetRefPtr());
         CHECK_RETURN_RET(captureStream != nullptr && captureStream->IsHasEnableOfflinePhoto(), CAMERA_OK);
