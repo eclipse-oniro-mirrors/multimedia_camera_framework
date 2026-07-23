@@ -250,7 +250,7 @@ int CameraInput::Open()
     } else {
         MEDIA_ERR_LOG("CameraInput::Open() deviceObj is nullptr");
     }
-    return ServiceToCameraError(retCode);
+    return ServiceToCameraErrorV2(retCode);
 }
 
 const std::unordered_map<CameraPosition, camera_position_enum_t> fwToMetaCameraPosition_ = {

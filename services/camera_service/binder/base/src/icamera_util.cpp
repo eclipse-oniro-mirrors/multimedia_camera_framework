@@ -106,10 +106,12 @@ int32_t ServiceToCameraError(int32_t ret)
 }
 
 
-static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorrMap = {
+static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorMap = {
     {CAMERA_OK, 0},
     {CAMERA_ALLOC_ERROR, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC},
     {CAMERA_INVALID_ARG, CameraErrorCode::SERVICE_FATL_ERROR},
+    {CAMERA_INPUT_DEVICE, CameraErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE},
+    {CAMERA_STOP_WITHOUT_START, CameraErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START},
     {CAMERA_UNSUPPORTED, CameraErrorCode::DEVICE_DISABLED},
     {CAMERA_DEVICE_BUSY, CameraErrorCode::CONFLICT_CAMERA},
     {CAMERA_DEVICE_CLOSED, CameraErrorCode::DEVICE_DISABLED},
@@ -124,8 +126,8 @@ static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorrMap = {
     {CAMERA_OPERATION_NOT_ALLOWED, CameraErrorCode::OPERATION_NOT_ALLOWED},
     {CAMERA_DEVICE_ERROR, CameraErrorCode::OPERATION_NOT_ALLOWED},
     {CAMERA_NO_PERMISSION, CameraErrorCode::OPERATION_NOT_ALLOWED},
+    {CAMERA_CAPTURE_NOT_READY, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY},
     {CAMERA_DEVICE_CONFLICT, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT},
-    {CAMERA_DEVICE_CONFLICT, CameraErrorCode::OPERATION_NOT_ALLOWED},
     {CAMERA_DEVICE_SWITCH_FREQUENT, CameraErrorCode::DEVICE_SWITCH_FREQUENT},
     {CAMERA_DEVICE_LENS_RETRACTED, CameraErrorCode::CAMERA_LENS_RETRACTED},
     {CAMERA_UNSUPPORTED_COMBINATION, CameraErrorCode::UNSUPPORTED_MULTI_CAMERA_COMBINATION},
@@ -147,8 +149,8 @@ static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorrMap = {
 
 int32_t ServiceToCameraErrorV2(int32_t ret)
 {
-    auto it = ServiceToCameraErrorrMap.find(ret);
-    if (it != ServiceToCameraErrorrMap.end()) {
+    auto it = ServiceToCameraErrorMap.find(ret);
+    if (it != ServiceToCameraErrorMap.end()) {
         return it->second;
     }
     MEDIA_ERR_LOG("ServiceToCameraError() error code from service: %{public}d", ret);

@@ -1567,7 +1567,7 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
         input == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::RemoveInput input is null");
     auto device = ((sptr<CameraInput>&)input)->GetCameraDevice();
     CHECK_RETURN_RET_ELOG(
-        device == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::RemoveInput device is null");
+        device == nullptr, ServiceToCameraErrorV2(CAMERA_INPUT_DEVICE), "CaptureSession::RemoveInput device is null");
     supportSpecSearch_ = false;
     {
         std::lock_guard<std::mutex> lock(abilityContainerMutex_);
@@ -1693,7 +1693,7 @@ int32_t CaptureSession::Stop()
     } else {
         MEDIA_ERR_LOG("CaptureSession::Stop() captureSession is nullptr");
     }
-    return ServiceToCameraError(errCode);
+    return ServiceToCameraErrorV2(errCode);
 }
 
 int32_t CaptureSession::Release()

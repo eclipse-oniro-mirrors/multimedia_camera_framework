@@ -884,7 +884,7 @@ int32_t PhotoOutput::Capture()
         MEDIA_ERR_LOG("PhotoOutput::Capture() itemStream is nullptr");
     }
     CHECK_PRINT_ELOG(errCode != CAMERA_OK, "PhotoOutput Failed to Capture!, errCode: %{public}d", errCode);
-    return ServiceToCameraError(errCode);
+    return ServiceToCameraErrorV2(errCode);
     // LCOV_EXCL_STOP
 }
 

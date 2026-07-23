@@ -822,7 +822,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_003, Test
     ASSERT_NE(previewOutput, nullptr);
 
     EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
-    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SERVICE_FATL_ERROR);
+    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SERVICE_FATL_ERROR_OF_CONFIG);
     EXPECT_EQ(captureSession_->CommitConfig(), SERVICE_FATL_ERROR);
 
     EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
@@ -1164,7 +1164,7 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_017, Test
         sptr<CameraDevice> device = cameraDevices_[deviceBackIndex];
         ASSERT_NE(device, nullptr);
         if (device->GetPosition() == CAMERA_POSITION_BACK) {
-            EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_ON), OPERATION_NOT_ALLOWED);
+            EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_ON), OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT);
             EXPECT_EQ(cameraManager_->SetTorchMode(TorchMode::TORCH_MODE_OFF), OPERATION_NOT_ALLOWED);
             EXPECT_EQ(cameraManager_->GetTorchMode(), currentTorchMode);
         } else if (device->GetPosition() == CAMERA_POSITION_FRONT) {

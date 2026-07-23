@@ -511,7 +511,7 @@ int32_t HCaptureSession::CanAddInput(const sptr<ICameraDeviceService>& cameraDev
             MEDIA_ERR_LOG("HCaptureSession::CanAddInput Need to call BeginConfig "
                           "before adding input, sessionID: %{public}d",
                 GetSessionId());
-            errorCode = CAMERA_INVALID_STATE;
+            errorCode = CAMERA_STOP_WITHOUT_START;
             return;
         }
         if ((GetCameraDevice() != nullptr)) {

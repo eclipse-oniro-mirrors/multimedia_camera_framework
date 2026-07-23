@@ -836,7 +836,10 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_021, TestSize.Level0)
     device->Open();
 
     cameraService_->cameraMuteServiceCallbacks_ = {};
-    cameraService_->peerCallback_ = new ICameraBrokerTest();
+    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
+    ASSERT_NE(peerCallback, nullptr);
+    pid_t pid = 1234;
+    cameraService_->peerCallbacks_[pid] = peerCallback;
     cameraService_->OnMute(true);
     EXPECT_TRUE(cameraService_->cameraMuteServiceCallbacks_.empty());
     EXPECT_EQ(cameraService_->UnSetMuteCallback(IPCSkeleton::GetCallingPid()), CAMERA_OK);
@@ -846,8 +849,8 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_021, TestSize.Level0)
     cameraService_->OnMute(true);
     EXPECT_EQ(cameraService_->cameraMuteServiceCallbacks_.size(), 2);
 
-    if (cameraService_->peerCallback_) {
-        cameraService_->peerCallback_ = nullptr;
+    if (cameraService_->peerCallbacks_[pid]) {
+        cameraService_->peerCallbacks_[pid] = nullptr;
     }
     if (callback) {
         callback = nullptr;
