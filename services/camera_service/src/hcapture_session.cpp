@@ -25,7 +25,7 @@
 #include <memory>
 #include <mutex>
 #include <new>
-#include <sched.h> 
+#include <sched.h>
 #include <cstdint>
 #include <string>
 #include <sync_fence.h>
