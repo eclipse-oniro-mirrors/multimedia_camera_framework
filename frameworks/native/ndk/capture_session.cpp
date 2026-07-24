@@ -1190,21 +1190,16 @@ Camera_ErrorCode OH_CaptureSession_GetZoomPointInfos(const Camera_CaptureSession
     CHECK_RETURN_RET_ELOG(size == nullptr, CAMERA_INVALID_ARGUMENT,
                           "Invalid argument, size is null!");
     CHECK_RETURN_RET_ELOG(cameraZoomPointInfo == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, cameraZoomPointInfo is null!");
+                          "Invalid argument, cameraZoomPointInfo is null!");
 
     std::vector<OHOS::CameraStandard::ZoomPointInfo> zoomPointInfoList;
     Camera_ErrorCode ret = session->GetZoomPointInfos(zoomPointInfoList);
     CHECK_RETURN_RET(ret != CAMERA_OK, ret);
     *size = static_cast<int32_t>(zoomPointInfoList.size());
-    CHECK_EXECUTE(*size == 0,
-                  *cameraZoomPointInfo = nullptr; return CAMERA_OK);
-
-    // 分配内存
+    CHECK_RETURN_RET_ILOG(*size == 0, CAMERA_OK, "OH_CaptureSession_GetZoomPointInfos Get Null");
     *cameraZoomPointInfo = new (std::nothrow) OH_Camera_ZoomPointInfo[*size];
     CHECK_RETURN_RET_ELOG(*cameraZoomPointInfo == nullptr, CAMERA_OPERATION_NOT_ALLOWED,
-        "Failed to allocate memory for zoom point info!");
-
-    // 填充数据
+                          "Failed to allocate memory for zoom point info!");
     for (int32_t i = 0; i < *size; i++) {
         (*cameraZoomPointInfo)[i].zoomRatio = zoomPointInfoList[i].zoomRatio;
         (*cameraZoomPointInfo)[i].equivalentFocalLength =
@@ -1215,7 +1210,7 @@ Camera_ErrorCode OH_CaptureSession_GetZoomPointInfos(const Camera_CaptureSession
     return CAMERA_OK;
 }
 
-Camera_ErrorCode OH_CaptureSession_DeleteZoomPointInfo(const Camera_CaptureSession* session,
+Camera_ErrorCode OH_CaptureSession_DeleteZoomPointInfos(const Camera_CaptureSession* session,
     OH_Camera_ZoomPointInfo* zoomPointInfo)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_DeleteZoomPointInfo is called");
