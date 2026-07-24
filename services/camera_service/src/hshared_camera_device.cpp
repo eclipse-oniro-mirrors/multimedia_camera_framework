@@ -178,6 +178,7 @@ void HSharedCameraDevice::ReleaseRef(pid_t pid)
                 return;
             }
             refCount_.erase(it);
+            UnmarkNonPrivileged(pid);
         }
         shouldClose = refCount_.empty();
         MEDIA_INFO_LOG("HSharedCameraDevice::ReleaseRef pid: %{public}d, shouldClose: %{public}d", pid, shouldClose);
@@ -221,6 +222,64 @@ void HSharedCameraDevice::UnregisterAppCallback(pid_t pid)
     std::lock_guard<std::mutex> lock(callbackMutex_);
     appCallbacks_.erase(pid);
     MEDIA_INFO_LOG("HSharedCameraDevice::UnregisterAppCallback pid: %{public}d", pid);
+}
+
+bool HSharedCameraDevice::HasNonPrivilegedUser()
+{
+    std::lock_guard<std::mutex> lock(nonPrivilegedMutex_);
+    return !nonPrivilegedPids_.empty();
+}
+
+pid_t HSharedCameraDevice::GetNonPrivilegedPid()
+{
+    std::lock_guard<std::mutex> lock(nonPrivilegedMutex_);
+    if (!nonPrivilegedPids_.empty()) {
+        return *nonPrivilegedPids_.begin();
+    }
+    return -1;
+}
+
+void HSharedCameraDevice::MarkNonPrivileged(pid_t pid)
+{
+    {
+        std::lock_guard<std::mutex> lock(nonPrivilegedMutex_);
+        nonPrivilegedPids_.insert(pid);
+    }
+    MEDIA_INFO_LOG("HSharedCameraDevice::MarkNonPrivileged pid: %{public}d", pid);
+}
+
+void HSharedCameraDevice::UnmarkNonPrivileged(pid_t pid)
+{
+    {
+        std::lock_guard<std::mutex> lock(nonPrivilegedMutex_);
+        nonPrivilegedPids_.erase(pid);
+    }
+    MEDIA_INFO_LOG("HSharedCameraDevice::UnmarkNonPrivileged pid: %{public}d", pid);
+}
+
+void HSharedCameraDevice::EjectUser(pid_t pid)
+{
+    MEDIA_INFO_LOG("HSharedCameraDevice::EjectUser pid: %{public}d", pid);
+    UnregisterAppCallback(pid);
+    ReleaseRef(pid);
+    UnmarkNonPrivileged(pid);
+}
+
+void HSharedCameraDevice::SendErrorToPid(pid_t pid, int32_t errorType, int32_t errorMsg)
+{
+    sptr<ICameraDeviceServiceCallback> callback = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(callbackMutex_);
+        auto it = appCallbacks_.find(pid);
+        if (it != appCallbacks_.end()) {
+            callback = it->second;
+        }
+    }
+    if (callback != nullptr) {
+        callback->OnError(errorType, errorMsg);
+        MEDIA_INFO_LOG("HSharedCameraDevice::SendErrorToPid pid: %{public}d, errorType: %{public}d", pid,
+            errorType);
+    }
 }
 
 std::string HSharedCameraDevice::GetCameraId() const

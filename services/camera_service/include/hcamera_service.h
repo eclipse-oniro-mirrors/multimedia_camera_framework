@@ -451,6 +451,10 @@ private:
         std::vector<sptr<HCaptureSessionWrapper>>& sessionWrappers);
     void CollectDevicesForMigration(const std::string& cameraId, pid_t ownerPid,
         std::vector<sptr<HCameraDeviceWrapper>>& deviceWrappers);
+    void ReleaseSessionWrapperFromSharedMode(const std::string& cameraId, pid_t ownerPid,
+        const sptr<HSharedCaptureSession>& sharedSession);
+    void HandleNonPrivilegedAppForSharedDevice(const std::string& cameraId, pid_t callerPid,
+        sptr<HCameraDevice>& deviceForWrapper, bool& isSharedDevice);
 
     mutex mutex_;
     mutex cameraCbMutex_;

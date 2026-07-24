@@ -63,6 +63,7 @@
 #include "hcapture_session_wrapper.h"
 #include "hshared_camera_device.h"
 #include "hshared_capture_session.h"
+#include "camera_app_manager_client.h"
 
 #ifdef DEVICE_MANAGER
 #include "device_manager_impl.h"
@@ -1063,13 +1064,8 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
         isSharedDevice = true;
         MEDIA_INFO_LOG("HCameraService::CreateCameraDevice privilege app, using shared device");
     } else {
-        sptr<HSharedCameraDevice> sharedDevice = HSharedCameraDevice::GetSharedDevice(cameraId);
-        sptr<HSharedCaptureSession> sharedSession = HSharedCaptureSession::GetExistingSession(cameraId);
-        if (sharedDevice != nullptr && sharedSession != nullptr) {
-            deviceForWrapper = sharedDevice;
-            isSharedDevice = true;
-            MEDIA_INFO_LOG("HCameraService::CreateCameraDevice non-privilege app, using ready shared device");
-        } else {
+        HandleNonPrivilegedAppForSharedDevice(cameraId, callerPid, deviceForWrapper, isSharedDevice);
+        if (deviceForWrapper == nullptr) {
             deviceForWrapper = new (nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
             CHECK_RETURN_RET_ELOG(deviceForWrapper == nullptr, CAMERA_ALLOC_ERROR,
                 "HCameraService::CreateCameraDevice HCameraDevice allocation failed");
@@ -1147,6 +1143,94 @@ void HCameraService::CollectDevicesForMigration(const std::string& cameraId, pid
             deviceWrappers.emplace_back(wrapper);
         }
         ++it;
+    }
+}
+
+void HCameraService::ReleaseSessionWrapperFromSharedMode(const std::string& cameraId, pid_t ownerPid,
+    const sptr<HSharedCaptureSession>& sharedSession)
+{
+    sptr<HCaptureSessionWrapper> sessionWrapper = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(sessionsMutex_);
+        auto it = sessions_.begin();
+        while (it != sessions_.end()) {
+            sptr<HCaptureSessionWrapper> wrapper = it->promote();
+            if (wrapper == nullptr) {
+                it = sessions_.erase(it);
+                continue;
+            }
+            if (wrapper->GetOwnerPid() == ownerPid && wrapper->IsSharedMode() && wrapper->GetCameraId() == cameraId) {
+                sessionWrapper = wrapper;
+                break;
+            }
+            ++it;
+        }
+    }
+
+    if (sessionWrapper != nullptr) {
+        int32_t rc = sessionWrapper->Release();
+        CHECK_PRINT_ELOG(rc != CAMERA_OK,
+            "HCameraService::ReleaseSessionWrapperFromSharedMode release failed, cameraId:%{public}s, "
+            "pid:%{public}d, rc:%{public}d", cameraId.c_str(), ownerPid, rc);
+        if (rc != CAMERA_OK) {
+            return;
+        }
+        {
+            std::lock_guard<std::mutex> lock(sessionsMutex_);
+            auto it = sessions_.begin();
+            while (it != sessions_.end()) {
+                sptr<HCaptureSessionWrapper> wrapper = it->promote();
+                if (wrapper == nullptr || wrapper.GetRefPtr() == sessionWrapper.GetRefPtr()) {
+                    it = sessions_.erase(it);
+                    continue;
+                }
+                ++it;
+            }
+        }
+        MEDIA_INFO_LOG("HCameraService::ReleaseSessionWrapperFromSharedMode released, cameraId:%{public}s, "
+            "pid:%{public}d", cameraId.c_str(), ownerPid);
+        return;
+    }
+
+    if (sharedSession != nullptr) {
+        sharedSession->ReleaseRef(ownerPid);
+        MEDIA_INFO_LOG("HCameraService::ReleaseSessionWrapperFromSharedMode no wrapper found, "
+            "released shared session ref directly, cameraId:%{public}s, pid:%{public}d", cameraId.c_str(), ownerPid);
+    }
+}
+
+void HCameraService::HandleNonPrivilegedAppForSharedDevice(const std::string& cameraId, pid_t callerPid,
+    sptr<HCameraDevice>& deviceForWrapper, bool& isSharedDevice)
+{
+    sptr<HSharedCameraDevice> sharedDevice = HSharedCameraDevice::GetSharedDevice(cameraId);
+    sptr<HSharedCaptureSession> sharedSession = HSharedCaptureSession::GetExistingSession(cameraId);
+    if (sharedDevice == nullptr || sharedSession == nullptr) {
+        return;
+    }
+    if (!sharedDevice->HasNonPrivilegedUser()) {
+        sharedDevice->MarkNonPrivileged(callerPid);
+        deviceForWrapper = sharedDevice;
+        isSharedDevice = true;
+        MEDIA_INFO_LOG("HCameraService::CreateCameraDevice non-privilege app joins shared device");
+    } else {
+        pid_t existingPid = sharedDevice->GetNonPrivilegedPid();
+        auto appManagerClient = CameraAppManagerClient::GetInstance();
+        int32_t existingState = appManagerClient->GetProcessState(existingPid);
+        int32_t callerState = appManagerClient->GetProcessState(callerPid);
+        MEDIA_INFO_LOG("HCameraService::CreateCameraDevice non-privilege preempt check, "
+            "existingPid:%{public}d, existingState:%{public}d, callerPid:%{public}d, "
+            "callerState:%{public}d", existingPid, existingState, callerPid, callerState);
+        if (existingState >= callerState) {
+            sharedDevice->SendErrorToPid(existingPid, CAMERA_DEVICE_PREEMPTED, 0);
+            ReleaseSessionWrapperFromSharedMode(cameraId, existingPid, sharedSession);
+            sharedDevice->EjectUser(existingPid);
+            sharedDevice->MarkNonPrivileged(callerPid);
+            deviceForWrapper = sharedDevice;
+            isSharedDevice = true;
+            MEDIA_INFO_LOG("HCameraService::CreateCameraDevice non-privilege app preempts shared user");
+        } else {
+            MEDIA_INFO_LOG("HCameraService::CreateCameraDevice existing non-privilege shared user wins");
+        }
     }
 }
 

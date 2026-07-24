@@ -18,6 +18,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <atomic>
 #include <refbase.h>
 
@@ -50,6 +51,13 @@ public:
 
     void RegisterAppCallback(pid_t pid, const sptr<ICameraDeviceServiceCallback>& callback);
     void UnregisterAppCallback(pid_t pid);
+
+    bool HasNonPrivilegedUser();
+    pid_t GetNonPrivilegedPid();
+    void MarkNonPrivileged(pid_t pid);
+    void UnmarkNonPrivileged(pid_t pid);
+    void EjectUser(pid_t pid);
+    void SendErrorToPid(pid_t pid, int32_t errorType, int32_t errorMsg);
 
     std::string GetCameraId() const;
 
@@ -98,6 +106,8 @@ private:
     std::mutex lifecycleMutex_;
     std::map<pid_t, sptr<ICameraDeviceServiceCallback>> appCallbacks_;
     std::mutex callbackMutex_;
+    std::set<pid_t> nonPrivilegedPids_;
+    std::mutex nonPrivilegedMutex_;
     sptr<ICameraDeviceServiceCallback> aggregator_;
 
     int32_t OnRealDeviceOpened();
