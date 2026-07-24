@@ -1409,13 +1409,6 @@ public:
      */
     int32_t UnPrepareZoom();
 
-    /**
-     * @brief Gets the zoom point infos.
-     *
-     * @param zoomPointInfoList returned the zoom point infos list.
-     * @return errCode CAMERA_SUCCESS if the method call succeeds.
-     * @since 12
-     */
     int32_t GetZoomPointInfos(std::vector<ZoomPointInfo>& zoomPointInfoList);
 
     /**
@@ -2579,6 +2572,16 @@ protected:
     int32_t CheckCommonPreconditions(bool isSystemApp = true, bool isAfterSessionCommited = true);
 
     private:
+    int32_t ValidateSessionForZoom();
+    
+    int32_t GetZoomPointMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
+                                 camera_metadata_item_t& item);
+    bool ValidateSceneModeLength(uint32_t currentIndex, uint32_t totalCount, int32_t length);
+    
+    ZoomPointInfo ParseZoomPointInfo(const camera_metadata_item_t& item, int32_t& index);
+    
+    void ProcessSceneModeData(const camera_metadata_item_t& item, SceneMode currentMode,
+                              std::vector<ZoomPointInfo>& zoomPointInfoList);
     class LockGuardForControl {
     public:
         explicit LockGuardForControl(wptr<CaptureSession> session);
