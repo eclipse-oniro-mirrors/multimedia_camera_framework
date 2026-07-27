@@ -81,6 +81,7 @@ const std::string CameraManager::surfaceFormat = "CAMERA_SURFACE_FORMAT";
 const std::map<FoldStatus, std::vector<OHOS::Rosen::FoldStatus>> g_foldStatusAssociations = {
     {FoldStatus::EXPAND,
         {
+            OHOS::Rosen::FoldStatus::FOLDED,
             OHOS::Rosen::FoldStatus::FOLD_STATE_FOLDED_WITH_SECOND_EXPAND,
             OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_EXPAND,
             OHOS::Rosen::FoldStatus::FOLD_STATE_EXPAND_WITH_SECOND_HALF_FOLDED,
@@ -90,7 +91,6 @@ const std::map<FoldStatus, std::vector<OHOS::Rosen::FoldStatus>> g_foldStatusAss
     },
     {FoldStatus::FOLDED,
         {
-            OHOS::Rosen::FoldStatus::FOLDED,
             OHOS::Rosen::FoldStatus::FOLD_STATE_FOLDED_WITH_SECOND_HALF_FOLDED,
             OHOS::Rosen::FoldStatus::EXPAND
         }
@@ -1819,6 +1819,7 @@ std::string CameraManager::GetFoldScreenType()
 FoldStatus CameraManager::GetFoldStatus()
 {
     auto dmFoldStatus = OHOS::Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
+    MEDIA_DEBUG_LOG("GetFoldStatus dmFoldStatus= %{public}d", dmFoldStatus);
     if (!foldScreenType_.empty() && foldScreenType_[0] == '8') {
         for (const auto& [mainStatus, subStatusList] : g_foldStatusAssociations) {
             if (std::find(subStatusList.begin(), subStatusList.end(), dmFoldStatus) != subStatusList.end()) {
