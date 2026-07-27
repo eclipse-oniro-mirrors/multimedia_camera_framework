@@ -74,6 +74,7 @@ ohos_shared_library("cj_camera_ffi") {
       "napi:cj_bind_ffi",
       "napi:cj_bind_native",
       "image_framework:cj_image_ffi",
+      "bounds_checking_function:libsec_shared",
     ]
     sources = [
       "camera/src/camera_ffi.cpp",
