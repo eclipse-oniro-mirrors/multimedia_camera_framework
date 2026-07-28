@@ -238,8 +238,12 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     }
 #ifdef NOTIFICATION_ENABLE
     bool isNeedBeautyNotification = IsNeedBeautyNotification();
-    if (isNeedBeautyNotification && CameraBeautyNotification::GetInstance()->GetBeautyStatus() == BEAUTY_STATUS_ON) {
-        UpdateBeautySettings(dynamicSetting);
+    if (isNeedBeautyNotification) {
+        if (auto instance = CameraBeautyNotification::GetInstance()) {
+            if (instance->GetBeautyStatus() == BEAUTY_STATUS_ON) {
+                UpdateBeautySettings(dynamicSetting);
+            }
+        }
     }
 #endif
     
@@ -277,7 +281,9 @@ int32_t HStreamRepeat::Start(std::shared_ptr<OHOS::Camera::CameraMetadata> setti
     CHECK_EXECUTE(settings != nullptr, StartSketchStream(settings));
 #ifdef NOTIFICATION_ENABLE
     if (isNeedBeautyNotification) {
-        CameraBeautyNotification::GetInstance()->PublishNotification(true);
+        if (auto instance = CameraBeautyNotification::GetInstance()) {
+            instance->PublishNotification(true);
+        }
     }
 #endif
     return ret;
@@ -1005,7 +1011,9 @@ void HStreamRepeat::UpdateBeautySettings(std::shared_ptr<OHOS::Camera::CameraMet
 
 void HStreamRepeat::CancelNotification()
 {
-    CameraBeautyNotification::GetInstance()->CancelNotification();
+    if (auto instance = CameraBeautyNotification::GetInstance()) {
+        instance->CancelNotification();
+    }
 }
 
 bool HStreamRepeat::IsNeedBeautyNotification()
