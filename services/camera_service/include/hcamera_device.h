@@ -144,6 +144,11 @@ public:
         return cameraPrivacy_;
     }
 
+    inline void SetIspDead(bool isIspDead)
+    {
+        isIspDead_ = isIspDead;
+    }
+
     void RemoveResourceWhenHostDied();
 
     int64_t GetSecureCameraSeq(uint64_t* secureSeqId);
@@ -388,6 +393,7 @@ private:
     sptr<ICameraSpectrumInfoCallback> spectrumInfoCallback_;
     std::mutex spectrumInfoCallbackMutex_;
     int32_t userId_;
+    bool isIspDead_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

@@ -73,6 +73,10 @@ public:
             }
             hostManager->RemoveCameraHost(hostName);
         };
+        wptr<HCameraHostManager> GetHostManager() const
+        {
+            return hostManager_;
+        }
 
     private:
         wptr<HCameraHostManager> hostManager_;
@@ -87,8 +91,9 @@ public:
                          sptr<ICameraDeviceService> cameraDevice,
                          std::string originCameraId = "");
     virtual int32_t GetVersionByCamera(const std::string& cameraId);
-    void RemoveCameraDevice(const std::string& cameraId, std::string originCameraId = "");
+    void RemoveCameraDevice(const std::string& cameraId, std::string originCameraId = "", bool isIspDead = false);
     void CloseCameraDevice(const std::string& cameraId);
+    void CloseCameraDeviceForIspFailure(const std::string& cameraId);
 
     virtual int32_t GetCameras(std::vector<std::string> &cameraIds);
     virtual int32_t GetCameraAbility(const std::string &cameraId,

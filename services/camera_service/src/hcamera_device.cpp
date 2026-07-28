@@ -960,7 +960,7 @@ int32_t HCameraDevice::CloseDevice()
         EnableDeviceOpenedByConcurrent(false);
     }
     if (cameraHostManager_) {
-        cameraHostManager_->RemoveCameraDevice(cameraID_, GetCameraIdTransform());
+        cameraHostManager_->RemoveCameraDevice(cameraID_, GetCameraIdTransform(), isIspDead_);
         cameraHostManager_->UpdateRestoreParamCloseTime(GetClientName(), cameraID_);
         cameraHostManager_->SaveMapToJsonFile(SAVE_RESTORE_FILE_PATH, GetClientName(),  cameraID_);
     }
@@ -980,6 +980,7 @@ int32_t HCameraDevice::CloseDevice()
         !CameraRotatePlugin::GetInstance()->HookCloseDeviceForRotate(GetClientName(), deviceAbility_, cameraID_),
         "HCameraDevice::CloseDevice HookCloseDevice is failed");
 #endif
+    isIspDead_ = false;
     return CAMERA_OK;
 }
 
