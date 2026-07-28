@@ -164,7 +164,7 @@ const std::vector<napi_property_descriptor> CameraSessionForSysNapi::color_reser
 
 const std::vector<napi_property_descriptor> CameraSessionForSysNapi::imaging_mode_sys_props = {
     DECLARE_NAPI_FUNCTION("isImagingModeSupported", CameraSessionForSysNapi::IsImagingModeSupported),
-    DECLARE_NAPI_FUNCTION("getActiveImagingMode", CameraSessionForSysNapi::GetActiveImagingMode),
+    DECLARE_NAPI_FUNCTION("getImagingMode", CameraSessionForSysNapi::GetImagingMode),
     DECLARE_NAPI_FUNCTION("setImagingMode", CameraSessionForSysNapi::SetImagingMode)
 };
 
@@ -1657,9 +1657,9 @@ napi_value CameraSessionForSysNapi::IsImagingModeSupported(napi_env env, napi_ca
     return result;
 }
 
-napi_value CameraSessionForSysNapi::GetActiveImagingMode(napi_env env, napi_callback_info info)
+napi_value CameraSessionForSysNapi::GetImagingMode(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("GetActiveImagingMode is called");
+    MEDIA_DEBUG_LOG("GetImagingMode is called");
     napi_status status;
     napi_value result = nullptr;
     size_t argc = ARGS_ZERO;
@@ -1673,13 +1673,13 @@ napi_value CameraSessionForSysNapi::GetActiveImagingMode(napi_env env, napi_call
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
     if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
         ImagingMode imagingMode;
-        int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetActiveImagingMode(imagingMode);
+        int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetImagingMode(imagingMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
         }
         napi_create_int32(env, imagingMode, &result);
     } else {
-        MEDIA_ERR_LOG("GetActiveImagingMode call Failed!");
+        MEDIA_ERR_LOG("GetImagingMode call Failed!");
     }
     return result;
 }

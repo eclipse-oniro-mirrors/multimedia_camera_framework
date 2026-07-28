@@ -15335,11 +15335,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_0220, TestSize.Level0
 
 /*  
  * Feature: Framework
- * Function: Test GetActiveImagingMode after CommitConfig.
+ * Function: Test GetImagingMode after CommitConfig.
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test GetActiveImagingMode after CommitConfig.
+ * CaseDescription: Test GetImagingMode after CommitConfig.
  */
 HWTEST_F(CaptureSessionUnitTest, capture_session_unit_221, TestSize.Level0)
 {
@@ -15367,7 +15367,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_221, TestSize.Level0)
     EXPECT_EQ(sessionForSys->UnlockForControl(), CameraErrorCode::SUCCESS);
 
     ImagingMode imagingMode;
-    int32_t retCode = sessionForSys->GetActiveImagingMode(imagingMode);
+    int32_t retCode = sessionForSys->GetImagingMode(imagingMode);
     EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
     EXPECT_EQ(imagingMode, ImagingMode::IMAGING_MODE_AUTO);
 
