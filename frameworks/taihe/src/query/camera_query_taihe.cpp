@@ -1666,15 +1666,15 @@ bool ImagingModeQueryImpl::IsImagingModeSupported(ImagingModeType mode)
     return isSupported;
 }
 
-ImagingModeType ImagingModeImpl::GetActiveImagingMode()
+ImagingModeType ImagingModeImpl::GetImagingMode()
 {
     ImagingModeType errType = ImagingModeType(static_cast<ImagingModeType::key_t>(-1));
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), errType,
-        "SystemApi GetActiveImagingMode is called!");
+        "SystemApi GetImagingMode is called!");
     CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, errType,
-        "GetActiveImagingMode captureSessionForSys_ is null");
+        "GetImagingMode captureSessionForSys_ is null");
     OHOS::CameraStandard::ImagingMode mode;
-    int32_t retCode = captureSessionForSys_->GetActiveImagingMode(mode);
+    int32_t retCode = captureSessionForSys_->GetImagingMode(mode);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), errType);
     return ImagingModeType(static_cast<ImagingModeType::key_t>(mode));
 }

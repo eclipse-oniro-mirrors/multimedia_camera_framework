@@ -2914,7 +2914,7 @@ interface ImagingModeQuery {
 }
 
 interface ImagingMode : ImagingModeQuery {
-  GetActiveImagingMode(): ImagingModeType;
+  GetImagingMode(): ImagingModeType;
   SetImagingMode(mode: ImagingModeType): void;
 }
 

@@ -917,22 +917,22 @@ std::shared_ptr<ImageStabilizationGuideCallback> CaptureSessionForSys::GetImageS
     return imageStabilizationGuideCallback_;
 }
 
-int32_t CaptureSessionForSys::GetActiveImagingMode(ImagingMode& imagingMode)
+int32_t CaptureSessionForSys::GetImagingMode(ImagingMode& imagingMode)
 {
-    MEDIA_DEBUG_LOG("CaptureSessionForSys::GetActiveImagingMode is called");
+    MEDIA_DEBUG_LOG("CaptureSessionForSys::GetImagingMode is called");
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS,
-        "CaptureSessionForSys::GetActiveImagingMode camera device is null");
+        "CaptureSessionForSys::GetImagingMode camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
-        "CaptureSessionForSys::GetActiveImagingMode camera device is null");
+        "CaptureSessionForSys::GetImagingMode camera device is null");
     imagingMode = ImagingMode::IMAGING_MODE_AUTO;
     bool isSupported = false;
     sptr<CameraDevice> cameraObj_;
     cameraObj_ = inputDeviceInfo;
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetCachedMetadata();
     CHECK_RETURN_RET_ELOG(
-        metadata == nullptr, CameraErrorCode::SUCCESS, "GetActiveImagingMode camera metadata is null");
+        metadata == nullptr, CameraErrorCode::SUCCESS, "GetImagingMode camera metadata is null");
     camera_metadata_item_t item;
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_IMAGING_MODE, &item);
     if (ret == CAM_META_SUCCESS) {
@@ -943,8 +943,8 @@ int32_t CaptureSessionForSys::GetActiveImagingMode(ImagingMode& imagingMode)
         }
     }
     CHECK_PRINT_ELOG(!isSupported || ret != CAM_META_SUCCESS,
-        "CaptureSessionForSys::GetActiveImagingMode Failed with return code %{public}d", ret);
-    MEDIA_DEBUG_LOG("CaptureSessionForSys::GetActiveImagingMode imagingMode: %{public}d", imagingMode);
+        "CaptureSessionForSys::GetImagingMode Failed with return code %{public}d", ret);
+    MEDIA_DEBUG_LOG("CaptureSessionForSys::GetImagingMode imagingMode: %{public}d", imagingMode);
     return CameraErrorCode::SUCCESS;
 }
 

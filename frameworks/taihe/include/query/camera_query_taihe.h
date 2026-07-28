@@ -420,7 +420,7 @@ class ImagingModeImpl : public ImagingModeQueryImpl {
 public:
     explicit ImagingModeImpl() {}
     virtual ~ImagingModeImpl() = default;
-    ImagingModeType GetActiveImagingMode();
+    ImagingModeType GetImagingMode();
     void SetImagingMode(ImagingModeType mode);
 };
 } // namespace Camera

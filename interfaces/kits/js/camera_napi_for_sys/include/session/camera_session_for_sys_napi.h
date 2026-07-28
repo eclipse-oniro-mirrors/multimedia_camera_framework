@@ -165,7 +165,7 @@ public:
     static napi_value SetColorReservation(napi_env env, napi_callback_info info);
 
     static napi_value IsImagingModeSupported(napi_env env, napi_callback_info info);
-    static napi_value GetActiveImagingMode(napi_env env, napi_callback_info info);
+    static napi_value GetImagingMode(napi_env env, napi_callback_info info);
     static napi_value SetImagingMode(napi_env env, napi_callback_info info);
 
     sptr<CaptureSessionForSys> cameraSessionForSys_ = nullptr;
