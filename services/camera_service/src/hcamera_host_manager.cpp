@@ -657,6 +657,13 @@ int32_t HCameraHostManager::CameraHostInfo::OnCameraStatus(
         case UN_AVAILABLE: {
             MEDIA_INFO_LOG("CameraHostInfo::OnCameraStatus, camera %{public}s unavailable", cameraId.c_str());
             svcStatus = CAMERA_STATUS_UNAVAILABLE;
+            auto deadCallback = cameraHostDeadCallback_.lock();
+            if (deadCallback != nullptr) {
+                auto hostManager = deadCallback->GetHostManager().promote();
+                if (hostManager != nullptr) {
+                    hostManager->CloseCameraDeviceForIspFailure(cameraId);
+                }
+            }
             break;
         }
         case AVAILABLE: {
@@ -938,7 +945,7 @@ void HCameraHostManager::AddCameraDevice(const std::string& cameraId,
     statusCallback->OnCameraStatus(reportCameraId, CAMERA_STATUS_UNAVAILABLE, CallbackInvoker::APPLICATION);
 }
 
-void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId, std::string originCameraId)
+void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId, std::string originCameraId, bool isIspDead)
 {
     MEDIA_DEBUG_LOG("HCameraHostManager::RemoveCameraDevice start");
     std::lock_guard<std::mutex> lock(deviceMutex_);
@@ -948,7 +955,7 @@ void HCameraHostManager::RemoveCameraDevice(const std::string& cameraId, std::st
     }
     cameraDevices_.erase(cameraId);
     auto statusCallback = statusCallback_.lock();
-    if (statusCallback) {
+    if (statusCallback && !isIspDead) {
         string reportCameraId = (originCameraId != cameraId) ? originCameraId : cameraId;
         statusCallback->OnCameraStatus(reportCameraId, CAMERA_STATUS_AVAILABLE, CallbackInvoker::APPLICATION);
         statusCallback->clearPreScanConfig();
@@ -975,6 +982,23 @@ void HCameraHostManager::CloseCameraDevice(const std::string& cameraId)
     MEDIA_DEBUG_LOG("HCameraDevice::CloseCameraDevice should clean %{public}s device", cameraId.c_str());
     HCameraDevice* devicePtr = static_cast<HCameraDevice*>(deviceToDisconnect.GetRefPtr());
     devicePtr->RemoveResourceWhenHostDied();
+}
+
+void HCameraHostManager::CloseCameraDeviceForIspFailure(const std::string& cameraId)
+{
+    sptr<ICameraDeviceService> deviceToDisconnect = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(deviceMutex_);
+        auto iter = cameraDevices_.find(cameraId);
+        if (iter != cameraDevices_.end()) {
+            deviceToDisconnect = iter->second;
+        }
+    }
+    CHECK_RETURN(!deviceToDisconnect);
+    MEDIA_INFO_LOG("HCameraHostManager::CloseCameraDeviceForIspFailure clean %{public}s device", cameraId.c_str());
+    HCameraDevice* devicePtr = static_cast<HCameraDevice*>(deviceToDisconnect.GetRefPtr());
+    devicePtr->SetIspDead(true);
+    devicePtr->Close();
 }
 
 int32_t HCameraHostManager::GetCameras(std::vector<std::string>& cameraIds)
