@@ -67,6 +67,15 @@ public:
     {
         return 0;
     }
+    int32_t OnDeliveryLowQualityLcd(const std::string& imageId, const std::shared_ptr<PictureIntf>& picture) override
+    {
+        return 0;
+    };
+    int32_t OnProcessImageDone(const std::string& imageId, const std::vector<ImageFd>& imageFds,
+        const std::shared_ptr<PictureIntf>& lcdImage, const DpsMetadata& dpsMetaData) override
+    {
+        return 0;
+    };
 };
 
 class IDeferredVideoProcessingSessionCallbackFuzz : public DeferredVideoProcessingSessionCallbackStub {

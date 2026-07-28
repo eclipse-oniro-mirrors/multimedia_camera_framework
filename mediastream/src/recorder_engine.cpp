@@ -1204,13 +1204,14 @@ Status RecorderEngine::CreateMovieFileMediaLibrary()
     MEDIA_INFO_LOG("RecorderEngine::CreateMovieFileMediaLibrary is called");
     constexpr int32_t movieFileShotType = 4;
     auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
-        movieFileShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID(), 2);
+        movieFileShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID(), 2, 0);
     CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, Status::ERROR_UNKNOWN,
         "RecorderEngine::CreateMovieFileMediaLibrary get photoAssetProxy fail");
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->SetDisplayName(CreateVideoDisplayName());
     cameraPhotoProxy->SetIsVideo(true);
-    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
+    sptr<PhotoProxy> photoProxy = (sptr<PhotoProxy>&)cameraPhotoProxy;
+    photoAssetProxy->AddPhotoProxy(photoProxy, photoProxy, "");
     cameraPhotoProxy_ = cameraPhotoProxy;
     movieFilePhotoAssetProxy_ = photoAssetProxy;
     movieFileUri_ = photoAssetProxy->GetPhotoAssetUri();

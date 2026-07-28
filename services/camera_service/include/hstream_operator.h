@@ -132,9 +132,10 @@ public:
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos);
     std::list<sptr<HStreamCommon>> GetAllStreams();
     int32_t CreateMediaLibrary(sptr<CameraServerPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType,
-        std::string& burstKey, int64_t timestamp);
-    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy> &photoProxy,
-        std::string &uri, int32_t &cameraShotType, std::string& burstKey, int64_t timestamp);
+        std::string& burstKey, int64_t timestamp, int32_t imageCount = 1, const std::string& editData = "");
+    int32_t CreateMediaLibrary(std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy>& photoProxy,
+        std::string& uri, int32_t& cameraShotType, std::string& burstKey, int64_t timestamp, int32_t imageCount = 1,
+        const std::string& editData = "");
     void SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> photoProxy, int32_t &cameraShotType,
         bool &isBursting, std::string &burstKey);
     int32_t LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings, int32_t opMode);
@@ -342,7 +343,8 @@ private:
         const OHOS::HDI::Camera::V1_5::CaptureEndedInfoExt_v1_4& captureInfo);
 
     std::shared_ptr<PhotoAssetIntf> ProcessPhotoProxy(int32_t captureId, std::shared_ptr<PictureIntf> picturePtr,
-        bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string& uri);
+        bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy, std::string& uri, int32_t imageCount = 1,
+        const std::string& editData = "");
     void InitDefaultColortSpace(SceneMode opMode);
 
 #ifdef CAMERA_USE_SENSOR

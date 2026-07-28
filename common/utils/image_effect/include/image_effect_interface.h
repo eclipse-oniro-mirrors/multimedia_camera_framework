@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <string>
 #include "surface.h"
+#include "picture.h"
 
 namespace OHOS::CameraStandard {
 
@@ -42,6 +43,9 @@ public:
     virtual sptr<Surface> GetInputSurface() = 0;
     virtual int32_t SetOutputSurface(sptr<Surface> surface) = 0;
     virtual int32_t SetImageEffect(const std::string& filter, const std::string& filterParam) = 0;
+    virtual int32_t SetInputPicture(Media::Picture* picture);
+    virtual int32_t SuppressWatermarkForPicture(
+        std::shared_ptr<Media::Picture> inPicture, const std::string& editData) = 0;
 };
 } // namespace OHOS::CameraStandard
 #endif // OHOS_CAMERA_IMAGE_EFFECT_INTERFACE_H

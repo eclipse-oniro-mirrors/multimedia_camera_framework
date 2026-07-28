@@ -86,7 +86,8 @@
               "openssl",
               "icu",
               "storage_service",
-              "taihe_ffi_gen"
+              "taihe_ffi_gen",
+              "json"
             ]
         },
         "build": {

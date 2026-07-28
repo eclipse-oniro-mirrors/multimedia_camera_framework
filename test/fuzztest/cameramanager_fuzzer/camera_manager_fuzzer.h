@@ -39,6 +39,10 @@ public:
     void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) override {}
     void OnError(const std::string& imageId, const DpsErrorCode errorCode) override {}
     void OnStateChanged(const DpsStatusCode status) override {}
+    void OnDeliveryLowQualityLcd(const std::string& imageId, std::shared_ptr<PictureIntf> picture) override {}
+    void OnProcessImageDone(const std::string& imageId, const std::vector<CameraStandard::ImageFd>& imageFds,
+        std::shared_ptr<CameraStandard::PictureIntf> lcdImage, const DpsMetadata& metadata) override
+    {}
 };
 
 class ITorchServiceCallbackFuzz : public ITorchServiceCallback {

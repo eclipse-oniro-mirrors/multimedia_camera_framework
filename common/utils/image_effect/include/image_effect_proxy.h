@@ -38,6 +38,10 @@ public:
     sptr<Surface> GetInputSurface() override;
     int32_t SetOutputSurface(sptr<Surface> surface) override;
     int32_t SetImageEffect(const std::string& filter, const std::string& filterParam) override;
+    int32_t SetInputPicture(Media::Picture* picture) override;
+    int32_t SuppressWatermarkForPicture(
+        std::shared_ptr<Media::Picture> inPicture, const std::string& editData) override;
+
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Dynamiclib> imageEffectLib_ = {nullptr};

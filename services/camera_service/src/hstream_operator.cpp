@@ -83,6 +83,14 @@
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
+#include "image_effect_proxy.h"
+
+#include "picture.h"
+#include "picture_proxy.h"
+#include "picture_adapter.h"
+#include "image_packer.h"
+#include "json_parse.h"
+#include "parameters.h"
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -1759,7 +1767,7 @@ void HStreamOperator::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camer
 }
 
 int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraServerPhotoProxy>& cameraPhotoProxy, std::string& uri,
-    int32_t& cameraShotType, std::string& burstKey, int64_t timestamp)
+    int32_t& cameraShotType, std::string& burstKey, int64_t timestamp, int32_t imageCount, const std::string& editData)
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("CreateMediaLibrary E");
@@ -1781,13 +1789,14 @@ int32_t HStreamOperator::CreateMediaLibrary(sptr<CameraServerPhotoProxy>& camera
     CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(cameraPhotoProxy, cameraShotType, isBursting, burstKey);
     std::shared_ptr<PhotoAssetProxy> photoAssetProxy =
-        PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_);
+        PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_, 1, imageCount);
     if (photoAssetProxy == nullptr) {
         CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, captureId);
         MEDIA_ERR_LOG("HStreamOperator::CreateMediaLibrary get photoAssetProxy fail");
         return CAMERA_ALLOC_ERROR;
     }
-    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
+    sptr<PhotoProxy> photoProxy = (sptr<PhotoProxy>&)cameraPhotoProxy;
+    photoAssetProxy->AddPhotoProxy(photoProxy, photoProxy, "");
     uri = photoAssetProxy->GetPhotoAssetUri();
     if (!isBursting && isSetMotionPhoto) {
 #ifdef CAMERA_MOVING_PHOTO
@@ -1837,10 +1846,10 @@ bool HStreamOperator::IsCaptureStreamExist()
 
 std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captureId,
     std::shared_ptr<PictureIntf> picturePtr, bool isBursting, sptr<CameraServerPhotoProxy> cameraPhotoProxy,
-    std::string& uri)
+    std::string& uri, int32_t imageCount, const std::string& editData)
 {
     // LCOV_EXCL_START
-    MEDIA_DEBUG_LOG("ProcessPhotoProxy E");
+    MEDIA_INFO_LOG("ProcessPhotoProxy E");
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_RET_ELOG(picturePtr == nullptr, nullptr, "picturePtr is null");
     std::list<sptr<HStreamCommon>> captureStreams = streamContainer_.GetStreams(StreamType::CAPTURE);
@@ -1857,7 +1866,7 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
         "captureId is: %{public}d, isSystemApp: %{public}d.", captureId, isSystemApp);
     if (isBursting) {
         int32_t cameraShotType = 3;
-        photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_);
+        photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_, 0, imageCount);
         if (photoAssetProxy == nullptr) {
             CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, captureId);
         }
@@ -1871,7 +1880,7 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
 #else
     int32_t cameraShotType = 3;
     photoAssetProxy = isBursting ?
-        PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_) :
+        PhotoAssetProxy::GetPhotoAssetProxy(cameraShotType, uid_, callerToken_, 0, imageCount) :
         captureStream->GetPhotoAssetInstance(captureId);
 #endif
 
@@ -1892,30 +1901,124 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
         CHECK_EXECUTE(!IsIpsRotateSupported(), taskThread = std::thread(RotatePicture, picturePtr));
     }
 #endif
-    bool isProfessionalPhoto = (opMode_ == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO));
-    if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false || isProfessionalPhoto) {
+    if (captureStream->IsOriginalImageEnable()) {
+        bool isDump = system::GetParameter("const.camera_service.dump80_enable", "0") == "1";
+        MEDIA_INFO_LOG("ProcessPhotoProxy isDump %{public}d", isDump);
+#ifdef CAMERA_CAPTURE_YUV
+        MEDIA_INFO_LOG("ProcessPhotoProxy originalImageEnable E");
+        // temp pull
+        if (!isBursting && taskThread.joinable()) {
+            taskThread.join();
+            MEDIA_INFO_LOG("ProcessPhotoProxy RotatePicture X");
+        }
+
+        MEDIA_INFO_LOG("ProcessPhotoProxy init editData:%{public}s", editData.c_str());
+        std::string mEditData = editData;
+        std::string saveFormat = ParseThenDelEncodeFormat(mEditData);
+        MEDIA_INFO_LOG("ProcessPhotoProxy mEditData:%{public}s", mEditData.c_str());
+        if (saveFormat == "" || saveFormat == "JPG") {
+            MEDIA_INFO_LOG("ProcessPhotoProxy use default jpeg");
+            saveFormat = "JPEG";
+        }
+        MEDIA_INFO_LOG("ProcessPhotoProxy saveFormat:%{public}s", saveFormat.c_str());
+        std::unordered_map<std::string, std::pair<std::string, PhotoFormat>> saveFormat2EncodeAndProxyTypeMap = {
+            { "JPEG", { "image/jpeg", PhotoFormat::JPG } }, { "HEIF", { "image/heif", PhotoFormat::HEIF } }
+        };
+        auto [encodeFormat, proxyFormat] = saveFormat2EncodeAndProxyTypeMap[saveFormat];
+        auto [bufferOrg, sizeOrg] = picturePtr->Encode(encodeFormat);
+        CHECK_RETURN_RET_ELOG(
+            bufferOrg == nullptr || sizeOrg == 0, nullptr, "ProcessPhotoProxy encode original buffer failed");
+
+        if (isDump) {
+            PictureAdapter::DumpEncoded(bufferOrg.get(), sizeOrg, "80org_encode");
+            picturePtr->DumpMainPixel("80origin");
+        }
+
+        // add watermark
+        MEDIA_INFO_LOG("ProcessPhotoProxy watermark E");
+        auto imageEffectProxy = ImageEffectProxy::CreateImageEffectProxy();
+        CHECK_RETURN_RET_ELOG(!imageEffectProxy, nullptr, "imageEffectProxy is nullptr");
+        int32_t watermarkRet = imageEffectProxy->SuppressWatermarkForPicture(picturePtr->GetPicture(), mEditData);
+        CHECK_PRINT_WLOG(watermarkRet != MEDIA_OK,
+            "ProcessPhotoProxy SuppressWatermarkForPicture fail, editData:%{public}s", mEditData.c_str());
+        MEDIA_INFO_LOG("ProcessPhotoProxy watermark X");
+        if (isDump) {
+            picturePtr->DumpMainPixel("80effect");
+        }
+
+        // encode to jpeg/heif
+        MEDIA_INFO_LOG("ProcessPhotoProxy encode E");
+        std::unique_ptr<uint8_t[]> bufferEffect = nullptr;
+        int64_t sizeEffect = 0;
+        if (watermarkRet == EOK) {
+            auto [bfEft, sizeEft] = picturePtr->Encode(encodeFormat);
+            bufferEffect = std::move(bfEft);
+            sizeEffect = sizeEft;
+            CHECK_RETURN_RET_ELOG(
+                bufferEffect == nullptr || sizeEffect == 0, nullptr, "ProcessPhotoProxy encode effect buffer failed");
+            if (isDump) {
+                PictureAdapter::DumpEncoded(bufferEffect.get(), sizeEffect, "80watermark_encode");
+            }
+        }
         MEDIA_INFO_LOG("ProcessPhotoProxy AddPhotoProxy E");
         string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
         CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
-        photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
+        cameraPhotoProxy->UpdateServerPhotoProxyInfo(
+            std::move(bufferOrg), sizeOrg, proxyFormat);
+        sptr<PhotoProxy> originPhotoProxy = (sptr<PhotoProxy>&)cameraPhotoProxy;
+        sptr<PhotoProxy> effectPhotoProxy = originPhotoProxy;
+
+        if (bufferEffect) {
+            sptr<CameraServerPhotoProxy> effectServicePhotoProxy = new CameraServerPhotoProxy();
+            CHECK_RETURN_RET_ELOG(!effectServicePhotoProxy, nullptr, "ProcessPhotoProxy effectPhotoProxy is nullptr");
+            effectServicePhotoProxy = cameraPhotoProxy; // copy
+            effectServicePhotoProxy->UpdateServerPhotoProxyInfo(
+                std::move(bufferEffect), sizeEffect, proxyFormat);
+            effectPhotoProxy = (sptr<PhotoProxy>&)effectServicePhotoProxy;
+        }
+        photoAssetProxy->AddPhotoProxy(effectPhotoProxy, originPhotoProxy, mEditData);
         MEDIA_INFO_LOG("ProcessPhotoProxy AddPhotoProxy X");
+        uri = photoAssetProxy->GetPhotoAssetUri();
+        // notify downSampling lcd yuv
+        MEDIA_INFO_LOG("ProcessPhotoProxy Notify LCD YUV E");
+        bool isSucc = picturePtr->ResizeLcdPicture();
+        CHECK_PRINT_ELOG(!isSucc, "ResizeLcdPicture fail");
+        DeferredProcessing::DeferredProcessingService::GetInstance().NotifyLowQualityLcd(
+            photoAssetProxy->GetUserId(), uri, picturePtr);
+        MEDIA_INFO_LOG("ProcessPhotoProxy Notify LCD YUV X");
+#endif
+    } else {
+        bool isProfessionalPhoto =
+            (opMode_ == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO));
+        if (isBursting || captureStream->GetAddPhotoProxyEnabled() == false || isProfessionalPhoto) {
+            MEDIA_INFO_LOG("ProcessPhotoProxy AddPhotoProxy E");
+            string pictureId = cameraPhotoProxy->GetTitle() + "." + cameraPhotoProxy->GetExtension();
+            CameraReportDfxUtils::GetInstance()->SetPictureId(captureId, pictureId);
+            sptr<PhotoProxy> photoProxy = (sptr<PhotoProxy>&)cameraPhotoProxy;
+            photoAssetProxy->AddPhotoProxy(photoProxy, photoProxy, editData);
+            MEDIA_INFO_LOG("ProcessPhotoProxy AddPhotoProxy X");
+        }
+        uri = photoAssetProxy->GetPhotoAssetUri();
+        if (!isBursting && taskThread.joinable()) {
+            taskThread.join();
+            MEDIA_DEBUG_LOG("ProcessPhotoProxy RotatePicture X");
+        }
+        MEDIA_INFO_LOG("ProcessPhotoProxy NotifyLowQualityImage E");
+        if (IsCameraDebugOn()) {
+            picturePtr->DumpMainPicture();
+        }
+        // notify lowQuality
+        DeferredProcessing::DeferredProcessingService::GetInstance().NotifyLowQualityImage(
+            photoAssetProxy->GetUserId(), uri, picturePtr);
+        MEDIA_INFO_LOG("ProcessPhotoProxy NotifyLowQualityImage X");
     }
-    uri = photoAssetProxy->GetPhotoAssetUri();
-    if (!isBursting && taskThread.joinable()) {
-        taskThread.join();
-        MEDIA_DEBUG_LOG("ProcessPhotoProxy RotatePicture X");
-    }
-    MEDIA_INFO_LOG("ProcessPhotoProxy NotifyLowQualityImage E");
-    DeferredProcessing::DeferredProcessingService::GetInstance().NotifyLowQualityImage(
-        photoAssetProxy->GetUserId(), uri, picturePtr);
-    MEDIA_INFO_LOG("ProcessPhotoProxy NotifyLowQualityImage X");
     return photoAssetProxy;
     // LCOV_EXCL_STOP
 }
 
-int32_t HStreamOperator::CreateMediaLibrary(
-    std::shared_ptr<PictureIntf> picture, sptr<CameraServerPhotoProxy> &photoProxy, std::string &uri,
-    int32_t &cameraShotType, std::string &burstKey, int64_t timestamp)
+int32_t HStreamOperator::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture,
+    sptr<CameraServerPhotoProxy>& photoProxy, std::string& uri, int32_t& cameraShotType, std::string& burstKey,
+    int64_t timestamp, int32_t imageCount, const std::string& editData)
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("CreateMediaLibrary with picture E");
@@ -1939,7 +2042,7 @@ int32_t HStreamOperator::CreateMediaLibrary(
     CameraReportDfxUtils::GetInstance()->SetAddProxyStartInfo(captureId);
     SetCameraPhotoProxyInfo(photoProxy, cameraShotType, isBursting, burstKey);
     std::shared_ptr<PhotoAssetIntf> photoAssetProxy =
-        ProcessPhotoProxy(captureId, picture, isBursting, photoProxy, uri);
+        ProcessPhotoProxy(captureId, picture, isBursting, photoProxy, uri, imageCount, editData);
     CHECK_RETURN_RET_ELOG(photoAssetProxy == nullptr, CAMERA_INVALID_ARG, "photoAssetProxy is null");
     if (!isBursting && isSetMotionPhoto) {
 #ifdef CAMERA_MOVING_PHOTO
@@ -1983,6 +2086,7 @@ int32_t HStreamOperator::OnCaptureStarted(int32_t captureId, const std::vector<i
 
 int32_t HStreamOperator::CreateStreams(std::vector<HDI::Camera::V1_5::StreamInfo_V1_5>& streamInfos)
 {
+    using OHOS::HDI::Camera::V1_0::StreamInfo;
     CamRetCode hdiRc = HDI::Camera::V1_0::NO_ERROR;
     uint32_t major;
     uint32_t minor;

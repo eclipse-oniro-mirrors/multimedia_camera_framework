@@ -43,7 +43,7 @@ public:
     void OnProcessSuccess(const int32_t userId, const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo);
     void OnProcessError(const int32_t userId, const std::string& imageId, DpsError error);
     void NotifyScheduleState(DpsStatus status);
-    
+
     void Interrupt();
     void SetDefaultExecutionMode();
     bool GetPendingImages(std::vector<std::string>& pendingImages);
@@ -58,6 +58,8 @@ protected:
 
 private:
     void HandleSuccess(const int32_t userId, const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo);
+    void NotifyMediaLib(const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo,
+        sptr<IDeferredPhotoProcessingSessionCallback> callback);
     void HandleError(const int32_t userId, const std::string& imageId, DpsError error, bool isHighJob);
     uint32_t StartTimer(const std::string& imageId);
     void StopTimer(const std::string& imageId);

@@ -2206,5 +2206,136 @@ HWTEST_F(CameraPhotoOutputUnit, AutoExtendedGainmapDelivery_005, TestSize.Level0
     session->Release();
     input->Release();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with EnableOriginalImage
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with EnableOriginalImage
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_100, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("photo_output_unittest_100: ENTER");
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetCachedMetadata();
+    ASSERT_NE(metadata, nullptr);
+    int32_t curmode = session->GetMode();
+    bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_GENERATE_ORIGINAL_IMAGE, &curmode,
+        1);
+    ASSERT_TRUE(status);
+    bool isEnable = true;
+    int ret = phtOutput->EnableOriginalImage(isEnable);
+    EXPECT_EQ(ret, 0);
+
+    camera_metadata_item_t item;
+    int32_t res = OHOS::Camera::FindCameraMetadataItem(metadata->get(),
+        OHOS_CONTROL_GENERATE_ORIGINAL_IMAGE, &item);
+    EXPECT_EQ(res, CAM_META_SUCCESS);
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+    MEDIA_INFO_LOG("photo_output_unittest_100: END");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with SetEditData
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with SetEditData
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_101, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("photo_output_unittest_101: ENTER");
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    std::string editdata = "111";
+    int ret = phtOutput->SetEditData(editdata);
+    EXPECT_EQ(ret, 0);
+    input->Close();
+    input->Release();
+    MEDIA_INFO_LOG("photo_output_unittest_101: END");
+}
+
+/*
+ * Feature: Framework
+ * Function: Test photooutput with IsGenerateOriginalImageSupported
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test photooutput with IsGenerateOriginalImageSupported
+ */
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_102, TestSize.Level0)
+{
+    MEDIA_INFO_LOG("photo_output_unittest_102: ENTER");
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetCachedMetadata();
+    ASSERT_NE(metadata, nullptr);
+    bool isEnable = false;
+    int ret = phtOutput->IsGenerateOriginalImageSupported(isEnable);
+    EXPECT_EQ(ret, 7400201);
+    int32_t curmode = session->GetMode();
+    bool status = AddOrUpdateMetadata(metadata, OHOS_ABILITY_GENERATE_ORIGINAL_IMAGE, &curmode,
+        1);
+    ASSERT_TRUE(status);
+    ret = phtOutput->IsGenerateOriginalImageSupported(isEnable);
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(isEnable, true);
+    input->Close();
+    session->Stop();
+    session->Release();
+    input->Release();
+    MEDIA_INFO_LOG("photo_output_unittest_102: END");
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -56,9 +56,9 @@ protected:
 
 private:
     friend class DeferredPhotoProcessor;
-    void RecordResult(const std::string& imageId, const std::shared_ptr<ImageInfo>& result, bool isBPcache);
+    void RecordResult(const std::string& imageId, std::unique_ptr<ImageInfo> imageInfo, bool isBPcache);
     void DeRecordResult(const std::string& imageId);
-    std::shared_ptr<ImageInfo> GetCacheResult(const std::string& imageId);
+    std::unique_ptr<ImageInfo> GetCacheResult(const std::string& imageId);
     void CheckCrashCount(const std::string& imageId, DpsError& error);
     void SetBPCacheId(const std::string& imageId);
     std::string GetBPCacheId();
@@ -66,7 +66,7 @@ private:
     std::atomic_int32_t processTimeoutCount_ {DEFAULT_COUNT};
     std::unordered_set<DpsError> fatalStatusCodes_ {};
     std::unordered_set<std::string> highImages_ {};
-    std::unordered_map<std::string, std::shared_ptr<ImageInfo>> cacheMap_ {};
+    std::unordered_map<std::string, std::unique_ptr<ImageInfo>> cacheMap_ {};
     std::unordered_map<std::string, uint32_t> imageId2CrashCount_ {};
     std::string cachePhotoId_;
 };

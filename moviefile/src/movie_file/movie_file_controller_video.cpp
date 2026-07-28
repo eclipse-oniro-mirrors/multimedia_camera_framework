@@ -577,14 +577,15 @@ std::shared_ptr<PhotoAssetIntf> MovieFileControllerVideo::GetPhotoAsset()
     MEDIA_INFO_LOG("MovieFileRecorder::CreateMovieFileMediaLibrary is called");
     constexpr int32_t videoShotType = 1;
     auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
-        videoShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
+        videoShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID(), 1, 0);
     CHECK_RETURN_RET_ELOG(
         photoAssetProxy == nullptr, nullptr, "MovieFileRecorder::CreateMovieFileMediaLibrary get photoAssetProxy fail");
     sptr<CameraServerPhotoProxy> cameraPhotoProxy = new CameraServerPhotoProxy();
     cameraPhotoProxy->SetDisplayName(CreateVideoDisplayName());
     cameraPhotoProxy->SetIsVideo(true);
     cameraPhotoProxy->SetHighQuality(true);
-    photoAssetProxy->AddPhotoProxy((sptr<PhotoProxy>&)cameraPhotoProxy);
+    sptr<PhotoProxy> photoProxy = (sptr<PhotoProxy>&)cameraPhotoProxy;
+    photoAssetProxy->AddPhotoProxy(photoProxy, photoProxy, "");
     videoStreamCallback_->SetPhotoProxy(cameraPhotoProxy, photoAssetProxy);
     return photoAssetProxy;
 }

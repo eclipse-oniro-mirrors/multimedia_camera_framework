@@ -23,7 +23,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
-typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t, int32_t, std::string);
+typedef PhotoAssetIntf* (*CreatePhotoAssetIntf)(int32_t, int32_t, uint32_t, int32_t, int32_t, std::string);
 #ifdef CAMERA_CAPTURE_YUV
 typedef MediaLibraryManagerIntf* (*CreateMediaLibraryManagerIntf)();
 std::string PhotoAssetProxy::GetBundleName(int32_t callingUid)
@@ -45,7 +45,7 @@ std::string PhotoAssetProxy::GetBundleName(int32_t callingUid)
 #endif
 
 std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
-    int32_t shootType, int32_t callingUid, uint32_t callingTokenID, int32_t photoCount)
+    int32_t shootType, int32_t callingUid, uint32_t callingTokenID, int32_t videoCount, int32_t imageCount)
 {
     MEDIA_DEBUG_LOG("GetPhotoAssetProxy E callingUid:%{public}d", callingUid);
     auto dynamiclib = CameraDynamicLoader::GetDynamiclib(MEDIA_LIB_SO);
@@ -64,8 +64,8 @@ std::shared_ptr<PhotoAssetProxy> PhotoAssetProxy::GetPhotoAssetProxy(
     std::string bundleName = "";
 #endif
     MEDIA_DEBUG_LOG("GetPhotoAssetProxy bundleName:%{public}s", bundleName.c_str());
-    PhotoAssetIntf* photoAssetIntf = createPhotoAssetIntf(
-        shootType, callingUid, callingTokenID, photoCount, bundleName);
+    PhotoAssetIntf* photoAssetIntf =
+        createPhotoAssetIntf(shootType, callingUid, callingTokenID, videoCount, imageCount, bundleName);
     if (photoAssetIntf == nullptr) {
         HILOG_COMM_ERROR("PhotoAssetProxy::GetPhotoAssetProxy get photoAssetIntf fail");
         return nullptr;
@@ -90,6 +90,15 @@ void PhotoAssetProxy::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
     std::lock_guard<std::mutex> lock(opMutex_);
     CHECK_RETURN_ELOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy::AddPhotoProxy photoAssetIntf_ is null");
     photoAssetIntf_->AddPhotoProxy(photoProxy);
+}
+
+void PhotoAssetProxy::AddPhotoProxy(
+    sptr<Media::PhotoProxy> editPhotoProxy, sptr<Media::PhotoProxy> srcPhotoProxy, const std::string& editData)
+{
+    CAMERA_SYNC_TRACE;
+    std::lock_guard<std::mutex> lock(opMutex_);
+    CHECK_RETURN_ELOG(photoAssetIntf_ == nullptr, "PhotoAssetProxy::AddPhotoProxy photoAssetIntf_ is null");
+    photoAssetIntf_->AddPhotoProxy(editPhotoProxy, srcPhotoProxy, editData);
 }
 
 std::string PhotoAssetProxy::GetPhotoAssetUri()
@@ -183,6 +192,14 @@ MediaLibraryManagerProxy::MediaLibraryManagerProxy(
     CHECK_RETURN_ELOG(mediaLibraryLib_ == nullptr, "MediaLibraryManagerProxy construct mediaLibraryLib is null");
     CHECK_RETURN_ELOG(
         mediaLibraryManagerIntf_ == nullptr, "MediaLibraryManagerProxy construct mediaLibraryManagerIntf is null");
+}
+
+DeferredPictureInfo MediaLibraryManagerProxy::GetDeferredPictureInfo(const std::string& imageId)
+{
+    MEDIA_DEBUG_LOG("MediaLibraryManagerProxy::GetDeferredPictureInfo is called");
+    CHECK_RETURN_RET_ELOG(mediaLibraryManagerIntf_ == nullptr, {},
+        "MediaLibraryManagerProxy::GetDeferredPictureInfo mediaLibraryManagerIntf_ is null");
+    return mediaLibraryManagerIntf_->GetDeferredPictureInfo(imageId);
 }
 
 void MediaLibraryManagerProxy::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)

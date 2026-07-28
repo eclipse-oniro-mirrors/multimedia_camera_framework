@@ -867,9 +867,11 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("enableAutoBokehDataDelivery", EnableAutoBokehDataDelivery),
         DECLARE_NAPI_FUNCTION("isPhotoQualityPrioritizationSupported", IsPhotoQualityPrioritizationSupported),
         DECLARE_NAPI_FUNCTION("setPhotoQualityPrioritization", SetPhotoQualityPrioritization),
+        DECLARE_NAPI_FUNCTION("setEditData", SetEditData),
+        DECLARE_NAPI_FUNCTION("enableOriginalImage", EnableOriginalImage),
+        DECLARE_NAPI_FUNCTION("isGenerateOriginalImageSupported", IsGenerateOriginalImageSupported),
         DECLARE_NAPI_FUNCTION("isAutoExtendedGainmapDeliverySupported", IsAutoExtendedGainmapDeliverySupported),
         DECLARE_NAPI_FUNCTION("enableAutoExtendedGainmapDelivery", EnableAutoExtendedGainmapDelivery)
-
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -2794,6 +2796,95 @@ napi_value PhotoOutputNapi::EnableAutoExtendedGainmapDelivery(napi_env env, napi
         return result;
     }
     MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoExtendedGainmapDelivery success");
+    return result;
+}
+
+napi_value PhotoOutputNapi::SetEditData(napi_env env, napi_callback_info info)
+{
+    CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(
+        !CameraNapiSecurity::CheckSystemApp(env), nullptr, "SystemApi SetEditData is called!");
+    napi_status status;
+    napi_value result = CameraNapiUtils::GetUndefinedValue(env);
+    napi_get_undefined(env, &result);
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+ 
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        char buffer[PATH_MAX];
+        size_t length;
+        napi_get_value_string_utf8(env, argv[ARGS_ZERO], buffer, PATH_MAX, &length);
+ 
+        CHECK_RETURN_RET_ELOG(
+            photoOutputNapi->photoOutput_ == nullptr, nullptr, "photoOutputNapi->photoOutput_ is nullptr");
+        int32_t retCode = photoOutputNapi->photoOutput_->SetEditData(std::string(buffer));
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return result;
+        }
+        MEDIA_INFO_LOG("SetEditData done");
+    } else {
+        MEDIA_ERR_LOG("napi_unwrap failed");
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::EnableOriginalImage(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PhotoOutputNapi::EnableOriginalImage is called");
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi EnableOriginalImage is called!");
+        return nullptr;
+    }
+    napi_value  result = CameraNapiUtils::GetUndefinedValue(env);
+    napi_get_undefined(env, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    bool isEnable;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, isEnable);
+    if (!jsParamParser.AssertStatus(INVALID_ARGUMENT, "parse parameter occur error")) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableOriginalImage parse parameter occur error");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ == nullptr) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableOriginalImage get native object fail");
+        CameraNapiUtils::ThrowError(env, INVALID_ARGUMENT, "get native object fail");
+        return result;
+    }
+    int32_t retCode = photoOutputNapi->photoOutput_->EnableOriginalImage(isEnable);
+    if (!CameraNapiUtils::CheckError(env, retCode)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::EnableOriginalImage fail %{public}d", retCode);
+    }
+    return result;
+}
+
+napi_value PhotoOutputNapi::IsGenerateOriginalImageSupported(napi_env env, napi_callback_info info)
+{
+    if (!CameraNapiSecurity::CheckSystemApp(env)) {
+        MEDIA_ERR_LOG("SystemApi IsGenerateOriginalImageSupported is called!");
+        return nullptr;
+    }
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    bool isSupported = false;
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status == napi_ok && photoOutputNapi != nullptr) {
+        int32_t retCode = photoOutputNapi->photoOutput_->IsGenerateOriginalImageSupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return nullptr;
+        }
+    }
+    napi_get_boolean(env, isSupported, &result);
     return result;
 }
 

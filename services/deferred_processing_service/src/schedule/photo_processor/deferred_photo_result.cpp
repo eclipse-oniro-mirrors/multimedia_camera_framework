@@ -85,10 +85,10 @@ JobErrorType DeferredPhotoResult::OnError(const std::string& imageId, DpsError& 
 }
 
 void DeferredPhotoResult::RecordResult(const std::string& imageId,
-    const std::shared_ptr<ImageInfo>& result, bool isBPcache)
+    std::unique_ptr<ImageInfo> imageInfo, bool isBPcache)
 {
     DP_INFO_LOG("DPS_PHOTO: Cache imageId: %{public}s", imageId.c_str());
-    cacheMap_.emplace(imageId, result);
+    cacheMap_.emplace(imageId, std::move(imageInfo));
     DP_CHECK_EXECUTE(isBPcache, SetBPCacheId(imageId));
 }
 
@@ -99,10 +99,16 @@ void DeferredPhotoResult::DeRecordResult(const std::string& imageId)
     DP_CHECK_EXECUTE(GetBPCacheId() == imageId, SetBPCacheId(DEFAULT_BP_CACHE_ID));
 }
 
-std::shared_ptr<ImageInfo> DeferredPhotoResult::GetCacheResult(const std::string& imageId)
+std::unique_ptr<ImageInfo> DeferredPhotoResult::GetCacheResult(const std::string& imageId)
 {
     auto it = cacheMap_.find(imageId);
-    return it != cacheMap_.end() ? it->second : nullptr;
+    if (it != cacheMap_.end()) {
+        auto res = std::move(it->second);
+        cacheMap_.erase(it);
+        return res;
+    } else {
+        return nullptr;
+    }
 }
 
 void DeferredPhotoResult::CheckCrashCount(const std::string& imageId, DpsError& error)

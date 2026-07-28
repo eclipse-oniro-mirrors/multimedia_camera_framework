@@ -51,10 +51,11 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_001, TestSize.Level
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;
+    int32_t videoCount = 0;
     int32_t photoCount = 1;
     std::string bundleName = "com.example.camera";
-    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest = std::make_unique<PhotoAssetAdapter>(cameraShotType, uid,
-        IPCSkeleton::GetCallingTokenID(), photoCount, bundleName);
+    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest = std::make_unique<PhotoAssetAdapter>(
+        cameraShotType, uid, IPCSkeleton::GetCallingTokenID(), videoCount, photoCount, bundleName);
     sptr<Media::PhotoProxy> photoProxy;
     photoAssetAdapterTest->photoAssetProxy_ = nullptr;
     photoAssetAdapterTest->AddPhotoProxy(photoProxy);
@@ -87,11 +88,11 @@ HWTEST_F(PhotoAssetAdapterUnit, photo_asset_adapter_unittest_002, TestSize.Level
 {
     int32_t cameraShotType = 0;
     int32_t uid = 1;
+    int32_t videoCount = 0;
     int32_t photoCount = 1;
     std::string bundleName = "com.example.camera";
-    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest =
-        std::make_unique<PhotoAssetAdapter>(cameraShotType, uid, IPCSkeleton::GetCallingTokenID(),
-        photoCount, bundleName);
+    std::unique_ptr<PhotoAssetAdapter> photoAssetAdapterTest = std::make_unique<PhotoAssetAdapter>(
+        cameraShotType, uid, IPCSkeleton::GetCallingTokenID(), videoCount, photoCount, bundleName);
     EXPECT_NE(photoAssetAdapterTest, nullptr);
 
     std::shared_ptr<DataShare::DataShareHelper> dataShareHelper;

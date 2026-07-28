@@ -51,6 +51,7 @@ config("deferred_processing_public_config") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/session/video_session",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/utils",
+    "${multimedia_camera_framework_path}/interfaces/inner_api/native/camera/include/deferred_proc_session",
   ]
 }
  
@@ -176,6 +177,7 @@ ohos_shared_library("deferred_processing_service") {
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/mediastream:media_stream",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/idls:camera_deferred_idl_sa_stub",
+    "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_picture",
    ]
 
   public_configs = [
@@ -197,6 +199,7 @@ ohos_shared_library("deferred_processing_service") {
     "drivers_interface_camera:libcamera_proxy_1.3",
     "drivers_interface_camera:libcamera_proxy_1.4",
     "drivers_interface_camera:libcamera_proxy_1.5",
+    "drivers_interface_camera:libcamera_proxy_1.6",
     "drivers_interface_camera:metadata",
     "graphic_2d:librender_service_client",
     "graphic_surface:buffer_handle",

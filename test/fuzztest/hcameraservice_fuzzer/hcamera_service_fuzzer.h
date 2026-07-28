@@ -119,6 +119,17 @@ public:
     {
         return 0;
     }
+
+    ErrCode OnDeliveryLowQualityLcd(const std::string& imageId, const std::shared_ptr<PictureIntf>& picture) override
+    {
+        return 0;
+    }
+
+    ErrCode OnProcessImageDone(const std::string& imageId, const std::vector<ImageFd>& imageFds,
+        const std::shared_ptr<PictureIntf>& lcdImage, const DpsMetadata& dpsMetaData) override
+    {
+        return 0;
+    }
 };
 
 class MockFoldServiceCallback : public FoldServiceCallbackStub {

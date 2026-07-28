@@ -44,6 +44,12 @@ enum class PhotoFormat : int32_t {
     YUV,
 };
 
+enum ImageBufferType {
+    NONE = -1,
+    RENDER = 0,
+    ORIGINAL = 1,
+};
+
 class MappedMemory {
 public:
     MappedMemory(int fd, size_t size) : size_(size)
@@ -108,6 +114,8 @@ public:
     void OnPhotoSessionDied();
     int32_t ProcessPictureInfoV1_3(const std::string& imageId, const HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
     int32_t ProcessPictureInfoV1_4(const std::string& imageId, const HDI::Camera::V1_5::ImageBufferInfo_V1_4& buffer);
+    int32_t ProcessPictureInfoV1_6(
+        const std::string& imageId, const std::vector<HDI::Camera::V1_5::ImageBufferInfo_V1_4>& buffers);
 
     template <typename BufferType>
     int32_t ProcessBufferInfo(const std::string& imageId, const BufferType& buffer)
@@ -140,6 +148,8 @@ public:
 private:
     std::unique_ptr<ImageInfo> CreateFromMeta(int32_t defaultSize,
         const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metadata);
+    std::tuple<int32_t, bool, uint32_t, uint32_t, DpsMetadata> ParseMeta(
+    int32_t defaultSize, const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metadata);
     std::shared_ptr<PictureIntf> AssemblePicture(const HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
     std::shared_ptr<PictureIntf> AssemblePictureV4(
         const HDI::Camera::V1_5::ImageBufferInfo_V1_4& bufferV4, bool isUseImageHandle);

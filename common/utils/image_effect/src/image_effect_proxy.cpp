@@ -102,4 +102,18 @@ int32_t ImageEffectProxy::SetImageEffect(const std::string& filter, const std::s
     CHECK_RETURN_RET_ELOG(imageEffectIntf_ == nullptr, MEDIA_ERR, "imageEffectIntf_ is nullptr");
     return imageEffectIntf_->SetImageEffect(filter, filterParam);
 }
+int32_t ImageEffectProxy::SetInputPicture(Media::Picture* picture)
+{
+    MEDIA_DEBUG_LOG("ImageEffectProxy::SetInputPicture is called");
+    CHECK_RETURN_RET_ELOG(imageEffectIntf_ == nullptr, MEDIA_ERR, "imageEffectIntf_ is nullptr");
+    return imageEffectIntf_->SetInputPicture(picture);
+}
+
+int32_t ImageEffectProxy::SuppressWatermarkForPicture(
+    std::shared_ptr<Media::Picture> inPicture, const std::string& editData)
+{
+    MEDIA_DEBUG_LOG("ImageEffectProxy::SuppressWatermarkForPicture is called");
+    CHECK_RETURN_RET_ELOG(imageEffectIntf_ == nullptr, MEDIA_ERR, "imageEffectIntf_ is nullptr");
+    return imageEffectIntf_->SuppressWatermarkForPicture(inPicture, editData);
+}
 }  // namespace OHOS::CameraStandard

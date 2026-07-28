@@ -18,14 +18,19 @@
 
 #include "surface_buffer.h"
 #include "picture_interface.h"
+#include "picture.h"
+#include "pixel_map.h"
 namespace OHOS::Media {
     class Picture;
 }
 namespace OHOS {
 namespace CameraStandard {
+    using Media::Picture;
+    using Media::PixelMap;
 class PictureAdapter : public OHOS::CameraStandard::PictureIntf {
 public:
     PictureAdapter();
+    PictureAdapter(std::shared_ptr<Media::Picture> picture);
     ~PictureAdapter() override;
     void Create(sptr<SurfaceBuffer> &surfaceBuffer) override;
     void SetAuxiliaryPicture(sptr<SurfaceBuffer> &surfaceBuffer,
@@ -36,6 +41,12 @@ public:
     bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) override;
     void RotatePicture() override;
     uint32_t SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize) override;
+    bool ResizeLcdPicture() override;
+    void DumpMainPixel(const std::string& title) override;
+    void DumpMainPicture() override;
+    std::pair<std::unique_ptr<uint8_t[]>, int64_t> Encode(const std::string& encodeFormat) const override;
+    static void DumpEncoded(void* addr, int32_t len, std::string title);
+    static std::shared_ptr<Picture> CopyPictureSource(std::shared_ptr<Picture> picture);
 #ifdef CAMERA_CAPTURE_YUV
     std::shared_ptr<Media::Picture> GetPicture() const override;
 #else
@@ -44,6 +55,22 @@ public:
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Media::Picture> picture_;
+    std::shared_ptr<Media::AuxiliaryPicture> gainPixelMap_;
+    std::shared_ptr<Media::AuxiliaryPicture> depthPixelMap_;
+    static bool ResizeLcd(int32_t& width, int32_t& height);
+    static std::shared_ptr<PixelMap> CopyPixelMapSource(std::shared_ptr<PixelMap> pixelMap);
+    static bool IsYuvPixelMap(std::shared_ptr<PixelMap> pixelMap);
+    static std::shared_ptr<PixelMap> CopyYuvPixelmap(std::shared_ptr<PixelMap> pixelMap);
+    static std::shared_ptr<PixelMap> CopyNormalPixelmap(std::shared_ptr<PixelMap> pixelMap);
+    static std::shared_ptr<PixelMap> CopyYuvPixelmapWithSurfaceBuffer(std::shared_ptr<PixelMap> pixelMap);
+    static std::shared_ptr<PixelMap> CopyNoSurfaceBufferYuvPixelmap(std::shared_ptr<PixelMap> pixelMap);
+    static bool SetPixelMapYuvInfo(sptr<SurfaceBuffer>& surfaceBuffer, std::shared_ptr<PixelMap> pixelMap, bool isHdr);
+    static bool IsSupportCopyPixelMap(std::shared_ptr<PixelMap> pixelMap);
+    static void CopySurfaceBufferInfo(sptr<SurfaceBuffer> &source, sptr<SurfaceBuffer> &dst);
+    static bool GetSbStaticMetadata(const sptr<SurfaceBuffer> &buffer, std::vector<uint8_t> &staticMetadata);
+    static bool GetSbDynamicMetadata(const sptr<SurfaceBuffer> &buffer, std::vector<uint8_t> &dynamicMetadata);
+    static bool SetSbStaticMetadata(sptr<SurfaceBuffer> &buffer, const std::vector<uint8_t> &staticMetadata);
+    static bool SetSbDynamicMetadata(sptr<SurfaceBuffer> &buffer, const std::vector<uint8_t> &dynamicMetadata);
 };
 } // namespace CameraStandard
 } // namespace OHOS

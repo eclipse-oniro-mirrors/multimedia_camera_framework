@@ -5130,7 +5130,7 @@ int32_t CaptureSession::GetSensorExposureTime(uint32_t &exposureTime)
         "CaptureSession::GetSensorExposureTime Failed with return code %{public}d", ret);
     if(item.count > 0){
         exposureTime = item.data.ui32[0];
-    }else{
+    } else {
         MEDIA_ERR_LOG("GetSensorExposureTime item.count == 0.");
     }
     MEDIA_DEBUG_LOG("CaptureSession::GetSensorExposureTime exposureTime: %{public}d", exposureTime);
@@ -7811,6 +7811,18 @@ void CaptureSession::SetDefaultColorSpace()
         MEDIA_INFO_LOG("Set default color space for HDR capture when CommitConfig.");
         SetColorSpace(ColorSpace::BT2020_HLG);
     }
+}
+
+int32_t CaptureSession::SetEnableOriginalImage(bool isEnable)
+{
+    MEDIA_INFO_LOG("CaptureSession::SetEnableOriginalImage enable:%{public}d", isEnable);
+    LockGuardForControl lock(this);
+    CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, OPERATION_NOT_ALLOWED,
+        "CaptureSession::SetEnableOriginalImage changedMetadata_ is NULL");
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_GENERATE_ORIGINAL_IMAGE, &isEnable, 1);
+    CHECK_RETURN_RET_ELOG(
+        !status, DEVICE_DISABLED, "CaptureSession::SetEnableOriginalImage Failed to AddOrUpdateMetadata!");
+    return SUCCESS;
 }
 
 void CaptureSession::ProcessOISModeChange(

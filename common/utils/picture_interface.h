@@ -49,10 +49,14 @@ public:
     virtual int32_t SetExifMetadata(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual bool SetMaintenanceData(sptr<SurfaceBuffer> &surfaceBuffer) = 0;
     virtual void RotatePicture() = 0;
+    virtual bool ResizeLcdPicture() = 0;
+    virtual void DumpMainPicture() = 0;
     virtual uint32_t SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize) = 0;
 #ifdef CAMERA_CAPTURE_YUV
     virtual std::shared_ptr<Media::Picture> GetPicture() const = 0;
 #endif
+    virtual void DumpMainPixel(const std::string& title) = 0;
+    virtual std::pair<std::unique_ptr<uint8_t[]>, int64_t> Encode(const std::string& encodeFormat) const = 0;
 };
 typedef PictureIntf* (*GetPictureAdapter)();
 } // namespace OHOS::CameraStandard

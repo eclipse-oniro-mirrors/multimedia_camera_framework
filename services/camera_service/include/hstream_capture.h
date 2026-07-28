@@ -181,6 +181,10 @@ public:
 #ifdef CAMERA_CAPTURE_YUV
     static void OnPhotoStateCallback(int32_t photoNum);
 #endif
+    int32_t SetEditData(const std::string& editData) override;
+    int32_t SetShotParam(int32_t captureId, const std::string& shotParam) override;
+    int32_t EnableOriginalImage(bool enabled) override;
+    bool IsOriginalImageEnable();
     bool isYuvCapture_ = false;
     SpHolder<sptr<Surface>> gainmapSurface_;
     SpHolder<sptr<Surface>> deepSurface_;
@@ -239,6 +243,8 @@ private:
     void InitCaptureThread();
     void SetRawCallbackUnLock();
     void GetLocation(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting);
+    int32_t SetEditData(int32_t captureId, const std::string& editData);
+    std::string GetEditData(int32_t captureId);
     std::mutex callbackLock_;
     int32_t thumbnailSwitch_;
     std::atomic<int32_t> rawDeliverySwitch_;
@@ -285,6 +291,10 @@ private:
     std::once_flag photoStateFlag_;
     std::function<void(int32_t)> photoStateCallback_ = nullptr;
 #endif
+    std::string editData_;
+    std::mutex editDataLock_;
+    std::unordered_map<int32_t, std::string> captureId2EditData_;
+    bool enableOriginImage_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

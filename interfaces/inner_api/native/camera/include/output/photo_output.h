@@ -549,7 +549,7 @@ public:
      * @return 0 on success, or a negative error code on failure.
      */
     int32_t EnableAutoMotionBoostDelivery(bool isEnable);
-    
+
     /**
      * @brief check is supported of Bokeh Data Delivery.
      *
@@ -574,6 +574,11 @@ public:
 
     int32_t SetPhotoQualityPrioritization(PhotoQualityPrioritization quality);
 
+    int32_t SetEditData(const std::string &editData);
+
+    int32_t EnableOriginalImage(bool isEnable);
+
+    int32_t IsGenerateOriginalImageSupported(bool &isEnable);
     /**
      * @brief Check whether the current mode supports auto extended gainmap delivery.
      *
@@ -631,11 +636,15 @@ public:
     std::atomic<bool> isRawImageDelivery_ = false;
     SafeMap<int32_t, captureMonitorInfo> captureIdToCaptureInfoMap_;
     uint8_t callbackFlag_ = CAPTURE_DEFERRED_PHOTO;
+    int32_t SetShotParam(int32_t captureID, const std::string& shotData);
+
 private:
+    std::string editData_;
     std::mutex callbackMutex_;
     std::mutex offlineStatusMutex_;
     bool isNativeSurface_ = false;
     bool isSurfaceOnService_ = false;
+    bool isEnableOriginalImage_ = false;
     DeferredDeliveryImageType deferredType_ = DeferredDeliveryImageType::DELIVERY_NONE;
     std::shared_ptr<PhotoStateCallback> appCallback_;
     std::shared_ptr<PhotoAvailableCallback> appPhotoCallback_;

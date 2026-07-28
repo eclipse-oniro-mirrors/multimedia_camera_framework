@@ -42,6 +42,10 @@ public:
 #ifdef CAMERA_CAPTURE_YUV
     std::shared_ptr<Media::Picture> GetPicture() const override;
 #endif
+    bool ResizeLcdPicture() override;
+    void DumpMainPixel(const std::string& title) override;
+    void DumpMainPicture() override;
+    std::pair<std::unique_ptr<uint8_t[]>, int64_t> Encode(const std::string& encodeFormat) const override;
 private:
     // Keep the order of members in this class, the bottom member will be destroyed first
     std::shared_ptr<Dynamiclib> pictureLib_ = nullptr;

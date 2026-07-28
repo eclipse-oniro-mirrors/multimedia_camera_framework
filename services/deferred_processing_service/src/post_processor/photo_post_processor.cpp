@@ -24,6 +24,8 @@
 #include "v1_5/iimage_process_service.h"
 #include "v1_5/iimage_process_callback.h"
 #include "v1_5/types.h"
+#include "v1_6/iimage_process_service.h"
+#include "v1_6/iimage_process_callback.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -70,7 +72,7 @@ private:
     std::weak_ptr<PhotoProcessResult> processResult_;
 };
 
-class PhotoPostProcessor::PhotoProcessListener : public OHOS::HDI::Camera::V1_5::IImageProcessCallback {
+class PhotoPostProcessor::PhotoProcessListener : public OHOS::HDI::Camera::V1_6::IImageProcessCallback {
 public:
     explicit PhotoProcessListener(const std::weak_ptr<PhotoProcessResult>& processResult)
         : processResult_(processResult)
@@ -117,6 +119,21 @@ public:
         auto ret = processResult->ProcessPictureInfoV1_4(imageId, buffer);
         if (ret != DP_OK) {
             HILOG_COMM_ERROR("Process yuv1_4 done failed imageId: %{public}s.", imageId.c_str());
+            processResult->OnError(imageId, DPS_ERROR_IMAGE_PROC_FAILED);
+        }
+        return DP_OK;
+    }
+
+    int32_t OnProcessDone_V1_6(
+        const std::string& imageId, const std::vector<OHOS::HDI::Camera::V1_5::ImageBufferInfo_V1_4>& buffers) override
+    {
+        DP_INFO_LOG("OnProcessDone_V1_6 DPS_PHOTO: imageId: %{public}s", imageId.c_str());
+        auto processResult = processResult_.lock();
+        DP_CHECK_ERROR_RETURN_RET_LOG(processResult == nullptr, DP_OK, "PhotoProcessResult is nullptr.");
+
+        auto ret = processResult->ProcessPictureInfoV1_6(imageId, buffers);
+        if (ret != DP_OK) {
+            HILOG_COMM_ERROR("Process yuv1_6 done failed imageId: %{public}s.", imageId.c_str());
             processResult->OnError(imageId, DPS_ERROR_IMAGE_PROC_FAILED);
         }
         return DP_OK;
@@ -318,13 +335,19 @@ void PhotoPostProcessor::OnServiceChange(const HDI::ServiceManager::V1_0::Servic
     sptr<IImageProcessSession> session;
     sptr<OHOS::HDI::Camera::V1_3::IImageProcessService> proxyV1_3;
     sptr<OHOS::HDI::Camera::V1_5::IImageProcessService> proxyV1_4;
+    sptr<OHOS::HDI::Camera::V1_6::IImageProcessService> proxyV1_6;
     // LCOV_EXCL_START
-    if (versionId >= HDI_VERSION_ID_1_4) {
+    if (versionId >= HDI_VERSION_ID_1_6) {
+        proxyV1_6 = OHOS::HDI::Camera::V1_6::IImageProcessService::CastFrom(proxyV1_2);
+    } else if (versionId >= HDI_VERSION_ID_1_4) {
         proxyV1_4 = OHOS::HDI::Camera::V1_5::IImageProcessService::CastFrom(proxyV1_2);
     } else if (versionId >= HDI_VERSION_ID_1_3) {
         proxyV1_3 = OHOS::HDI::Camera::V1_3::IImageProcessService::CastFrom(proxyV1_2);
     }
-    if (proxyV1_4 != nullptr) {
+    if (proxyV1_6 != nullptr) {
+        DP_INFO_LOG("CreateImageProcessSession_V1_6 version=%{public}d_%{public}d", majorVer, minorVer);
+        proxyV1_6->CreateImageProcessSession_V1_6(userId_, processListener_, session);
+    } else if (proxyV1_4 != nullptr) {
         DP_INFO_LOG("CreateImageProcessSession_V1_4 version=%{public}d_%{public}d", majorVer, minorVer);
         proxyV1_4->CreateImageProcessSession_V1_4(userId_, processListener_, session);
     } else if (proxyV1_3 != nullptr) {

@@ -60,6 +60,22 @@ void DeferredProcessingService::NotifyLowQualityImage(const int32_t userId, cons
     DP_ERR_LOG("DeferredPhotoProcessingSessionCallback::NotifyLowQualityImage not set!, Discarding callback");
 }
 
+void DeferredProcessingService::NotifyLowQualityLcd(const int32_t userId, const std::string& imageId,
+    std::shared_ptr<PictureIntf> picture)
+{
+    EventsInfo::GetInstance().SetTrailing();
+    DP_CHECK_RETURN(!initialized_.load());
+
+    auto sessionManager = DPS_GetSessionManager();
+    DP_CHECK_ERROR_RETURN_LOG(sessionManager == nullptr, "SessionManager is nullptr, userId: %{public}d", userId);
+
+    if (auto callback = sessionManager->GetCallback(userId)) {
+        callback->OnDeliveryLowQualityLcd(imageId, picture);
+        return;
+    }
+    DP_ERR_LOG("DeferredPhotoProcessingSessionCallback::NotifyLowQualityLcd not set!, Discarding callback");
+}
+
 sptr<IDeferredPhotoProcessingSession> DeferredProcessingService::CreateDeferredPhotoProcessingSession(
     const int32_t userId, const sptr<IDeferredPhotoProcessingSessionCallback>& callback)
 {
