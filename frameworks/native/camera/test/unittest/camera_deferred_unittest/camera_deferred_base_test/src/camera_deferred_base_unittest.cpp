@@ -33,6 +33,13 @@
 #include "scheduler_manager.h"
 #include "task_manager.h"
 
+#include "command_server.h"
+#include "command_server_impl.h"
+#include "command.h"
+#include "image_info.h"
+#include "media_progress_notifier.h"
+#include "picture_interface.h"
+
 using namespace testing::ext;
 using namespace OHOS::CameraStandard::DeferredProcessing;
 
@@ -541,6 +548,413 @@ HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_023, TestSize.Level
 HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_024, TestSize.Level0) {
     int32_t level = 5;
     EXPECT_EQ(ConvertPhotoThermalLevel(level), SystemPressureLevel::SEVERE);
+}
+
+namespace {
+class TestCommand : public Command {
+    DECLARE_CMD_CLASS(TestCommand)
+    int32_t Executing() override { return 0; }
+};
+} // namespace
+
+/*
+ * Feature: CommandServer
+ * Function: Test Initialize creates the server instance
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: After Initialize, SendCommand should return DP_OK
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_025, TestSize.Level0)
+{
+    CommandServer cmdServer;
+    int32_t ret = cmdServer.Initialize("TestCmdServer");
+    EXPECT_EQ(ret, DP_OK);
+
+    auto cmd = std::make_shared<TestCommand>();
+    ret = cmdServer.SendCommand(cmd);
+    EXPECT_EQ(ret, DP_OK);
+}
+
+/*
+ * Feature: CommandServer
+ * Function: Test Initialize idempotent (re-initialization)
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Calling Initialize twice should not crash and return DP_OK both times
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_026, TestSize.Level0)
+{
+    CommandServer cmdServer;
+    int32_t ret = cmdServer.Initialize("TestCmdServer");
+    EXPECT_EQ(ret, DP_OK);
+
+    ret = cmdServer.Initialize("TestCmdServer");
+    EXPECT_EQ(ret, DP_OK);
+}
+
+/*
+ * Feature: CommandServer
+ * Function: Test SendCommand without Initialize returns DP_INIT_FAIL
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: SendCommand should return DP_INIT_FAIL when server is not initialized
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_027, TestSize.Level0)
+{
+    CommandServer cmdServer;
+    auto cmd = std::make_shared<TestCommand>();
+    int32_t ret = cmdServer.SendCommand(cmd);
+    EXPECT_EQ(ret, DP_INIT_FAIL);
+}
+
+/*
+ * Feature: CommandServer
+ * Function: Test SendUrgentCommand with valid server
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: SendUrgentCommand should return DP_OK when server is initialized
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_028, TestSize.Level0)
+{
+    CommandServer cmdServer;
+    int32_t ret = cmdServer.Initialize("TestCmdServer");
+    EXPECT_EQ(ret, DP_OK);
+
+    auto cmd = std::make_shared<TestCommand>();
+    ret = cmdServer.SendUrgentCommand(cmd);
+    EXPECT_EQ(ret, DP_OK);
+}
+
+/*
+ * Feature: CommandServer
+ * Function: Test SendUrgentCommand without Initialize returns DP_INIT_FAIL
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: SendUrgentCommand should return DP_INIT_FAIL when server is not initialized
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_029, TestSize.Level0)
+{
+    CommandServer cmdServer;
+    auto cmd = std::make_shared<TestCommand>();
+    int32_t ret = cmdServer.SendUrgentCommand(cmd);
+    EXPECT_EQ(ret, DP_INIT_FAIL);
+}
+
+/*
+ * Feature: CommandServer
+ * Function: Test SetThreadPriority and GetThreadPriority
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: SetThreadPriority and GetThreadPriority should work when server is initialized
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_030, TestSize.Level0)
+{
+    CommandServer cmdServer;
+    int32_t ret = cmdServer.Initialize("TestCmdServer");
+    EXPECT_EQ(ret, DP_OK);
+
+    cmdServer.SetThreadPriority(10);
+    int32_t priority = cmdServer.GetThreadPriority();
+    EXPECT_EQ(priority, 10);
+}
+
+/*
+ * Feature: CommandServer
+ * Function: Test GetThreadPriority without Initialize returns DP_INIT_FAIL
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: GetThreadPriority should return DP_INIT_FAIL when server is not initialized
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_032, TestSize.Level0)
+{
+    CommandServer cmdServer;
+    int32_t priority = cmdServer.GetThreadPriority();
+    EXPECT_EQ(priority, DP_INIT_FAIL);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test default constructor initializes members correctly
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Default constructor should set dataSize_ to 0, isHighQuality_ to false,
+ * and type_ to CallbackType::NONE
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_033, TestSize.Level0)
+{
+    ImageInfo imageInfo;
+    EXPECT_EQ(imageInfo.GetDataSize(), 0);
+    EXPECT_FALSE(imageInfo.IsHighQuality());
+
+    EXPECT_EQ(imageInfo.GetCloudFlag(), 0U);
+    EXPECT_EQ(imageInfo.GetCaptureFlag(), 0U);
+    EXPECT_EQ(imageInfo.GetType(), CallbackType::NONE);
+    EXPECT_EQ(imageInfo.GetErrorCode(), DpsError::DPS_NO_ERROR);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test parameterized constructor
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Parameterized constructor should set all members correctly
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_034, TestSize.Level0)
+{
+    int32_t dataSize = 1024;
+    bool isHighQuality = true;
+    uint32_t cloudFlag = 1;
+    uint32_t captureFlag = 2;
+    DpsMetadata metadata;
+
+    ImageInfo imageInfo(dataSize, isHighQuality, cloudFlag, captureFlag, metadata);
+    EXPECT_EQ(imageInfo.GetDataSize(), dataSize);
+    EXPECT_TRUE(imageInfo.IsHighQuality());
+    EXPECT_EQ(imageInfo.GetCloudFlag(), cloudFlag);
+    EXPECT_EQ(imageInfo.GetCaptureFlag(), captureFlag);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test SetBuffer changes type to IMAGE_PROCESS_DONE
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: SetBuffer should set the shared buffer and change callback type
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_035, TestSize.Level0)
+{
+    ImageInfo imageInfo;
+    int32_t dataSize = 128;
+    auto sharedBuffer = std::make_unique<SharedBuffer>(dataSize);
+    sharedBuffer->Initialize();
+    ASSERT_NE(sharedBuffer, nullptr);
+
+    imageInfo.SetBuffer(std::move(sharedBuffer));
+    EXPECT_EQ(imageInfo.GetType(), CallbackType::IMAGE_PROCESS_DONE);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test SetError changes type to IMAGE_ERROR
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: SetError should set the error code and change callback type to IMAGE_ERROR
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_036, TestSize.Level0)
+{
+    ImageInfo imageInfo;
+    imageInfo.SetError(DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
+    EXPECT_EQ(imageInfo.GetType(), CallbackType::IMAGE_ERROR);
+    EXPECT_EQ(imageInfo.GetErrorCode(), DpsError::DPS_ERROR_IMAGE_PROC_FAILED);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test GetIPCFileDescriptor returns nullptr when sharedBuffer is null
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: GetIPCFileDescriptor should return nullptr when no buffer is set
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_037, TestSize.Level0)
+{
+    ImageInfo imageInfo;
+    auto ipcFd = imageInfo.GetIPCFileDescriptor();
+    EXPECT_EQ(ipcFd, nullptr);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test GetIPCFileDescriptor returns nullptr when fd is -1
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: GetIPCFileDescriptor should return nullptr when buffer fd is invalid
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_038, TestSize.Level0)
+{
+    ImageInfo imageInfo;
+    auto sharedBuffer = std::make_unique<SharedBuffer>(0);
+    imageInfo.SetBuffer(std::move(sharedBuffer));
+    auto ipcFd = imageInfo.GetIPCFileDescriptor();
+    EXPECT_EQ(ipcFd, nullptr);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test GetIPCFileDescriptor returns valid fd
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: GetIPCFileDescriptor should return a valid IPCFileDescriptor when buffer is valid
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_039, TestSize.Level0)
+{
+    ImageInfo imageInfo;
+    int32_t dataSize = 256;
+
+    auto sharedBuffer = std::make_unique<SharedBuffer>(dataSize);
+    sharedBuffer->Initialize();
+    ASSERT_NE(sharedBuffer->GetFd(), -1);
+
+    imageInfo.SetBuffer(std::move(sharedBuffer));
+    auto ipcFd = imageInfo.GetIPCFileDescriptor();
+    EXPECT_NE(ipcFd, nullptr);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test GetPicture returns nullptr when no picture is set
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: GetPicture should return nullptr by default
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_040, TestSize.Level0)
+{
+    ImageInfo imageInfo;
+    auto picture = imageInfo.GetPicture();
+    EXPECT_EQ(picture, nullptr);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test SetError with different error codes
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: SetError should correctly set all error code types
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_041, TestSize.Level0)
+{
+    ImageInfo imageInfo;
+    imageInfo.SetError(DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
+    EXPECT_EQ(imageInfo.GetErrorCode(), DpsError::DPS_ERROR_IMAGE_PROC_TIMEOUT);
+    EXPECT_EQ(imageInfo.GetType(), CallbackType::IMAGE_ERROR);
+
+    ImageInfo imageInfo2;
+    imageInfo2.SetError(DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
+    EXPECT_EQ(imageInfo2.GetErrorCode(), DpsError::DPS_ERROR_IMAGE_PROC_INVALID_PHOTO_ID);
+}
+
+/*
+ * Feature: ImageInfo
+ * Function: Test GetMetaData returns the metadata
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: GetMetaData should return the metadata set in constructor
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_042, TestSize.Level0)
+{
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    ImageInfo imageInfo(0, false, 0, 0, metadata);
+
+    auto result = imageInfo.GetMetaData();
+    int32_t value = 0;
+    result.Get(DEFERRED_PROCESSING_TYPE_KEY, value);
+    EXPECT_EQ(value, DPS_OFFLINE);
+}
+
+/*
+ * Feature: MediaProgressNotifier
+ * Function: Test constructor initializes members correctly
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Constructor should set notifyInterval and nextNotifyPts
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_043, TestSize.Level0)
+{
+    int64_t notifyInterval = 1000;
+    MediaProgressNotifier notifier(notifyInterval);
+    EXPECT_FALSE(notifier.isCompletedProcess());
+}
+
+/*
+ * Feature: MediaProgressNotifier
+ * Function: Test SetTotalDuration and CheckNotify skip when currentPts < nextNotifyPts
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: CheckNotify should skip notification when currentPts is below threshold
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_044, TestSize.Level0)
+{
+    int64_t notifyInterval = 100;
+    MediaProgressNotifier notifier(notifyInterval);
+    notifier.SetTotalDuration(1000);
+
+    notifier.CheckNotify(50);
+    EXPECT_FALSE(notifier.isCompletedProcess());
+}
+
+/*
+ * Feature: MediaProgressNotifier
+ * Function: Test CheckNotify triggers notification when currentPts reaches threshold
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: CheckNotify should send notification and advance nextNotifyPts
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_045, TestSize.Level0)
+{
+    int64_t notifyInterval = 100;
+    MediaProgressNotifier notifier(notifyInterval);
+    notifier.SetTotalDuration(1000);
+
+    notifier.CheckNotify(100);
+    EXPECT_FALSE(notifier.isCompletedProcess());
+}
+
+/*
+ * Feature: MediaProgressNotifier
+ * Function: Test CheckNotify marks completed when nextNotifyPts >= total
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: CheckNotify should set isCompleted_ to true when progress reaches end
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_046, TestSize.Level0)
+{
+    int64_t notifyInterval = 100;
+    MediaProgressNotifier notifier(notifyInterval);
+    notifier.SetTotalDuration(500);
+
+    notifier.CheckNotify(100);
+    notifier.CheckNotify(200);
+    notifier.CheckNotify(300);
+    notifier.CheckNotify(400);
+    notifier.CheckNotify(500);
+    EXPECT_TRUE(notifier.isCompletedProcess());
+}
+
+/*
+ * Feature: MediaProgressNotifier
+ * Function: Test SetNotifyCallback binds callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: SetNotifyCallback should store the callback without error
+ */
+HWTEST_F(DeferredBaseUnitTest, camera_deferred_base_unittest_047, TestSize.Level0)
+{
+    MediaProgressNotifier notifier(100);
+    std::shared_ptr<ProgressCallback> callback = nullptr;
+    notifier.SetNotifyCallback(callback);
+    EXPECT_FALSE(notifier.isCompletedProcess());
 }
 } // CameraStandard
 } // OHOS
