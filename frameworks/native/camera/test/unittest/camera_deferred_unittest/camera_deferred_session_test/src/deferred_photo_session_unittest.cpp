@@ -19,6 +19,7 @@
 #include "deferred_processing_types.h"
 #include "dps.h"
 #include "dps_metadata_info.h"
+#include "events_info.h"
 #include "gmock/gmock.h"
 
 using namespace testing::ext;
@@ -322,6 +323,43 @@ HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_022, TestSize.Level0)
     session->AddPhotoSession(sessionInfo);
     auto callback = session->GetCallback(OTHER_USER_ID);
     ASSERT_EQ(callback, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test NotifyProcessImage with normal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyProcessImage sets media library state to idle and processes cache photo
+ */
+HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_023, TestSize.Level0)
+{
+    sptr<IDeferredPhotoProcessingSession> photoProcessing = GetDeferredPhotoProcessingSession();
+    ASSERT_NE(photoProcessing, nullptr);
+
+    auto ret = photoProcessing->NotifyProcessImage();
+    EXPECT_EQ(ret, DP_OK);
+    EXPECT_FALSE(EventsInfo::GetInstance().IsMediaBusy());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test NotifyProcessImage when DPS_SendUrgentCommand returns error
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test NotifyProcessImage still returns DP_OK when command server is not initialized
+ */
+HWTEST_F(PhotoSessionUnitTest, photo_session_unittest_024, TestSize.Level0)
+{
+    sptr<IDeferredPhotoProcessingSession> photoProcessing = GetDeferredPhotoProcessingSession();
+    ASSERT_NE(photoProcessing, nullptr);
+
+    DeferredProcessingService::GetInstance().initialized_.store(false);
+    auto ret = photoProcessing->NotifyProcessImage();
+    EXPECT_EQ(ret, DP_OK);
+    DeferredProcessingService::GetInstance().initialized_.store(true);
 }
 } // DeferredProcessing
 } // CameraStandard
