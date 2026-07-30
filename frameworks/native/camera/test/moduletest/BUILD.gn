@@ -49,6 +49,7 @@ ohos_moduletest("camera_base_function_moduletest") {
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "image_framework:image_native",
+    "hilog:libhilog",
   ]
 
   cflags = [
@@ -99,6 +100,7 @@ ohos_moduletest("camera_deferred_photo_moduletest") {
     "image_framework:image",
     "image_framework:image_native",
     "ipc:ipc_core",
+    "hilog:libhilog",
   ]
 
   cflags = [
@@ -198,6 +200,7 @@ ohos_moduletest("camera_format_YUV_moduletest") {
     "image_framework:image_native",
     "ipc:ipc_core",
     "os_account:os_account_innerkits",
+    "hilog:libhilog",
   ]
 
   defines = []

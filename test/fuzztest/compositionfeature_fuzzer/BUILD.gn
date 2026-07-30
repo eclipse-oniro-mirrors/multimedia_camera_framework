@@ -45,6 +45,7 @@ ohos_fuzztest("CompositionFeatureFuzzTest") {
     "image_framework:image_native",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "hilog:libhilog",
   ]
 }
 
