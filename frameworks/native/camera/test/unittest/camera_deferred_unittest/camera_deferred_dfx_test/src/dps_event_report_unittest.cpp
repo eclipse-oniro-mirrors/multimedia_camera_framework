@@ -863,6 +863,118 @@ HWTEST_F(DpsEventReportUnittest, UpdateTrailingTime002, TestSize.Level0)
     EXPECT_TRUE(dpsEventInfo.trailingTimeEndTime == 0);
     EXPECT_TRUE(dpsEventInfo.trailingTimeBeginTime == 0);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test ReportImageModeChange.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReportImageModeChange with valid parameters, verify no crash.
+ */
+HWTEST_F(DpsEventReportUnittest, ReportImageModeChange001, TestSize.Level0)
+{
+    ExecutionMode executionMode = ExecutionMode::HIGH_PERFORMANCE;
+    int32_t memorySize = 1024;
+
+    EXPECT_NO_FATAL_FAILURE(DPSEventReport::GetInstance().ReportImageModeChange(executionMode, memorySize));
+    EXPECT_NO_FATAL_FAILURE(DPSEventReport::GetInstance().ReportImageModeChange(ExecutionMode::LOAD_BALANCE, 2048));
+    EXPECT_NO_FATAL_FAILURE(DPSEventReport::GetInstance().ReportImageModeChange(ExecutionMode::LOW_POWER, 512));
+    EXPECT_NO_FATAL_FAILURE(DPSEventReport::GetInstance().ReportImageModeChange(ExecutionMode::DUMMY, 0));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ReportImageException.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReportImageException eventInfo exists for userId, verify userIdToImageIdEventInfo unchanged.
+ */
+HWTEST_F(DpsEventReportUnittest, ReportImageException001, TestSize.Level0)
+{
+    const std::string imageId = IMAGEID;
+    int32_t userId = USERID;
+    std::map<std::string, DPSEventInfo> eventInfo;
+
+    DPSEventInfo dpsEventInfo;
+    dpsEventInfo.userId = USERID;
+    dpsEventInfo.imageId = IMAGEID;
+    dpsEventInfo.exceptionSource = ExceptionSource::HDI_EXCEPTION;
+    dpsEventInfo.exceptionCause = ExceptionCause::HDI_TIMEOUT;
+    eventInfo.emplace(imageId, dpsEventInfo);
+
+    DPSEventReport::GetInstance().userIdToImageIdEventInfo.emplace(userId, eventInfo);
+    DPSEventReport::GetInstance().ReportImageException(imageId, userId);
+    EXPECT_NE(DPSEventReport::GetInstance().userIdToImageIdEventInfo.find(userId),
+        DPSEventReport::GetInstance().userIdToImageIdEventInfo.end());
+    EXPECT_EQ(DPSEventReport::GetInstance().userIdToImageIdEventInfo[userId].count(imageId), 0);
+    DPSEventReport::GetInstance().RemoveEventInfo(imageId, userId);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test ReportImageException.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ReportImageException when eventInfo does not exist for userId, verify no crash.
+ */
+HWTEST_F(DpsEventReportUnittest, ReportImageException002, TestSize.Level0)
+{
+    const std::string imageId = "nonExistentImageId";
+    int32_t userId = 999;
+
+    DPSEventReport::GetInstance().ReportImageException(imageId, userId);
+    EXPECT_EQ(DPSEventReport::GetInstance().userIdToImageIdEventInfo.find(999) ==
+        DPSEventReport::GetInstance().userIdToImageIdEventInfo.end(), true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateExecutionMode.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateExecutionMode with correct userId and imageId.
+ */
+HWTEST_F(DpsEventReportUnittest, UpdateExecutionMode001, TestSize.Level0)
+{
+    const std::string imageId = IMAGEID;
+    int32_t userId = USERID;
+    std::map<std::string, DPSEventInfo> eventInfo;
+
+    DPSEventInfo dpsEventInfo;
+    dpsEventInfo.userId = USERID;
+    dpsEventInfo.imageId = IMAGEID;
+    dpsEventInfo.executionMode = ExecutionMode::LOAD_BALANCE;
+    eventInfo.emplace(imageId, dpsEventInfo);
+
+    DPSEventReport::GetInstance().userIdToImageIdEventInfo.emplace(userId, eventInfo);
+    ExecutionMode newMode = ExecutionMode::HIGH_PERFORMANCE;
+    DPSEventReport::GetInstance().UpdateExecutionMode(imageId, userId, newMode);
+    EXPECT_EQ(DPSEventReport::GetInstance().userIdToImageIdEventInfo[userId][imageId].executionMode,
+        ExecutionMode::HIGH_PERFORMANCE);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateExecutionMode.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateExecutionMode with non-existent userId.
+ */
+HWTEST_F(DpsEventReportUnittest, UpdateExecutionMode002, TestSize.Level0)
+{
+    const std::string imageId = IMAGEID;
+    int32_t userId = 999;
+
+    DPSEventReport::GetInstance().UpdateExecutionMode(imageId, userId, ExecutionMode::LOW_POWER);
+    EXPECT_EQ(DPSEventReport::GetInstance().userIdToImageIdEventInfo.find(999) ==
+        DPSEventReport::GetInstance().userIdToImageIdEventInfo.end(), true);
+}
+
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
