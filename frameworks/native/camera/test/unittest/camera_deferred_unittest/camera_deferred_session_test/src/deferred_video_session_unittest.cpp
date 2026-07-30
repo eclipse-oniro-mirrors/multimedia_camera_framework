@@ -219,6 +219,90 @@ HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_006, TestSize.Le
     session->DeleteVideoSession(USER_ID);
     session->DeleteVideoSession(OTHER_USER_ID);
 }
+
+class MockVideoProcSessionCallback : public IDeferredVideoProcSessionCallback {
+public:
+    MOCK_METHOD(void, OnProcessVideoDone, (const std::string& videoId), (override));
+    MOCK_METHOD(void, OnError, (const std::string& videoId, const DpsErrorCode errorCode), (override));
+    MOCK_METHOD(void, OnStateChanged, (const DpsStatusCode status), (override));
+    MOCK_METHOD(void, OnProcessingProgress, (const std::string& videoId, float progress), (override));
+};
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessingSessionCallback OnProcessVideoDone with null proc session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnProcessVideoDone when deferredVideoProcSession_ is null
+ */
+HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_007, TestSize.Level0)
+{
+    auto callbackStub = sptr<DeferredVideoProcessingSessionCallback>::MakeSptr(nullptr);
+    ASSERT_NE(callbackStub, nullptr);
+
+    int32_t ret = callbackStub->OnProcessVideoDone("testVideoId");
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessingSessionCallback OnProcessVideoDone with null callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OnProcessVideoDone when deferredVideoProcSession_ is valid but GetCallback is null
+ */
+HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_008, TestSize.Level0)
+{
+    auto procSession = sptr<DeferredVideoProcSession>::MakeSptr(userId_, nullptr);
+    auto callbackStub = sptr<DeferredVideoProcessingSessionCallback>::MakeSptr(procSession);
+    ASSERT_NE(callbackStub, nullptr);
+
+    int32_t ret = callbackStub->OnProcessVideoDone("testVideoId");
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcSession AddVideo with single path and null remoteSession_
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AddVideo overload with srcPath/temp1Path/temp2Path/editPath
+ *   when remoteSession_ is null, verify no crash
+ */
+HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_009, TestSize.Level0)
+{
+    auto mockCallback = std::make_shared<MockVideoProcSessionCallback>();
+    auto procSession = sptr<DeferredVideoProcSession>::MakeSptr(userId_, mockCallback);
+    ASSERT_NE(procSession, nullptr);
+
+    EXPECT_CALL(*mockCallback, OnProcessVideoDone(_)).Times(0);
+    EXPECT_CALL(*mockCallback, OnError(_, _)).Times(0);
+    EXPECT_NO_FATAL_FAILURE(procSession->AddVideo("testVideoId", VIDEO_PATH, VIDEO_TEMP_PATH_1,
+        VIDEO_TEMP_PATH_2, VIDEO_PATH));
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcSession AddVideo with valid remoteSession_
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test AddVideo overload with editPath parameter through full session stack
+ */
+HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_010, TestSize.Level0)
+{
+    auto deferredVideoSession = GetDeferredVideoProcessingSession();
+    ASSERT_NE(deferredVideoSession, nullptr);
+
+    deferredVideoSession->BeginSynchronize();
+    int32_t ret = deferredVideoSession->AddVideo("testVideoId", VIDEO_PATH, VIDEO_TEMP_PATH_1,
+        VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    EXPECT_EQ(ret, DP_OK);
+    deferredVideoSession->EndSynchronize();
+}
 } // DeferredProcessing
 } // CameraStandard
 } // OHOS
