@@ -1173,5 +1173,73 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_034, TestSize.Level0)
     EXPECT_EQ(session->Release(), 0);
     session->Stop();
 }
+
+/*
+* Feature: Framework
+* Function: Test previewoutput with IsLogViewAssistSupported and SetLogViewAssistEnable when session_ is nullptr
+* SubFunction: NA
+* FunctionPoints: PreviewOutput::IsLogViewAssistSupported, PreviewOutput::SetLogViewAssistEnable
+* EnvConditions: NA
+* CaseDescription: Test IsLogViewAssistSupported returns false and SetLogViewAssistEnable
+*                  returns SESSION_NOT_CONFIG when session_ is nullptr
+*/
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_035, TestSize.Level0)
+{
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+
+    auto previewOutput = (sptr<PreviewOutput>&)preview;
+    previewOutput->session_ = nullptr;
+
+    EXPECT_EQ(previewOutput->IsLogViewAssistSupported(), false);
+    EXPECT_EQ(previewOutput->SetLogViewAssistEnable(true), CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+/*
+* Feature: Framework
+* Function: Test previewoutput with IsLogViewAssistSupported and SetLogViewAssistEnable
+* SubFunction: NA
+* FunctionPoints: PreviewOutput::IsLogViewAssistSupported, PreviewOutput::SetLogViewAssistEnable
+* EnvConditions: NA
+* CaseDescription: Test IsLogViewAssistSupported returns expected value and SetLogViewAssistEnable
+*                  returns expected result with valid session
+*/
+HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_036, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    sptr<CaptureOutput> preview = CreatePreviewOutput();
+    ASSERT_NE(preview, nullptr);
+    sptr<PreviewOutput> previewOutput = (sptr<PreviewOutput>&)preview;
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    bool isSupported = previewOutput->IsLogViewAssistSupported();
+    if (isSupported) {
+        EXPECT_EQ(previewOutput->SetLogViewAssistEnable(true), CameraErrorCode::SUCCESS);
+    }
+
+    EXPECT_EQ(preview->Release(), 0);
+    EXPECT_EQ(input->Release(), 0);
+    EXPECT_EQ(session->Release(), 0);
+}
 }
 }
