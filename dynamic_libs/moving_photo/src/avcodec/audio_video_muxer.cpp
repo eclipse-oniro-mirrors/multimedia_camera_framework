@@ -138,6 +138,7 @@ int32_t AudioVideoMuxer::SetStartTime(float timems)
 
 int32_t AudioVideoMuxer::SetSqr(int32_t bitrate, bool isBframeEnable)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(muxer_ == nullptr || bitrate <= 0, 1, "AudioVideoMuxer::SetSqr failed");
     std::string bitrateStr = STAGE_VIDEO_ENCODER_PARAM_VALUE + std::to_string(bitrate);
     std::string BframeStr = STAGE_VIDEO_ENCODER_BFRAME_VALUE + std::to_string(isBframeEnable);
@@ -150,6 +151,7 @@ int32_t AudioVideoMuxer::SetSqr(int32_t bitrate, bool isBframeEnable)
     userMeta->SetData(STAGE_ENCODER_PARAM_KEY, InfoStr);
     int32_t ret = muxer_->SetUserMeta(userMeta);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "SetSqr failed, ret: %{public}d", ret);
+    // LCOV_EXCL_STOP
     return 0;
 }
 
@@ -165,6 +167,7 @@ int32_t AudioVideoMuxer::SetTimedMetadata()
 
 int32_t AudioVideoMuxer::WriteSampleBuffer(std::shared_ptr<OHOS::Media::AVBuffer> sample, TrackType type)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_RET_ELOG(muxer_ == nullptr, 1, "muxer_ is nullptr!");
     CHECK_RETURN_RET_ELOG(sample == nullptr, AV_ERR_INVALID_VAL, "input sample is nullptr!");
@@ -180,12 +183,19 @@ int32_t AudioVideoMuxer::WriteSampleBuffer(std::shared_ptr<OHOS::Media::AVBuffer
         case TrackType::META_TRACK:
             trackId = metaTrackId_;
             break;
+        case TrackType::MANUAL_TRACK:
+            trackId = manualTrackId_;
+            break;
+        case TrackType::MANUAL_META_TRACK:
+            trackId = manualMetaTrackId_;
+            break;
         default:
             MEDIA_ERR_LOG("TrackType type = %{public}d not supported", type);
     }
     ret = muxer_->WriteSample(trackId, sample);
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "WriteSampleBuffer failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::GetVideoFd()
@@ -205,6 +215,7 @@ shared_ptr<PhotoAssetIntf> AudioVideoMuxer::GetPhotoAssetProxy()
 
 int32_t AudioVideoMuxer::AddTrack(int &trackId, std::shared_ptr<Format> format, TrackType type)
 {
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(format == nullptr, AV_ERR_INVALID_VAL, "input track format is nullptr!");
     CHECK_RETURN_RET_ELOG(muxer_ == nullptr, 1, "muxer_ is nullptr!");
     int32_t ret = muxer_->AddTrack(trackId, format->GetMeta());
@@ -218,11 +229,18 @@ int32_t AudioVideoMuxer::AddTrack(int &trackId, std::shared_ptr<Format> format, 
         case TrackType::META_TRACK:
             metaTrackId_ = trackId;
             break;
+        case TrackType::MANUAL_TRACK:
+            manualTrackId_ = trackId;
+            break;
+        case TrackType::MANUAL_META_TRACK:
+            manualMetaTrackId_ = trackId;
+            break;
         default:
             MEDIA_ERR_LOG("TrackType type = %{public}d not supported", type);
     }
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK && trackId >= 0, 1, "AddTrack failed, ret: %{public}d", ret);
     return 0;
+    // LCOV_EXCL_STOP
 }
 
 int32_t AudioVideoMuxer::Stop()

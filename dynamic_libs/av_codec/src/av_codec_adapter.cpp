@@ -18,6 +18,10 @@
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::MediaAVCodec;
+const std::map<ProxyVideoCodecType, std::string> codecType2MimeTypeMap = {
+    { ProxyVideoCodecType::AVC, std::string(CodecMimeType::VIDEO_AVC) },
+    { ProxyVideoCodecType::HEVC, std::string(CodecMimeType::VIDEO_HEVC) },
+};
 constexpr int32_t AVC = 0;
 constexpr int32_t HEVC = 1;
 AVCodecAdapter::AVCodecAdapter()
@@ -40,6 +44,38 @@ bool AVCodecAdapter::IsBframeSupported(int32_t videoCodecType)
     auto codecInfo = std::make_shared<MediaAVCodec::AVCodecInfo>(capabilityData);
     bool isBFrame = codecInfo->IsFeatureSupported(MediaAVCodec::AVCapabilityFeature::VIDEO_ENCODER_B_FRAME);
     return isBFrame;
+}
+
+void FillAttribute(std::shared_ptr<AVCodecList> avCodecList, CodecCapabilityInfo& info)
+{
+    CHECK_RETURN_ELOG(avCodecList == nullptr, "get codec list failed");
+    AVCodecCategory category = (info.category == CodeCategory::HARDWARE) ?
+                            AVCodecCategory::AVCODEC_HARDWARE : AVCodecCategory::AVCODEC_SOFTWARE;
+    CapabilityData *capabilityData = avCodecList->GetCapability(info.mimeType, true, category);
+    CHECK_RETURN(capabilityData == nullptr);
+    info.isEncoderSupport = true;
+    auto codecInfo = std::make_shared<AVCodecInfo>(capabilityData);
+    CHECK_RETURN(codecInfo == nullptr);
+    info.isBframeSupported = codecInfo->IsFeatureSupported(AVCapabilityFeature::VIDEO_ENCODER_B_FRAME);
+    info.isWaterMarkSupported = codecInfo->IsFeatureSupported(AVCapabilityFeature::VIDEO_WATERMARK);
+}
+
+int32_t AVCodecAdapter::GetCodecCapabilityInfo(std::vector<CodecCapabilityInfo>& codecCapabilityInfos)
+{
+    codecCapabilityInfos.clear();
+    std::shared_ptr<AVCodecList> avCodecList = AVCodecListFactory::CreateAVCodecList();
+    CHECK_RETURN_RET_ELOG(avCodecList == nullptr, MEDIA_ERR, "get code list failed");
+    for (const auto& codecType : { ProxyVideoCodecType::HEVC, ProxyVideoCodecType::AVC }) {
+        auto it = codecType2MimeTypeMap.find(codecType);
+        CHECK_CONTINUE(it == codecType2MimeTypeMap.end());
+        for (const auto& category : {CodeCategory::HARDWARE, CodeCategory::SOFTWARE}) {
+            CodecCapabilityInfo capabilityInfo = {.codecType = codecType, .mimeType = it->second, .category = category};
+            FillAttribute(avCodecList, capabilityInfo);
+            CHECK_CONTINUE(capabilityInfo.isEncoderSupport == false);
+            codecCapabilityInfos.emplace_back(capabilityInfo);
+        }
+    }
+    return MEDIA_OK;
 }
 
 int32_t AVCodecAdapter::GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes)

@@ -17,6 +17,7 @@
 #define AVCODEC_SAMPLE_VIDEO_ENCODER_H
 
 #include <unordered_set>
+#include <set>
 #include "safe_map.h"
 #include "frame_record.h"
 #include "avcodec_video_encoder.h"
@@ -31,12 +32,15 @@
 
 namespace OHOS {
 namespace CameraStandard {
+constexpr uint32_t IFRAME_INTERVAL = 8;
+constexpr int64_t TIMESTAMP_DIFF_MAX = 52000000;
+constexpr size_t TIMESTAMP_SET_MAX_SIZE = 2;
 using namespace std;
 using namespace OHOS::MediaAVCodec;
 class VideoEncoder : public std::enable_shared_from_this<VideoEncoder> {
 public:
     VideoEncoder() = default;
-    explicit VideoEncoder(VideoCodecType type, ColorSpace colorSpace);
+    explicit VideoEncoder(VideoCodecType type, ColorSpace colorSpace, bool isExtendImage = false);
     ~VideoEncoder();
 
     int32_t Create(const std::string &codecMime);
@@ -78,8 +82,27 @@ public:
     void SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation);
     void RestartVideoCodec(shared_ptr<Size> size, int32_t rotation);
     bool ProcessOverTimeFrame(sptr<FrameRecord> frameRecord);
+    bool EncodeExtendSurfaceBuffer(sptr<FrameRecord> frameRecord);
+    void ProcessFrameInfo(std::shared_ptr<AVBuffer> buffer);
+    inline bool IsTimestampInvalid(int64_t timestampDiff)
+    {
+        return timestampDiff <= 0 || timestampDiff > TIMESTAMP_DIFF_MAX;
+    }
+    inline void CheckTimestampOrder(int64_t currentPts, int64_t muxerIndex)
+    {
+        //(timestampSet_ keeps max 2 elements)
+        timestampSet_.insert(currentPts);
+        CHECK_RETURN(timestampSet_.size() <= TIMESTAMP_SET_MAX_SIZE);
+        int64_t minTs = *timestampSet_.begin();
+        timestampSet_.erase(timestampSet_.begin());
+        // if not satisfied,this frame is abnormal,act like its not existed and log
+        CHECK_EXECUTE(lastMinTimestamp_ == INT64_MAX || minTs > lastMinTimestamp_, lastMinTimestamp_ = minTs);
+        CHECK_PRINT_ELOG(lastMinTimestamp_ != INT64_MAX && minTs < lastMinTimestamp_,
+            "CheckMP: mIdx=%{public}" PRId64 ", cur=%{public}llu, prev=%{public}llu", muxerIndex,
+            static_cast<unsigned long long>(minTs), static_cast<unsigned long long>(lastMinTimestamp_));
+    }
+
 private:
-    bool IsBframeSupported();
     int32_t SetCallback();
     int32_t Configure();
     std::shared_ptr<AVBuffer> CopyAVBuffer(std::shared_ptr<AVBuffer> &inputBuffer);
@@ -118,6 +141,12 @@ private:
         sptr<VideoCodecAVBufferInfo> bufferInfo = nullptr;
     };
     SafeMap<int64_t, OverTimeBufferInfo> overTimeMap;
+    bool isExtendImage_ = false;
+    //CHECKMP
+    std::set<int64_t> timestampSet_;
+    int64_t lastMinTimestamp_ = INT64_MAX;
+    int64_t lastIFrameTimestamp_ = 0;
+    int32_t frameCountSinceLastIFrame_ = 0;
 };
 } // CameraStandard
 } // OHOS

@@ -88,6 +88,7 @@ int32_t AudioDeferredProcess::GetMaxBufferSize(const AudioStreamInfo& inputOptio
     MEDIA_INFO_LOG("AudioDeferredProcess::GetMaxBufferSize Enter");
     uint32_t maxUnprocessedBufferSize_ = 0;
     uint32_t maxProcessedBufferSize_ = 0;
+    CHECK_RETURN_RET_ELOG(offlineEffectChain_ == nullptr, -1, "AudioDeferredProcess::offlineEffectChain_ is nullptr");
     CHECK_RETURN_RET_ELOG(
         offlineEffectChain_->GetEffectBufferSize(maxUnprocessedBufferSize_, maxProcessedBufferSize_) != 0, -1,
         "AudioDeferredProcess::GetMaxBufferSize Err");
@@ -128,6 +129,8 @@ void AudioDeferredProcess::FadeOneBatch(std::array<uint8_t, MAX_PROCESSED_SIZE *
 void AudioDeferredProcess::EffectChainProcess(std::array<uint8_t, MAX_UNPROCESSED_SIZE * PROCESS_BATCH_SIZE>& rawArr,
     std::array<uint8_t, MAX_PROCESSED_SIZE * PROCESS_BATCH_SIZE>& processedArr)
 {
+    CHECK_RETURN_ELOG(
+        offlineEffectChain_ == nullptr, "AudioDeferredProcess::EffectChainProcess offlineEffectChain_ is nullptr.");
     // LCOV_EXCL_START
     int32_t ret = offlineEffectChain_->Process(rawArr.data(), oneUnprocessedSize_ * PROCESS_BATCH_SIZE,
         processedArr.data(), oneProcessedSize_ * PROCESS_BATCH_SIZE);
@@ -144,6 +147,7 @@ void AudioDeferredProcess::ReturnToRecords(std::array<uint8_t, MAX_PROCESSED_SIZ
         int32_t ret = memcpy_s(temp, oneProcessedSize_, processedArr.data() + j * oneProcessedSize_, oneProcessedSize_);
         CHECK_PRINT_ELOG(ret != 0, "AudioDeferredProcess::Process returnToRecords memcpy_s err");
         CHECK_RETURN_ELOG(i + 1 + j - batchSize < 0, "ReturnToRecords unexpected error occured");
+        CHECK_RETURN_ELOG(i + 1 + j - batchSize >= processedRecords.size(), "ReturnToRecords index out of range");
         processedRecords[i + 1 + j - batchSize]->SetAudioBuffer(temp, oneProcessedSize_);
     }
     // LCOV_EXCL_STOP
@@ -190,8 +194,8 @@ void AudioDeferredProcess::SetMutedAudioRecordForVecs(vector<sptr<AudioRecord>>&
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
-    CHECK_RETURN_WLOG(offlineEffectChain_ == nullptr, -1,
-        "AudioDeferredProcess::SetMutedAudioRecordForVecs offlineEffectChain_ is nullptr.");
+    CHECK_RETURN_WLOG(
+        offlineEffectChain_ == nullptr, "AudioDeferredProcess::Process offlineEffectChain_ is nullptr.");
     MEDIA_INFO_LOG("AudioDeferredProcess::SetMutedAudioRecordForVecs Enter");
     uint32_t count = 0;
     uint32_t audioRecordsLen = audioRecords.size();

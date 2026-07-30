@@ -14,6 +14,7 @@
  */
 
 #include "sample_info.h"
+#include "frame_record.h"
 #include "utils/camera_log.h"
 
 namespace OHOS {
@@ -111,9 +112,14 @@ std::shared_ptr<OHOS::Media::AVBuffer> VideoCodecAVBufferInfo::GetCopyAVBuffer()
     CHECK_RETURN_RET_ELOG(destBuffer == nullptr, nullptr, "destBuffer is null");
     auto sourceAddr = buffer->memory_->GetAddr();
     auto destAddr = destBuffer->memory_->GetAddr();
+    auto fd = destBuffer->memory_->GetFileDescriptor();
     errno_t cpyRet = memcpy_s(reinterpret_cast<void *>(destAddr), buffer->memory_->GetSize(),
         reinterpret_cast<void *>(sourceAddr), buffer->memory_->GetSize());
     CHECK_PRINT_ELOG(0 != cpyRet, "CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
+    FrameRecord::TrackAddr(destAddr, fd, buffer->pts_);
+    std::string copyTag = "copy_dst_addr_" + std::to_string(reinterpret_cast<intptr_t>(destAddr)) +
+        "_fd_" + std::to_string(fd);
+    FrameRecord::DumpBuffer(destBuffer->memory_->GetAddr(), buffer->memory_->GetSize(), buffer->pts_, copyTag);
     destBuffer->pts_ = buffer->pts_;
     destBuffer->flag_ = buffer->flag_;
     destBuffer->memory_->SetSize(buffer->memory_->GetSize());

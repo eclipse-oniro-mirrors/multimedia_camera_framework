@@ -133,8 +133,10 @@ public:
             MEDIA_DEBUG_LOG("releaseSurfaceBuffer go %{public}s", frameId_.c_str());
         }
         if (audioBuffer_ != nullptr) {
-            MEDIA_DEBUG_LOG("ReleaseAudioBuffer, timestamp:%{public}" PRId64 ", IsFinishCache:%{public}d", timestamp_,
-                IsFinishCache());
+            MEDIA_DEBUG_LOG(
+                "ReleaseAudioBuffer, timestamp:%{public}" PRId64 ", "
+                "IsFinishCache:%{public}d",
+                timestamp_, IsFinishCache());
             delete audioBuffer_;
             audioBuffer_ = nullptr;
         }

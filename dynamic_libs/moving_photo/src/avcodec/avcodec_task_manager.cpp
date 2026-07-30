@@ -64,7 +64,7 @@ AvcodecTaskManager::AvcodecTaskManager(
     // Create Task Manager
     videoEncoder_ = make_shared<VideoEncoder>(type, colorSpace);
 }
-
+// LCOV_EXCL_START
 AvcodecTaskManager::AvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
     sptr<AudioTaskManager> audioTaskManager, VideoCodecType type, ColorSpace colorSpace)
     :videoCodecType_(type), colorSpace_(colorSpace), movingSurface_(movingSurface), size_(size)
@@ -114,7 +114,7 @@ shared_ptr<TaskManager>& AvcodecTaskManager::GetEncoderManager()
     }
     return videoEncoderManager_;
 }
-
+// LCOV_EXCL_STOP
 void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback)
 {
     // LCOV_EXCL_START
@@ -229,8 +229,9 @@ constexpr inline float MovingPhotoNanosecToMillisec(int64_t nanosec)
     // LCOV_EXCL_STOP
 }
 
-sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
-    vector<sptr<FrameRecord>>& choosedBuffer, int32_t captureId, int64_t& backTimestamp)
+sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords,
+    vector<sptr<FrameRecord>> manualFrameRecords, int32_t captureRotation, vector<sptr<FrameRecord>>& choosedBuffer,
+    int32_t captureId, int64_t& backTimestamp)
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
@@ -246,6 +247,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
     OH_AVOutputFormat format = AV_OUTPUT_FORMAT_MPEG_4;
     int64_t timestamp = videoFdMap_[captureId].first;
     auto photoAssetProxy = videoFdMap_[captureId].second;
+    ClearManualCache(manualFrameRecords, timestamp);
     ChooseVideoBuffer(frameRecords, choosedBuffer, timestamp, captureId, backTimestamp);
     muxer->Create(format, photoAssetProxy, videoTypeMap_[captureId]);
     muxer->SetRotation(captureRotation);
@@ -259,41 +261,93 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
         CHECK_EXECUTE(videoEncoder_ != nullptr,
             muxer->SetSqr(videoEncoder_->GetEncoderBitrate(), videoEncoder_->GetBframeAbility()));
     }
+    CHECK_RETURN_RET_ELOG(videoEncoder_ == nullptr, nullptr, "videoEncoder_ is null");
+    bool isHevcAndHdrSupported =
+        videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC && videoEncoder_->IsHdr(colorSpace_);
+    CHECK_RETURN_RET_ELOG(frameRecords.empty(), nullptr, "frameRecords is empty");
+    CHECK_RETURN_RET_ELOG(frameRecords[0] == nullptr || frameRecords[0]->GetFrameSize() == nullptr, nullptr,
+        "AvcodecTaskManager::CreateAVMuxer GetFrameSize is null");
+    int videoTrackId = -1;
+    int audioTrackId = -1;
+    int metaTrackId = -1;
+    AddMuxerTracks(muxer, frameRecords, isHevcAndHdrSupported, videoTrackId, audioTrackId, metaTrackId);
+    int manualTrackId = -1;
+    int manualMetaTrackId = -1;
+    AddManualTracks(muxer, manualFrameRecords, isHevcAndHdrSupported, videoTrackId, manualTrackId, manualMetaTrackId);
+    MEDIA_INFO_LOG(
+        "CreateMuxer vId:%{public}d,aid:%{public}d,fid:%{public}d,manid:%{public}d,manmid:%{public}d",
+        videoTrackId, audioTrackId, metaTrackId, manualTrackId, manualMetaTrackId);
+    muxer->SetTimedMetadata();
+    muxer->Start();
+    return muxer;
+    // LCOV_EXCL_STOP
+}
+
+void AvcodecTaskManager::AddMuxerTracks(sptr<AudioVideoMuxer> muxer, const vector<sptr<FrameRecord>>& frameRecords,
+    bool isHevcAndHdrSupported, int32_t& videoTrackId, int32_t& audioTrackId, int32_t& metaTrackId)
+{
+    // LCOV_EXCL_START
     auto formatVideo = make_shared<Format>();
     MEDIA_INFO_LOG("CreateAVMuxer videoCodecType_ = %{public}d", videoCodecType_);
     formatVideo->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
         == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC ? OH_AVCODEC_MIMETYPE_VIDEO_HEVC : OH_AVCODEC_MIMETYPE_VIDEO_AVC);
-    CHECK_RETURN_RET_ELOG(videoEncoder_ == nullptr, nullptr, "videoEncoder_ is null");
-    bool isHevcAndHdrSupported =
-        videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC && videoEncoder_->IsHdr(colorSpace_);
     if (isHevcAndHdrSupported) {
         formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_IS_HDR_VIVID, IS_HDR_VIVID);
     }
-    CHECK_RETURN_RET_ELOG(frameRecords.empty(), nullptr, "frameRecords is empty");
-    CHECK_RETURN_RET_ELOG(frameRecords[0] == nullptr || frameRecords[0]->GetFrameSize() == nullptr, nullptr,
-        "AvcodecTaskManager::CreateAVMuxer GetFrameSize is null");
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, frameRecords[0]->GetFrameSize()->width);
     formatVideo->PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, frameRecords[0]->GetFrameSize()->height);
     formatVideo->PutDoubleValue(MediaDescriptionKey::MD_KEY_FRAME_RATE, VIDEO_FRAME_RATE);
-    int videoTrackId = -1;
     muxer->AddTrack(videoTrackId, formatVideo, VIDEO_TRACK);
-    int audioTrackId = -1;
+
     auto formatAudio = make_shared<Format>();
     formatAudio->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, OH_AVCODEC_MIMETYPE_AUDIO_AAC);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_SAMPLE_RATE, SAMPLERATE_32000);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_CHANNEL_COUNT, DEFAULT_CHANNEL_COUNT);
     formatAudio->PutIntValue(MediaDescriptionKey::MD_KEY_PROFILE, DEFAULT_PROFILE);
     muxer->AddTrack(audioTrackId, formatAudio, AUDIO_TRACK);
-    int metaTrackId = -1;
+
     auto formatMeta = make_shared<Format>();
     formatMeta->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, TIMED_METADATA_TRACK_MIMETYPE);
     formatMeta->PutStringValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_KEY, TIMED_METADATA_KEY);
     formatMeta->PutIntValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_SRC_TRACK_ID, videoTrackId);
     muxer->AddTrack(metaTrackId, formatMeta, META_TRACK);
     MEDIA_INFO_LOG("CreateMuxer vId:%{public}d,aid:%{public}d,mid:%{public}d", videoTrackId, audioTrackId, metaTrackId);
-    muxer->SetTimedMetadata();
-    muxer->Start();
-    return muxer;
+    // LCOV_EXCL_STOP
+}
+
+void AvcodecTaskManager::AddManualTracks(sptr<AudioVideoMuxer> muxer,
+    const vector<sptr<FrameRecord>>& manualFrameRecords, bool isHevcAndHdrSupported,
+    int32_t videoTrackId, int32_t& manualTrackId, int32_t& manualMetaTrackId)
+{
+    // LCOV_EXCL_START
+    if (manualFrameRecords.empty()) {
+        return;
+    }
+    MEDIA_INFO_LOG("CreateAVMuxer add manual track");
+    auto formatManual = make_shared<Format>();
+    formatManual->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, videoCodecType_
+        == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC ? OH_AVCODEC_MIMETYPE_VIDEO_HEVC : OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+    if (isHevcAndHdrSupported) {
+        formatManual->PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_IS_HDR_VIVID, IS_HDR_VIVID);
+    }
+    formatManual->PutIntValue(MediaDescriptionKey::MD_KEY_WIDTH, manualFrameRecords[0]->GetFrameSize()->width);
+    formatManual->PutIntValue(MediaDescriptionKey::MD_KEY_HEIGHT, manualFrameRecords[0]->GetFrameSize()->height);
+    formatManual->PutIntValue(MediaDescriptionKey::MD_KEY_TRACK_TYPE, static_cast<int32_t>(MEDIA_TYPE_AUXILIARY));
+    formatManual->PutStringValue(MediaDescriptionKey::MD_KEY_TRACK_REFERENCE_TYPE, "vdep");
+    formatManual->PutStringValue(MediaDescriptionKey::MD_KEY_TRACK_DESCRIPTION,
+        "com.openharmony.manual.auxiliary");
+    std::vector<int32_t> videoTrackIDsVector = {videoTrackId};
+    int32_t *videoAuxlTrackIDs = videoTrackIDsVector.data();
+    formatManual->PutIntBuffer(MediaDescriptionKey::MD_KEY_REFERENCE_TRACK_IDS, videoAuxlTrackIDs,
+        videoTrackIDsVector.size());
+    muxer->AddTrack(manualTrackId, formatManual, MANUAL_TRACK);
+
+    auto formatManualMeta = make_shared<Format>();
+    formatManualMeta->PutStringValue(MediaDescriptionKey::MD_KEY_CODEC_MIME, TIMED_METADATA_TRACK_MIMETYPE);
+    formatManualMeta->PutStringValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_KEY,
+        "com.openharmony.timed_metadata.movingphoto.sl");
+    formatManualMeta->PutIntValue(MediaDescriptionKey::MD_KEY_TIMED_METADATA_SRC_TRACK_ID, videoTrackId);
+    muxer->AddTrack(manualMetaTrackId, formatManualMeta, MANUAL_META_TRACK);
     // LCOV_EXCL_STOP
 }
 
@@ -330,7 +384,8 @@ bool AvcodecTaskManager::isEmptyVideoFdMap()
     // LCOV_EXCL_STOP
 }
 
-void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName,
+void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords,
+    std::shared_ptr<AVBuffer> manualXpsBuffer, vector<sptr<FrameRecord>> manualFrameRecords, uint64_t taskName,
     int32_t captureRotation, int32_t captureId) __attribute__((no_sanitize("cfi")))
 {
     CAMERA_SYNC_TRACE;
@@ -339,13 +394,16 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto taskManager = GetTaskManager();
     CHECK_RETURN_ELOG(taskManager == nullptr, "GetTaskManager is null");
-    GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation, captureId]() {
+    GetTaskManager()->SubmitTask([thisPtr, frameRecords, captureRotation, captureId, manualXpsBuffer,
+        manualFrameRecords]() {
         CAMERA_SYNC_TRACE;
-        MEDIA_INFO_LOG("CreateAVMuxer with %{public}zu, captureId: %{public}d", frameRecords.size(), captureId);
-        vector<sptr<FrameRecord>> choosedBuffer;
-        int64_t backTimestamp;
+        MEDIA_INFO_LOG("CreateAVMuxer with %{public}zu, manualframerecords %{public}zu, captureId: %{public}d",
+            frameRecords.size(), manualFrameRecords.size(), captureId);
+        vector<sptr<FrameRecord>> choosedBuffer = {};
+        int64_t backTimestamp = 0;
         sptr<AudioVideoMuxer> muxer =
-            thisPtr->CreateAVMuxer(frameRecords, captureRotation, choosedBuffer, captureId, backTimestamp);
+            thisPtr->CreateAVMuxer(frameRecords, manualFrameRecords, captureRotation, choosedBuffer, captureId,
+                backTimestamp);
         CHECK_RETURN_ELOG(muxer == nullptr, "CreateAVMuxer failed");
         if (choosedBuffer.empty()) {
             lock_guard<mutex> lock(thisPtr->videoFdMutex_);
@@ -357,42 +415,101 @@ void AvcodecTaskManager::DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, ui
         auto result = muxer->WriteSampleBuffer(thisPtr->videoEncoder_->GetXpsBuffer(), VIDEO_TRACK);
         MEDIA_DEBUG_LOG("VIDEO_TRACK write sample result %{public}d", result);
         int64_t videoStartTime = choosedBuffer.front()->GetTimeStamp();
-        map<int64_t, int32_t> retMap;
-        for (size_t index = 0; index < choosedBuffer.size(); index++) {
-            MEDIA_DEBUG_LOG("VIDEO_TRACK write sample index %{public}zu", index);
-            shared_ptr<Media::AVBuffer> buffer = choosedBuffer[index]->encodedBuffer;
-            {
-                int32_t ret = AV_ERR_OK;
-                std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
-                CHECK_CONTINUE_WLOG(buffer == nullptr, "video encodedBuffer is null");
-                buffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
-                MEDIA_DEBUG_LOG("choosed buffer timestamp:%{public}" PRIu64 ", pts:%{public}" PRIi64,
-                    choosedBuffer[index]->GetTimeStamp(), choosedBuffer[index]->encodedBuffer->pts_);
-                ret = muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
-                retMap[choosedBuffer[index]->GetTimeStamp()] = ret;
-            }
-        }
-        std::sort(choosedBuffer.begin(), choosedBuffer.end(),
-            [](sptr<FrameRecord> a, sptr<FrameRecord> b) { return a->GetTimeStamp() < b->GetTimeStamp(); });
-        for (size_t index = 0; index < choosedBuffer.size(); index++) {
-            MEDIA_DEBUG_LOG("META_TRACK write sample index %{public}zu", index);
-            sptr<SurfaceBuffer> metaSurfaceBuffer = choosedBuffer[index]->GetMetaBuffer();
-            auto ptr = retMap.find(choosedBuffer[index]->GetTimeStamp());
-            if (metaSurfaceBuffer && ptr != retMap.end() && ptr->second == AV_ERR_OK) {
-                shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
-                metaAvBuffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
-                MEDIA_DEBUG_LOG("metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
-                    (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
-                muxer->WriteSampleBuffer(metaAvBuffer, META_TRACK);
-            } else {
-                CHECK_EXECUTE(ptr != retMap.end(), MEDIA_ERR_LOG("metaSurfaceBuffer ret %{public}d", ptr->second));
-            }
-            choosedBuffer[index]->UnLockMetaBuffer();
-        }
+        thisPtr->WriteVideoAndMetaSamples(muxer, choosedBuffer, videoStartTime);
+        thisPtr->WriteManualBuffer(manualXpsBuffer, manualFrameRecords, muxer, videoStartTime);
         thisPtr->CollectAudioBuffer(choosedBuffer, muxer, true);
         thisPtr->FinishMuxer(muxer, captureId);
     });
     // LCOV_EXCL_STOP
+}
+
+void AvcodecTaskManager::WriteVideoAndMetaSamples(sptr<AudioVideoMuxer> muxer,
+    vector<sptr<FrameRecord>>& choosedBuffer, int64_t videoStartTime)
+{
+    // LCOV_EXCL_START
+    map<int64_t, int32_t> retMap;
+    for (size_t index = 0; index < choosedBuffer.size(); index++) {
+        MEDIA_DEBUG_LOG("VIDEO_TRACK write sample index %{public}zu", index);
+        shared_ptr<Media::AVBuffer> buffer = choosedBuffer[index]->GetEncodeBuffer();
+        FrameRecord::DumpBuffer(buffer->memory_->GetAddr(), buffer->memory_->GetSize(),
+            choosedBuffer[index]->GetTimeStamp(), "muxer_write_ts");
+        {
+            int32_t ret = AV_ERR_OK;
+            std::lock_guard<std::mutex> lock(choosedBuffer[index]->bufferMutex_);
+            CHECK_CONTINUE_WLOG(buffer == nullptr, "video encodedBuffer is null");
+            buffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
+            MEDIA_DEBUG_LOG("choosed buffer timestamp:%{public}llu, pts:%{public}" PRId64,
+                (long long unsigned)choosedBuffer[index]->GetTimeStamp(),
+                choosedBuffer[index]->GetEncodeBuffer()->pts_);
+            ret = muxer->WriteSampleBuffer(buffer, VIDEO_TRACK);
+            retMap[choosedBuffer[index]->GetTimeStamp()] = ret;
+        }
+    }
+    std::sort(choosedBuffer.begin(), choosedBuffer.end(),
+        [](sptr<FrameRecord> a, sptr<FrameRecord> b) { return a->GetTimeStamp() < b->GetTimeStamp(); });
+    for (size_t index = 0; index < choosedBuffer.size(); index++) {
+        MEDIA_DEBUG_LOG("META_TRACK write sample index %{public}zu", index);
+        sptr<SurfaceBuffer> metaSurfaceBuffer = choosedBuffer[index]->GetMetaBuffer();
+        auto ptr = retMap.find(choosedBuffer[index]->GetTimeStamp());
+        if (metaSurfaceBuffer && ptr != retMap.end() && ptr->second == AV_ERR_OK) {
+            shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
+            metaAvBuffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
+            MEDIA_DEBUG_LOG("metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
+                (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
+            muxer->WriteSampleBuffer(metaAvBuffer, META_TRACK);
+        } else {
+            CHECK_EXECUTE(ptr != retMap.end(), MEDIA_ERR_LOG("metaSurfaceBuffer ret %{public}d", ptr->second));
+        }
+        choosedBuffer[index]->UnLockMetaBuffer();
+    }
+    // LCOV_EXCL_STOP
+}
+
+void AvcodecTaskManager::WriteManualBuffer(std::shared_ptr<AVBuffer> manualXpsBuffer,
+    vector<sptr<FrameRecord>> manualFrameRecords, sptr<AudioVideoMuxer> muxer, int64_t videoStartTime)
+{
+    CHECK_RETURN_ELOG(manualFrameRecords.empty(), "WriteManualBuffer failed, frameRecords is empty.");
+    CHECK_RETURN_ELOG(manualXpsBuffer == nullptr, "manualXpsBuffer is nullptr!");
+    auto xpsResult = muxer->WriteSampleBuffer(manualXpsBuffer, MANUAL_TRACK);
+    CHECK_PRINT_ELOG(xpsResult != AV_ERR_OK, "manual xps buffer write failed");
+    map<int64_t, int32_t> retMap;
+    std::sort(manualFrameRecords.begin(), manualFrameRecords.end(),
+        [](sptr<FrameRecord> a, sptr<FrameRecord> b) { return a->GetTimeStamp() < b->GetTimeStamp(); });
+    for (size_t index = 0; index < manualFrameRecords.size(); index++) {
+        MEDIA_INFO_LOG("MANUAL_TRACK write sample index %{public}zu", index);
+        shared_ptr<Media::AVBuffer> buffer = manualFrameRecords[index]->GetEncodeBuffer();
+        {
+            int32_t ret = AV_ERR_OK;
+            std::lock_guard<std::mutex> lock(manualFrameRecords[index]->bufferMutex_);
+            CHECK_CONTINUE_WLOG(buffer == nullptr, "video encodedBuffer is null");
+            buffer->pts_ = NanosecToMicrosec(manualFrameRecords[index]->GetTimeStamp() - videoStartTime);
+            if (buffer->pts_ >= 0) {
+                MEDIA_INFO_LOG("choosed buffer timestamp:%{public}" PRIu64 ", pts:%{public}" PRId64,
+                    manualFrameRecords[index]->GetTimeStamp(), buffer->pts_);
+                ret = muxer->WriteSampleBuffer(buffer, MANUAL_TRACK);
+                retMap[manualFrameRecords[index]->GetTimeStamp()] = ret;
+                CHECK_PRINT_ELOG(ret != AV_ERR_OK, "manual surface buffer write failed");
+            }
+        }
+    }
+
+    for (size_t index = 0; index < manualFrameRecords.size(); index++) {
+        MEDIA_INFO_LOG("MANUAL_META_TRACK manual write sample index %{public}zu", index);
+        sptr<SurfaceBuffer> metaSurfaceBuffer = manualFrameRecords[index]->GetMetaBuffer();
+        auto ptr = retMap.find(manualFrameRecords[index]->GetTimeStamp());
+        if (metaSurfaceBuffer && ptr != retMap.end() && ptr->second == AV_ERR_OK) {
+            shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
+            metaAvBuffer->pts_ = NanosecToMicrosec(manualFrameRecords[index]->GetTimeStamp() - videoStartTime);
+            if (metaAvBuffer->pts_ >= 0) {
+                MEDIA_INFO_LOG("manual metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
+                    (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
+                muxer->WriteSampleBuffer(metaAvBuffer, MANUAL_META_TRACK);
+            }
+        } else {
+            CHECK_EXECUTE(ptr != retMap.end(), MEDIA_ERR_LOG("manual metaSurfaceBuffer ret %{public}d", ptr->second));
+        }
+        manualFrameRecords[index]->UnLockMetaBuffer();
+    }
 }
 
 size_t AvcodecTaskManager::FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords,
@@ -469,6 +586,17 @@ void AvcodecTaskManager::IgnoreDeblur(vector<sptr<FrameRecord>> frameRecords,
     // LCOV_EXCL_STOP
 }
 
+void AvcodecTaskManager::ClearManualCache(vector<sptr<FrameRecord>> manualFrameRecords, int64_t shutterTime)
+{
+    CHECK_RETURN_ELOG(manualFrameRecords.empty(), "Current manualFrameRecords is empty");
+    int64_t startTimeStamp = shutterTime - preBufferDuration_;
+    MEDIA_INFO_LOG("ClearManualCache startTimeStamp : %{public}" PRIu64, startTimeStamp);
+    manualFrameRecords.erase(std::remove_if(manualFrameRecords.begin(),
+        manualFrameRecords.end(), [startTimeStamp](const auto &frameRecord) {
+            return frameRecord->GetTimeStamp() < startTimeStamp;
+        }), manualFrameRecords.end());
+}
+
 void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords,
     vector<sptr<FrameRecord>> &choosedBuffer, int64_t shutterTime, int32_t captureId, int64_t& backTimestamp)
 {
@@ -489,8 +617,8 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     size_t idrIndex = FindIdrFrameIndex(frameRecords, clearVideoEndTime, shutterTime, captureId);
     size_t frameCount = 0;
     int64_t idrIndexTimeStamp = frameRecords[idrIndex]->GetTimeStamp();
-    MEDIA_INFO_LOG("ChooseVideoBuffer::after choose idrIndex:%{public}zu, timestamp:%{public}" PRIu64, idrIndex,
-        idrIndexTimeStamp);
+    MEDIA_INFO_LOG("ChooseVideoBuffer::after choose idrIndex:%{public}zu, timestamp:%{public}llu", idrIndex,
+        (long long unsigned)idrIndexTimeStamp);
     for (size_t index = idrIndex; index < frameRecords.size(); ++index) {
         auto frame = frameRecords[index];
         int64_t timestamp = frame->GetTimeStamp();
@@ -511,9 +639,10 @@ void AvcodecTaskManager::ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecord
     CHECK_EXECUTE(size > 0 && Bability, choosedBuffer.erase(choosedBuffer.end() - size, choosedBuffer.end()));
     CHECK_RETURN_ELOG(choosedBuffer.empty(), "ChooseVideoBuffer is empty");
     backTimestamp = choosedBuffer.back()->GetTimeStamp();
-    MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu, frontBuffer timeStamp: %{public}" PRIu64 ", "
-                   "backBuffer timeStamp: %{public}" PRIu64,
-        choosedBuffer.size(), choosedBuffer.front()->GetTimeStamp(), backTimestamp);
+    MEDIA_INFO_LOG("ChooseVideoBuffer with size %{public}zu, frontBuffer timeStamp: %{public}llu,"
+                   "backBuffer timeStamp: %{public}llu",
+        choosedBuffer.size(), (long long unsigned)choosedBuffer.front()->GetTimeStamp(),
+        (long long unsigned)backTimestamp);
     std::sort(choosedBuffer.begin(), choosedBuffer.end(),
         [](sptr<FrameRecord> a, sptr<FrameRecord> b) { return a->muxerIndex_ < b->muxerIndex_; });
     // LCOV_EXCL_STOP
@@ -548,6 +677,7 @@ void AvcodecTaskManager::WaitForAudioRecordFinished(vector<sptr<FrameRecord>>& c
 void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer,
     sptr<AudioVideoMuxer> muxer, bool isNeedEncode)
 {
+    // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     CHECK_RETURN_ELOG(choosedBuffer.empty(), "CollectAudioBuffer choosedBuffer is empty");
     WaitForAudioRecordFinished(choosedBuffer);
@@ -572,7 +702,6 @@ void AvcodecTaskManager::CollectAudioBuffer(vector<sptr<FrameRecord>>& choosedBu
     bool isEncodeSuccess = false;
     CHECK_RETURN_ELOG(!audioEncoder_ || encodeAudioRecords.empty() || !muxer,
         "CollectAudioBuffer cannot find useful data");
-    // LCOV_EXCL_START
     if (isNeedEncode) {
         isEncodeSuccess = audioEncoder_->EncodeAudioBuffer(encodeAudioRecords);
         MEDIA_DEBUG_LOG("encode audio buffer result %{public}d", isEncodeSuccess);
@@ -680,7 +809,7 @@ void AvcodecTaskManager::SetVideoBufferDuration(uint32_t preBufferCount, uint32_
     postBufferDuration_ = static_cast<int64_t>(postBufferCount) * ONE_BILLION / VIDEO_FRAME_RATE;
     // LCOV_EXCL_STOP
 }
-
+// LCOV_EXCL_START
 void AvcodecTaskManager::RecordVideoType(int32_t captureId, VideoType type)
 {
     lock_guard<mutex> lock(videoTypeMutex_);
@@ -740,7 +869,7 @@ void AudioDeferredProcessSingle::CreateAudioDeferredProcess(sptr<AudioCapturerSe
     CHECK_RETURN(audioDeferredProcessPtr_->ConfigOfflineAudioEffectChain() != 0);
     CHECK_RETURN(audioDeferredProcessPtr_->PrepareOfflineAudioEffectChain() != 0);
     CHECK_RETURN(audioDeferredProcessPtr_->GetMaxBufferSize(audioCapturerSession->deferredInputOptions_,
-                                                            audioCapturerSession->deferredOutputOptions_) != 0);
+        audioCapturerSession->deferredOutputOptions_) != 0);
 }
 
 void AudioDeferredProcessSingle::ProcessMutedAudioBufferForVecs(sptr<AudioCapturerSession> audioCapturerSession,
@@ -752,7 +881,7 @@ void AudioDeferredProcessSingle::ProcessMutedAudioBufferForVecs(sptr<AudioCaptur
         CreateAudioDeferredProcess(audioCapturerSession);
     }
     CHECK_RETURN_ELOG(!audioDeferredProcessPtr_,
-                      "AudioDeferredProcessSingle::ProcessMutedAudioBufferForVecs audioDeferredProcessPtr_ is nullptr");
+        "AudioDeferredProcessSingle::ProcessMutedAudioBufferForVecs audioDeferredProcessPtr_ is nullptr");
     audioDeferredProcessPtr_->SetMutedAudioRecordForVecs(audioRecords, encodeAudioRecords);
 }
 
@@ -786,7 +915,7 @@ void AudioTaskManager::Release()
         std::lock_guard<std::mutex> lock(audioCacheMutex_);
         processedAudioRecordCache_.clear();
     }
-
+    
     arrivalAudioBufferQueue_.Clear();
     ClearTaskResource();
 }
@@ -835,7 +964,7 @@ int32_t AudioTaskManager::ClearProcessedAudioCache(int32_t captureId)
         std::lock_guard<std::mutex> lock(audioCacheMutex_);
         auto &processedAudioRecordCache = GetProcessedAudioRecordCache();
         CHECK_RETURN_RET_ELOG(processedAudioRecordCache.empty(), -1,
-                              "Current processedAudioRecordCache is empty");
+            "Current processedAudioRecordCache is empty");
         processedAudioRecordCache.erase(std::remove_if(processedAudioRecordCache.begin(),
             processedAudioRecordCache.end(), [startTimeStamp](const auto &audioRecord) {
                 return audioRecord->GetTimeStamp() < startTimeStamp;
@@ -861,7 +990,7 @@ shared_ptr<TaskManager>& AudioTaskManager::GetAudioTaskManager()
     bool shouldCreateTaskManager = audioProcessTaskManager_ == nullptr && isAudioTaskActive_.load();
     if (shouldCreateTaskManager) {
         audioProcessTaskManager_ = make_unique<TaskManager>("AudioTaskManager",
-                                                            DEFAULT_AUDIO_TASK_THREAD_NUMBER, false);
+            DEFAULT_AUDIO_TASK_THREAD_NUMBER, false);
     }
     return audioProcessTaskManager_;
 }
@@ -872,14 +1001,14 @@ shared_ptr<TaskManager>& AudioTaskManager::GetAudioProcessManager()
     bool shouldCreateTaskManager = audioRecordProcessManager_ == nullptr && isAudioTaskActive_.load();
     if (shouldCreateTaskManager) {
         audioRecordProcessManager_ = make_unique<TaskManager>("AudioProcessTaskManager",
-                                                              DEFAULT_PROCESSED_THREAD_NUMBER, false);
+            DEFAULT_PROCESSED_THREAD_NUMBER, false);
     }
     return audioRecordProcessManager_;
 }
 
 void AudioTaskManager::RegisterAudioBuffeArrivalCallback(int64_t middleTimeStamp)
 {
-    MEDIA_DEBUG_LOG("AudioTaskManager::RegisterAudioBuffeArrivalCallback time : %{public}" PRIu64, middleTimeStamp);
+    MEDIA_DEBUG_LOG("AudioTaskManager::RegisterAudioBuffeArrivalCallback time :%{public}" PRId64, middleTimeStamp);
     int64_t endTime = NanosecToMillisec(middleTimeStamp + NANOSEC_RANGE);
     int64_t startTime = NanosecToMillisec(middleTimeStamp - NANOSEC_RANGE);
     if (audioCapturerSession_) {
@@ -890,18 +1019,19 @@ void AudioTaskManager::RegisterAudioBuffeArrivalCallback(int64_t middleTimeStamp
                 auto sharedThis = weakThis.promote();
                 CHECK_RETURN_ELOG(sharedThis == nullptr, "RegisterAudioBuffeArrivalCallback sharedThis is nullptr");
                 sharedThis->OnAudioBufferArrival(audioRecord, isFinished);
-            });
+        });
     }
 }
-
+// LCOV_EXCL_STOP
 void AudioTaskManager::OnAudioBufferArrival(sptr<AudioRecord>& audioRecord, bool isFinished)
 {
     // LCOV_EXCL_START
-    MEDIA_DEBUG_LOG("AudioTaskManager::OnAudioBufferArrival timeStamp: %{public}" PRIu64, audioRecord->GetTimeStamp());
+    MEDIA_DEBUG_LOG("AudioTaskManager::OnAudioBufferArrival timeStamp: %{public}" PRId64 ",",
+        audioRecord->GetTimeStamp());
     if (arrivalAudioBufferQueue_.Full()) {
         sptr<AudioRecord> audioRecord = arrivalAudioBufferQueue_.Pop();
         CHECK_EXECUTE(audioRecord->IsFinishCache() && audioRecord->GetFinishProcessedStatus(),
-                      audioRecord->ReleaseAudioBuffer());
+            audioRecord->ReleaseAudioBuffer());
     }
     CHECK_RETURN(!audioRecord);
     arrivalAudioBufferQueue_.Push(audioRecord);
@@ -913,25 +1043,26 @@ void AudioTaskManager::OnAudioBufferArrival(sptr<AudioRecord>& audioRecord, bool
         while (number > 0) {
             sptr<AudioRecord> backAudioRecord = arrivalAudioBufferQueue_.PopBack();
             CHECK_EXECUTE(backAudioRecord->IsFinishCache() && backAudioRecord->GetFinishProcessedStatus(),
-                          backAudioRecord->ReleaseAudioBuffer());
+                backAudioRecord->ReleaseAudioBuffer());
             number--;
         }
     }
     CHECK_RETURN(arrivalAudioBufferQueue_.Empty());
     MEDIA_DEBUG_LOG("AudioTaskManager::OnAudioBufferArrival enter process size: %{public}zu",
-                    arrivalAudioBufferQueue_.Size());
+        arrivalAudioBufferQueue_.Size());
     if (isFinished && !isBufferArrivalFinished_) {
         std::unique_lock<std::mutex> lock(mutex_);
         auto thisPtr = sptr<AudioTaskManager>(this);
         CHECK_RETURN_ELOG(!thisPtr, "OnAudioBufferArrival current audioTaskManager is nullptr");
         for (size_t count = 0; count < AUDIO_PROCESS_MATCH_SIZE; count++) {
             arrivalVarible_.wait_for(
-                lock, std::chrono::milliseconds(WAIT_AUDIO_PROCESSED_DURATION_TIME),
+                lock,
+                std::chrono::milliseconds(WAIT_AUDIO_PROCESSED_DURATION_TIME),
                 [thisPtr] { return thisPtr->GetIsBufferArrivalFinished(); });
         }
     }
     CHECK_RETURN_ELOG(!isFinished && !isBufferArrivalFinished_,
-                      "AudioTaskManager::OnAudioBufferArrival proceesed failed");
+        "AudioTaskManager::OnAudioBufferArrival proceesed failed");
     SetIsBufferArrivalFinished(false);
     ProcessAudioFromAudioBufferQueue();
     // LCOV_EXCL_STOP
@@ -944,52 +1075,61 @@ void AudioTaskManager::ProcessAudioFromAudioBufferQueue()
     auto processTaskManager = GetAudioProcessManager();
     auto weakThis = wptr<AudioTaskManager>(this);
     CHECK_RETURN_ELOG(weakThis == nullptr || processTaskManager == nullptr,
-                      "ProcessAudioFromAudioBufferQueue failed");
+        "ProcessAudioFromAudioBufferQueue failed");
     processTaskManager->SubmitTask([weakThis]() {
         CAMERA_SYNC_TRACE;
         auto sharedThis = weakThis.promote();
         CHECK_RETURN_ELOG(sharedThis == nullptr, "ProcessAudioFromAudioBufferQueue current sharedThis is nullptr");
-        vector<sptr<AudioRecord>> audioRecords = sharedThis->GetArrivalAudioBufferQueue().GetAllElements();
-        if (audioRecords.size() == 0) {
-            sharedThis->SetIsBufferArrivalFinished(true);
-            return;
-        }
-        auto &arrivalAudiBufferQueue = sharedThis->GetArrivalAudioBufferQueue();
-        for (size_t index = 0; index < audioRecords.size(); index++) {
-            CHECK_EXECUTE(arrivalAudiBufferQueue.Front()->GetTimeStamp() <= audioRecords.back()->GetTimeStamp(),
-                          arrivalAudiBufferQueue.Pop());
-        }
-        MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue audioRecords.size(): %{public}zu",
-                       audioRecords.size());
-        vector<sptr<AudioRecord>> audioRecordVec;
-        for (auto ptr : audioRecords) {
-            audioRecordVec.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
-        }
-        AudioDeferredProcessSingle &audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
-        if (!sharedThis || !sharedThis->audioCapturerSession_) {
-            sharedThis->SetIsBufferArrivalFinished(true);
-            MEDIA_ERR_LOG("ProcessAudioFromAudioBufferQueue current sharedThis is nullptr");
-            return;
-        }
-        audioDeferredProcessSingle.ConfigAndProcess(
-            sharedThis->audioCapturerSession_, audioRecords, audioRecordVec);
-        sharedThis->SetTimerForAudioDeferredProcess();
-        for (auto &record : audioRecords) {
-            CHECK_EXECUTE(record != nullptr, record->SetFinishedProcessedStatus(true));
-        }
-        {
-            std::lock_guard<std::mutex> lock(sharedThis->audioCacheMutex_);
-            auto &processedAudioRecordCache = sharedThis->GetProcessedAudioRecordCache();
-            processedAudioRecordCache.insert(processedAudioRecordCache.end(),
-                audioRecordVec.begin(), audioRecordVec.end());
-            std::sort(processedAudioRecordCache.begin(), processedAudioRecordCache.end(),
-                [](const sptr<AudioRecord> &audioRecordA, const sptr<AudioRecord> &audioRecordB) {
-                    return audioRecordA->GetTimeStamp() < audioRecordB->GetTimeStamp();
-                });
-        }
-        sharedThis->SetIsBufferArrivalFinished(true);
-        MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue end");
+        sharedThis->HandleAudioRecordsProcessing(sharedThis);
     });
+    // LCOV_EXCL_STOP
+}
+
+void AudioTaskManager::HandleAudioRecordsProcessing(const sptr<AudioTaskManager>& sharedThis)
+{
+    // LCOV_EXCL_START
+    vector<sptr<AudioRecord>> audioRecords = sharedThis->GetArrivalAudioBufferQueue().GetAllElements();
+    if (audioRecords.size() == 0) {
+        sharedThis->SetIsBufferArrivalFinished(true);
+        return;
+    }
+    auto &arrivalAudiBufferQueue = sharedThis->GetArrivalAudioBufferQueue();
+    for (size_t index = 0; index < audioRecords.size(); index++) {
+        CHECK_EXECUTE(arrivalAudiBufferQueue.Front()->GetTimeStamp() <= audioRecords.back()->GetTimeStamp(),
+            arrivalAudiBufferQueue.Pop());
+    }
+    MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue audioRecords.size(): %{public}zu",
+        audioRecords.size());
+    vector<sptr<AudioRecord>> audioRecordVec;
+    for (auto ptr : audioRecords) {
+        audioRecordVec.emplace_back(new AudioRecord(ptr->GetTimeStamp()));
+    }
+    AudioDeferredProcessSingle &audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
+    if (!sharedThis || !sharedThis->audioCapturerSession_) {
+        sharedThis->SetIsBufferArrivalFinished(true);
+        MEDIA_ERR_LOG("ProcessAudioFromAudioBufferQueue current sharedThis is nullptr");
+        return;
+    }
+    audioDeferredProcessSingle.ConfigAndProcess(
+        sharedThis->audioCapturerSession_, audioRecords, audioRecordVec);
+    sharedThis->SetTimerForAudioDeferredProcess();
+    for (auto &record : audioRecords) {
+        CHECK_EXECUTE(record != nullptr, record->SetFinishedProcessedStatus(true));
+    }
+    {
+        std::lock_guard<std::mutex> lock(sharedThis->audioCacheMutex_);
+        auto &processedAudioRecordCache = sharedThis->GetProcessedAudioRecordCache();
+        processedAudioRecordCache.insert(processedAudioRecordCache.end(),
+            audioRecordVec.begin(), audioRecordVec.end());
+        std::sort(
+            processedAudioRecordCache.begin(), processedAudioRecordCache.end(),
+            [](const sptr<AudioRecord> &audioRecordA,
+                const sptr<AudioRecord> &audioRecordB) {
+                return audioRecordA->GetTimeStamp() < audioRecordB->GetTimeStamp();
+            });
+    }
+    sharedThis->SetIsBufferArrivalFinished(true);
+    MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioFromAudioBufferQueue end");
     // LCOV_EXCL_STOP
 }
 
@@ -997,8 +1137,8 @@ void AudioTaskManager::ProcessAudioBuffer(int32_t captureId, int64_t middleTimeS
 {
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("AudioTaskManager::ProcessAudioBuffer enter captureId: %{public}d,"
-                   "middleTimeStamp: %{public}" PRIu64 ", curCaptureIdToTimeMap_: %{public}zu", captureId,
-                   middleTimeStamp, curCaptureIdToTimeMap_.size());
+        "startTimeStamp: %{public}" PRIu64 ", curCaptureIdToTimeMap_: %{public}zu", captureId,
+        middleTimeStamp, curCaptureIdToTimeMap_.size());
     auto audioCapturerSession = GetAudioCaptureSession();
     CHECK_RETURN_ELOG(!audioCapturerSession, "current audioCapturerSession is nullptr");
     {
@@ -1014,7 +1154,7 @@ void AudioTaskManager::ProcessAudioBuffer(int32_t captureId, int64_t middleTimeS
             }
         }
         CHECK_EXECUTE(audioCapturerSession && !audioCapturerSession->GetProcessedCbFunc(),
-                      audioCapturerSession->SetAudioBufferCallback(nullptr));
+            audioCapturerSession->SetAudioBufferCallback(nullptr));
         curCaptureIdToTimeMap_[captureId] = NanosecToMillisec(middleTimeStamp - NANOSEC_RANGE);
     }
     RegisterAudioBuffeArrivalCallback(middleTimeStamp);
@@ -1041,19 +1181,19 @@ void AudioTaskManager::PrepareAudioBuffer(int64_t middleTimeStamp)
 }
 
 void AudioTaskManager::ProcessAudioBufferToMuted(vector<sptr<AudioRecord>>& audioRecords,
-                                                 vector<sptr<AudioRecord>>& encodeAudioRecords)
+    vector<sptr<AudioRecord>>& encodeAudioRecords)
 {
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("AudioTaskManager::ProcessAudioBufferToMuted enter");
     AudioDeferredProcessSingle &audioDeferredProcessSingle = AudioDeferredProcessSingle::GetInstance();
     if (audioCapturerSession_) {
         audioDeferredProcessSingle.ProcessMutedAudioBufferForVecs(audioCapturerSession_,
-                                                                  audioRecords, encodeAudioRecords);
+            audioRecords, encodeAudioRecords);
     }
     SetTimerForAudioDeferredProcess();
     // LCOV_EXCL_STOP
 }
-
+// LCOV_EXCL_START
 void AudioTaskManager::SetTimerForAudioDeferredProcess()
 {
     auto weakThis = wptr<AudioTaskManager>(this);
@@ -1069,6 +1209,102 @@ void AudioTaskManager::SetTimerForAudioDeferredProcess()
         MEDIA_INFO_LOG("AvcodecTaskManager::delete audioDeferredProcessPtr_.");
         sharedThis->timerId_ = 0;
     }, RELEASE_WAIT_TIME, true);
+}
+
+AvcodecExtendImageTaskManager::AvcodecExtendImageTaskManager(wptr<Surface> extendImageSurface,
+    VideoCodecType type, ColorSpace colorSpace) : extendImageSurface_(extendImageSurface),
+    videoCodecType_(type), colorSpace_(colorSpace)
+{
+    CAMERA_SYNC_TRACE;
+    bool isExtendImage = true;
+    extendVideoEncoder_ = make_shared<VideoEncoder>(videoCodecType_, colorSpace_, isExtendImage);
+}
+
+AvcodecExtendImageTaskManager::~AvcodecExtendImageTaskManager()
+{
+    CAMERA_SYNC_TRACE;
+    Release();
+    ClearTaskResource();
+}
+
+void AvcodecExtendImageTaskManager::Release()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("AvcodecExtendImageTaskManager release start");
+    CHECK_EXECUTE(extendVideoEncoder_ != nullptr, extendVideoEncoder_->Release());
+    extendVideoEncoder_ = nullptr;
+}
+
+void AvcodecExtendImageTaskManager::ClearTaskResource()
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("AvcodecExtendImageTaskManager ClearTaskResource start");
+    {
+        lock_guard<mutex> lock(extendTaskManagerMutex_);
+        isExtendTaskActive_ = false;
+        if (extendTaskManager_ != nullptr) {
+            extendTaskManager_->CancelAllTasks();
+            extendTaskManager_.reset();
+        }
+    }
+}
+
+shared_ptr<TaskManager>& AvcodecExtendImageTaskManager::GetExtendTaskManager()
+{
+    std::lock_guard<mutex> lock(extendTaskManagerMutex_);
+    bool shouldCreateTaskManager = extendTaskManager_ == nullptr && isExtendTaskActive_.load();
+    if (shouldCreateTaskManager) {
+        extendTaskManager_ = make_unique<TaskManager>("extendImageTaskManager",
+            DEFAULT_PROCESSED_THREAD_NUMBER, false);
+    }
+    return extendTaskManager_;
+}
+// LCOV_EXCL_STOP
+bool AvcodecExtendImageTaskManager::EncodeVideoExtendBuffer(sptr<FrameRecord> frameRecord,
+    CacheCbFunc cacheCallback)
+{
+    // LCOV_EXCL_START
+    CAMERA_SYNC_TRACE;
+    auto extendImageTaskManager = GetExtendTaskManager();
+    auto thisPtr = wptr<AvcodecExtendImageTaskManager>(this);
+    CHECK_RETURN_RET(!frameRecord || thisPtr == nullptr, false);
+    CHECK_PRINT_ILOG(extendImageTaskManager == nullptr, "extendImageTaskManager is nullptr");
+    return extendImageTaskManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
+        auto sharedThis = thisPtr.promote();
+        CHECK_RETURN(sharedThis == nullptr);
+        CHECK_RETURN(!sharedThis->extendVideoEncoder_ || !frameRecord);
+        {
+            std::lock_guard<std::mutex> encodeLock(sharedThis->startAvcodecMutex_);
+            if (sharedThis->extendVideoEncoder_->CheckIfRestartNeeded()) {
+                sharedThis->extendVideoEncoder_->RestartVideoCodec(frameRecord->GetFrameSize(),
+                    frameRecord->GetRotation());
+            }
+        }
+        bool isEncodeSuccess = sharedThis->extendVideoEncoder_->EncodeExtendSurfaceBuffer(frameRecord);
+        frameRecord->SetEncodedResult(isEncodeSuccess);
+        frameRecord->SetFinishStatus();
+        if (isEncodeSuccess) {
+            MEDIA_INFO_LOG("encode extend image success %{public}s, refCount: %{public}d",
+                frameRecord->GetFrameId().c_str(), frameRecord->GetSptrRefCount());
+        } else {
+            MEDIA_ERR_LOG("encode extend image fail %{public}s", frameRecord->GetFrameId().c_str());
+        }
+        if (cacheCallback) {
+            cacheCallback(frameRecord, isEncodeSuccess);
+        }
+    });
+    // LCOV_EXCL_STOP
+}
+
+std::shared_ptr<AVBuffer> AvcodecExtendImageTaskManager::GetXpsBuffer()
+{
+    // LCOV_EXCL_START
+    if (extendVideoEncoder_ == nullptr) {
+        MEDIA_ERR_LOG("extendVideoEncoder_ is nullptr!");
+        return nullptr;
+    }
+    return extendVideoEncoder_->GetXpsBuffer();
+    // LCOV_EXCL_STOP
 }
 } // namespace CameraStandard
 } // namespace OHOS

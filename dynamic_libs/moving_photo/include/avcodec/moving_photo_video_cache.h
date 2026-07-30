@@ -40,11 +40,14 @@ using namespace std;
 using CachedFrameSet = unordered_set<sptr<FrameRecord>, FrameRecord::HashFunction, FrameRecord::EqualFunction>;
 using EncodedEndCbFunc = function<void(vector<sptr<FrameRecord>>, uint64_t, int32_t, int32_t)>;
 class CachedFrameCallbackHandle;
+
 class MovingPhotoVideoCache : public RefBase {
 public:
-    explicit MovingPhotoVideoCache(sptr<AvcodecTaskManager> taskManager);
+    explicit MovingPhotoVideoCache(sptr<AvcodecTaskManager> taskManager,
+        sptr<AvcodecExtendImageTaskManager> manualTaskManager);
     ~MovingPhotoVideoCache();
     void CacheFrame(sptr<FrameRecord> frameRecord);
+    void OnManualImageEncoded(sptr<FrameRecord> frameRecord, bool encodedResult);
     void OnImageEncoded(sptr<FrameRecord> frameRecord, bool encodeResult);
     void GetFrameCachedResult(vector<sptr<FrameRecord>> frameRecords,
         EncodedEndCbFunc encodedEndCbFunc, uint64_t taskName, int32_t rotation, int32_t captureId);
@@ -56,6 +59,9 @@ private:
     vector<sptr<CachedFrameCallbackHandle>> cachedFrameCallbackHandles_;
     mutex taskManagerLock_; // Guard cachedFrameCallbackHandles
     sptr<AvcodecTaskManager> taskManager_;
+    mutex manualTaskManagerLock_;
+    sptr<AvcodecExtendImageTaskManager> manualTaskManager_;
+    vector<sptr<FrameRecord>> manualImageEncodedCache_;
 };
 
 class CachedFrameCallbackHandle : public RefBase {
@@ -66,11 +72,20 @@ public:
     ~CachedFrameCallbackHandle();
     void OnCacheFrameFinish(sptr<FrameRecord> frameRecord, bool cachedSuccess);
     void AbortCapture();
+    inline int32_t GetCaptureId()
+    {
+        return captureId_;
+    }
+    inline int32_t GetSuccessSize()
+    {
+        return encodedSuccessSize_;
+    }
     CachedFrameSet GetCacheRecord();
 private:
     CachedFrameSet cacheRecords_; //set
     vector<sptr<FrameRecord>> errorCacheRecords_;
     vector<sptr<FrameRecord>> successCacheRecords_;
+    std::atomic<int32_t> encodedSuccessSize_ { 0 };
     EncodedEndCbFunc encodedEndCbFunc_;
     atomic<bool> isAbort_ { false };
     mutex cacheFrameMutex_;

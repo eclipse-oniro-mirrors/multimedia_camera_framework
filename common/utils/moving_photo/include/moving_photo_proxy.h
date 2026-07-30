@@ -18,6 +18,7 @@
 
 #include "camera_dynamic_loader.h"
 #include "moving_photo_interface.h"
+#include "sp_holder.h"
 namespace OHOS {
 namespace CameraStandard {
 class AvcodecTaskManagerProxy : public AvcodecTaskManagerIntf {
@@ -68,7 +69,7 @@ public:
         std::shared_ptr<Dynamiclib> movingPhotoManagerLib, sptr<MovingPhotoManagerIntf> movingPhotoManagerIntf);
     ~MovingPhotoManagerProxy() override;
     static sptr<MovingPhotoManagerProxy> CreateMovingPhotoManagerProxy();
-    static void FreeMovingPhotoManagerDynamiclib();
+    static void FreeMovingPhotoDynamiclibDelayed();
 
     void StartAudioCapture() override;
     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
@@ -90,6 +91,10 @@ public:
 private:
     std::shared_ptr<Dynamiclib> movingPhotoManagerLib_ = {nullptr};
     sptr<MovingPhotoManagerIntf> movingPhotoManagerIntf_ = {nullptr};
+    SpHolder<sptr<Surface>> videoSurface_;
+    SpHolder<sptr<Surface>> metaSurface_;
+    SpHolder<sptr<Surface>> xtStyleVideoSurface_;
+    SpHolder<sptr<Surface>> xtStyleMetaSurface_;
 };
 
 class AudioTaskManagerProxy : public AudioTaskManagerIntf {
@@ -106,6 +111,20 @@ public:
 private:
     std::shared_ptr<Dynamiclib> audioTaskManagerLib_ = {nullptr};
     sptr<AudioTaskManagerIntf> audioTaskManagerIntf_ = {nullptr};
+};
+
+class AvcodecManualTaskManagerProxy : public AvcodecManualTaskManagerIntf {
+public:
+    explicit AvcodecManualTaskManagerProxy(std::shared_ptr<Dynamiclib> avcodecManualTaskManagerLib,
+        sptr<AvcodecManualTaskManagerIntf> avcodecManualTaskManagerIntf);
+    ~AvcodecManualTaskManagerProxy() override;
+    static sptr<AvcodecManualTaskManagerProxy>  CreateAvcodecManualTaskManagerProxy();
+    void CreateAvcodecManualTaskManager(wptr<Surface> manualSurface, VideoCodecType type,
+        int32_t colorSpace) override;
+    sptr<AvcodecManualTaskManagerIntf> GetManualTaskManagerAdapter() const;
+private:
+    std::shared_ptr<Dynamiclib> avcodecManualTaskManagerLib_ = {nullptr};
+    sptr<AvcodecManualTaskManagerIntf> avcodecManualTaskManagerIntf_ = {nullptr};
 };
 } // namespace CameraStandard
 } // namespace OHOS

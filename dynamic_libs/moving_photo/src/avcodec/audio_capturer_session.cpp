@@ -30,6 +30,7 @@
 
 namespace OHOS {
 namespace CameraStandard {
+static std::mutex creatAudioMutex;
 AudioCapturerSession::AudioCapturerSession()
     : audioBufferQueue_("audioBuffer", DEFAULT_AUDIO_CACHE_NUMBER)
 {
@@ -94,7 +95,6 @@ bool AudioCapturerSession::CreateAudioCapturer()
 
 AudioCapturerSession::~AudioCapturerSession()
 {
-    MEDIA_INFO_LOG("~AudioCapturerSession enter");
     audioBufferQueue_.SetActive(false);
     audioBufferQueue_.Clear();
     Stop();

@@ -84,7 +84,7 @@ void AvcodecTaskManagerAdapter::SetVideoFd(
     CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
     avcodecTaskManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
 }
-
+// LCOV_EXCL_START
 uint32_t AvcodecTaskManagerAdapter::GetDeferredVideoEnhanceFlag(int32_t captureId)
 {
     MEDIA_DEBUG_LOG("GetDeferredVideoEnhanceFlag start, captureId: %{public}d", captureId);
@@ -107,7 +107,7 @@ void AvcodecTaskManagerAdapter::SetVideoId(int32_t captureId, std::string videoI
     CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
     avcodecTaskManager_->SetVideoId(captureId, videoId);
 }
-
+// LCOV_EXCL_STOP
 void AvcodecTaskManagerAdapter::SubmitTask(std::function<void()> task)
 {
     MEDIA_DEBUG_LOG("SubmitTask start");
@@ -210,7 +210,7 @@ MovingPhotoManagerAdapter::~MovingPhotoManagerAdapter()
 {
     MEDIA_DEBUG_LOG("MovingPhotoManagerAdapter dtor is called");
 }
-
+// LCOV_EXCL_START
 void MovingPhotoManagerAdapter::StartAudioCapture()
 {
     CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
@@ -244,7 +244,7 @@ void MovingPhotoManagerAdapter::SetBufferDuration(uint32_t preBufferDuration, ui
     CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
     movingPhotoManager_->SetBufferDuration(preBufferDuration, postBufferDuration);
 }
-
+// LCOV_EXCL_STOP
 void MovingPhotoManagerAdapter::ReleaseStreamStruct(VideoType videoType)
 {
     CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
@@ -300,7 +300,7 @@ void MovingPhotoManagerAdapter::Release()
     CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
     movingPhotoManager_->Release();
 }
-
+// LCOV_EXCL_START
 AudioTaskManagerAdapter::AudioTaskManagerAdapter()
 {
     MEDIA_DEBUG_LOG("AudioTaskManagerAdapter is called");
@@ -341,24 +341,54 @@ sptr<AudioTaskManager> AudioTaskManagerAdapter::GetAudioTaskManager() const
     return audioTaskManager_;
 }
 
-extern "C" AvcodecTaskManagerIntf *createAvcodecTaskManagerIntf()
+
+sptr<AvcodecExtendImageTaskManager> AvcodecManualTaskManagerAdapter::GetManualImageTaskManager() const
+{
+    return avcodecManualImageTaskManager_;
+}
+
+AvcodecManualTaskManagerAdapter::AvcodecManualTaskManagerAdapter()
+{
+    MEDIA_DEBUG_LOG("AvcodecManualTaskManagerAdapter is called");
+}
+
+AvcodecManualTaskManagerAdapter::~AvcodecManualTaskManagerAdapter()
+{
+    MEDIA_DEBUG_LOG("AvcodecManualTaskManagerAdapter dtor is called");
+}
+
+void AvcodecManualTaskManagerAdapter::CreateAvcodecManualTaskManager(wptr<Surface> manualSurface,
+    VideoCodecType type, int32_t colorSpace)
+{
+    CHECK_RETURN_ELOG(avcodecManualImageTaskManager_ != nullptr,
+        "current avcodecManualImageTaskManager_ is not nullptr");
+    avcodecManualImageTaskManager_ = new AvcodecExtendImageTaskManager(manualSurface, type,
+        static_cast<ColorSpace>(colorSpace));
+}
+// LCOV_EXCL_STOP
+__attribute__((visibility("default"))) extern "C" AvcodecTaskManagerIntf *createAvcodecTaskManagerIntf()
 {
     return new AvcodecTaskManagerAdapter();
 }
 
-extern "C" AudioCapturerSessionIntf *createAudioCapturerSessionIntf()
+__attribute__((visibility("default"))) extern "C" AudioCapturerSessionIntf *createAudioCapturerSessionIntf()
 {
     return new AudioCapturerSessionAdapter();
 }
 
-extern "C" MovingPhotoManagerIntf *createMovingPhotoManagerIntf()
+__attribute__((visibility("default"))) extern "C" MovingPhotoManagerIntf *createMovingPhotoManagerIntf()
 {
     return new MovingPhotoManagerAdapter();
 }
 
-extern "C" AudioTaskManagerIntf *createAudioTaskManagerIntf()
+__attribute__((visibility("default"))) extern "C" AudioTaskManagerIntf *createAudioTaskManagerIntf()
 {
     return new AudioTaskManagerAdapter();
+}
+
+__attribute__((visibility("default"))) extern "C" AvcodecManualTaskManagerIntf *createAvcodecManualTaskManagerIntf()
+{
+    return new AvcodecManualTaskManagerAdapter();
 }
 } // namespace CameraStandard
 } // namespace OHOS

@@ -78,7 +78,7 @@ public:
     void DestroyAudioDeferredProcess();
     void TimerDestroyAudioDeferredProcess();
     mutex deferredProcessMutex_;
-    void ProcessMutedAudioBufferForVecs(sptr<AudioCapturerSession> audioCapturerSession_,
+    void ProcessMutedAudioBufferForVecs(sptr<AudioCapturerSession> audioCapturerSession,
         vector<sptr<AudioRecord>>& audioRecords, vector<sptr<AudioRecord>>& encodeAudioRecords);
 
 private:
@@ -97,17 +97,19 @@ public:
     ~AvcodecTaskManager();
     void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
     void CollectAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer, sptr<AudioVideoMuxer> muxer, bool isNeedEncode);
+    void WriteManualBuffer(std::shared_ptr<AVBuffer> manualXpsBuffer, vector<sptr<FrameRecord>> manualFrameRecords,
+        sptr<AudioVideoMuxer> muxer, int64_t videoStartTime);
     void WaitForAudioRecordFinished(vector<sptr<FrameRecord>>& choosedBuffer);
-    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, uint64_t taskName, int32_t captureRotation,
-        int32_t captureId);
-    sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords, int32_t captureRotation,
-        vector<sptr<FrameRecord>> &choosedBuffer, int32_t captureId, int64_t& backTimestamp);
+    void DoMuxerVideo(vector<sptr<FrameRecord>> frameRecords, std::shared_ptr<AVBuffer> manualXpsBuffer,
+        vector<sptr<FrameRecord>> manualFrameRecords, uint64_t taskName, int32_t captureRotation, int32_t captureId);
+    sptr<AudioVideoMuxer> CreateAVMuxer(vector<sptr<FrameRecord>> frameRecords,
+        vector<sptr<FrameRecord>> manualFrameRecords, int32_t captureRotation, vector<sptr<FrameRecord>> &choosedBuffer,
+        int32_t captureId, int64_t& backTimestamp);
     inline int32_t CalComplete(int32_t size)
     {
         size = size % NUM_NINE;
         //can only be 0,1,5,end up with I or P
         return (size - NUM_FIVE) >= 0 ? (size - NUM_FIVE) : (size - NUM_ONE) >= 0 ? (size - NUM_ONE) : 0;
-
     }
     void SubmitTask(function<void()> task);
     void SetVideoFd(int64_t timestamp, shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId);
@@ -130,6 +132,13 @@ public:
     std::map<int32_t, int64_t> mPEndTimeMap_ = {};
 private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId);
+    void ClearManualCache(vector<sptr<FrameRecord>> manualFrameRecords, int64_t shutterTime);
+    void AddManualTracks(sptr<AudioVideoMuxer> muxer, const vector<sptr<FrameRecord>>& manualFrameRecords,
+        bool isHevcAndHdrSupported, int32_t videoTrackId, int32_t& manualTrackId, int32_t& manualMetaTrackId);
+    void AddMuxerTracks(sptr<AudioVideoMuxer> muxer, const vector<sptr<FrameRecord>>& frameRecords,
+        bool isHevcAndHdrSupported, int32_t& videoTrackId, int32_t& audioTrackId, int32_t& metaTrackId);
+    void WriteVideoAndMetaSamples(sptr<AudioVideoMuxer> muxer, vector<sptr<FrameRecord>>& choosedBuffer,
+        int64_t videoStartTime);
     void ChooseVideoBuffer(vector<sptr<FrameRecord>> frameRecords, vector<sptr<FrameRecord>> &choosedBuffer,
         int64_t shutterTime, int32_t captureId, int64_t& backTimestamp);
     size_t FindIdrFrameIndex(vector<sptr<FrameRecord>> frameRecords,
@@ -226,10 +235,11 @@ public:
     std::mutex captureIdToTimMutex_;
 
 private:
+    void HandleAudioRecordsProcessing(const sptr<AudioTaskManager>& sharedThis);
     uint32_t timerId_ = 0;
     sptr<AudioCapturerSession> audioCapturerSession_ = nullptr;
-    std::mutex audioProcessManagerMutex_;
     std::mutex audioTaskManagerMutex_;
+    std::mutex audioProcessManagerMutex_;
     shared_ptr<TaskManager> audioProcessTaskManager_ = nullptr;
     shared_ptr<TaskManager> audioRecordProcessManager_ = nullptr;
     std::atomic<bool> isAudioTaskActive_ { true };
@@ -240,6 +250,26 @@ private:
     vector<sptr<AudioRecord>> processedAudioRecordCache_;
 };
 
+class AvcodecExtendImageTaskManager : public RefBase {
+public:
+    explicit AvcodecExtendImageTaskManager(wptr<Surface> extendImageSurface, VideoCodecType type,
+        ColorSpace colorSpace);
+    ~AvcodecExtendImageTaskManager();
+    bool EncodeVideoExtendBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
+    shared_ptr<TaskManager>& GetExtendTaskManager();
+    void ClearTaskResource();
+    void Release();
+    std::shared_ptr<AVBuffer> GetXpsBuffer();
+private:
+    std::mutex extendTaskManagerMutex_;
+    wptr<Surface> extendImageSurface_;
+    shared_ptr<TaskManager> extendTaskManager_ = nullptr;
+    std::atomic<bool> isExtendTaskActive_ { true };
+    VideoCodecType videoCodecType_ = VideoCodecType::VIDEO_ENCODE_TYPE_AVC;
+    ColorSpace colorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
+    shared_ptr<VideoEncoder> extendVideoEncoder_ = nullptr;
+    std::mutex startAvcodecMutex_;
+};
 } // CameraStandard
 } // OHOS
 #endif // CAMERA_FRAMEWORK_LIVEPHOTO_GENERATOR_H
