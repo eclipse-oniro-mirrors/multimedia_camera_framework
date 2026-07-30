@@ -21,6 +21,7 @@ ohos_unittest("camera_deferred_unittest") {
   include_dirs = [
     "./camera_deferred_base_test/include",
     "./camera_deferred_dfx_test/include",
+    "./camera_deferred_event_test/include",
     "./camera_deferred_manager_test/include",
     "./camera_deferred_proc_test/include",
     "./camera_deferred_post_processor_test/include",
@@ -80,6 +81,7 @@ ohos_unittest("camera_deferred_unittest") {
       "camera_deferred_base_test/src/camera_deferred_base_unittest.cpp",
       "camera_deferred_dfx_test/src/dps_event_report_unittest.cpp",
       "camera_deferred_dfx_test/src/dps_video_report_unittest.cpp",
+      "camera_deferred_event_test/src/events_subscriber_unittest.cpp",
       "camera_deferred_manager_test/src/camera_deferred_manager_unittest.cpp",
       "camera_deferred_post_processor_test/src/camera_deferred_post_processor_unittest.cpp",
       "camera_deferred_schedule_test/src/deferred_photo_job_unittest.cpp",

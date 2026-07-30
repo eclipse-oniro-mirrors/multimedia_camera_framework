@@ -1163,5 +1163,880 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_044, TestSize.Level0)
     ASSERT_NE(camDevice, nullptr);
     camDevice->SetFirstCallerTokenID(callerToken);
 }
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateCameraSwitchCameraId
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UpdateCameraSwitchCameraId to verify cameraID_ is updated correctly.
+ *  Also test with empty string.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_045, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    std::string newCameraId = "test_camera_switch_id";
+    camDevice->UpdateCameraSwitchCameraId(newCameraId);
+    EXPECT_EQ(camDevice->GetCameraId(), newCameraId);
+
+    std::string emptyId = "";
+    camDevice->UpdateCameraSwitchCameraId(emptyId);
+    EXPECT_EQ(camDevice->GetCameraId(), emptyId);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSensorOrientation when GetCorrectedCameraOrientation fails
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set deviceAbility_ to valid metadata without the required tag so that
+ *  GetCorrectedCameraOrientation returns non-CAM_META_SUCCESS. Expect 0 return value.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_046, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+
+    camDevice->deviceAbility_ = metadata;
+    camDevice->clientName_ = "com.test.camera";
+    int32_t result = camDevice->GetSensorOrientation();
+    EXPECT_EQ(result, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSensorOrientation success branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set deviceAbility_ via GetCameraAbility to get actual sensor orientation.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_047, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    auto cameraProxy = CameraManager::g_cameraManager->GetServiceProxy();
+    ASSERT_NE(cameraProxy, nullptr);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
+    cameraProxy->GetCameraAbility(cameraId, ability);
+    ASSERT_NE(ability, nullptr);
+
+    camDevice->deviceAbility_ = ability;
+    camDevice->clientName_ = "com.test.camera";
+    camDevice->usePhysicalCameraOrientation_ = false;
+    int32_t result = camDevice->GetSensorOrientation();
+    EXPECT_GE(result, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CreateMuteSetting
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Call CreateMuteSetting and verify the created settings have the mute mode entry
+ *  set to OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_048, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> settings;
+    camDevice->CreateMuteSetting(settings);
+    ASSERT_NE(settings, nullptr);
+
+    camera_metadata_item_t item;
+    int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_MUTE_MODE, &item);
+    EXPECT_EQ(ret, CAM_META_SUCCESS);
+    EXPECT_EQ(item.data.u8[0], OHOS_CAMERA_MUTE_MODE_SOLID_COLOR_BLACK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test closeDelayedDevice when hdiCameraDevice_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set hdiCameraDevice_ to nullptr to test the early return branch.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_049, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->hdiCameraDevice_ = nullptr;
+    int32_t result = camDevice->closeDelayedDevice();
+    EXPECT_EQ(result, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test closeDelayedDevice with opened device
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Open the camera first, then call closeDelayedDevice to test the main logic branch.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_050, TestSize.Level1)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput> &)input;
+    std::string cameraSettings = camInput->GetCameraSettings();
+    camInput->SetCameraSettings(cameraSettings);
+
+    cameraHostManager_->AddCameraHost(LOCAL_SERVICE_NAME);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    auto peerCallback = new (std::nothrow) ICameraBrokerTest();
+    ASSERT_NE(peerCallback, nullptr);
+    pid_t pid = 1234;
+    HCameraDeviceManager::GetInstance()->peerCallbacks_[pid] = peerCallback;
+
+    camDevice->SetMdmCheck(false);
+    int32_t ret = camDevice->HCameraDevice::Open();
+    EXPECT_EQ(ret, 0);
+
+    ret = camDevice->closeDelayedDevice();
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    ret = camDevice->HCameraDevice::Close();
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPhysicalCameraOrientationVariable when deviceAbility_ is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set deviceAbility_ to nullptr to test early return branch.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_051, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->deviceAbility_ = nullptr;
+    bool result = camDevice->IsPhysicalCameraOrientationVariable();
+    EXPECT_EQ(result, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPhysicalCameraOrientationVariable when tag not found
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set deviceAbility_ without OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE tag.
+ *  The FindCameraMetadataItem returns non-CAM_META_SUCCESS so return 0 (false).
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_052, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    camDevice->deviceAbility_ = metadata;
+    bool result = camDevice->IsPhysicalCameraOrientationVariable();
+    EXPECT_EQ(result, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPhysicalCameraOrientationVariable with variable = true, naturalDirection = false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Add OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE=1 and set
+ *  GetNaturalDirectionCorrect to return false. Expect isVariable=true.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_053, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    uint8_t isVariable = 1;
+    metadata->addEntry(OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &isVariable, 1);
+    camDevice->deviceAbility_ = metadata;
+    camDevice->clientName_ = "com.test.variable";
+
+    bool result = camDevice->IsPhysicalCameraOrientationVariable();
+    EXPECT_EQ(result, true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsPhysicalCameraOrientationVariable with variable = false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Add OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE=0 entry.
+ *  isVariable is computed as item.data.u8[0]=0, so result is false.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_054, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    uint8_t notVariable = 0;
+
+    metadata->addEntry(OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &notVariable, 1);
+    camDevice->deviceAbility_ = metadata;
+    camDevice->clientName_ = "com.test.notvariable";
+    bool result = camDevice->IsPhysicalCameraOrientationVariable();
+    EXPECT_EQ(result, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetUseLogicCamera when isLogicCamera_ is false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set isLogicCamera_ to false, expect GetUseLogicCamera returns false.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_055, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = false;
+    bool result = camDevice->GetUseLogicCamera(0);
+    EXPECT_EQ(result, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetUseLogicCamera when isLogicCamera_ is true and appConfigure is nullptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set isLogicCamera_ to true and clientName_ to a non-existent bundle,
+ *  so CameraApplistManager returns nullptr. Expect GetUseLogicCamera returns true.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_056, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = true;
+    camDevice->clientName_ = "com.nonexistent.bundle";
+    bool result = camDevice->GetUseLogicCamera(0);
+    EXPECT_EQ(result, true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetUseLogicCamera when config has entry with second=0
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: When isLogicCamera is true and appConfigure is valid but displayMode is
+ *  not found in useLogicCamera map, expects true.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_057, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = true;
+    camDevice->clientName_ = "com.test.app";
+    bool result = camDevice->GetUseLogicCamera(999);
+    EXPECT_EQ(result, true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRotateAngleForSpecialBundle with frameRateRange
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Call UpdateRotateAngleForSpecialBundle with isResetDegree=true.
+ *  UpdateCameraRotateAngleAndZoom returns CAMERA_INVALID_ARG without configured strategy info.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_058, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    int32_t result = camDevice->UpdateRotateAngleForSpecialBundle(true);
+    EXPECT_EQ(result, CAMERA_INVALID_ARG);
+
+    result = camDevice->UpdateRotateAngleForSpecialBundle(false);
+    EXPECT_EQ(result, CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRotateAngleJudge when isLogicCamera_ is false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set isLogicCamera_ to false, expect early return CAMERA_OK.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_059, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = false;
+    int32_t result = camDevice->UpdateRotateAngleJudge(0);
+    EXPECT_EQ(result, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRotateAngleJudge when isLogicCamera_ is true
+ *  but IsPhysicalCameraOrientationVariable returns false
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set isLogicCamera_ to true and deviceAbility_ to nullptr so that
+ *  IsPhysicalCameraOrientationVariable returns false. First condition
+ *  (!isLogicCamera_ || !IsPhysicalCameraOrientationVariable()) is true, returns CAMERA_OK.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_060, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = true;
+    camDevice->deviceAbility_ = nullptr;
+    int32_t result = camDevice->UpdateRotateAngleJudge(0);
+    EXPECT_EQ(result, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRotateAngleJudge with foldScreenType_='7' and displayMode not FULL/COORDINATION
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: foldScreenType_[0]='7', displayMode not FULL/COORDINATION.
+ *  isResetDegree=true. UpdateCameraRotateAngleAndZoom returns CAMERA_INVALID_ARG.
+ *  retCode != CAMERA_OK, isUsed=false (default) -> returns CAMERA_INVALID_ARG.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_061, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = true;
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    uint8_t isVariable = 1;
+
+    metadata->addEntry(OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &isVariable, 1);
+    camDevice->deviceAbility_ = metadata;
+    camDevice->clientName_ = "com.test.fold7";
+    camDevice->foldScreenType_ = "7";
+    camDevice->usePhysicalCameraOrientation_ = false;
+    int32_t result = camDevice->UpdateRotateAngleJudge(0);
+    EXPECT_EQ(result, CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRotateAngleJudge with foldScreenType_='6' and displayMode != GLOBAL_FULL
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: foldScreenType_[0]='6', displayMode != GLOBAL_FULL.
+ *  isResetDegree=true. UpdateCameraRotateAngleAndZoom returns CAMERA_INVALID_ARG.
+ *  retCode != CAMERA_OK, isUsed=false -> returns CAMERA_INVALID_ARG.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_062, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = true;
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    uint8_t isVariable = 1;
+
+    metadata->addEntry(OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &isVariable, 1);
+    camDevice->deviceAbility_ = metadata;
+    camDevice->clientName_ = "com.test.fold6";
+    camDevice->foldScreenType_ = "6";
+    camDevice->usePhysicalCameraOrientation_ = false;
+    int32_t result = camDevice->UpdateRotateAngleJudge(0);
+    EXPECT_EQ(result, CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRotateAngleJudge with foldScreenType_='8' and displayMode != GLOBAL_FULL
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: foldScreenType_[0]='8', displayMode != GLOBAL_FULL.
+ *  Same logic as '6' branch.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_063, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = true;
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    uint8_t isVariable = 1;
+
+    metadata->addEntry(OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &isVariable, 1);
+    camDevice->deviceAbility_ = metadata;
+    camDevice->clientName_ = "com.test.fold8";
+    camDevice->foldScreenType_ = "8";
+    camDevice->usePhysicalCameraOrientation_ = false;
+    int32_t result = camDevice->UpdateRotateAngleJudge(0);
+    EXPECT_EQ(result, CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRotateAngleJudge when isLogicCamera_=true no foldScreen
+ *  and not usePhysicalCameraOrientation
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: isLogicCamera_=true, foldScreenType_ is empty,
+ *  usePhysicalCameraOrientation_=false. Goes to else-if isLogicCamera_ branch,
+ *  isUsed=false -> returns CAMERA_INVALID_ARG.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_064, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = true;
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    uint8_t isVariable = 1;
+    metadata->addEntry(OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &isVariable, 1);
+
+    camDevice->deviceAbility_ = metadata;
+    camDevice->clientName_ = "com.test.logic";
+    camDevice->foldScreenType_ = "";
+    camDevice->usePhysicalCameraOrientation_ = false;
+    int32_t result = camDevice->UpdateRotateAngleJudge(0);
+    EXPECT_EQ(result, CAMERA_INVALID_ARG);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateRotateAngleJudge when isLogicCamera_=true no foldScreen
+ *  and usePhysicalCameraOrientation=true
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: isLogicCamera_=true, foldScreenType_ empty,
+ *  usePhysicalCameraOrientation_=true. isUsed=true -> returns CAMERA_OK.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_065, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->isLogicCamera_ = true;
+    const uint32_t METADATA_ITEM_SIZE = 10;
+    const uint32_t METADATA_DATA_SIZE = 100;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        std::make_shared<OHOS::Camera::CameraMetadata>(METADATA_ITEM_SIZE, METADATA_DATA_SIZE);
+    uint8_t isVariable = 1;
+    metadata->addEntry(OHOS_ABILITY_SENSOR_ORIENTATION_VARIABLE, &isVariable, 1);
+
+    camDevice->deviceAbility_ = metadata;
+    camDevice->clientName_ = "com.test.logicUse";
+    camDevice->foldScreenType_ = "";
+    camDevice->usePhysicalCameraOrientation_ = true;
+    int32_t result = camDevice->UpdateRotateAngleJudge(0);
+    EXPECT_EQ(result, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetUsedAsPosition with normal value
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Call SetUsedAsPosition with valid position value and verify usedAsPosition_
+ *  and GetUsedAsPosition. Since the test app has system permission, should succeed.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_066, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    uint8_t position = OHOS_CAMERA_POSITION_FRONT;
+    int32_t result = camDevice->SetUsedAsPosition(position);
+    EXPECT_EQ(result, CAMERA_OK);
+    EXPECT_EQ(camDevice->GetUsedAsPosition(), position);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetUsedAsPosition with BACK position
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Call SetUsedAsPosition with OHOS_CAMERA_POSITION_BACK and verify.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_067, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    uint8_t position = OHOS_CAMERA_POSITION_BACK;
+    camDevice->SetUsedAsPosition(position);
+    EXPECT_EQ(camDevice->GetUsedAsPosition(), position);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetUsedAsPosition with OTHER position
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Call SetUsedAsPosition with OHOS_CAMERA_POSITION_OTHER and verify.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_068, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    uint8_t position = OHOS_CAMERA_POSITION_OTHER;
+    camDevice->SetUsedAsPosition(position);
+    EXPECT_EQ(camDevice->GetUsedAsPosition(), position);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RegisterDisplayModeListener and UnregisterDisplayModeListener
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test RegisterDisplayModeListener followed by UnregisterDisplayModeListener.
+ *  Covers both success path and listener cleanup.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_069, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->RegisterDisplayModeListener();
+    camDevice->UnregisterDisplayModeListener();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnregisterDisplayModeListener when listener is already null
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Call UnregisterDisplayModeListener twice to cover the early return branch
+ *  where displayModeListener_ is null.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_070, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->RegisterDisplayModeListener();
+    camDevice->UnregisterDisplayModeListener();
+    camDevice->UnregisterDisplayModeListener();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetSpectrumCallback with nullptr callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Call SetSpectrumCallback with nullptr, both spectrumInfoCallback_
+ *  and userId_ should remain unchanged (default).
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_071, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->SetSpectrumCallback(0, nullptr);
+    EXPECT_EQ(camDevice->GetSpectrumCallback(), nullptr);
+
+    camDevice->SetSpectrumCallback(1, nullptr);
+    EXPECT_EQ(camDevice->GetSpectrumCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetSpectrumCallback with userId=0
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: When userId is 0, even if callback is valid, the function should not set values.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_072, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    sptr<CameraSpectrumListenerManager> callback = cameraManager_->GetCameraSpectrumListenerManager();
+    ASSERT_NE(callback, nullptr);
+    camDevice->SetSpectrumCallback(0, callback);
+    EXPECT_EQ(camDevice->GetSpectrumCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test SetSpectrumCallback with valid userId and callback
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set valid userId and valid callback, verify spectrumInfoCallback_ and
+ *  userId_ are stored correctly.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_073, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    sptr<CameraSpectrumListenerManager> callback = cameraManager_->GetCameraSpectrumListenerManager();
+    ASSERT_NE(callback, nullptr);
+    int32_t userId = 100;
+    camDevice->SetSpectrumCallback(userId, callback);
+    EXPECT_NE(camDevice->GetSpectrumCallback(), nullptr);
+
+    camDevice->UnsetSpectrumCallback();
+    EXPECT_EQ(camDevice->GetSpectrumCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnsetSpectrumCallback when callback is valid
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Set a valid callback first, then call UnsetSpectrumCallback.
+ *  Verify callback is set to nullptr.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_074, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    sptr<CameraSpectrumListenerManager> callback = cameraManager_->GetCameraSpectrumListenerManager();
+    ASSERT_NE(callback, nullptr);
+
+    camDevice->SetSpectrumCallback(200, callback);
+    EXPECT_NE(camDevice->GetSpectrumCallback(), nullptr);
+
+    camDevice->UnsetSpectrumCallback();
+    EXPECT_EQ(camDevice->GetSpectrumCallback(), nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnsetSpectrumCallback when callback is already null
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Call UnsetSpectrumCallback when no callback is set.
+ *  The early return branch (spectrumInfoCallback_ == nullptr) is covered.
+ */
+HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_075, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_NE(cameras.size(), 0);
+
+    std::string cameraId = cameras[0]->GetID();
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, cameraId, callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->UnsetSpectrumCallback();
+    EXPECT_EQ(camDevice->GetSpectrumCallback(), nullptr);
+}
 }
 }
