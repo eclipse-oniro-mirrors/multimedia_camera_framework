@@ -35,6 +35,8 @@ struct MetadataKeys {
     static constexpr auto EXIF_SIZE = "exifDataSize";
     static constexpr auto ROTATION_IN_IPS = "rotationInIps";
     static constexpr auto CPATURE_FLAG = "captureEnhancementFlag";
+    static constexpr auto IMAGE_BUFFER_TYPE = "ImageBufferType";
+    static constexpr auto EDIT_DATA = "editData";
 };
 
 enum class PhotoFormat : int32_t {
@@ -146,6 +148,8 @@ public:
     }
 
 private:
+    int32_t JudgeBuffersType(
+        const std::vector<HDI::Camera::V1_5::ImageBufferInfo_V1_4>& buffers, std::unique_ptr<ImageInfo>& imageInfo);
     std::unique_ptr<ImageInfo> CreateFromMeta(int32_t defaultSize,
         const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metadata);
     std::tuple<int32_t, bool, uint32_t, uint32_t, DpsMetadata> ParseMeta(

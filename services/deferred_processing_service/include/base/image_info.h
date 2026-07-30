@@ -32,13 +32,14 @@ public:
         int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag, DpsMetadata metadata);
 
     virtual ~ImageInfoSingle();
-    ImageInfoSingle(const ImageInfoSingle&) = delete;
     ImageInfoSingle& operator=(const ImageInfoSingle&) = delete;
-    ImageInfoSingle(ImageInfoSingle&&) = delete;
+    ImageInfoSingle(const ImageInfoSingle&);
+    ImageInfoSingle(ImageInfoSingle&& rhs);
     ImageInfoSingle& operator=(ImageInfoSingle&&) = delete;
 
     void SetBuffer(std::unique_ptr<SharedBuffer> sharedBuffer);
     void SetPicture(const std::shared_ptr<PictureIntf>& picture);
+    void SetPicture(const std::shared_ptr<PictureIntf>& picture, CallbackType type);
     sptr<IPCFileDescriptor> GetIPCFileDescriptor();
     std::shared_ptr<PictureIntf> GetPicture();
     void SetError(DpsError error);
@@ -85,7 +86,7 @@ public:
 
     void SetType(CallbackType type);
 
-private:
+protected:
     int32_t dataSize_ { 0 };
     bool isHighQuality_ { false };
 
@@ -100,16 +101,27 @@ private:
 
 class ImageInfo : public ImageInfoSingle {
 public:
+    enum BuffersType {
+        ONE_EFFECT_NEED_ORIGIN, // deepCopy then encode and wm
+        ONE_EFFECT,             // v1_4
+        ONE_EFFECT_ONE_ORIGIN,  // encode and wm
+        INVALID_BUFFERS_TYPE,
+    };
+
     ImageInfo() : ImageInfoSingle() {}
     ImageInfo(int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag, DpsMetadata metadata)
         : ImageInfoSingle(dataSize, isHighQuality, cloudFlag, captureFlag, metadata)
     {}
+    ImageInfo(ImageInfoSingle&& rhs) : ImageInfoSingle(std::move(rhs)) {}
     ~ImageInfo() {}
     ImageInfo(const ImageInfo&) = delete;
     ImageInfo& operator=(const ImageInfo&) = delete;
     ImageInfo(ImageInfo&&) = delete;
     ImageInfo& operator=(ImageInfo&&) = delete;
     std::vector<std::unique_ptr<ImageInfoSingle>> imageInfoSingles_;
+    BuffersType buffersType_ = INVALID_BUFFERS_TYPE;
+    bool isSupportedOriginImg_ = false;
+    bool isEnableOriginImg_ = false;
 
     std::shared_ptr<CameraStandard::PictureIntf> GetLcdImage() const
     {

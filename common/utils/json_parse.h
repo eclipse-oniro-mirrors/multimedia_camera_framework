@@ -23,7 +23,7 @@ namespace CameraStandard {
     std::pair<std::string, std::string> ParseWatermarkFilter(const std::string &editData);
     std::string MergeShotParam(const std::string& editData, const std::string& shotParam);
     std::string ParseThenDelEncodeFormat(std::string& editData);
-
+    std::string CreateOrSetFaceBeautifyParamValidToBeautyFilter(const std::string& editData, bool isEnable);
 
 } // namespace CameraStandard
 } // namespace OHOS

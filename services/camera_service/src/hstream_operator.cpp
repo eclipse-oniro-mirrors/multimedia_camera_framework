@@ -1913,9 +1913,10 @@ std::shared_ptr<PhotoAssetIntf> HStreamOperator::ProcessPhotoProxy(int32_t captu
         }
 
         MEDIA_INFO_LOG("ProcessPhotoProxy init editData:%{public}s", editData.c_str());
-        std::string mEditData = editData;
+        std::string mEditData = CreateOrSetFaceBeautifyParamValidToBeautyFilter(editData, false);
+        MEDIA_INFO_LOG("ProcessPhotoProxy after setting faceBeautyParamValid editData:%{public}s", mEditData.c_str());
         std::string saveFormat = ParseThenDelEncodeFormat(mEditData);
-        MEDIA_INFO_LOG("ProcessPhotoProxy mEditData:%{public}s", mEditData.c_str());
+        MEDIA_INFO_LOG("ProcessPhotoProxy after del format editData:%{public}s", mEditData.c_str());
         if (saveFormat == "" || saveFormat == "JPG") {
             MEDIA_INFO_LOG("ProcessPhotoProxy use default jpeg");
             saveFormat = "JPEG";

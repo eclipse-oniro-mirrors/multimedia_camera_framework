@@ -27,6 +27,34 @@ ImageInfoSingle::ImageInfoSingle()
     DP_DEBUG_LOG("entered.");
 }
 
+ImageInfoSingle::ImageInfoSingle(const ImageInfoSingle& rhs)
+{
+    dataSize_ = rhs.dataSize_;
+    isHighQuality_ = rhs.isHighQuality_;
+
+    cloudFlag_ = rhs.cloudFlag_;
+    captureFlag_ = rhs.captureFlag_;
+    dpsMetaData_ = rhs.dpsMetaData_;
+    error_ = rhs.error_;
+    type_ = rhs.type_;
+    sharedBuffer_ = nullptr;
+    picture_ = rhs.picture_;
+}
+
+ImageInfoSingle::ImageInfoSingle(ImageInfoSingle&& rhs)
+{
+    dataSize_ = rhs.dataSize_;
+    isHighQuality_ = rhs.isHighQuality_;
+
+    cloudFlag_ = rhs.cloudFlag_;
+    captureFlag_ = rhs.captureFlag_;
+    dpsMetaData_ = rhs.dpsMetaData_;
+    error_ = rhs.error_;
+    type_ = rhs.type_;
+    sharedBuffer_ = std::move(rhs.sharedBuffer_);
+    picture_ = rhs.picture_;
+}
+
 ImageInfoSingle::ImageInfoSingle(int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag,
     DpsMetadata dpsMetadata) : dataSize_(dataSize), isHighQuality_(isHighQuality), cloudFlag_(cloudFlag),
     captureFlag_(captureFlag), dpsMetaData_(dpsMetadata)

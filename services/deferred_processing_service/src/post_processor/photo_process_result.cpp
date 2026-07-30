@@ -129,6 +129,47 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_4(
     return DP_OK;
 }
 
+int32_t PhotoProcessResult::JudgeBuffersType(
+    const std::vector<HDI::Camera::V1_5::ImageBufferInfo_V1_4>& buffers, std::unique_ptr<ImageInfo>& imageInfo)
+{
+#ifdef CAMERA_CAPTURE_YUV
+    const int32_t TWO_BUFFER = 2;
+    DP_CHECK_RETURN_RET_LOG(buffers.size() > TWO_BUFFER || buffers.empty(), DPS_ERROR_IMAGE_PROC_FAILED,
+        "invalid buffer size:%{public}zu", buffers.size());
+    auto& buffer = buffers.front();
+    const auto& bufferV_3 = buffer.v1_3;
+    DP_CHECK_RETURN_RET(bufferV_3.imageHandle == nullptr, DPS_ERROR_IMAGE_PROC_FAILED);
+
+    std::vector<std::shared_ptr<PictureIntf>> pictures = AssemblePictureList(buffer);
+    DP_CHECK_ERROR_RETURN_RET_LOG(pictures.empty(), DPS_ERROR_IMAGE_PROC_FAILED, "failed to AssemblePictureList.");
+
+    auto firstPicIntf = pictures.front();
+    DP_CHECK_ERROR_RETURN_RET_LOG(!firstPicIntf, DPS_ERROR_IMAGE_PROC_FAILED, "firstPicIntf nullptr");
+    auto firstPic = firstPicIntf->GetPicture();
+    bool isFaceDetected = PictureAdapter::IsFaceDetected(firstPic);
+    imageInfo->isEnableOriginImg_ = isFaceDetected;
+
+    if (buffers.size() == TWO_BUFFER) {
+        imageInfo->buffersType_ = ImageInfo::ONE_EFFECT_ONE_ORIGIN;
+        return DP_OK;
+    }
+    // ONE_BUFFER
+    int32_t deferredFormat = 0;
+    GetMetadataValue(bufferV_3.metadata, MetadataKeys::DEFERRED_FORMAT, deferredFormat);
+    if (deferredFormat != static_cast<int32_t>(PhotoFormat::YUV)) {
+        imageInfo->buffersType_ = ImageInfo::ONE_EFFECT;
+        return DP_OK;
+    }
+
+    if (isFaceDetected) {
+        imageInfo->buffersType_ = ImageInfo::ONE_EFFECT_NEED_ORIGIN;
+    } else {
+        imageInfo->buffersType_ = ImageInfo::ONE_EFFECT;
+    }
+#endif
+    return DP_OK;
+}
+
 int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
     const std::string& imageId, const std::vector<HDI::Camera::V1_5::ImageBufferInfo_V1_4>& buffers)
 {
@@ -145,20 +186,24 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
 
     DeferredPictureInfo deferInfo = mediaLibraryManagerProxy->GetDeferredPictureInfo(imageId);
     std::string editData = deferInfo.editData;
+    if (!editData.empty()) {
+        editData = CreateOrSetFaceBeautifyParamValidToBeautyFilter(editData, true);
+    }
     std::string encodeFormat = deferInfo.mimeType;
     DP_INFO_LOG("ProcessPictureInfoV1_6 encodeFormat:%{public}s", encodeFormat.c_str());
-    const int32_t ONLY_EFFECT_IMAGE = 1;
-    bool isOneEffectNoOriginal = editData.empty() && buffers.size() == ONLY_EFFECT_IMAGE;
-    if (isOneEffectNoOriginal) {
+    int32_t ret = JudgeBuffersType(buffers, imageInfo);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ret != DP_OK, ret, "JudgeBuffersType fail");
+    DP_INFO_LOG("ProcessPictureInfoV1_6 buffersType:%{public}d", imageInfo->buffersType_);
+
+    if (imageInfo->buffersType_ == ImageInfo::ONE_EFFECT) {
         DP_INFO_LOG("ProcessPictureInfoV1_6 only effectImage, enter V1_4");
         return ProcessPictureInfoV1_4(imageId, buffers.front());
     }
-    bool isRequireOriginImg = !editData.empty() && buffers.size() == ONLY_EFFECT_IMAGE;
+    bool isRequireOriginImg = imageInfo->buffersType_ == ImageInfo::ONE_EFFECT_NEED_ORIGIN;
     auto [filterName, filterParam] = ParseWatermarkFilter(editData);
     bool isIncludeWatermark = !filterName.empty() && !filterParam.empty();
-    DP_INFO_LOG("ProcessPictureInfoV1_6 isOneEffectNoOriginal:%{public}d, isRequireOriginImg: %{public}d, "
-                "isIncludeWatermark:%{public}d",
-        isOneEffectNoOriginal, isRequireOriginImg, isIncludeWatermark);
+    DP_INFO_LOG("ProcessPictureInfoV1_6 isRequireOriginImg: %{public}d, "
+                "isIncludeWatermark:%{public}d", isRequireOriginImg, isIncludeWatermark);
 #else
     std::string editData;
     std::string encodeFormat;
@@ -174,8 +219,10 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
         GetMetadataValue(bufferV_3.metadata, MetadataKeys::DEFERRED_FORMAT, deferredFormat);
         auto [dataSize, isHighQuality, cloudFlag, captureFlag, dpsMetadata] =
             ParseMeta(bufferHandle->size, bufferV_3.metadata);
+        dpsMetadata.Set(MetadataKeys::EDIT_DATA, editData);
         auto imageInfoSingle =
             std::make_unique<ImageInfoSingle>(dataSize, isHighQuality, cloudFlag, captureFlag, dpsMetadata);
+        DP_CHECK_ERROR_RETURN_RET_LOG(!imageInfoSingle, DPS_ERROR_IMAGE_PROC_FAILED, "imageInfoSingle is nullptr");
         if (deferredFormat != static_cast<int32_t>(PhotoFormat::YUV)) {
             // JPG
             DP_INFO_LOG("ProcessPictureInfoV1_6 JPG process");
@@ -196,7 +243,7 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
                 bufferPtr->GetFd());
             imageInfoSingle->SetBuffer(std::move(bufferPtr));
             // jpg no need to post process
-            OnProcessDone(imageId, std::move(imageInfo));
+            OnProcessDone(imageId, std::make_unique<ImageInfo>(std::move(*imageInfoSingle)));
             return EOK;
         }
 #ifdef CAMERA_CAPTURE_YUV
@@ -206,8 +253,10 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
             std::vector<std::shared_ptr<PictureIntf>> pictures = AssemblePictureList(buffer);
             DP_CHECK_ERROR_RETURN_RET_LOG(
                 pictures.empty(), DPS_ERROR_IMAGE_PROC_FAILED, "failed to AssemblePictureList.");
+            const int32_t TWO = 2;
+            bool isIncludeXtStyle = pictures.size() == TWO;
 
-            imageInfoSingle->SetPicture(pictures[0]);
+            imageInfoSingle->SetPicture(imageInfo->isEnableOriginImg_ && isIncludeXtStyle ? pictures[1] : pictures[0]);
         }
         // process
         DP_INFO_LOG("ProcessPictureInfoV1_6 continue processing");
@@ -234,7 +283,7 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
 
             DP_INFO_LOG("Encode DPS_PHOTO: bufferHandle fd: %{public}d, bufferPtr fd: %{public}d", bufferHandle->fd,
                 bufferPtr->GetFd());
-            auto encodedImg = std::make_unique<ImageInfoSingle>();
+            auto encodedImg = std::make_unique<ImageInfoSingle>(*imageSingle);
             encodedImg->SetBuffer(std::move(bufferPtr));
             encodedImg->SetDataSize(bfSize);
             return encodedImg;
@@ -304,8 +353,9 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
                 std::unique_ptr<ImageInfoSingle> imageInfoSingleOrg = nullptr;
                 if (isRequireOriginImg) {
                     // encode org
-                    imageInfoSingleOrg =
-                        std::make_unique<ImageInfoSingle>(dataSize, isHighQuality, cloudFlag, captureFlag, dpsMetadata);
+                    DP_CHECK_ERROR_RETURN_RET_LOG(
+                        !imageInfoSingle, DPS_ERROR_IMAGE_PROC_FAILED, "imageInfoSingle is nullptr");
+                    imageInfoSingleOrg = std::make_unique<ImageInfoSingle>(*imageInfoSingle);
                     DP_CHECK_ERROR_RETURN_RET_LOG(
                         imageInfoSingleOrg == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "imageInfoSingleOrg nullptr");
                     if (isIncludeWatermark) {
@@ -342,6 +392,8 @@ int32_t PhotoProcessResult::ProcessPictureInfoV1_6(
                     if (isRequireOriginImg) {
                         if (isIncludeWatermark) {
                             auto encodedImgOrg = Encode(imageInfoSingleOrg, encodeFormat, "100orgOne");
+                            DP_CHECK_ERROR_RETURN_RET_LOG(
+                                encodedImgOrg == nullptr, DPS_ERROR_IMAGE_PROC_FAILED, "encodedImgOrg fail");
                             encodedImgOrg->SetType(CallbackType::IMAGE_ORIGIN);
                             imageInfo->imageInfoSingles_.emplace_back(std::move(encodedImgOrg));
                             encodedImg->SetType(CallbackType::IMAGE_EFFECT);
