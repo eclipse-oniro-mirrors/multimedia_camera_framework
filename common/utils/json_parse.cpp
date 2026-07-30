@@ -15,6 +15,7 @@
 #include "json_parse.h"
 #include <nlohmann/json.hpp>
 #include <string>
+#include <unordered_set>
 
 namespace OHOS::CameraStandard {
 std::pair<std::string, std::string> ParseWatermarkFilter(const std::string& editData)
@@ -89,4 +90,33 @@ std::string ParseThenDelEncodeFormat(std::string& editData)
     return encodeFormat;
 }
 
+std::string CreateOrSetFaceBeautifyParamValidToBeautyFilter(const std::string& editData, bool isEnable)
+{
+    static const std::unordered_set<std::string> BEAUTY_FILTER {
+        "EnhancedFaceBeautificationEFilter",
+        "ModerateFaceBeautificationEFilter",
+        "BaseFaceBeautificationEFilter",
+    };
+    nlohmann::json root = nlohmann::json::parse(editData, nullptr, false);
+    if (root.contains("edit_data") && root["edit_data"].is_string()) {
+        std::string edit_data = root["edit_data"];
+        nlohmann::json subRoot = nlohmann::json::parse(edit_data, nullptr, false);
+        if (subRoot.contains("imageEffect") && subRoot["imageEffect"].contains("filters")) {
+            nlohmann::json& filters = subRoot["imageEffect"]["filters"];
+            for (auto& filter : filters) {
+                if (filter.contains("name") && filter["name"].is_string()) {
+                    std::string name = filter["name"].get<std::string>();
+                    // check name
+                    if (BEAUTY_FILTER.count(name) && filter.contains("values")) {
+                        // append
+                        nlohmann::json& values = filter["values"];
+                        values["faceBeautyParamValid"] = isEnable;
+                    }
+                }
+            }
+        }
+        root["edit_data"] = subRoot.dump();
+    }
+    return root.dump();
+}
 } // namespace OHOS::CameraStandard

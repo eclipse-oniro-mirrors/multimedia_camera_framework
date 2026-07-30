@@ -34,22 +34,24 @@
 
 namespace OHOS {
 namespace CameraStandard {
-    using namespace Media;
-    enum BufferHandleAttrKey : int32_t {
-        ATTRKEY_COLORSPACE_INFO = 1,
-        ATTRKEY_COLORSPACE_TYPE,
-        ATTRKEY_HDR_METADATA_TYPE,
-        ATTRKEY_HDR_STATIC_METADATA,
-        ATTRKEY_HDR_DYNAMIC_METADATA,
-        ATTRKEY_HDR_PROCESSED,
-        ATTRKEY_CROP_REGION,
-        ATTRKEY_EXPECT_FPS,
-        ATTRKEY_DATA_ACCESS,
-        ATTRKEY_GPU_DIRTY_REGION = 17,
-        ATTRKEY_VENDOR_EXT_START = 2048,
-        ATTRKEY_OEM_EXT_START = 4096,
-        ATTRKEY_END = 8192,
-    };
+using namespace Media;
+static const std::string FACE_IS_DETECTED = "HwMnoteFaceBeautyIsDetected";
+
+enum BufferHandleAttrKey : int32_t {
+    ATTRKEY_COLORSPACE_INFO = 1,
+    ATTRKEY_COLORSPACE_TYPE,
+    ATTRKEY_HDR_METADATA_TYPE,
+    ATTRKEY_HDR_STATIC_METADATA,
+    ATTRKEY_HDR_DYNAMIC_METADATA,
+    ATTRKEY_HDR_PROCESSED,
+    ATTRKEY_CROP_REGION,
+    ATTRKEY_EXPECT_FPS,
+    ATTRKEY_DATA_ACCESS,
+    ATTRKEY_GPU_DIRTY_REGION = 17,
+    ATTRKEY_VENDOR_EXT_START = 2048,
+    ATTRKEY_OEM_EXT_START = 4096,
+    ATTRKEY_END = 8192,
+};
 std::unordered_map<std::string, float> exifOrientationDegree = {
     {"Top-left", 0},
     {"Top-right", 90},
@@ -92,6 +94,149 @@ std::string GetAndSetExifOrientation(OHOS::Media::ImageMetadata* exifData)
         DECORATOR_HILOG(HILOG_ERROR, "GetExifOrientation exifData is nullptr");
     }
     return orientation;
+}
+bool PictureAdapter::RotateFaceCoordinate(std::vector<float>& floatValues, int32_t stIdx, int32_t degree)
+{
+    static const int32_t FACE_X1 = 0;
+    static const int32_t FACE_Y1 = 1;
+    static const int32_t FACE_X2 = 2;
+    static const int32_t FACE_Y2 = 3;
+    static const int32_t FACE_ANGLE_INDEX = 6;
+    CHECK_RETURN_RET_ELOG(stIdx < 0, false, "invalid stIdx:%{public}d", stIdx);
+    CHECK_RETURN_RET_ELOG(floatValues.size() <= stIdx + FACE_ANGLE_INDEX, false, "invalid size of floatValues");
+    float& x1 = floatValues[stIdx + FACE_X1];
+    float& y1 = floatValues[stIdx + FACE_Y1];
+    float& x2 = floatValues[stIdx + FACE_X2];
+    float& y2 = floatValues[stIdx + FACE_Y2];
+    float& angle = floatValues[stIdx + FACE_ANGLE_INDEX];
+    float ix1 = x1;
+    float iy1 = y1;
+    float ix2 = x2;
+    float iy2 = y2;
+    switch (degree) {
+        case 90: {
+            x1 = 1.f - iy2;
+            y1 = ix1;
+            x2 = 1.f - iy1;
+            y2 = ix2;
+            angle += 90;
+            break;
+        }
+        case 180: {
+            x1 = 1.f - ix2;
+            y1 = 1.f - iy2;
+            x2 = 1.f - ix1;
+            y2 = 1.f - iy1;
+            angle += 180;
+            break;
+        }
+        case 270: {
+            x1 = iy1;
+            y1 = 1.f - ix2;
+            x2 = iy2;
+            y2 = 1.f - ix1;
+            angle -= 90;
+            break;
+        }
+        case 0:
+            MEDIA_WARNING_LOG("0 degree, do nothing");
+            break;
+        default:
+            MEDIA_ERR_LOG("invalid degree:%{public}d", degree);
+            return false;
+    }
+    return true;
+}
+
+std::string PictureAdapter::RotateFaceExif(const std::string& faceInfo, int32_t faceNum, int32_t degree)
+{
+    CHECK_PRINT_WLOG(!degree, "degree is 0");
+    CHECK_RETURN_RET_ELOG(!faceNum, "", "faceNum is 0");
+    CHECK_RETURN_RET_ELOG(faceInfo.empty(), "", "faceInfo is empty");
+    static const int32_t INFO_COUNT_PER_FACE = 10; // 面部信息个数per face
+    static const int32_t FACE_NUM_UB = 100;
+    CHECK_RETURN_RET_ELOG(faceNum < 0 || faceNum > FACE_NUM_UB, "", "invalid faceNum count:%{public}d", faceNum);
+    // 解析字符串为float数值
+    std::vector<float> floatValues;
+    std::istringstream iss(faceInfo);
+    float value;
+    while (iss >> value) {
+        floatValues.push_back(value);
+    }
+
+    CHECK_RETURN_RET_ELOG(static_cast<int32_t>(floatValues.size()) != faceNum * INFO_COUNT_PER_FACE, "",
+        "invalid info count:%{public}zu", floatValues.size());
+    for (int32_t i = 0; i < faceNum; ++i) {
+        int32_t stIdx = i * INFO_COUNT_PER_FACE;
+        bool isSucc = RotateFaceCoordinate(floatValues, stIdx, degree);
+        CHECK_RETURN_RET_ELOG(!isSucc, "", "RotateFaceCoordinate fail");
+    }
+
+    // 转换为字符串
+    std::ostringstream oss;
+    for (size_t i = 0; i < floatValues.size(); i++) {
+        oss << floatValues[i];
+        if (i < floatValues.size() - 1) {
+            oss << " ";
+        }
+    }
+    return oss.str();
+}
+
+bool PictureAdapter::IsInteger(const std::string& str, int32_t& result)
+{
+    if (str.empty())
+        return false;
+
+    std::stringstream ss(str);
+    ss >> result;
+
+    // 检查是否成功读取且没有剩余字符
+    return ss.eof() && !ss.fail();
+}
+
+bool PictureAdapter::RotateBeautyExif(OHOS::Media::ImageMetadata* exifData, const std::string& orientation)
+{
+    CHECK_RETURN_RET_ELOG(!exifData, false, "exifData is nullptr");
+    static const std::string FACE_NUM = "HwMnoteFaceBeautyFaceNum";
+    static const std::string FACE_INFO = "HwMnoteFaceBeautyFaceInfo";
+    const std::vector<std::string> BT_KEYS = { "HwMnoteFaceBeautyVersion", FACE_IS_DETECTED, FACE_NUM, FACE_INFO,
+        "HwMnoteFaceBeautyFaceBlurInfo", "HwMnoteFaceBeautyLux", "HwMnoteFaceBeautyExposureTime",
+        "HwMnoteFaceBeautyISO" };
+    for (auto& key : BT_KEYS) {
+        std::string val = "";
+        exifData->GetValue(key, val);
+        MEDIA_DEBUG_LOG("key-val:%{public}s::%{public}s", key.c_str(), val.c_str());
+    }
+
+    int32_t degree = std::round(TransExifOrientationToDegree(orientation));
+    CHECK_PRINT_WLOG(!degree, "degree is 0");
+    MEDIA_INFO_LOG("degree is %{public}d", degree);
+
+    std::string isDetect = "";
+    exifData->GetValue(FACE_IS_DETECTED, isDetect);
+    CHECK_RETURN_RET_ELOG(isDetect.empty() || isDetect == "default_exif_value" || isDetect == "0", false, "not detect");
+
+    std::string faceNumStr = "";
+    exifData->GetValue(FACE_NUM, faceNumStr);
+    CHECK_RETURN_RET_ELOG(
+        faceNumStr.empty() || faceNumStr == "default_exif_value" || faceNumStr == "0", false, "no face");
+
+    int32_t faceNum = 0;
+    bool isSucc = IsInteger(faceNumStr, faceNum);
+    CHECK_RETURN_RET_ELOG(!isSucc, false, "invalid faceNum");
+
+    std::string faceInfoStr = "";
+    exifData->GetValue(FACE_INFO, faceInfoStr);
+    CHECK_RETURN_RET_ELOG(faceInfoStr.empty() || faceInfoStr == "default_exif_value", false,
+        "invalid faceInfoStr:%{public}s", faceInfoStr.c_str());
+
+    std::string rotateFaceInfo = RotateFaceExif(faceInfoStr, faceNum, degree);
+    CHECK_RETURN_RET_ELOG(rotateFaceInfo.empty(), false, "rotate fail");
+    MEDIA_INFO_LOG(
+        "rotate rotateFaceInfo from:\n%{public}s to\n%{public}s", faceInfoStr.c_str(), rotateFaceInfo.c_str());
+    exifData->SetValue(FACE_INFO, rotateFaceInfo);
+    return true;
 }
 
 PictureAdapter::PictureAdapter() : picture_(nullptr)
@@ -184,6 +329,9 @@ void PictureAdapter::RotatePicture()
     std::string orientation = GetAndSetExifOrientation(
         reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()));
     MEDIA_INFO_LOG("PictureAdapter::RotatePicture orientation:%{public}s", orientation.c_str());
+    bool isSucc =
+        RotateBeautyExif(reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get()), orientation);
+    CHECK_PRINT_WLOG(!isSucc, "PictureAdapter::RotatePicture RotateBeautyExif fail");
     RotatePixelMap(picture->GetMainPixel(), orientation);
     auto gainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::GAINMAP);
     if (gainMap) {
@@ -202,6 +350,21 @@ void PictureAdapter::RotatePicture()
         RotatePixelMap(linearMap->GetContentPixel(), orientation);
     }
     MEDIA_INFO_LOG("PictureAdapter::RotatePicture X");
+}
+
+bool PictureAdapter::IsFaceDetected(std::shared_ptr<Media::Picture> picture)
+{
+    MEDIA_DEBUG_LOG("PictureAdapter::IsFaceDetected E");
+    CHECK_RETURN_RET_ELOG(!picture, false, "PictureAdapter::RotatePicture picture is nullptr");
+    auto exifData = reinterpret_cast<OHOS::Media::ImageMetadata*>(picture->GetExifMetadata().get());
+    CHECK_RETURN_RET_ELOG(!exifData, false, "exifData is nullptr");
+
+    std::string isDetect = "";
+    exifData->GetValue(FACE_IS_DETECTED, isDetect);
+    CHECK_RETURN_RET_ELOG(isDetect.empty() || isDetect == "default_exif_value", false, "not detect");
+    CHECK_RETURN_RET_ELOG(isDetect != "1", false, "isDetect false:%{public}s", isDetect.c_str());
+    MEDIA_INFO_LOG("PictureAdapter::IsFaceDetected X");
+    return true;
 }
 
 uint32_t PictureAdapter::SetXtStyleMetadataBlob(const uint8_t *source, const uint32_t bufferSize)

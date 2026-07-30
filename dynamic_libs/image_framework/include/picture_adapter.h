@@ -47,6 +47,7 @@ public:
     std::pair<std::unique_ptr<uint8_t[]>, int64_t> Encode(const std::string& encodeFormat) const override;
     static void DumpEncoded(void* addr, int32_t len, std::string title);
     static std::shared_ptr<Picture> CopyPictureSource(std::shared_ptr<Picture> picture);
+    static bool IsFaceDetected(std::shared_ptr<Media::Picture> picture);
 #ifdef CAMERA_CAPTURE_YUV
     std::shared_ptr<Media::Picture> GetPicture() const override;
 #else
@@ -71,6 +72,10 @@ private:
     static bool GetSbDynamicMetadata(const sptr<SurfaceBuffer> &buffer, std::vector<uint8_t> &dynamicMetadata);
     static bool SetSbStaticMetadata(sptr<SurfaceBuffer> &buffer, const std::vector<uint8_t> &staticMetadata);
     static bool SetSbDynamicMetadata(sptr<SurfaceBuffer> &buffer, const std::vector<uint8_t> &dynamicMetadata);
+    static bool RotateFaceCoordinate(std::vector<float>& floatValues, int32_t stIdx, int32_t degree);
+    static std::string RotateFaceExif(const std::string& faceInfo, int32_t faceNum, int32_t degree);
+    static bool IsInteger(const std::string& str, int32_t& result);
+    static bool RotateBeautyExif(OHOS::Media::ImageMetadata* exifData, const std::string& orientation);
 };
 } // namespace CameraStandard
 } // namespace OHOS

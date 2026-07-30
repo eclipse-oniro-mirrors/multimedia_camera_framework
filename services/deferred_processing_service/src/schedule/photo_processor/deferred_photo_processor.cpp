@@ -227,10 +227,16 @@ void DeferredPhotoProcessor::NotifyMediaLib(const std::string& imageId,
 {
     DP_INFO_LOG("NotifyMediaLib enter, imageId: %{public}s", imageId.c_str());
     uint32_t cloudFlag = imageInfo->GetCloudFlag();
-    DpsMetadata metadata = imageInfo->GetMetaData();
+    DpsMetadata metadata = !imageInfo->imageInfoSingles_.empty() && imageInfo->imageInfoSingles_.front() ?
+        imageInfo->imageInfoSingles_.front()->GetMetaData() :
+        imageInfo->GetMetaData();
     uint32_t captureFlag = 0;
     metadata.Get("captureEnhancementFlag", captureFlag);
-    DP_DEBUG_LOG("DPS_OHOTO: HandleSuccess cloudFlag: %{public}d, captureFlag: %{public}d ", cloudFlag, captureFlag);
+    std::string editData;
+    metadata.Get(MetadataKeys::EDIT_DATA, editData);
+    DP_INFO_LOG(
+        "NotifyMediaLib DPS_OHOTO: HandleSuccess cloudFlag: %{public}d, captureFlag: %{public}d, editData: %{public}s",
+        cloudFlag, captureFlag, editData.c_str());
 
     if (imageInfo->imageInfoSingles_.empty()) {
         // adapt V1_4
@@ -255,7 +261,7 @@ void DeferredPhotoProcessor::NotifyMediaLib(const std::string& imageId,
         for (auto& imageSingle : imageInfo->imageInfoSingles_) {
             switch (imageSingle->GetType()) {
                 case CallbackType::IMAGE_EFFECT: {
-                    DP_INFO_LOG("NotifyMediaLib IMAGE_PROCESS_DONE enter");
+                    DP_INFO_LOG("NotifyMediaLib IMAGE_PROCESS_DONE enter, imageId: %{public}s", imageId.c_str());
                     int32_t dataSize = imageSingle->GetDataSize();
                     sptr<IPCFileDescriptor> ipcFd = imageSingle->GetIPCFileDescriptor();
                     DP_CHECK_ERROR_PRINT_LOG(ipcFd == nullptr, "ipcFd is nullptr");
