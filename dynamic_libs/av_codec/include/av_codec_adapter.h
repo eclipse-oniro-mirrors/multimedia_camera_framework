@@ -23,6 +23,7 @@ public:
     ~AVCodecAdapter() override;
     bool IsBframeSupported(int32_t videoCodecType) override;
     int32_t GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes) override;
+    int32_t GetCodecCapabilityInfo(std::vector<CodecCapabilityInfo>& codecCapabilityInfos) override;
 private:
     std::string MapCodecName(int32_t codecType) const;
 };

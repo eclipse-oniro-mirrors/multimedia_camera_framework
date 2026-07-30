@@ -54,6 +54,7 @@ ohos_unittest("camera_common_utils_test") {
     "drivers_interface_camera:metadata",
     "googletest:gmock_main",
     "hilog:libhilog",
+    "init:libbegetutil",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image_native",

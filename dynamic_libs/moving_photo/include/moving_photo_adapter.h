@@ -95,6 +95,18 @@ public:
 private:
     sptr<AudioTaskManager> audioTaskManager_ = {nullptr};
 };
+
+class AvcodecManualTaskManagerAdapter : public AvcodecManualTaskManagerIntf {
+public:
+    AvcodecManualTaskManagerAdapter();
+    ~AvcodecManualTaskManagerAdapter() override;
+    void CreateAvcodecManualTaskManager(wptr<Surface> manualSurface, VideoCodecType type,
+        int32_t colorSpace) override;
+    sptr<AvcodecExtendImageTaskManager> GetManualImageTaskManager() const;
+
+private:
+    sptr<AvcodecExtendImageTaskManager> avcodecManualImageTaskManager_ = nullptr;
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // MOVING_PHOTO_ADAPTER_H

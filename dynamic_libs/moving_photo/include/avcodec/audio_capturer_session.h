@@ -47,11 +47,6 @@ public:
     void SetAudioBufferCallback(ProcessCbFunc processAudioFunc);
     void SetStopAudioRecord();
 
-    inline sptr<AudioRecord> GetBackAudioRecord()
-    {
-        return audioBufferQueue_.Back();
-    }
-
     inline bool GetProcessedCbFunc()
     {
         std::lock_guard<std::mutex> lock(processCallbackMutex_);

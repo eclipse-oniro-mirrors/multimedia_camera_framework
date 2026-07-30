@@ -25,6 +25,7 @@ using CreateAvcodecTaskManagerIntf = AvcodecTaskManagerIntf*(*)();
 using CreateAudioCapturerSessionIntf = AudioCapturerSessionIntf*(*)();
 using CreateMovingPhotoManagerIntf = MovingPhotoManagerIntf*(*)();
 using CreateAudioTaskManagerIntf = AudioTaskManagerIntf*(*)();
+using CreateAvcodecManualTaskManagerIntf = AvcodecManualTaskManagerIntf*(*)();
 
 AvcodecTaskManagerProxy::AvcodecTaskManagerProxy(
     std::shared_ptr<Dynamiclib> avcodecTaskManagerLib, sptr<AvcodecTaskManagerIntf> avcodecTaskManagerIntf)
@@ -234,14 +235,24 @@ MovingPhotoManagerProxy::MovingPhotoManagerProxy(
     MEDIA_DEBUG_LOG("MovingPhotoManagerProxy ctor is called");
 }
 
+void UnregisterConsumerListener(SpHolder<sptr<Surface>>& surfaceHolder)
+{
+    auto surface = surfaceHolder.Get();
+    CHECK_EXECUTE(surface, surface->UnregisterConsumerListener());
+}
+
 MovingPhotoManagerProxy::~MovingPhotoManagerProxy()
 {
-    MEDIA_DEBUG_LOG("MovingPhotoManagerProxy dtor is called");
+    MEDIA_INFO_LOG("MovingPhotoManagerProxy dtor is called");
+    UnregisterConsumerListener(videoSurface_);
+    UnregisterConsumerListener(metaSurface_);
+    UnregisterConsumerListener(xtStyleVideoSurface_);
+    UnregisterConsumerListener(xtStyleMetaSurface_);
 }
 
 sptr<MovingPhotoManagerProxy> MovingPhotoManagerProxy::CreateMovingPhotoManagerProxy()
 {
-    MEDIA_DEBUG_LOG("CreateMovingPhotoManagerProxy is called");
+    MEDIA_DEBUG_LOG("[DL] %{public}s is called", __FUNCTION__);
     std::shared_ptr<Dynamiclib> dynamiclib = CameraDynamicLoader::GetDynamiclib(MOVING_PHOTO_SO);
     CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "Failed to load moving photo library");
     CreateMovingPhotoManagerIntf createMovingPhotoManagerIntf =
@@ -252,10 +263,10 @@ sptr<MovingPhotoManagerProxy> MovingPhotoManagerProxy::CreateMovingPhotoManagerP
     return sptr<MovingPhotoManagerProxy>::MakeSptr(dynamiclib, sptr<MovingPhotoManagerIntf>(movingPhotoManagerIntf));
 }
 
-void MovingPhotoManagerProxy::FreeMovingPhotoManagerDynamiclib()
+void MovingPhotoManagerProxy::FreeMovingPhotoDynamiclibDelayed()
 {
-    constexpr uint32_t delayMs = 60 * 1000; // 60 second
-    CameraDynamicLoader::FreeDynamicLibDelayed(MOVING_PHOTO_SO, delayMs);
+    MEDIA_DEBUG_LOG("[DL] %{public}s is called", __FUNCTION__);
+    CameraDynamicLoader::FreeDynamicLibDelayed(MOVING_PHOTO_SO);
 }
 
 void MovingPhotoManagerProxy::StartAudioCapture()
@@ -278,6 +289,13 @@ void MovingPhotoManagerProxy::ExpandMovingPhoto(
     CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
     movingPhotoManagerIntf_->ExpandMovingPhoto(
         videoType, width, height, colorspace, videoSurface, metaSurface, avcodecTaskManager);
+    if (videoType == XT_ORIGIN_VIDEO) {
+        xtStyleVideoSurface_.Set(videoSurface);
+        xtStyleMetaSurface_.Set(metaSurface);
+    } else {
+        videoSurface_.Set(videoSurface);
+        metaSurface_.Set(metaSurface);
+    }
 }
 
 void MovingPhotoManagerProxy::SetBrotherListener()
@@ -349,7 +367,6 @@ void MovingPhotoManagerProxy::Release()
     movingPhotoManagerIntf_->Release();
 }
 
-
 AudioTaskManagerProxy::AudioTaskManagerProxy(
     std::shared_ptr<Dynamiclib> audioTaskManagerLib, sptr<AudioTaskManagerIntf> audioTaskManagerIntf)
     : audioTaskManagerLib_(audioTaskManagerLib), audioTaskManagerIntf_(audioTaskManagerIntf)
@@ -363,7 +380,7 @@ sptr<AudioTaskManagerProxy> AudioTaskManagerProxy::CreateAudioTaskManagerProxy()
     std::shared_ptr<Dynamiclib> dynamiclib = CameraDynamicLoader::GetDynamiclib(MOVING_PHOTO_SO);
     CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "Failed to load moving photo library");
     CreateAudioTaskManagerIntf createAudioTaskManagerIntf =
-            (CreateAudioTaskManagerIntf)dynamiclib->GetFunction("createAudioTaskManagerIntf");
+        (CreateAudioTaskManagerIntf)dynamiclib->GetFunction("createAudioTaskManagerIntf");
     CHECK_RETURN_RET_ELOG(createAudioTaskManagerIntf == nullptr, nullptr, "createAudioTaskManagerIntf is nullptr");
     AudioTaskManagerIntf* audioTaskManagerIntf = createAudioTaskManagerIntf();
     CHECK_RETURN_RET_ELOG(audioTaskManagerIntf== nullptr, nullptr, "audioTaskManagerIntf is nullptr");
@@ -377,7 +394,7 @@ void AudioTaskManagerProxy::CreateAudioTaskManager(sptr<AudioCapturerSessionIntf
     MEDIA_DEBUG_LOG("CreateAudioTaskManager is called");
     CHECK_RETURN_ELOG(audioTaskManagerIntf_ == nullptr, "current AudioTaskManagerIntf_ is nullptr");
     sptr<AudioCapturerSessionProxy> audioCapturerSessionProxy =
-            static_cast<AudioCapturerSessionProxy*>(audioCapturerSessionIntf.GetRefPtr());
+        static_cast<AudioCapturerSessionProxy*>(audioCapturerSessionIntf.GetRefPtr());
     CHECK_RETURN_ELOG(audioCapturerSessionProxy == nullptr, "audioCapturerSessionProxy is nullptr");
     audioTaskManagerIntf_->CreateAudioTaskManager(audioCapturerSessionProxy->GetAudioCapturerSessionAdapter());
 }
@@ -406,5 +423,48 @@ void AudioTaskManagerProxy::ProcessAudioBuffer(int32_t captureId, int64_t startT
     return audioTaskManagerIntf_->ProcessAudioBuffer(captureId, startTimeStamp);
 }
 
+AvcodecManualTaskManagerProxy::AvcodecManualTaskManagerProxy(std::shared_ptr<Dynamiclib> avcodecManualTaskManagerLib,
+    sptr<AvcodecManualTaskManagerIntf> avcodecManualTaskManagerIntf)
+    : avcodecManualTaskManagerLib_(avcodecManualTaskManagerLib),
+    avcodecManualTaskManagerIntf_(avcodecManualTaskManagerIntf)
+{
+    MEDIA_DEBUG_LOG("AvcodecManualTaskManagerProxy is called");
+}
+
+AvcodecManualTaskManagerProxy::~AvcodecManualTaskManagerProxy()
+{
+    MEDIA_DEBUG_LOG("AvcodecManualTaskManagerProxy dtor is called");
+}
+
+sptr<AvcodecManualTaskManagerIntf> AvcodecManualTaskManagerProxy::GetManualTaskManagerAdapter() const
+{
+    return avcodecManualTaskManagerIntf_;
+}
+
+void AvcodecManualTaskManagerProxy::CreateAvcodecManualTaskManager(wptr<Surface> manualSurface, VideoCodecType type,
+    int32_t colorSpace)
+{
+    MEDIA_DEBUG_LOG("CreateAvcodecManualTaskManager is called");
+    avcodecManualTaskManagerIntf_->CreateAvcodecManualTaskManager(manualSurface, type, colorSpace);
+}
+
+sptr<AvcodecManualTaskManagerProxy> AvcodecManualTaskManagerProxy::CreateAvcodecManualTaskManagerProxy()
+{
+    MEDIA_DEBUG_LOG("CreateAvcodecManualTaskManagerProxy start");
+    std::shared_ptr<Dynamiclib> dynamiclib = CameraDynamicLoader::GetDynamiclib(MOVING_PHOTO_SO);
+    CHECK_RETURN_RET_ELOG(dynamiclib == nullptr, nullptr, "Failed to load moving photo library");
+
+    CreateAvcodecManualTaskManagerIntf createAvcodecManualTaskManagerIntf =
+        (CreateAvcodecManualTaskManagerIntf)dynamiclib->GetFunction("createAvcodecManualTaskManagerIntf");
+    CHECK_RETURN_RET_ELOG(createAvcodecManualTaskManagerIntf == nullptr, nullptr,
+        "Failed to get createAvcodecManualTaskManagerIntf function");
+
+    AvcodecManualTaskManagerIntf* avcodecManualTaskManagerIntf = createAvcodecManualTaskManagerIntf();
+    CHECK_RETURN_RET_ELOG(
+        avcodecManualTaskManagerIntf == nullptr, nullptr, "Failed to create avcodecManualTaskManagerIntf instance");
+    sptr<AvcodecManualTaskManagerProxy> avcodecManualTaskManagerProxy =
+        new AvcodecManualTaskManagerProxy(dynamiclib, sptr<AvcodecManualTaskManagerIntf>(avcodecManualTaskManagerIntf));
+    return avcodecManualTaskManagerProxy;
+}
 } // namespace CameraStandard
 } // namespace OHOS

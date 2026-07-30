@@ -20,6 +20,9 @@
 namespace OHOS {
 namespace CameraStandard {
 
+std::mutex FrameRecord::addrTrackerMutex_;
+std::map<void*, FrameRecord::AddrInfo> FrameRecord::addrTracker_;
+
 FrameRecord::FrameRecord(sptr<SurfaceBuffer> videoBuffer, int64_t timestamp, GraphicTransformType type)
     : videoBuffer_(videoBuffer), timestamp_(timestamp), transformType_(type)
 {
@@ -35,6 +38,9 @@ FrameRecord::FrameRecord(sptr<SurfaceBuffer> videoBuffer, int64_t timestamp, Gra
 FrameRecord::~FrameRecord()
 {
     MEDIA_DEBUG_LOG("FrameRecord::~FrameRecord");
+    if (encodedBuffer != nullptr && encodedBuffer->memory_ != nullptr) {
+        UntrackAddr(encodedBuffer->memory_->GetAddr());
+    }
     encodedBuffer = nullptr;
 }
 

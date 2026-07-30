@@ -85,6 +85,14 @@
         }                        \
     } while (0)
 
+#define CHECK_EXECUTE_RETURN(cond, cmd) \
+    do {                                \
+        if (cond) {                     \
+            cmd;                        \
+            return;                     \
+        }                               \
+    } while (0)
+
 #define CHECK_RETURN_RET(cond, ret) \
     do {                            \
         if (cond) {                 \

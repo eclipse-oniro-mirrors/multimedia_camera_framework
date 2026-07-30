@@ -58,6 +58,7 @@ constexpr int32_t BUFFER_ENCODE_EXPIREATION_TIME = 400;
 constexpr int32_t QUEUE_WAIT_TIME = 200;
 constexpr int32_t KEY_I_FRAME_INTERVAL = 300;
 constexpr int32_t CODEC_SURFACE_SIZE = 8;
+constexpr int32_t CODEC_EXTEND_SURFACE_SIZE = 25;
 constexpr OH_AVPixelFormat VIDOE_PIXEL_FORMAT = AV_PIXEL_FORMAT_NV21;
 constexpr int32_t IDR_FRAME_COUNT = 2;
 const std::string TIMED_METADATA_TRACK_MIMETYPE = "meta/timed-metadata";
