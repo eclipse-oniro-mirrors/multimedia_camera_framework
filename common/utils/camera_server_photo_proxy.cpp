@@ -241,6 +241,24 @@ void CameraServerPhotoProxy::GetServerPhotoProxyInfo(sptr<SurfaceBuffer>& surfac
     // LCOV_EXCL_STOP
 }
 
+void CameraServerPhotoProxy::UpdateServerPhotoProxyInfo(
+    std::unique_ptr<uint8_t[]>&& buffer, size_t bufferSize, PhotoFormat format)
+{
+    // LCOV_EXCL_START
+    MEDIA_INFO_LOG("UpdateServerPhotoProxyInfo E");
+    CHECK_RETURN_ELOG(buffer == nullptr, "buffer is null");
+    std::lock_guard<std::mutex> lock(mutex_);
+    bufferHandle_ = nullptr;
+    format_ = 0;
+    buffer_ = std::move(buffer);
+    fileSize_ = bufferSize;
+    imageFormat_ = static_cast<int32_t>(format);
+    MEDIA_INFO_LOG("UpdateServerPhotoProxyInfo X,cId:%{public}d pId:%{public}s w:%{public}d h:%{public}d f:%{public}d "
+                   "s:%{public}zu dT:%{public}d iH:%{public}d",
+        captureId_, photoId_.c_str(), photoWidth_, photoHeight_, format_, fileSize_, deferredProcType_, isHighQuality_);
+    // LCOV_EXCL_STOP
+}
+
 int32_t CameraServerPhotoProxy::GetCaptureId()
 {
     // LCOV_EXCL_START
@@ -279,6 +297,9 @@ void* CameraServerPhotoProxy::GetFileDataAddr()
 {
     MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileDataAddr");
     std::lock_guard<std::mutex> lock(mutex_);
+    if (buffer_) {
+        return buffer_.get();
+    }
     CHECK_RETURN_RET_ELOG(
         bufferHandle_ == nullptr, fileDataAddr_, "CameraServerPhotoProxy::GetFileDataAddr bufferHandle_ is nullptr");
     if (!isMmaped_) {
@@ -494,6 +515,40 @@ void CameraServerPhotoProxy::SetVideoEnhancementType(int32_t videoEnhancementTyp
 void CameraServerPhotoProxy::SetHighQuality(bool isHigh)
 {
     isHighQuality_ = isHigh;
+}
+
+CameraServerPhotoProxy& CameraServerPhotoProxy::operator=(const CameraServerPhotoProxy& rhs)
+{
+    if (this != &rhs) {
+        return *this;
+    }
+    buffer_ = nullptr;
+    cloudImageEnhanceFlag_ = rhs.cloudImageEnhanceFlag_;
+    bufferHandle_ = nullptr;
+    format_ = rhs.format_;
+    photoWidth_ = rhs.photoWidth_;
+    photoHeight_ = rhs.photoHeight_;
+    fileDataAddr_ = nullptr;
+    fileSize_ = 0;
+    isMmaped_ = false;
+    photoId_ = rhs.photoId_;
+    deferredProcType_ = rhs.deferredProcType_;
+    isDeferredPhoto_ = rhs.isDeferredPhoto_;
+    displayName_ = rhs.displayName_;
+    isHighQuality_ = rhs.isHighQuality_;
+    latitude_ = rhs.latitude_;
+    longitude_ = rhs.longitude_;
+    mode_ = rhs.mode_;
+    captureId_ = rhs.captureId_;
+    burstSeqId_ = rhs.burstSeqId_;
+    burstKey_ = rhs.burstKey_;
+    isCoverPhoto_ = rhs.isCoverPhoto_;
+    imageFormat_ = rhs.imageFormat_;
+    stageVideoTaskStatus_ = rhs.stageVideoTaskStatus_;
+    isVideo_ = rhs.isVideo_;
+    videoEnhancementType_ = rhs.videoEnhancementType_;
+
+    return *this;
 }
 } // namespace CameraStandard
 } // namespace OHOS

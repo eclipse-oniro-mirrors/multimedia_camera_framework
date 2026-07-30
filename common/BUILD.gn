@@ -81,6 +81,7 @@ common_sources = [
   "utils/image_effect/src/image_effect_proxy.cpp",
   "utils/camera_xml_parser.cpp",
   "utils/watermark_util.cpp",
+  "utils/json_parse.cpp",
 ]
 common_external_deps = [
   "bundle_framework:appexecfwk_base",
@@ -109,6 +110,7 @@ common_external_deps = [
   "media_foundation:media_foundation",
   "media_foundation:native_media_core",
   "samgr:samgr_proxy",
+  "json:nlohmann_json_static"
 ]
 ohos_shared_library("camera_utils") {
   sanitize = {

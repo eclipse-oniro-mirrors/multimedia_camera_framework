@@ -96,6 +96,8 @@ public:
     void SetIsVideo(bool isVideo);
     void SetLatitude(double latitude);
     void SetLongitude(double longitude);
+    void UpdateServerPhotoProxyInfo(
+    std::unique_ptr<uint8_t[]>&& buffer, size_t bufferSize, PhotoFormat format);
 
 private:
     uint32_t cloudImageEnhanceFlag_;

@@ -71,7 +71,7 @@ void ThumbnailBufferConsumer::ExecuteOnBufferAvailable()
         return;
     }
     sptr<SurfaceBuffer> newSurfaceBuffer = CameraSurfaceBufferUtil::DeepCopyThumbnailBuffer(surfaceBuffer);
-    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");   
+    MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer begin");
     thumbnailSurfaceObj->ReleaseBuffer(surfaceBuffer, -1);
     CHECK_RETURN_ELOG(newSurfaceBuffer == nullptr, "newSurfaceBuffer is null");
     MEDIA_DEBUG_LOG("ThumbnailListener ReleaseBuffer end");

@@ -59,14 +59,26 @@ public:
     MOCK_METHOD(int32_t, OnStateChanged, (DeferredProcessing::StatusCode status));
     MOCK_METHOD(int32_t, CallbackParcel, (uint32_t code, MessageParcel& data, MessageParcel& reply,
         MessageOption& option));
+    MOCK_METHOD(int32_t, OnDeliveryLowQualityLcd,
+        (const std::string& imageId, const std::shared_ptr<PictureIntf>& picture), (override));
+    MOCK_METHOD(int32_t, OnProcessImageDone,
+        (const std::string& imageId, const std::vector<CameraStandard::ImageFd>& imageFds,
+            const std::shared_ptr<PictureIntf>& lcdImage, const DpsMetadata& dpsMetaData),
+        (override));
 
     PhotoProcessingSessionCallbackMock()
     {
         ON_CALL(*this, OnProcessImageDone(Matcher<const string&>(_),_,_)).WillByDefault(Return(0));
         ON_CALL(*this, OnDeliveryLowQualityImage).WillByDefault(Return(0));
-        ON_CALL(*this, OnProcessImageDone(Matcher<const string&>(_),_,_,_)).WillByDefault(Return(0));
+        ON_CALL(*this, OnProcessImageDone(Matcher<const string&>(_), Matcher<const sptr<IPCFileDescriptor>&>(_), _, _))
+            .WillByDefault(Return(0));
         ON_CALL(*this, OnError(Matcher<const string&>(_),_)).WillByDefault(Return(0));
         ON_CALL(*this, OnStateChanged).WillByDefault(Return(0));
+        ON_CALL(*this,
+            OnProcessImageDone(
+                Matcher<const string&>(_), Matcher<const std::vector<CameraStandard::ImageFd>&>(_), _, _))
+            .WillByDefault(Return(0));
+        ON_CALL(*this, OnDeliveryLowQualityLcd).WillByDefault(Return(0));
     }
 };
 

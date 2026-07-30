@@ -18,18 +18,28 @@
 #include <cstdint>
 #include <string>
 #include "refbase.h"
+
 namespace OHOS::Media {
     class PhotoProxy;
 }
 namespace OHOS::CameraStandard {
+struct DeferredPictureInfo {
+    std::string editData;
+    std::string mimeType;      // 二阶段编码格式
+    int32_t orientation { 0 }; // 二阶段旋转角度
+};
+
 enum VideoType {
     ORIGIN_VIDEO = 0,
     XT_ORIGIN_VIDEO = 1,
     XT_EFFECT_VIDEO = 2
 };
+
 class PhotoAssetIntf {
 public:
     virtual void AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy);
+    virtual void AddPhotoProxy(
+        sptr<Media::PhotoProxy> editPhotoProxy, sptr<Media::PhotoProxy> srcPhotoProxy, const std::string& editData);
     virtual std::string GetPhotoAssetUri();
     virtual int32_t GetVideoFd(VideoType videoType);
     virtual void NotifyVideoSaveFinished(VideoType videoType);
@@ -42,6 +52,8 @@ public:
 class MediaLibraryManagerIntf {
 public:
     virtual ~MediaLibraryManagerIntf() = default;
+    virtual DeferredPictureInfo GetDeferredPictureInfo(const std::string& imageId) = 0;
+
     virtual void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback);
     virtual void UnregisterPhotoStateCallback();
 };

@@ -33,6 +33,7 @@ constexpr int32_t HDI_VERSION_ID_1_2 = GetVersionId(1, 2);
 constexpr int32_t HDI_VERSION_ID_1_3 = GetVersionId(1, 3);
 constexpr int32_t HDI_VERSION_ID_1_4 = GetVersionId(1, 4);
 constexpr int32_t HDI_VERSION_ID_1_5 = GetVersionId(1, 5);
+constexpr int32_t HDI_VERSION_ID_1_6 = GetVersionId(1, 6);
 
 } // namespace CameraStandard
 } // namespace OHOS

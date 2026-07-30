@@ -127,6 +127,34 @@ std::shared_ptr<Media::Picture> PictureProxy::GetPicture() const
     return pictureIntf->GetPicture();
 }
 #endif
+
+bool PictureProxy::ResizeLcdPicture()
+{
+    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
+    CHECK_RETURN_RET_ELOG(!pictureIntf, false, "PictureProxy::ResizeLcdPicture pictureIntf is nullptr");
+    return pictureIntf->ResizeLcdPicture();
+}
+
+void PictureProxy::DumpMainPixel(const std::string& title)
+{
+    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
+    CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::DumpMainPixel pictureIntf is nullptr");
+    pictureIntf->DumpMainPixel(title);
+}
+
+void PictureProxy::DumpMainPicture()
+{
+    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
+    CHECK_RETURN_ELOG(!pictureIntf, "PictureProxy::DumpMainPicture pictureIntf is nullptr");
+    pictureIntf->DumpMainPicture();
+}
+
+std::pair<std::unique_ptr<uint8_t[]>, int64_t> PictureProxy::Encode(const std::string& encodeFormat) const
+{
+    std::shared_ptr<PictureIntf> pictureIntf = GetPictureIntf();
+    CHECK_RETURN_RET_ELOG(!pictureIntf, {}, "PictureProxy::Encode pictureIntf is nullptr");
+    return pictureIntf->Encode(encodeFormat);
+}
 // LCOV_EXCL_STOP
 }  // namespace CameraStandard
 }  // namespace OHOS

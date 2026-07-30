@@ -204,6 +204,7 @@ ohos_unittest("camera_service_unittest") {
     "-fPIC",
     "-Werror=unused",
     "-fno-access-control",
+    "-DIMAGE_COLORSPACE_FLAG",
   ]
   sanitize = {
     cfi = true

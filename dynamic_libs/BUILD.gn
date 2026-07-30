@@ -87,6 +87,7 @@ ohos_shared_library("camera_dynamic_picture") {
     "-fPIC",
     "-Wall",
     "-Os",
+    "-DIMAGE_COLORSPACE_FLAG",
   ]
   sanitize = {
     cfi = true
@@ -485,6 +486,11 @@ ohos_shared_library("camera_dynamic_image_effect") {
     "-Wall",
     "-Os",
   ]
+
+  deps = [
+    "${multimedia_camera_framework_path}/common:camera_utils"
+  ]
+
   sanitize = {
     cfi = true
     cfi_cross_dso = true
@@ -506,6 +512,7 @@ ohos_shared_library("camera_dynamic_image_effect") {
     "graphic_surface:surface",
     "image_framework:image_native",
     "c_utils:utils",
+    "json:nlohmann_json_static"
   ]
 
   if (use_image_effect) {

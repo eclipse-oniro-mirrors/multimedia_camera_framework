@@ -45,6 +45,8 @@ class CameraServerPhotoProxy : public PhotoProxy {
 public:
     CameraServerPhotoProxy();
     virtual ~CameraServerPhotoProxy();
+    CameraServerPhotoProxy& operator=(const CameraServerPhotoProxy& rhs);
+    void UpdateServerPhotoProxyInfo(std::unique_ptr<uint8_t[]>&& buffer, size_t bufferSize, PhotoFormat format);
     void GetServerPhotoProxyInfo(sptr<SurfaceBuffer>& surfaceBuffer);
     void ReadFromParcel(MessageParcel &parcel);
     std::string GetTitle() override;
@@ -82,6 +84,7 @@ public:
     void SetHighQuality(bool isHigh);
 
 private:
+    std::unique_ptr<uint8_t[]> buffer_ = nullptr;
     uint32_t cloudImageEnhanceFlag_;
     BufferHandle* bufferHandle_;
     int32_t format_;

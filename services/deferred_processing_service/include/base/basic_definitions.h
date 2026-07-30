@@ -255,8 +255,11 @@ enum MediaResult : int32_t {
 
 enum class CallbackType {
     NONE = -1,
-    IMAGE_PROCESS_DONE = 0,
+    IMAGE_PROCESS_DONE = 0, // JPG
     IMAGE_PROCESS_YUV_DONE,
+    IMAGE_ORIGIN,
+    IMAGE_EFFECT,
+    IMAGE_BOTH,
     IMAGE_ERROR,
     ON_STATE_CHANGED,
     VIDEO_PROCESS_DONE,

@@ -124,6 +124,20 @@ public:
     {
         return 0;
     }
+    ErrCode SetEditData(const std::string& editData) override
+    {
+        return 0;
+    }
+
+    ErrCode EnableOriginalImage(bool enabled) override
+    {
+        return 0;
+    }
+
+    ErrCode SetShotParam(int32_t captureID, const std::string& shotData) override
+    {
+        return 0;
+    }
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

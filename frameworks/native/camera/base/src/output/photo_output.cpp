@@ -17,7 +17,7 @@
 
 #include <mutex>
 #include <securec.h>
-
+#include <nlohmann/json.hpp>
 #include "photo_output_callback.h"
 #include "camera_error_code.h"
 #include "camera_log.h"
@@ -34,6 +34,7 @@
 #include <pixel_map.h>
 #include "metadata_common_utils.h"
 #include "photo_asset_interface.h"
+#include "json_parse.h"
 #ifdef CAMERA_CAPTURE_YUV
 #include "camera_security_utils.h"
 #endif
@@ -1865,6 +1866,97 @@ int32_t PhotoOutput::SetPhotoQualityPrioritization(PhotoQualityPrioritization qu
         "CaptureSession::SetPhotoQualityPrioritization Failed to UnlockForControl");
     MEDIA_DEBUG_LOG("CaptureSession::SetPhotoQualityPrioritization succeeded");
     return ret;
+}
+
+int32_t PhotoOutput::SetEditData(const std::string& editData)
+{
+    MEDIA_INFO_LOG("SetEditData editData:%{public}s", editData.c_str());
+    if (auto hStreamCapture = CastStream<IStreamCapture>(GetStream())) {
+        int32_t errCode = hStreamCapture->SetEditData(editData);
+        CHECK_RETURN_RET_ELOG(
+            errCode != CAMERA_OK, SERVICE_FATL_ERROR, "Failed to SetEditData! , errCode: %{public}d", errCode);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutput::SetCameraRotation() itemStream is nullptr");
+        return CameraErrorCode::SERVICE_FATL_ERROR;
+    }
+    return SUCCESS;
+}
+
+int32_t PhotoOutput::EnableOriginalImage(bool isEnable)
+{
+    MEDIA_INFO_LOG("Enter EnableOriginalImage, isEnable:%{public}d", isEnable);
+    isEnableOriginalImage_ = false;
+    bool temp = false;
+    int32_t ret = IsGenerateOriginalImageSupported(temp);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "IsGenerateOriginalImageSupported error");
+    CHECK_RETURN_RET_ELOG(temp == false, CameraErrorCode::OPERATION_NOT_ALLOWED, "EnableOriginalImage is false");
+    uint8_t enableValue = static_cast<uint8_t>(isEnable);
+    MEDIA_DEBUG_LOG("EnableOriginalImage enableValue:%{public}d", enableValue);
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(
+        session == nullptr, SERVICE_FATL_ERROR, "PhotoOutput EnableOriginalImage error!, session is nullptr");
+    ret = session->SetEnableOriginalImage(isEnable);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret, "EnableOriginalImage Failed to enable");
+    sptr<IStreamCapture> itemStream = CastStream<IStreamCapture>(GetStream());
+    CHECK_RETURN_RET_ELOG(!itemStream, CameraErrorCode::OPERATION_NOT_ALLOWED, "itemStream is nullptr");
+
+    int32_t errorCode = itemStream->EnableOriginalImage(isEnable);
+    CHECK_RETURN_RET_ELOG(errorCode != CameraErrorCode::SUCCESS, OPERATION_NOT_ALLOWED,
+        "EnableOriginalImage Failed to UnlockForControl");
+    isEnableOriginalImage_ = isEnable;
+    MEDIA_INFO_LOG("EnableOriginalImage success");
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t PhotoOutput::SetShotParam(int32_t captureID, const std::string& shotData)
+{
+    MEDIA_INFO_LOG("Enter SetShotParam, captureID:%{public}d, shotData:%{public}s", captureID, shotData.c_str());
+    if (sptr<IStreamCapture> itemStream = CastStream<IStreamCapture>(GetStream())) {
+        MEDIA_INFO_LOG("OnThumbnailAvailable setShotParm start");
+        if (isEnableOriginalImage_) {
+            int32_t errCode = itemStream->SetShotParam(captureID, shotData);
+            CHECK_RETURN_RET_ELOG(
+                errCode != CAMERA_OK, OPERATION_NOT_ALLOWED, "OnThumbnailAvailable SetShotParam SetShotParam fail");
+        } else {
+            return OPERATION_NOT_ALLOWED;
+        }
+        MEDIA_INFO_LOG("Capture End");
+        return SUCCESS;
+    }
+    return OPERATION_NOT_ALLOWED;
+}
+
+int32_t PhotoOutput::IsGenerateOriginalImageSupported(bool& isEnable)
+{
+    MEDIA_DEBUG_LOG("Enter PhotoOutput::IsGenerateOriginalImageSupported");
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput IsGenerateOriginalImageSupported error!, session is nullptr");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, SERVICE_FATL_ERROR,
+        "PhotoOutput::IsGenerateOriginalImageSupported camera device is null");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(
+        cameraObj == nullptr, SERVICE_FATL_ERROR, "PhotoOutput::IsGenerateOriginalImageSupported cameraObj is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetMetadata();
+    CHECK_RETURN_RET_ELOG(
+        metadata == nullptr, SERVICE_FATL_ERROR, "IsGenerateOriginalImageSupported camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_GENERATE_ORIGINAL_IMAGE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, SERVICE_FATL_ERROR,
+        "PhotoOutput::IsGenerateOriginalImageSupported Failed with return code %{public}d", ret);
+    // 这里拿的是sessionmode
+    auto mode = session->GetMode();
+    MEDIA_INFO_LOG("IsGenerateOriginalImageSupported current_mode: %{public}d", mode);
+    MEDIA_INFO_LOG("IsGenerateOriginalImageSupported item.count: %{public}d", item.count);
+    for (uint32_t i = 0; i < item.count; i++) {
+        MEDIA_INFO_LOG("IsGenerateOriginalImageSupported mode: %{public}d", item.data.u8[i]);
+        if ((item.data.u8[i]) == static_cast<uint8_t>(mode)) {
+            isEnable = true;
+        }
+    }
+    return CameraErrorCode::SUCCESS;
 }
 
 int32_t PhotoOutput::IsAutoExtendedGainmapDeliverySupported(bool &isAutoExtendedGainmapDeliverySupported)

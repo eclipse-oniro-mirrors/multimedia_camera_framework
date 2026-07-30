@@ -253,6 +253,9 @@ public:
     static napi_value EnableAutoBokehDataDelivery(napi_env env, napi_callback_info info);
     static napi_value IsPhotoQualityPrioritizationSupported(napi_env env, napi_callback_info info);
     static napi_value SetPhotoQualityPrioritization(napi_env env, napi_callback_info info);
+    static napi_value SetEditData(napi_env env, napi_callback_info info);
+    static napi_value EnableOriginalImage(napi_env env, napi_callback_info info);
+    static napi_value IsGenerateOriginalImageSupported(napi_env env, napi_callback_info info);
     static napi_value IsAutoExtendedGainmapDeliverySupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoExtendedGainmapDelivery(napi_env env, napi_callback_info info);
 

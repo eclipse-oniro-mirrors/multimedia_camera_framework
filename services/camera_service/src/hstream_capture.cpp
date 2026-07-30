@@ -53,6 +53,7 @@
 #include <string>
 #include "res_sched_client.h"
 #include "res_type.h"
+#include "json_parse.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -750,6 +751,72 @@ void ConcurrentMap::Release()
 #endif
 }
 
+int32_t HStreamCapture::SetEditData(const std::string& editData)
+{
+    MEDIA_INFO_LOG("SetEditData: %{public}s", editData.c_str());
+    std::lock_guard<std::mutex> lock(editDataLock_);
+    editData_ = editData;
+    return SUCCESS;
+}
+
+int32_t HStreamCapture::SetShotParam(int32_t captureId, const std::string& shotParam)
+{
+    MEDIA_INFO_LOG("SetShotParam captureId:%{public}d: %{public}s", captureId, shotParam.c_str());
+    std::lock_guard<std::mutex> lock(editDataLock_);
+    if (!IsOriginalImageEnable()) {
+        return SUCCESS;
+    }
+    auto it = captureId2EditData_.find(captureId);
+    std::string editData;
+    if (it != captureId2EditData_.end()) {
+        editData = it->second;
+        editData = MergeShotParam(editData, shotParam);
+        captureId2EditData_[captureId] = editData;
+        MEDIA_INFO_LOG("SetShotParam editData update to: %{public}s", editData.c_str());
+    } else {
+        MEDIA_ERR_LOG("not found captureId:%{public}d", captureId);
+    }
+    return SUCCESS;
+}
+
+int32_t HStreamCapture::EnableOriginalImage(bool enabled)
+{
+    MEDIA_INFO_LOG("EnableOriginalImage: %{public}d", enabled);
+    std::lock_guard<std::mutex> lock(editDataLock_);
+    enableOriginImage_ = enabled;
+    return SUCCESS;
+}
+
+int32_t HStreamCapture::SetEditData(int32_t captureId, const std::string& editData)
+{
+    MEDIA_INFO_LOG("SetEditData: captureId:%{public}d, editData:%{public}s", captureId, editData.c_str());
+    std::lock_guard<std::mutex> lock(editDataLock_);
+    captureId2EditData_[captureId] = editData;
+    return SUCCESS;
+}
+
+std::string HStreamCapture::GetEditData(int32_t captureId)
+{
+    std::lock_guard<std::mutex> lock(editDataLock_);
+    if (!IsOriginalImageEnable()) {
+        return "";
+    }
+    auto it = captureId2EditData_.find(captureId);
+    std::string editData;
+    if (it != captureId2EditData_.end()) {
+        editData = it->second;
+        captureId2EditData_.erase(it);
+        return editData;
+    }
+    MEDIA_ERR_LOG("not found captureId:%{public}d", captureId);
+    return "";
+}
+
+bool HStreamCapture::IsOriginalImageEnable()
+{
+    return enableOriginImage_;
+}
+
 int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
@@ -770,7 +837,7 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
     }
 #endif
     auto photoAssetProxy = PhotoAssetProxy::GetPhotoAssetProxy(
-        cameraShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID());
+        cameraShotType, IPCSkeleton::GetCallingUid(), IPCSkeleton::GetCallingTokenID(), 0, enableOriginImage_ ? 2 : 1);
     if (photoAssetProxy == nullptr) {
         HILOG_COMM_ERROR("HStreamCapture::CreateMediaLibraryPhotoAssetProxy get photoAssetProxy fail");
         CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::MEDIALIBRARY_ERROR, captureId);
@@ -784,7 +851,7 @@ int32_t HStreamCapture::CreateMediaLibraryPhotoAssetProxy(int32_t captureId)
 std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstance(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
-    const int32_t getPhotoAssetStep = 2;
+    const int32_t getPhotoAssetStep = IsOriginalImageEnable() ? 1 : 2;
     CHECK_RETURN_RET_ELOG(!photoAssetProxy_.WaitForUnlock(
                               captureId, getPhotoAssetStep, GetMode(), std::chrono::seconds(PHOTO_ASSET_TIMEOUT)),
         nullptr, "GetPhotoAsset faild wait timeout, captureId:%{public}d", captureId);
@@ -863,6 +930,11 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     MEDIA_INFO_LOG("HStreamCapture::Capture SetPhotoLevelInfo captureId:%{public}d isSystemApp:%{public}d",
         preparedCaptureId, isSystemApp);
 #endif
+    if (!editData_.empty()) {
+        MEDIA_INFO_LOG("HStreamCapture::Capture SetEditData captureId:%{public}d, editData:%{public}s",
+            preparedCaptureId, editData_.c_str());
+        SetEditData(preparedCaptureId, editData_);
+    }
     CamRetCode rc = (CamRetCode)(streamOperator->Capture(preparedCaptureId, captureInfoPhoto, isBursting_));
     if (rc != HDI::Camera::V1_0::NO_ERROR) {
         ResetCaptureId();
@@ -1668,6 +1740,8 @@ int32_t HStreamCapture::CallbackEnter([[maybe_unused]] uint32_t code)
         case IStreamCaptureIpcCode::COMMAND_ENABLE_RAW_DELIVERY:
         case IStreamCaptureIpcCode::COMMAND_DEFER_IMAGE_DELIVERY_FOR:
         case IStreamCaptureIpcCode::COMMAND_CONFIRM_CAPTURE:
+        case IStreamCaptureIpcCode::COMMAND_SET_EDIT_DATA:
+        case IStreamCaptureIpcCode::COMMAND_ENABLE_ORIGINAL_IMAGE:
         case IStreamCaptureIpcCode::COMMAND_ENABLE_OFFLINE_PHOTO : {
             CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamCapture::CheckSystemApp fail");
             break;
@@ -1766,8 +1840,9 @@ void HStreamCapture::SetCameraPhotoProxyInfo(sptr<CameraServerPhotoProxy> camera
 int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhotoProxy> cameraPhotoProxy)
 {
     CAMERA_SYNC_TRACE;
-    CHECK_RETURN_RET(
-        isBursting_ || (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO)),
+    CHECK_RETURN_RET(isBursting_ ||
+            (GetMode() == static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::PROFESSIONAL_PHOTO)) ||
+            IsOriginalImageEnable(),
         CAMERA_UNSUPPORTED);
     const int32_t updateMediaLibraryStep = 1;
     if (!photoAssetProxy_.WaitForUnlock(
@@ -1782,7 +1857,7 @@ int32_t HStreamCapture::UpdateMediaLibraryPhotoAssetProxy(sptr<CameraServerPhoto
         "HStreamCapture UpdateMediaLibraryPhotoAssetProxy E captureId(%{public}d)", cameraPhotoProxy->GetCaptureId());
     SetCameraPhotoProxyInfo(cameraPhotoProxy);
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy E");
-    photoAssetProxy->AddPhotoProxy(cameraPhotoProxy);
+    photoAssetProxy->AddPhotoProxy(cameraPhotoProxy, cameraPhotoProxy, "");
     MEDIA_DEBUG_LOG("HStreamCapture AddPhotoProxy X");
     photoAssetProxy_.IncreaseCaptureStep(cameraPhotoProxy->GetCaptureId());
     MEDIA_DEBUG_LOG(
@@ -1805,7 +1880,8 @@ int32_t HStreamCapture::CreateMediaLibrary(std::shared_ptr<PictureIntf> picture,
             cameraPhotoProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null PhotoProxy");
         cameraPhotoProxy->SetLatitude(latitude_);
         cameraPhotoProxy->SetLongitude(longitude_);
-        hStreamOperatorSptr_->CreateMediaLibrary(picture, cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+        hStreamOperatorSptr_->CreateMediaLibrary(picture, cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp,
+            enableOriginImage_ ? 2 : 1, GetEditData(cameraPhotoProxy->GetCaptureId()));
     }
     return CAMERA_OK;
 }
@@ -1819,7 +1895,8 @@ int32_t HStreamCapture::CreateMediaLibrary(sptr<CameraServerPhotoProxy> &cameraP
             cameraPhotoProxy == nullptr, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null PhotoProxy");
         cameraPhotoProxy->SetLatitude(latitude_);
         cameraPhotoProxy->SetLongitude(longitude_);
-        hStreamOperatorSptr_->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+        hStreamOperatorSptr_->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp,
+            enableOriginImage_ ? 2 : 1, GetEditData(cameraPhotoProxy->GetCaptureId()));
     }
     return CAMERA_OK;
 }
@@ -1837,7 +1914,8 @@ int32_t HStreamCapture::CreateMediaLibrary(const sptr<CameraPhotoProxy> &photoPr
     CHECK_RETURN_RET_ELOG(!cameraPhotoProxy, CAMERA_UNKNOWN_ERROR, "CreateMediaLibrary with null photoProxy");
     cameraPhotoProxy->SetLatitude(latitude_);
     cameraPhotoProxy->SetLongitude(longitude_);
-    hStreamOperatorSptr_->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
+    hStreamOperatorSptr_->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp,
+        enableOriginImage_ ? 2 : 1, GetEditData(cameraPhotoProxy->GetCaptureId()));
     return CAMERA_OK;
 }
 

@@ -33,6 +33,8 @@ public:
     void Initialize();
     void NotifyLowQualityImage(const int32_t userId, const std::string& imageId,
         std::shared_ptr<PictureIntf> picture);
+    void NotifyLowQualityLcd(const int32_t userId, const std::string& imageId,
+        std::shared_ptr<PictureIntf> picture);
     sptr<IDeferredPhotoProcessingSession> CreateDeferredPhotoProcessingSession(const int32_t userId,
         const sptr<IDeferredPhotoProcessingSessionCallback>& callback);
     sptr<IDeferredVideoProcessingSession> CreateDeferredVideoProcessingSession(const int32_t userId,

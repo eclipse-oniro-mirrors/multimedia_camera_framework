@@ -26,9 +26,8 @@
 namespace OHOS {
 namespace CameraStandard {
 Media::MediaLibraryCameraManager *g_mediaLibraryManager = nullptr;
-PhotoAssetAdapter::PhotoAssetAdapter(
-    int32_t cameraShotType, int32_t uid, uint32_t callingTokenID, int32_t photoCount,
-    std::string bundleName)
+PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID, int32_t videoCount,
+    int32_t imageCount, std::string bundleName)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("PhotoAssetAdapter ctor");
@@ -55,8 +54,12 @@ PhotoAssetAdapter::PhotoAssetAdapter(
         .callingTokenId = callingTokenID,
         .packageName = bundleName
     };
-    photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(
-        callerInfo, static_cast<Media::CameraShotType>(cameraShotType), photoCount);
+    Media::CameraPresetPara para {
+        .cameraShotType = static_cast<Media::CameraShotType>(cameraShotType),
+        .saveImageType = static_cast<Media::SaveImageType>(imageCount),
+        .saveVideoType = static_cast<Media::SaveVideoType>(videoCount),
+    };
+    photoAssetProxy_ = g_mediaLibraryManager->CreatePhotoAssetProxy(callerInfo, para);
     CHECK_EXECUTE(!photoAssetProxy_, CameraReportUtils::GetInstance().ReportCameraCreateNullptr(
         "PhotoAssetAdapter::PhotoAssetAdapter", "Media::MediaLibraryCameraManager::CreatePhotoAssetProxy"));
 }
@@ -65,6 +68,14 @@ void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 {
     if (photoAssetProxy_) {
         photoAssetProxy_->AddPhotoProxy(photoProxy);
+    }
+}
+
+void PhotoAssetAdapter::AddPhotoProxy(
+    sptr<Media::PhotoProxy> editPhotoProxy, sptr<Media::PhotoProxy> srcPhotoProxy, const std::string& editData)
+{
+    if (photoAssetProxy_) {
+        photoAssetProxy_->AddPhotoProxy(editPhotoProxy, srcPhotoProxy, editData);
     }
 }
 
@@ -143,6 +154,14 @@ MediaLibraryManagerAdapter::MediaLibraryManagerAdapter()
     }
 }
 
+DeferredPictureInfo MediaLibraryManagerAdapter::GetDeferredPictureInfo(const std::string& imageId)
+{
+    MEDIA_DEBUG_LOG("MediaLibraryManagerAdapter::GetDeferredPictureInfo is called");
+    CHECK_RETURN_RET_ELOG(!g_mediaLibraryManager, {}, "g_mediaLibraryManager is nullptr");
+    Media::DeferredPictureInfo dpInfo = g_mediaLibraryManager->GetDeferredPictureInfo(imageId);
+    return { .editData = dpInfo.editData, .mimeType = dpInfo.mimeType, .orientation = dpInfo.orientation };
+}
+
 void MediaLibraryManagerAdapter::RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback)
 {
     MEDIA_DEBUG_LOG("MediaLibraryManagerAdapter::RegisterPhotoStateCallback is called");
@@ -161,11 +180,10 @@ extern "C" MediaLibraryManagerIntf *createMediaLibraryManagerIntf()
 }
 #endif
 // LCOV_EXCL_STOP
-extern "C" PhotoAssetIntf *createPhotoAssetIntf(
-    int32_t cameraShotType, int32_t uid, uint32_t callingTokenID, int32_t photoCount,
-    std::string bundleName)
+extern "C" PhotoAssetIntf* createPhotoAssetIntf(int32_t cameraShotType, int32_t uid, uint32_t callingTokenID,
+    int32_t videoCount, int32_t imageCount, std::string bundleName)
 {
-    return new PhotoAssetAdapter(cameraShotType, uid, callingTokenID, photoCount, bundleName);
+    return new PhotoAssetAdapter(cameraShotType, uid, callingTokenID, videoCount, imageCount, bundleName);
 }
 }  // namespace AVSession
 }  // namespace OHOS

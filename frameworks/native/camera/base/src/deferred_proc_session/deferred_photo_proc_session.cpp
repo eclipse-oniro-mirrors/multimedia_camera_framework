@@ -23,7 +23,6 @@
 #include "camera_error_code.h"
 #include "picture_proxy.h"
 #include "dps_metadata_info.h"
-
 namespace OHOS {
 namespace CameraStandard {
 
@@ -119,14 +118,6 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
     // LCOV_EXCL_STOP
 }
 
-int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string& imageId,
-    const std::vector<CameraStandard::ImageFd>& imageFds, const std::shared_ptr<CameraStandard::PictureIntf>& lcdImage,
-    const DpsMetadata& metadata)
-{
-    // wait for implementation
-    return 0;
-}
-
 int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityLcd(const std::string &imageId,
     const std::shared_ptr<PictureIntf>& pictureIntf)
 {
@@ -145,18 +136,61 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityLcd(const st
     // LCOV_EXCL_STOP
 }
 
+int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::string& imageId,
+    const std::vector<ImageFd>& imageFds, const std::shared_ptr<CameraStandard::PictureIntf>& lcdImage,
+    const DpsMetadata& metadata)
+{
+    // LCOV_EXCL_START
+    HILOG_COMM_INFO("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() is"
+                    "called, status:%{public}s",
+        imageId.c_str());
+    MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone enter");
+    CHECK_RETURN_RET_ELOG(deferredPhotoProcSession_ == nullptr || deferredPhotoProcSession_->GetCallback() == nullptr,
+        0, "DeferredPhotoProcessingSessionCallback::OnProcessImageDone not set!, Discarding callback");
+    std::vector<ImageFd> newImageFds;
+    for (auto img : imageFds) {
+        int fd = -1;
+        if (img.fd) {
+            fd = img.fd->GetFd();
+        }
+        int32_t size = lseek(fd, 0, SEEK_END);
+        MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone fd:%{public}d, byte:%{public}d, "
+                       "fdSize:%{public}d",
+            fd, img.bytes, size);
+        img.addr = (uint8_t*)mmap(nullptr, img.bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (img.addr == MAP_FAILED) {
+            const char* error_msg = strerror(errno);
+            MEDIA_INFO_LOG("OnProcessImageDone mmap failed: %{public}s\n", error_msg);
+        }
+        newImageFds.push_back(img);
+    }
+
+    deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, newImageFds, lcdImage, metadata);
+    for (auto& img : newImageFds) {
+        munmap(img.addr, img.bytes);
+    }
+    return 0;
+    // LCOV_EXCL_STOP
+}
+
 int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] uint32_t code,
     [[maybe_unused]] MessageParcel& data, [[maybe_unused]] MessageParcel& reply, [[maybe_unused]] MessageOption& option)
 {
     // LCOV_EXCL_START
     MEDIA_DEBUG_LOG("start, code:%{public}u", code);
-    if ((static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
-        != DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE)
-        && (static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)
-        != DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
-        COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_DPSMETADATA)) {
-        return ERR_NONE;
+    using DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode;
+    switch (static_cast<IDeferredPhotoProcessingSessionCallbackIpcCode>(code)) {
+        case IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_IMAGE:
+        case IDeferredPhotoProcessingSessionCallbackIpcCode::
+            COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_SHARED_PTR_PICTUREINTF_IN_DPSMETADATA:
+        case IDeferredPhotoProcessingSessionCallbackIpcCode::COMMAND_ON_DELIVERY_LOW_QUALITY_LCD:
+        case IDeferredPhotoProcessingSessionCallbackIpcCode::
+            COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_IMAGEFD_VECTOR_IN_SHARED_PTR_PICTUREINTF_IN_DPSMETADATA:
+            break;
+        default:
+            return ERR_NONE;
     }
+
     CHECK_RETURN_RET(data.ReadInterfaceToken() != GetDescriptor(), ERR_TRANSACTION_FAILED);
 
     switch (static_cast<DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode>(code)) {
@@ -190,6 +224,52 @@ int32_t DeferredPhotoProcessingSessionCallback::CallbackParcel([[maybe_unused]] 
             sptr<DpsMetadata> metadata = data.ReadParcelable<DpsMetadata>();
             CHECK_RETURN_RET_ELOG(metadata == nullptr, ERR_INVALID_DATA, "metadata is nullptr");
             ErrCode errCode = OnProcessImageDone(imageId, picturePtr->GetPictureIntf(), *metadata);
+            MEDIA_INFO_LOG("HandleOnProcessPictureDone result: %{public}d", errCode);
+            CHECK_RETURN_RET_ELOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "OnProcessImageDone faild");
+            break;
+        }
+        case DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
+            COMMAND_ON_DELIVERY_LOW_QUALITY_LCD: {
+            MEDIA_INFO_LOG("HandleProcessLowQualityLcd enter");
+            std::string imageId = Str16ToStr8(data.ReadString16());
+            int32_t size = data.ReadInt32();
+            CHECK_RETURN_RET_ELOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
+            std::shared_ptr<PictureProxy> picturePtr = PictureProxy::CreatePictureProxy();
+            CHECK_RETURN_RET_ELOG(picturePtr == nullptr, ERR_INVALID_DATA, "picturePtr is nullptr");
+            MEDIA_DEBUG_LOG("HandleProcessLowQualityLcd Picture::Unmarshalling E");
+            picturePtr->UnmarshallingPicture(data);
+            MEDIA_DEBUG_LOG("HandleProcessLowQualityLcd Picture::Unmarshalling X");
+            ErrCode errCode = OnDeliveryLowQualityLcd(imageId, picturePtr->GetPictureIntf());
+            MEDIA_INFO_LOG("HandleProcessLowQualityLcd result: %{public}d", errCode);
+            CHECK_RETURN_RET_ELOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE,
+                "HandleProcessLowQualityLcd OnDeliveryLowQualityLcd failed");
+            break;
+        }
+        case DeferredProcessing::IDeferredPhotoProcessingSessionCallbackIpcCode::
+            COMMAND_ON_PROCESS_IMAGE_DONE_IN_STRING_IN_IMAGEFD_VECTOR_IN_SHARED_PTR_PICTUREINTF_IN_DPSMETADATA: {
+            MEDIA_INFO_LOG("HandleOnProcessPictureDone enter");
+            auto& parcel = data;
+            std::string imageId = Str16ToStr8(parcel.ReadString16());
+            int32_t imageFdsSize = parcel.ReadInt32();
+            std::vector<ImageFd> imageFds;
+            for (int32_t i1 = 0; i1 < imageFdsSize; ++i1) {
+                std::unique_ptr<ImageFd> value1(data.ReadParcelable<ImageFd>());
+                if (!value1) {
+                    return ERR_INVALID_DATA;
+                }
+                MEDIA_INFO_LOG("HandleOnProcessPictureDone fd:%{public}d", value1->fd->GetFd());
+                imageFds.push_back(*value1);
+            }
+            int32_t size = data.ReadInt32();
+            CHECK_RETURN_RET_ELOG(size == 0, ERR_INVALID_DATA, "Not an parcelable oject");
+            std::shared_ptr<PictureProxy> picturePtr = PictureProxy::CreatePictureProxy();
+            CHECK_RETURN_RET_ELOG(picturePtr == nullptr, IPC_STUB_INVALID_DATA_ERR, "picturePtr is nullptr");
+            MEDIA_DEBUG_LOG("HandleOnProcessPictureDone Picture::Unmarshalling E");
+            picturePtr->UnmarshallingPicture(data);
+            MEDIA_INFO_LOG("HandleOnProcessPictureDone Picture::Unmarshalling X");
+            sptr<DpsMetadata> metadata = parcel.ReadParcelable<DpsMetadata>();
+            CHECK_RETURN_RET_ELOG(metadata == nullptr, ERR_INVALID_DATA, "metadata is nullptr");
+            ErrCode errCode = OnProcessImageDone(imageId, imageFds, picturePtr->GetPictureIntf(), *metadata);
             MEDIA_INFO_LOG("HandleOnProcessPictureDone result: %{public}d", errCode);
             CHECK_RETURN_RET_ELOG(!reply.WriteInt32(errCode), ERR_INVALID_VALUE, "OnProcessImageDone faild");
             break;

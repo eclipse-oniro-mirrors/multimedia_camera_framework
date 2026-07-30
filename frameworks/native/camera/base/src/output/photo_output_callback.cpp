@@ -17,7 +17,7 @@
 
 #include <mutex>
 #include <securec.h>
-
+#include <iomanip>
 #include "photo_output.h"
 #include "camera_log.h"
 #include "camera_util.h"
@@ -199,17 +199,18 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::expoEfl, info.expoEfl);
     surfaceBuffer->GetExtraData()->ExtraGet(OHOS::Camera::captureTime, info.captureTime);
     MEDIA_INFO_LOG("OnThumbnailAvailable width:%{public}d, height: %{public}d, captureId: %{public}d,"
-        "burstSeqId: %{public}d", thumbnailWidth, thumbnailHeight, info.captureID, burstSeqId);
-    MEDIA_DEBUG_LOG("OnThumbnailAvailable expoTime:%{public}" PRId64 ", expoIso: %{public}" PRId32
-        ",expoFNumber: %{public}f, expoEfl: %{public}f, captureTime: %{public}" PRId64,
+                   "burstSeqId: %{public}d",
+        thumbnailWidth, thumbnailHeight, info.captureID, burstSeqId);
+    MEDIA_INFO_LOG("OnThumbnailAvailable expoTime:%{public}" PRId64 ", expoIso: %{public}" PRId32
+                   ",expoFNumber: %{public}f, expoEfl: %{public}f, captureTime: %{public}" PRId64,
         info.expoTime, info.expoIso, info.expoFNumber, info.expoEfl, info.captureTime);
     OHOS::ColorManager::ColorSpaceName colorSpace = GetColorSpace(surfaceBuffer);
     CHECK_RETURN_RET_ELOG(
         colorSpace == OHOS::ColorManager::ColorSpaceName::NONE, CAMERA_OK, "Thumbnail GetcolorSpace failed!");
     bool isHdr = colorSpace == OHOS::ColorManager::ColorSpaceName::BT2020_HLG;
     // create pixelMap
-    std::unique_ptr<Media::PixelMap> pixelMap = CreatePixelMapFromSurfaceBuffer(surfaceBuffer,
-        thumbnailWidth, thumbnailHeight, isHdr);
+    std::unique_ptr<Media::PixelMap> pixelMap =
+        CreatePixelMapFromSurfaceBuffer(surfaceBuffer, thumbnailWidth, thumbnailHeight, isHdr);
     CHECK_PRINT_ELOG(pixelMap == nullptr, "ThumbnailListener create pixelMap is nullptr");
     ThumbnailSetColorSpaceAndRotate(pixelMap, surfaceBuffer, colorSpace);
 
@@ -220,6 +221,18 @@ int32_t HStreamCaptureThumbnailCallbackImpl::OnThumbnailAvailable(sptr<SurfaceBu
         WatermarkExifMetadataProxy::FreeWatermarkExifMetadataDynamiclib();
     }
     callback->OnThumbnailAvailable(info.captureID, timestamp, std::move(pixelMap));
+    std::ostringstream oss;
+    oss << info.expoEfl << "mm ";
+    oss << std::fixed << std::setprecision(1);
+    oss << "F" << std::round(info.expoFNumber) << " ";
+    int64_t shutterSpeed = info.expoTime ? std::round(1000000000.f / info.expoTime) : 0;
+    oss << "1/" << shutterSpeed << "s ";
+    int isoValue = info.expoIso;
+    oss << "ISO" << isoValue;
+    std::string shotParam = oss.str();
+    MEDIA_INFO_LOG("OnThumbnailAvailable setShotParm start");
+    auto ret = photoOutput->SetShotParam(info.captureID, shotParam);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "SetShotParam fail");
     return CAMERA_OK;
 }
 

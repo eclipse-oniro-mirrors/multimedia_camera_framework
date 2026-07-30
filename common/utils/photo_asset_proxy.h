@@ -27,12 +27,14 @@ namespace CameraStandard {
 class PhotoAssetProxy : public PhotoAssetIntf {
 public:
     static std::shared_ptr<PhotoAssetProxy> GetPhotoAssetProxy(
-        int32_t shotType, int32_t callingUid, uint32_t callingTokenID, int32_t photoCount = 1);
+        int32_t shotType, int32_t callingUid, uint32_t callingTokenID, int32_t videoCount, int32_t imageCount);
     explicit PhotoAssetProxy(
         std::shared_ptr<Dynamiclib> mediaLibraryLib, std::shared_ptr<PhotoAssetIntf> photoAssetIntf);
     ~PhotoAssetProxy() override = default;
 
     void AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy) override;
+    void AddPhotoProxy(sptr<Media::PhotoProxy> editPhotoProxy, sptr<Media::PhotoProxy> srcPhotoProxy,
+        const std::string& editData) override;
     std::string GetPhotoAssetUri() override;
     int32_t GetVideoFd(VideoType videoType) override;
     void NotifyVideoSaveFinished(VideoType videoType) override;
@@ -58,6 +60,8 @@ public:
     explicit MediaLibraryManagerProxy(
         std::shared_ptr<Dynamiclib> mediaLibraryLib, std::shared_ptr<MediaLibraryManagerIntf> mediaLibraryManagerIntf);
     ~MediaLibraryManagerProxy() override = default;
+    DeferredPictureInfo GetDeferredPictureInfo(const std::string& imageId) override;
+
     void RegisterPhotoStateCallback(const std::function<void(int32_t)> &callback) override;
     void UnregisterPhotoStateCallback() override;
 private:

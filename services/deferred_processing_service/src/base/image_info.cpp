@@ -22,47 +22,47 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
-ImageInfo::ImageInfo()
+ImageInfoSingle::ImageInfoSingle()
 {
     DP_DEBUG_LOG("entered.");
 }
 
-ImageInfo::ImageInfo(int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag,
+ImageInfoSingle::ImageInfoSingle(int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag,
     DpsMetadata dpsMetadata) : dataSize_(dataSize), isHighQuality_(isHighQuality), cloudFlag_(cloudFlag),
     captureFlag_(captureFlag), dpsMetaData_(dpsMetadata)
 {
     DP_DEBUG_LOG("entered.");
 }
 
-ImageInfo::~ImageInfo()
+ImageInfoSingle::~ImageInfoSingle()
 {
     DP_DEBUG_LOG("entered.");
 }
 
-void ImageInfo::SetBuffer(std::unique_ptr<SharedBuffer> sharedBuffer)
+void ImageInfoSingle::SetBuffer(std::unique_ptr<SharedBuffer> sharedBuffer)
 {
     sharedBuffer_ = std::move(sharedBuffer);
     SetType(CallbackType::IMAGE_PROCESS_DONE);
 }
 
-void ImageInfo::SetPicture(const std::shared_ptr<PictureIntf>& picture)
+void ImageInfoSingle::SetPicture(const std::shared_ptr<PictureIntf>& picture)
 {
     picture_ = picture;
     SetType(CallbackType::IMAGE_PROCESS_YUV_DONE);
 }
 
-void ImageInfo::SetError(DpsError error)
+void ImageInfoSingle::SetError(DpsError error)
 {
     error_ = error;
     SetType(CallbackType::IMAGE_ERROR);
 }
 
-void ImageInfo::SetType(CallbackType type)
+void ImageInfoSingle::SetType(CallbackType type)
 {
     type_ = type;
 }
 
-sptr<IPCFileDescriptor> ImageInfo::GetIPCFileDescriptor()
+sptr<IPCFileDescriptor> ImageInfoSingle::GetIPCFileDescriptor()
 {
     DP_CHECK_RETURN_RET(sharedBuffer_ == nullptr, nullptr);
     DP_CHECK_RETURN_RET(sharedBuffer_->GetFd() == -1, nullptr);
@@ -71,10 +71,11 @@ sptr<IPCFileDescriptor> ImageInfo::GetIPCFileDescriptor()
     return sptr<IPCFileDescriptor>::MakeSptr(fd);
 }
 
-std::shared_ptr<PictureIntf> ImageInfo::GetPicture()
+std::shared_ptr<PictureIntf> ImageInfoSingle::GetPicture()
 {
     return picture_;
 }
+
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

@@ -21,6 +21,7 @@
 #include "camera_log.h"
 #include "surface_type.h"
 #include <cstdint>
+#include "json_parse.h"
 
 // LCOV_EXCL_START
 namespace OHOS::CameraStandard {
@@ -150,7 +151,7 @@ int32_t ImageEffectAdapter::SetImageEffect(const std::string& filter, const std:
     }
     {
         std::lock_guard<std::mutex> lock(filterLock_);
-        if (filter == INPLACE_STICKER_NAME) {
+        if (filter.find("Sticker") != std::string::npos) {
             if (filterParam.empty()) {
                 RemoveWaterMark();
             } else {
@@ -209,7 +210,7 @@ void ImageEffectAdapter::AddWaterMark(const std::string& filter, const std::stri
     std::string waterMarkDirString = root->GetString(WATER_MARK_PATH_KEY);
     MEDIA_INFO_LOG("ImageEffectAdapter::AddWaterMark orientation:%{public}d cameraPosition:%{public}d "
         "waterMarkDir:%{public}s", orientation, cameraPosition, waterMarkDirString.c_str());
-    waterMarkEFilter_ = Media::Effect::EFilterFactory::Instance()->Create(INPLACE_STICKER_NAME);
+    waterMarkEFilter_ = Media::Effect::EFilterFactory::Instance()->Create(filter);
     CHECK_RETURN_ELOG(waterMarkEFilter_ == nullptr, "ImageEffectAdapter::AddWaterMark create filter failed");
     OHOS::Media::Effect::ErrorCode result = waterMarkEFilter_->Restore(root);
     CHECK_PRINT_ELOG(
@@ -232,6 +233,37 @@ void ImageEffectAdapter::AddColorFilter(const std::string& filter)
     colorEffect_ = filter;
     CHECK_RETURN_ELOG(colorEFilter_ == nullptr, "ImageEffectAdapter::AddColorFilter create filter failed");
     imageEffect_->AddEFilter(colorEFilter_);
+}
+
+int32_t ImageEffectAdapter::SetInputPicture(Media::Picture* picture)
+{
+    MEDIA_INFO_LOG("SetInputPicture");
+    CHECK_RETURN_RET_ELOG(imageEffect_ == nullptr, MEDIA_ERR, "imageEffect_ is null");
+    imageEffect_->SetInputPicture(picture);
+    return MEDIA_OK;
+}
+
+int32_t ImageEffectAdapter::SuppressWatermarkForPicture(
+    std::shared_ptr<Media::Picture> inPicture, const std::string& editData)
+{
+    MEDIA_INFO_LOG("SuppressWatermarkForPicture editData:%{public}s", editData.c_str());
+    CHECK_RETURN_RET_ELOG(!inPicture, MEDIA_ERR, "SuppressWatermarkForPicture inPicture is nullptr");
+    Init();
+    std::vector<std::string> filters;
+    GetSupportedFilters(filters);
+    auto [filterName, filterParam] = ParseWatermarkFilter(editData);
+
+    CHECK_RETURN_RET_WLOG(
+        filterName.empty() || filterParam.empty(), MEDIA_ERR, "not found watermark filter in editData!");
+    CHECK_RETURN_RET_ELOG(std::find(filters.begin(), filters.end(), filterName) == filters.end(), MEDIA_ERR,
+        "not support filter:%{public}s", filterName.c_str());
+    int32_t ret = SetImageEffect(filterName, filterParam);
+    CHECK_RETURN_RET_ELOG(ret != MEDIA_OK, ret, "SetImageEffect fail");
+    ret = SetInputPicture(inPicture.get()); // inplace
+    CHECK_RETURN_RET_ELOG(ret != MEDIA_OK, ret, "SetInputPicture fail");
+    ret = Start();
+    CHECK_RETURN_RET_ELOG(ret != MEDIA_OK, ret, "Start fail");
+    return MEDIA_OK;
 }
 
 extern "C" ImageEffectIntf *createImageEffectIntf()

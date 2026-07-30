@@ -25,6 +25,7 @@
 #include "events_info.h"
 #include "dps_metadata_info.h"
 #include "photo_process_command.h"
+#include "deferred_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -201,6 +202,7 @@ std::shared_ptr<PhotoPostProcessor> DeferredPhotoProcessor::GetPhotoPostProcesso
 void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::string& imageId,
     std::unique_ptr<ImageInfo> imageInfo)
 {
+    DP_INFO_LOG("HandleSuccess enter, imageId: %{public}s", imageId.c_str());
     StopTimer(imageId);
     result_->OnSuccess(imageId);
     auto jobPtr = repository_->GetJobUnLocked(imageId);
@@ -216,32 +218,81 @@ void DeferredPhotoProcessor::HandleSuccess(const int32_t userId, const std::stri
         result_->RecordResult(imageId, std::move(imageInfo), true);
         return;
     }
+    NotifyMediaLib(imageId, std::move(imageInfo), callback);
+    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_BUSY);
+}
 
-    DP_INFO_LOG("DPS_PHOTO: userId: %{public}d, imageId: %{public}s", userId, imageId.c_str());
+void DeferredPhotoProcessor::NotifyMediaLib(const std::string& imageId,
+    std::unique_ptr<ImageInfo> imageInfo, sptr<IDeferredPhotoProcessingSessionCallback> callback)
+{
+    DP_INFO_LOG("NotifyMediaLib enter, imageId: %{public}s", imageId.c_str());
     uint32_t cloudFlag = imageInfo->GetCloudFlag();
     DpsMetadata metadata = imageInfo->GetMetaData();
     uint32_t captureFlag = 0;
     metadata.Get("captureEnhancementFlag", captureFlag);
-    DP_DEBUG_LOG("DPS_OHOTO: HandleSuccess cloudFlag: %{public}d, captureFlag: %{public}d ",
-        cloudFlag, captureFlag);
-    switch (imageInfo->GetType()) {
-        case CallbackType::IMAGE_PROCESS_DONE: {
-            int32_t dataSize = imageInfo->GetDataSize();
-            sptr<IPCFileDescriptor> ipcFd = imageInfo->GetIPCFileDescriptor();
-            callback->OnProcessImageDone(imageId, ipcFd, dataSize, cloudFlag);
-            break;
+    DP_DEBUG_LOG("DPS_OHOTO: HandleSuccess cloudFlag: %{public}d, captureFlag: %{public}d ", cloudFlag, captureFlag);
+
+    if (imageInfo->imageInfoSingles_.empty()) {
+        // adapt V1_4
+        switch (imageInfo->GetType()) {
+            case CallbackType::IMAGE_PROCESS_DONE: {
+                int32_t dataSize = imageInfo->GetDataSize();
+                sptr<IPCFileDescriptor> ipcFd = imageInfo->GetIPCFileDescriptor();
+                callback->OnProcessImageDone(imageId, ipcFd, dataSize, cloudFlag);
+                break;
+            }
+            case CallbackType::IMAGE_PROCESS_YUV_DONE: {
+                std::shared_ptr<PictureIntf> picture = imageInfo->GetPicture();
+                callback->OnProcessImageDone(imageId, picture, metadata);
+                break;
+            }
+            default:
+                DP_ERR_LOG("Unexpected callback type: %{public}d for imageId: %{public}s",
+                    static_cast<int>(imageInfo->GetType()), imageId.c_str());
         }
-        case CallbackType::IMAGE_PROCESS_YUV_DONE: {
-            std::shared_ptr<PictureIntf> picture = imageInfo->GetPicture();
-            callback->OnProcessImageDone(imageId, picture, metadata);
-            break;
+    } else {
+        std::vector<ImageFd> imageFds;
+        for (auto& imageSingle : imageInfo->imageInfoSingles_) {
+            switch (imageSingle->GetType()) {
+                case CallbackType::IMAGE_EFFECT: {
+                    DP_INFO_LOG("NotifyMediaLib IMAGE_PROCESS_DONE enter");
+                    int32_t dataSize = imageSingle->GetDataSize();
+                    sptr<IPCFileDescriptor> ipcFd = imageSingle->GetIPCFileDescriptor();
+                    DP_CHECK_ERROR_PRINT_LOG(ipcFd == nullptr, "ipcFd is nullptr");
+                    imageFds.emplace_back(ImageFd { ipcFd, ImageType::EFFECTIVE_IMAGE, dataSize });
+                    break;
+                }
+                case CallbackType::IMAGE_ORIGIN: {
+                    DP_INFO_LOG("NotifyMediaLib IMAGE_ORIGIN enter, imageId: %{public}s", imageId.c_str());
+                    int32_t dataSize = imageSingle->GetDataSize();
+                    sptr<IPCFileDescriptor> ipcFd = imageSingle->GetIPCFileDescriptor();
+                    DP_CHECK_ERROR_PRINT_LOG(ipcFd == nullptr, "ipcFd is nullptr");
+                    imageFds.emplace_back(ImageFd { ipcFd, ImageType::ORIGINAL_IMAGE, dataSize });
+                    break;
+                }
+                case CallbackType::IMAGE_BOTH: {
+                    DP_INFO_LOG("NotifyMediaLib IMAGE_BOTH enter, imageId: %{public}s", imageId.c_str());
+                    int32_t dataSize = imageSingle->GetDataSize();
+                    sptr<IPCFileDescriptor> ipcFd = imageSingle->GetIPCFileDescriptor();
+                    DP_CHECK_ERROR_PRINT_LOG(ipcFd == nullptr, "ipcFd is nullptr");
+                    imageFds.emplace_back(ImageFd { ipcFd, ImageType::ORIGINAL_IMAGE, dataSize });
+                    imageFds.emplace_back(ImageFd { ipcFd, ImageType::EFFECTIVE_IMAGE, dataSize });
+                    break;
+                }
+                case CallbackType::IMAGE_ERROR:
+                    callback->OnError(imageId, MapDpsErrorCode(imageInfo->GetErrorCode()));
+                    break;
+                default:
+                    DP_ERR_LOG("Unexpected callback type: %{public}d for imageId: %{public}s",
+                        static_cast<int>(imageInfo->GetType()), imageId.c_str());
+                    break;
+            }
         }
-        default:
-            DP_ERR_LOG("Unexpected callback type: %{public}d for imageId: %{public}s",
-                static_cast<int>(imageInfo->GetType()), imageId.c_str());
-            break;
+
+        DP_INFO_LOG("NotifyMediaLib OnProcessImageDone, imageId: %{public}s", imageId.c_str());
+        int32_t ret = callback->OnProcessImageDone(imageId, imageFds, imageInfo->GetLcdImage(), metadata);
+        DP_INFO_LOG("NotifyMediaLib OnProcessImageDone ret:%{public}d", ret);
     }
-    EventsInfo::GetInstance().SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_BUSY);
     DPSEventReport::GetInstance().ReportImageProcessCaptureFlag(captureFlag);
 }
 
@@ -324,26 +375,13 @@ sptr<IDeferredPhotoProcessingSessionCallback> DeferredPhotoProcessor::GetCallbac
 
 bool DeferredPhotoProcessor::ProcessCatchResults(const std::string& imageId)
 {
-    auto result = result_->GetCacheResult(imageId);
-    DP_CHECK_RETURN_RET(result == nullptr, false);
+    auto imageInfo = result_->GetCacheResult(imageId);
+    DP_CHECK_RETURN_RET(imageInfo == nullptr, false);
     auto callback = GetCallback();
     DP_CHECK_RETURN_RET(callback == nullptr, false);
 
     DP_INFO_LOG("DPS_PHOTO: ProcessCatchResults imageId: %{public}s", imageId.c_str());
-    switch (result->GetType()) {
-        case CallbackType::IMAGE_PROCESS_DONE:
-            callback->OnProcessImageDone(imageId, result->GetIPCFileDescriptor(),
-                result->GetDataSize(), result->GetCloudFlag());
-            break;
-        case CallbackType::IMAGE_PROCESS_YUV_DONE:
-            callback->OnProcessImageDone(imageId, result->GetPicture(), result->GetMetaData());
-            break;
-        case CallbackType::IMAGE_ERROR:
-            callback->OnError(imageId, MapDpsErrorCode(result->GetErrorCode()));
-            break;
-        default:
-            break;
-    }
+    NotifyMediaLib(imageId, std::move(imageInfo), callback);
     result_->DeRecordResult(imageId);
     return true;
 }

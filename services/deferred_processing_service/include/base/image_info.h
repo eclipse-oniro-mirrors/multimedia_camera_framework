@@ -25,26 +25,32 @@ namespace OHOS {
 namespace CameraStandard {
 class PictureIntf;
 namespace DeferredProcessing {
-class ImageInfo {
+class ImageInfoSingle {
 public:
-    ImageInfo();
-    ImageInfo(int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag,
-        DpsMetadata metadata);
-    ~ImageInfo();
-    ImageInfo(const ImageInfo&) = delete;
-    ImageInfo& operator=(const ImageInfo&) = delete;
-    ImageInfo(ImageInfo&&) = delete;
-    ImageInfo& operator=(ImageInfo&&) = delete;
+    ImageInfoSingle();
+    ImageInfoSingle(
+        int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag, DpsMetadata metadata);
+
+    virtual ~ImageInfoSingle();
+    ImageInfoSingle(const ImageInfoSingle&) = delete;
+    ImageInfoSingle& operator=(const ImageInfoSingle&) = delete;
+    ImageInfoSingle(ImageInfoSingle&&) = delete;
+    ImageInfoSingle& operator=(ImageInfoSingle&&) = delete;
 
     void SetBuffer(std::unique_ptr<SharedBuffer> sharedBuffer);
     void SetPicture(const std::shared_ptr<PictureIntf>& picture);
     sptr<IPCFileDescriptor> GetIPCFileDescriptor();
     std::shared_ptr<PictureIntf> GetPicture();
     void SetError(DpsError error);
-    
+
     inline int32_t GetDataSize() const
     {
         return dataSize_;
+    }
+
+    inline void SetDataSize(int32_t size)
+    {
+        dataSize_ = size;
     }
 
     inline bool IsHighQuality() const
@@ -62,7 +68,6 @@ public:
         return captureFlag_;
     }
 
-
     inline CallbackType GetType()
     {
         return type_;
@@ -78,18 +83,45 @@ public:
         return dpsMetaData_;
     }
 
-private:
     void SetType(CallbackType type);
 
-    int32_t dataSize_ {0};
-    bool isHighQuality_ {false};
-    uint32_t cloudFlag_ {0};
-    uint32_t captureFlag_ {0};
+private:
+    int32_t dataSize_ { 0 };
+    bool isHighQuality_ { false };
+
+    uint32_t cloudFlag_ { 0 };
+    uint32_t captureFlag_ { 0 };
     DpsMetadata dpsMetaData_;
-    DpsError error_ {DpsError::DPS_NO_ERROR};
-    CallbackType type_ {CallbackType::NONE};
-    std::unique_ptr<SharedBuffer> sharedBuffer_ {nullptr};
-    std::shared_ptr<PictureIntf> picture_ {nullptr};
+    DpsError error_ { DpsError::DPS_NO_ERROR };
+    CallbackType type_ { CallbackType::NONE };
+    std::unique_ptr<SharedBuffer> sharedBuffer_ { nullptr };
+    std::shared_ptr<PictureIntf> picture_ { nullptr };
+};
+
+class ImageInfo : public ImageInfoSingle {
+public:
+    ImageInfo() : ImageInfoSingle() {}
+    ImageInfo(int32_t dataSize, bool isHighQuality, uint32_t cloudFlag, uint32_t captureFlag, DpsMetadata metadata)
+        : ImageInfoSingle(dataSize, isHighQuality, cloudFlag, captureFlag, metadata)
+    {}
+    ~ImageInfo() {}
+    ImageInfo(const ImageInfo&) = delete;
+    ImageInfo& operator=(const ImageInfo&) = delete;
+    ImageInfo(ImageInfo&&) = delete;
+    ImageInfo& operator=(ImageInfo&&) = delete;
+    std::vector<std::unique_ptr<ImageInfoSingle>> imageInfoSingles_;
+
+    std::shared_ptr<CameraStandard::PictureIntf> GetLcdImage() const
+    {
+        return lcdImage_;
+    };
+    void SetLcdImage(std::shared_ptr<CameraStandard::PictureIntf> lcdImage)
+    {
+        lcdImage_ = lcdImage;
+    }
+
+private:
+    std::shared_ptr<CameraStandard::PictureIntf> lcdImage_;
 };
 } // namespace DeferredProcessing
 } // namespace CameraStandard
