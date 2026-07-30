@@ -516,6 +516,248 @@ HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_022, 
     auto ret = process_->HasRunningJob();
     EXPECT_EQ(ret, false);
 }
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor OnProcessProgress with normal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor OnProcessProgress with valid callback
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_023, TestSize.Level1)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
+    ASSERT_EQ(process_->GetRepository()->jobQueue_->GetSize(), 1);
+
+    process_->OnProcessProgress(VIDEO_ID_1, 0.5f);
+    EXPECT_EQ(process_->GetRepository()->jobQueue_->GetSize(), 1);
+    process_->RemoveVideo(VIDEO_ID_1, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor GetDstPath with normal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor GetDstPath with valid temp path
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_024, TestSize.Level1)
+{
+    std::string testPath = "/data/test/media/temp/test_temp1.mp4";
+    std::string result = process_->GetDstPath(testPath);
+    EXPECT_FALSE(result.empty());
+
+    EXPECT_NE(result.find("_vid_tmp.mp4"), std::string::npos);
+    EXPECT_NE(result.find("/enhanced/"), std::string::npos);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor GetDstPath with invalid temp path
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor GetDstPath with path not containing /temp/
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_025, TestSize.Level1)
+{
+    std::string testPath = "/data/test/media/enhanced/test_temp1.mp4";
+    std::string result = process_->GetDstPath(testPath);
+
+    EXPECT_TRUE(result.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor GetDstPath with invalid underscore
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor GetDstPath with filename without underscore
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_026, TestSize.Level1)
+{
+    std::string testPath = "/data/test/media/temp/testtemp1.mp4";
+    std::string result = process_->GetDstPath(testPath);
+
+    EXPECT_TRUE(result.empty());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor StartTimer with null mediaManagerProxy branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor StartTimer when mediaManagerProxy_ is nullptr (uses UINT32_MAX)
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_027, TestSize.Level1)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
+
+    uint32_t timerId = process_->StartTimer(VIDEO_ID_1);
+    EXPECT_NE(timerId, INVALID_TIMERID);
+    process_->StopTimer(VIDEO_ID_1);
+    process_->RemoveVideo(VIDEO_ID_1, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor StopTimer with normal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor StopTimer with valid timer
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_028, TestSize.Level1)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
+
+    uint32_t timerId = process_->StartTimer(VIDEO_ID_1);
+    auto jobPtr = process_->GetRepository()->GetJobUnLocked(VIDEO_ID_1);
+    ASSERT_NE(jobPtr, nullptr);
+    EXPECT_NE(jobPtr->GetTimerId(), timerId);
+
+    process_->StopTimer(VIDEO_ID_1);
+    auto jobAfterStop = process_->GetRepository()->GetJobUnLocked(VIDEO_ID_1);
+    ASSERT_NE(jobAfterStop, nullptr);
+
+    EXPECT_EQ(jobAfterStop->GetTimerId(), INVALID_TIMERID);
+    process_->RemoveVideo(VIDEO_ID_1, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor ProcessVideoTimeout with normal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor ProcessVideoTimeout sends timeout command
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_029, TestSize.Level1)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
+
+    process_->ProcessVideoTimeout(VIDEO_ID_1);
+    EXPECT_EQ(process_->GetRepository()->jobQueue_->GetSize(), 1);
+    process_->RemoveVideo(VIDEO_ID_1, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor StartMpeg with null mediaManagerProxy branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor StartMpeg when mediaManagerProxy_ creation fails (null ptr)
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_030, TestSize.Level1)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
+
+    bool result = process_->StartMpeg(VIDEO_ID_1, nullptr, 1920, 1080);
+    EXPECT_FALSE(result);
+    process_->RemoveVideo(VIDEO_ID_1, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor StartMpeg with null repository
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor StartMpeg when repository is nullptr
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_031, TestSize.Level1)
+{
+    auto tempRepo = process_->repository_;
+    process_->repository_ = nullptr;
+
+    bool result = process_->StartMpeg(VIDEO_ID_1, nullptr, 1920, 1080);
+    EXPECT_FALSE(result);
+
+    process_->repository_ = tempRepo;
+
+    process_->ReleaseMpeg();
+    EXPECT_NE(process_->repository_, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor GetTempFolderSize with invalid tempPath branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor GetTempFolderSize when tempPath has no /
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_034, TestSize.Level1)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, "invalidPath", VIDEO_TEMP_PATH_2);
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
+
+    auto jobPtr = process_->GetRepository()->GetJobUnLocked(VIDEO_ID_1);
+    ASSERT_NE(jobPtr, nullptr);
+
+    uint64_t size = process_->GetTempFolderSize(jobPtr);
+    EXPECT_EQ(size, 0U);
+    process_->RemoveVideo(VIDEO_ID_1, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor GetTempFolderSize with valid job branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor GetTempFolderSize with valid job and temp path
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_035, TestSize.Level1)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+
+    process_->AddVideo(VIDEO_ID_1, std::move(info));
+    auto jobPtr = process_->GetRepository()->GetJobUnLocked(VIDEO_ID_1);
+    ASSERT_NE(jobPtr, nullptr);
+
+    uint64_t size = process_->GetTempFolderSize(jobPtr);
+    EXPECT_GE(size, 0U);
+    process_->RemoveVideo(VIDEO_ID_1, false);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test DeferredVideoProcessor ReportStorage with normal branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test DeferredVideoProcessor ReportStorage with zero size
+ */
+HWTEST_F(DeferredVideoProcessorUnittest, deferred_video_processor_unittest_036, TestSize.Level1)
+{
+    uint64_t size = process_->GetTempFolderSize(nullptr);
+    EXPECT_EQ(size, 0U);
+    process_->ReportStorage(USER_ID, 0);
+
+    size = process_->GetTempFolderSize(nullptr);
+    EXPECT_EQ(size, 0U);
+
+    process_->ReportStorage(USER_ID, 1024);
+    size = process_->GetTempFolderSize(nullptr);
+    EXPECT_EQ(size, 0U);
+}
 } // DeferredProcessing
 } // CameraStandard
 } // OHOS
