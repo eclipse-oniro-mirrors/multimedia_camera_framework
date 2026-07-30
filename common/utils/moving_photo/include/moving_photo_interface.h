@@ -93,6 +93,13 @@ public:
     virtual void SubmitTask(std::function<void()> task) = 0;
     virtual void ProcessAudioBuffer(int32_t captureId, int64_t middleTimeStamp) = 0;
 };
+
+class AvcodecManualTaskManagerIntf : public RefBase {
+public:
+    virtual ~AvcodecManualTaskManagerIntf() = default;
+    virtual void CreateAvcodecManualTaskManager(wptr<Surface> manualSurface, VideoCodecType type,
+        int32_t colorSpace) = 0;
+};
 } // namespace CameraStandard
 } // namespace OHOS
 #endif

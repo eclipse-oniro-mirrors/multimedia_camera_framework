@@ -16,6 +16,7 @@
 #define AV_CODEC_INTERFACE_H
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 /**
@@ -23,11 +24,30 @@
  * @since 12
  */
 namespace OHOS::CameraStandard {
+enum class ProxyVideoCodecType : int32_t {
+    AVC = 0,
+    HEVC = 1,
+};
+
+enum class CodeCategory : int32_t {
+    HARDWARE = 0,
+    SOFTWARE,
+};
+
+struct CodecCapabilityInfo {
+    ProxyVideoCodecType codecType;
+    std::string mimeType;
+    CodeCategory category;
+    bool isEncoderSupport{false};
+    bool isBframeSupported{false};
+    bool isWaterMarkSupported{false};
+};
 class AVCodecIntf {
 public:
     virtual ~AVCodecIntf() = default;
     virtual bool IsBframeSupported(int32_t videoCodecType) = 0;
     virtual int32_t GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes) = 0;
+    virtual int32_t GetCodecCapabilityInfo(std::vector<CodecCapabilityInfo>& codecCapabilityInfos) = 0;
 };
 }  // namespace OHOS::CameraStandard
 #endif // AV_CODEC_INTERFACE_H

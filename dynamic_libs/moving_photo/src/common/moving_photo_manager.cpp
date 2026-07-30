@@ -89,7 +89,16 @@ void MovingPhotoResource::CreateMovingPhotoVideoCache()
     sptr<AvcodecTaskManagerAdapter> avcodecTaskManagerAdapter =
         static_cast<AvcodecTaskManagerAdapter*>(avcodecTaskManagerProxy->GetTaskManagerAdapter().GetRefPtr());
     CHECK_RETURN_ELOG(avcodecTaskManagerAdapter == nullptr, "avcodec task manager adapter is null");
-    movingPhotoVideoCache_ = new MovingPhotoVideoCache(avcodecTaskManagerAdapter->GetTaskManager());
+
+    sptr<AvcodecManualTaskManagerProxy> avcodecManualTaskManagerProxy =
+        static_cast<AvcodecManualTaskManagerProxy*>(avcodecManualTaskManagerProxy_.GetRefPtr());
+    CHECK_RETURN_ELOG(avcodecManualTaskManagerProxy == nullptr, "avcodec manual task manager proxy is nullptr");
+    sptr<AvcodecManualTaskManagerAdapter> avcodecManualTaskManagerAdapter =
+        static_cast<AvcodecManualTaskManagerAdapter*>(
+        avcodecManualTaskManagerProxy->GetManualTaskManagerAdapter().GetRefPtr());
+    CHECK_RETURN_ELOG(avcodecManualTaskManagerAdapter == nullptr, "avcodec manual task manager adapter is nullptr");
+    movingPhotoVideoCache_ = new MovingPhotoVideoCache(avcodecTaskManagerAdapter->GetTaskManager(),
+        avcodecManualTaskManagerAdapter->GetManualImageTaskManager());
 }
 
 MovingPhotoManager::MovingPhotoManager()
@@ -130,9 +139,15 @@ void MovingPhotoManager::ReleaseStreamStruct(VideoType videoType)
 void MovingPhotoManager::ChangeListenerSetXtStyleType(bool isXtStyleEnabled)
 {
     MEDIA_DEBUG_LOG("MovingPhotoManager::ChangeListenerSetXtStyleType is callled");
-    CHECK_EXECUTE(isXtStyleEnabled, movingPhotoResource_.SetXtStyleType(VideoType::XT_EFFECT_VIDEO));
-    CHECK_EXECUTE(isXtStyleEnabled, xtStyleMovingPhotoResource_.SetXtStyleType(VideoType::XT_ORIGIN_VIDEO));
-    CHECK_EXECUTE(!isXtStyleEnabled, movingPhotoResource_.SetXtStyleType(VideoType::ORIGIN_VIDEO));
+    {
+        std::lock_guard<std::mutex> lock(GetLock(XT_ORIGIN_VIDEO));
+        CHECK_EXECUTE(isXtStyleEnabled, xtStyleMovingPhotoResource_.SetXtStyleType(VideoType::XT_ORIGIN_VIDEO));
+    }
+    {
+        std::lock_guard<std::mutex> lock(GetLock(ORIGIN_VIDEO));
+        CHECK_EXECUTE(isXtStyleEnabled, movingPhotoResource_.SetXtStyleType(VideoType::XT_EFFECT_VIDEO));
+        CHECK_EXECUTE(!isXtStyleEnabled, movingPhotoResource_.SetXtStyleType(VideoType::ORIGIN_VIDEO));
+    }
 }
 
 void MovingPhotoManager::StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId,
@@ -240,10 +255,9 @@ void MovingPhotoManager::Release()
 void MovingPhotoManager::StopMovingPhoto(VideoType type)
 {
     CAMERA_SYNC_TRACE;
-    MEDIA_DEBUG_LOG("MovingPhotoManager::StopMovingPhoto is callled");
+    MEDIA_DEBUG_LOG("MovingPhotoManager::StopMovingPhoto is called");
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
     movingPhotoResource_.StopDrainOut();
-    CHECK_PRINT_ILOG(!audioCapturerSessionProxy_, "audioCapturerSessionProxy_ is nullptr");
     auto audioCaptureSessionProxy = sptr<AudioCapturerSessionIntf>(audioCapturerSessionProxy_);
     std::thread asyncAudioReleaseThread = thread([audioCaptureSessionProxy]() {
         CHECK_PRINT_ELOG(!audioCaptureSessionProxy, "audioCapturerSessionProxy is nullptr");
@@ -319,12 +333,28 @@ void MovingPhotoManager::ExpandMovingPhoto(VideoType videoType, int32_t width, i
         size->width = static_cast<uint32_t>(width);
         size->height = static_cast<uint32_t>(height);
         avcodecTaskManager = AvcodecTaskManagerProxy::CreateAvcodecTaskManagerProxy();
-        CHECK_RETURN_ELOG(avcodecTaskManager == nullptr, "Failed to create AvcodecTaskManagerProxy");
+        CHECK_RETURN_ELOG(avcodecTaskManager == nullptr,
+            "HStreamOperator::avcodecTaskManager is nullptr.");
         avcodecTaskManager->CreateAvcodecTaskManagerForAudio(videoSurface,
             size, streamStruct.audioTaskManagerProxy_, VideoCodecType::VIDEO_ENCODE_TYPE_HEVC, colorspace);
         avcodecTaskManager->SetVideoBufferDuration(preCacheFrameCount_, postCacheFrameCount_);
         streamStruct.avcodecTaskManagerProxy_ = avcodecTaskManager;
     }
+    CreateManualTaskManager(streamStruct, videoSurface, colorspace);
     streamStruct.CreateMovingPhotoVideoCache();
+}
+
+void MovingPhotoManager::CreateManualTaskManager(MovingPhotoResource& streamStruct, sptr<Surface> videoSurface,
+    ColorSpace colorspace)
+{
+    if (!streamStruct.avcodecManualTaskManagerProxy_) {
+        sptr<AvcodecManualTaskManagerIntf> avcodecManualTaskManager =
+            AvcodecManualTaskManagerProxy::CreateAvcodecManualTaskManagerProxy();
+        CHECK_EXECUTE(avcodecManualTaskManager != nullptr, {
+            avcodecManualTaskManager->CreateAvcodecManualTaskManager(videoSurface,
+                VideoCodecType::VIDEO_ENCODE_TYPE_HEVC, colorspace);
+            streamStruct.avcodecManualTaskManagerProxy_ = avcodecManualTaskManager;
+        });
+    }
 }
 }

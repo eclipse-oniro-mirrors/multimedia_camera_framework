@@ -47,7 +47,7 @@ SessionDrainImageCallback::~SessionDrainImageCallback()
 void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
 {
     // LCOV_EXCL_START
-    MEDIA_INFO_LOG("OnDrainImage enter");
+    MEDIA_DEBUG_LOG("OnDrainImage enter");
     {
         std::lock_guard<std::mutex> lock(mutex_);
         frameCacheList_.push_back(frame);
@@ -79,18 +79,16 @@ void SessionDrainImageCallback::OnDrainImageFinish(bool isFinished)
     MEDIA_INFO_LOG("OnDrainImageFinish enter");
     auto movingPhotoVideoCache = movingPhotoVideoCache_.promote();
     CHECK_RETURN_ELOG(movingPhotoVideoCache == nullptr, "movingPhotoVideoCache is null");
-    std::lock_guard<std::mutex> lock(mutex_);
-    movingPhotoVideoCache->GetFrameCachedResult(
-        frameCacheList_,
-        [movingPhotoVideoCache](const std::vector<sptr<FrameRecord>> &lframeRecords,
-                                uint64_t ltimestamp,
-                                int32_t lrotation,
-                                int32_t lcaptureId) {
-            movingPhotoVideoCache->DoMuxerVideo(lframeRecords, ltimestamp, lrotation, lcaptureId);
-        },
-        timestamp_,
-        rotation_,
-        captureId_);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        movingPhotoVideoCache->GetFrameCachedResult(
+            frameCacheList_,
+            [movingPhotoVideoCache](const std::vector<sptr<FrameRecord>>& lframeRecords, uint64_t ltimestamp,
+                int32_t lrotation, int32_t lcaptureId) {
+                movingPhotoVideoCache->DoMuxerVideo(lframeRecords, ltimestamp, lrotation, lcaptureId);
+            },
+            timestamp_, rotation_, captureId_);
+    }
     auto listener = listener_.promote();
     CHECK_RETURN(!listener || !isFinished);
     listener->RemoveDrainImageManager(this);
@@ -118,7 +116,7 @@ MovingPhotoListener::~MovingPhotoListener()
         metaCache_->clear();
     }
     recorderBufferQueue_.Clear();
-    MEDIA_ERR_LOG("HStreamRepeat::LivePhotoListener ~ end");
+    MEDIA_INFO_LOG("MovingPhotoListener dtor completed");
 }
 
 void MovingPhotoListener::RemoveDrainImageManager(sptr<SessionDrainImageCallback> callback)
@@ -165,18 +163,7 @@ void MovingPhotoListener::StopDrainOut()
 void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t timestamp, GraphicTransformType transform)
 {
     MEDIA_DEBUG_LOG("OnBufferArrival timestamp %{public}llu", (long long unsigned)timestamp);
-    if (recorderBufferQueue_.Full()) {
-        MEDIA_DEBUG_LOG("surface_ release surface buffer");
-        sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
-        CHECK_RETURN_ELOG(popFrame == nullptr, "MovingPhotoListener::OnBufferAvailable popFrame is nullptr.");
-        popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
-        sptr<Surface> metaSurface = metaSurface_.promote();
-        if (metaSurface) {
-            popFrame->ReleaseMetaBuffer(metaSurface, true);
-        }
-        MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
-                        popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
-    }
+    ReleaseOldestBufferWhenFull();
     MEDIA_DEBUG_LOG("surface_ push buffer %{public}d x %{public}d, stride is %{public}d",
                     buffer->GetSurfaceBufferWidth(), buffer->GetSurfaceBufferHeight(), buffer->GetStride());
     sptr<FrameRecord> frameRecord = new (std::nothrow) FrameRecord(buffer, timestamp, transform);
@@ -193,6 +180,7 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
             MEDIA_INFO_LOG("ClearCache end");
         }
     }
+    frameRecord->SetManual();
     recorderBufferQueue_.Push(frameRecord);
     auto metaPair =
         metaCache_->find_if([timestamp](const MetaElementType &value) { return value.first == timestamp; });
@@ -200,6 +188,31 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
         MEDIA_DEBUG_LOG("frame has meta");
         frameRecord->SetMetaBuffer(metaPair.value().second);
     }
+    FrameTimestampInfo currentFrameInfo(buffer->GetSeqNum(), timestamp);
+    CheckFrameTimestampJump(prevFrameInfo_, currentFrameInfo);
+    prevFrameInfo_ = currentFrameInfo;
+    NotifyDrainImageCallbacks(frameRecord);
+}
+
+void MovingPhotoListener::ReleaseOldestBufferWhenFull()
+{
+    if (!recorderBufferQueue_.Full()) {
+        return;
+    }
+    MEDIA_DEBUG_LOG("surface_ release surface buffer");
+    sptr<FrameRecord> popFrame = recorderBufferQueue_.Pop();
+    CHECK_RETURN_ELOG(popFrame == nullptr, "MovingPhotoListener::OnBufferAvailable popFrame is nullptr.");
+    popFrame->ReleaseSurfaceBuffer(movingPhotoSurfaceWrapper_);
+    sptr<Surface> metaSurface = metaSurface_.promote();
+    if (metaSurface) {
+        popFrame->ReleaseMetaBuffer(metaSurface, true);
+    }
+    MEDIA_DEBUG_LOG("surface_ release surface buffer: %{public}s, refCount: %{public}d",
+                    popFrame->GetFrameId().c_str(), popFrame->GetSptrRefCount());
+}
+
+void MovingPhotoListener::NotifyDrainImageCallbacks(const sptr<FrameRecord>& frameRecord)
+{
     vector<sptr<SessionDrainImageCallback>> callbacks;
     callbackMap_.Iterate(
         [frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback, sptr<DrainImageManager> manager) {
@@ -244,8 +257,8 @@ uint32_t MovingPhotoListener::FrameAlign(sptr<SessionDrainImageCallback> drainIm
     uint32_t eraseCnt = 0;
     for (auto iter = frameList.begin(); iter != frameList.end() && (*iter)->GetTimeStamp() < brotherRecordInfo->first;
         iter++, eraseCnt++) {
-        MEDIA_INFO_LOG("%{public}d, iter->GetTimeStamp():%{public}" PRIi64
-                       ", brotherRecordInfo->first:%{public}" PRIi64,
+        MEDIA_INFO_LOG(
+            "%{public}d, iter->GetTimeStamp():%{public}" PRId64 ", brotherRecordInfo->first:%{public}" PRId64,
             static_cast<int32_t>(listenerXtStyleType_), (*iter)->GetTimeStamp(), brotherRecordInfo->first);
     }
     CHECK_EXECUTE(eraseCnt, frameList.erase(frameList.begin(), frameList.begin() + eraseCnt));
@@ -295,6 +308,13 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
     CHECK_EXECUTE(!frameList.empty(), frameList.back()->SetCoverFrame());
     std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
     for (const auto& frame : frameList) {
+        auto surfaceBuffer = frame->GetSurfaceBuffer();
+        if (surfaceBuffer) {
+            FrameTimestampInfo currentFrameInfo(surfaceBuffer->GetSeqNum(), frame->GetTimeStamp());
+            CheckFrameTimestampJump(
+                drainImageCallback->GetPrevFrameInfo(), currentFrameInfo, drainImageCallback->GetCaptureId());
+            drainImageCallback->SetPrevFrameInfo(currentFrameInfo);
+        }
         MEDIA_DEBUG_LOG("DrainOutImage enter DrainImage");
         drainImageManager->DrainImage(frame);
     }
@@ -327,7 +347,28 @@ MovingPhotoMetaListener::MovingPhotoMetaListener(wptr<Surface> surface,
 
 MovingPhotoMetaListener::~MovingPhotoMetaListener()
 {
-    MEDIA_ERR_LOG("HStreamRepeat::MovingPhotoMetaListener ~ end");
+    MEDIA_INFO_LOG("MovingPhotoMetaListener dtor is called");
+}
+
+void MovingPhotoListener::CheckFrameTimestampJump(
+    const FrameTimestampInfo& prevFrameInfo, const FrameTimestampInfo& currentFrameInfo, int32_t captureId)
+{
+    CHECK_RETURN(prevFrameInfo.seqNum == 0);
+    auto timestampDiff = currentFrameInfo.timestamp - prevFrameInfo.timestamp;
+    if (IsTimestampInvalid(timestampDiff)) {
+        CHECK_PRINT_ELOG(captureId >= 0,
+            "CheckMP for cId %{public}d: Pre: sN=%{public}u, ts=%{public}llu, Cur: sN=%{public}u, "
+            "ts=%{public}llu, d=%{public}lluns",
+            captureId, prevFrameInfo.seqNum, static_cast<unsigned long long>(prevFrameInfo.timestamp),
+            currentFrameInfo.seqNum, static_cast<unsigned long long>(currentFrameInfo.timestamp),
+            static_cast<unsigned long long>(timestampDiff));
+        CHECK_PRINT_ELOG(captureId < 0,
+            "CheckMP: Pre: sN=%{public}u, ts=%{public}llu,Cur: sN=%{public}u, ts=%{public}llu, "
+            "d=%{public}lluns",
+            prevFrameInfo.seqNum, static_cast<unsigned long long>(prevFrameInfo.timestamp), currentFrameInfo.seqNum,
+            static_cast<unsigned long long>(currentFrameInfo.timestamp),
+            static_cast<unsigned long long>(timestampDiff));
+    }
 }
 // LCOV_EXCL_STOP
 } // namespace OHOS::CameraStandard

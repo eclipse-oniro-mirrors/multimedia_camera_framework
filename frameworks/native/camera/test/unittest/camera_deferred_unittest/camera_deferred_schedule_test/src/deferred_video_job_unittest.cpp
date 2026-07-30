@@ -655,6 +655,187 @@ HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_016, TestSize.Lev
 
 /*
  * Feature: Framework
+ * Function: Test GetInputFd with empty srcPaths branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetInputFd returns nullptr when srcPaths is empty
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_017, TestSize.Level0)
+{
+    std::vector<std::string> emptySrcPaths;
+    auto info = std::make_unique<VideoInfo>(emptySrcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    auto job = std::make_shared<DeferredVideoJob>(VIDEO_ID_1, std::move(info));
+    ASSERT_NE(job, nullptr);
+
+    auto result = job->GetInputFd();
+    EXPECT_EQ(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetInputFd with invalid path branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetInputFd continues to next path when realpath fails on invalid path
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_018, TestSize.Level0)
+{
+    std::vector<std::string> invalidSrcPaths = {"/nonexistent/path/test.mp4"};
+    auto info = std::make_unique<VideoInfo>(invalidSrcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2);
+    auto job = std::make_shared<DeferredVideoJob>(VIDEO_ID_1, std::move(info));
+    ASSERT_NE(job, nullptr);
+
+    auto result = job->GetInputFd();
+    EXPECT_EQ(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetInputFd with valid path branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetInputFd returns valid DpsFd when a valid srcPath exists
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_019, TestSize.Level0)
+{
+    auto job = CreateTestDeferredVideoJobPtr(VIDEO_ID_1, VideoJobState::NONE);
+    ASSERT_NE(job, nullptr);
+
+    auto result = job->GetInputFd();
+    EXPECT_NE(result, nullptr);
+    EXPECT_GE(result->GetFd(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetInputFd with cached path branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetInputFd returns cached srcFd_ on second call with same path
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_020, TestSize.Level0)
+{
+    auto job = CreateTestDeferredVideoJobPtr(VIDEO_ID_2, VideoJobState::NONE);
+    ASSERT_NE(job, nullptr);
+
+    auto firstResult = job->GetInputFd();
+    EXPECT_NE(firstResult, nullptr);
+
+    auto secondResult = job->GetInputFd();
+    EXPECT_NE(secondResult, nullptr);
+    EXPECT_EQ(firstResult.get(), secondResult.get());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetMovieFd with empty moviePath branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetMovieFd returns nullptr when moviePath is empty
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_021, TestSize.Level0)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, "");
+    auto job = std::make_shared<DeferredVideoJob>(VIDEO_ID_1, std::move(info));
+    ASSERT_NE(job, nullptr);
+
+    auto result = job->GetMovieFd();
+    EXPECT_EQ(result, nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetMovieFd with valid moviePath branch
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetMovieFd returns valid DpsFd when moviePath is valid
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_022, TestSize.Level0)
+{
+    std::vector<std::string> srcPaths = {VIDEO_PATH};
+    auto info = std::make_unique<VideoInfo>(srcPaths, VIDEO_TEMP_PATH_1, VIDEO_TEMP_PATH_2, VIDEO_PATH);
+    auto job = std::make_shared<DeferredVideoJob>(VIDEO_ID_1, std::move(info));
+    ASSERT_NE(job, nullptr);
+
+    auto result = job->GetMovieFd();
+    EXPECT_NE(result, nullptr);
+    EXPECT_GE(result->GetFd(), 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoJobQueue::Swap with out-of-range indices
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Swap returns early when indices are out of range
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_023, TestSize.Level0)
+{
+    DeferredVideoJobPtr job = CreateTestDeferredVideoJobPtr(VIDEO_ID_1, VideoJobState::NONE);
+    jobQueue_->Push(job);
+    EXPECT_EQ(jobQueue_->GetSize(), 1);
+
+    // Swap with out-of-range index should not crash
+    jobQueue_->Swap(0, 100);
+    EXPECT_EQ(jobQueue_->GetSize(), 1);
+    auto top = jobQueue_->Peek();
+    EXPECT_EQ(top, job);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test VideoJobQueue::Swap with valid indices
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Swap correctly swaps two elements and updates indexMap_
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_024, TestSize.Level0)
+{
+    DeferredVideoJobPtr job1 = CreateTestDeferredVideoJobPtr(VIDEO_ID_1, VideoJobState::NONE);
+    DeferredVideoJobPtr job2 = CreateTestDeferredVideoJobPtr(VIDEO_ID_2, VideoJobState::NONE);
+    
+    jobQueue_->Push(job1);
+    jobQueue_->Push(job2);
+    EXPECT_EQ(jobQueue_->GetSize(), 2);
+    EXPECT_EQ(jobQueue_->Peek(), job1);
+
+    jobQueue_->Swap(0, 1);
+    EXPECT_EQ(jobQueue_->GetSize(), 2);
+    EXPECT_EQ(jobQueue_->Peek(), job2);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UpdateTime via SetJobPriority with HIGH priority
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test that setting priority to HIGH triggers UpdateTime, changing createTime_
+ */
+HWTEST_F(DeferredVideoJobUnitTest, deferred_video_job_unittest_025, TestSize.Level0)
+{
+    auto job = CreateTestDeferredVideoJobPtr(VIDEO_ID_1, VideoJobState::NONE);
+    ASSERT_NE(job, nullptr);
+
+    auto oldPriority = job->GetCurPriority();
+    EXPECT_EQ(oldPriority, JobPriority::NORMAL);
+
+    bool changed = job->SetJobPriority(JobPriority::HIGH);
+    EXPECT_TRUE(changed);
+    EXPECT_EQ(job->GetCurPriority(), JobPriority::HIGH);
+}
+
+/*
+ * Feature: Framework
  * Function: Test functions of class VideoJobRepository in AddVideoJob.
  * SubFunction: NA
  * FunctionPoints: NA

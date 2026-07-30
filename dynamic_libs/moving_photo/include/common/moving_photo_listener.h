@@ -23,11 +23,21 @@
 #include "surface.h"
 #include "fixed_size_list.h"
 #include "blocking_queue.h"
+#include "avcodec/video_encoder.h"
 
 namespace OHOS::CameraStandard {
 class SessionDrainImageCallback;
 using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 using OnceRecordTimeInfo = std::pair<int64_t, int64_t>;
+
+struct FrameTimestampInfo {
+    uint32_t seqNum;
+    int64_t timestamp;
+
+    FrameTimestampInfo() : seqNum(0), timestamp(0) {}
+    FrameTimestampInfo(uint32_t seq, int64_t ts) : seqNum(seq), timestamp(ts) {}
+};
+
 class MovingPhotoListener : public MovingPhotoSurfaceWrapper::SurfaceBufferListener {
 public:
     explicit MovingPhotoListener(sptr<MovingPhotoSurfaceWrapper> surfaceWrapper, wptr<Surface> metaSurface,
@@ -42,6 +52,12 @@ public:
     void SetClearFlag();
     uint32_t FrameAlign(sptr<SessionDrainImageCallback> drainImageCallback, std::vector<sptr<FrameRecord>>& frameList);
     bool RefillMeta(sptr<SurfaceBuffer> buffer, int64_t timestamp);
+    void CheckFrameTimestampJump(
+        const FrameTimestampInfo& prevFrameInfo, const FrameTimestampInfo& currentFrameInfo, int32_t captureId = -1);
+    inline bool IsTimestampInvalid(int64_t timestampDiff)
+    {
+        return timestampDiff <= 0 || std::abs(timestampDiff) > TIMESTAMP_DIFF_MAX;
+    }
 
     inline int64_t GetQueueFrontTimestamp()
     {
@@ -84,6 +100,8 @@ public:
     }
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
 private:
+    void NotifyDrainImageCallbacks(const sptr<FrameRecord>& frameRecord);
+    void ReleaseOldestBufferWhenFull();
     VideoType listenerXtStyleType_ = VideoType::ORIGIN_VIDEO;
     wptr<Surface> metaSurface_;
     shared_ptr<FixedSizeList<MetaElementType>> metaCache_;
@@ -97,6 +115,7 @@ private:
     wptr<MovingPhotoListener> brotherListener_ = nullptr;
     mutex brotherListenerMutex_;
     mutex xtTypeMutex_;
+    FrameTimestampInfo prevFrameInfo_;
 };
 
 class MovingPhotoMetaListener : public IBufferConsumerListener {
@@ -126,6 +145,18 @@ public:
     {
         return timestamp_;
     }
+    inline int32_t GetCaptureId()
+    {
+        return captureId_;
+    }
+    inline FrameTimestampInfo& GetPrevFrameInfo()
+    {
+        return prevFrameInfo_;
+    }
+    inline void SetPrevFrameInfo(FrameTimestampInfo prevFrameInfo)
+    {
+        prevFrameInfo_ = prevFrameInfo;
+    }
 private:
     void OnDrainFrameRecord(sptr<FrameRecord> frame);
     std::mutex mutex_;
@@ -135,6 +166,7 @@ private:
     uint64_t timestamp_;
     int32_t rotation_;
     int32_t captureId_;
+    FrameTimestampInfo prevFrameInfo_;
 };
 } // namespace OHOS::CameraStandard
 #endif // OHOS_CAMERA_MOVING_PHOTO_LISTENER_H

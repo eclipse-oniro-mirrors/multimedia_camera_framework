@@ -27,6 +27,8 @@ public:
     ~AVCodecProxy();
     bool IsBframeSupported(int32_t videoCodecType) override;
     int32_t GetSupportedVideoCodecTypes(std::vector<int32_t>& supportedVideoCodecTypes) override;
+    int32_t GetCodecCapabilityInfo(std::vector<CodecCapabilityInfo>& codecCapabilityInfos) override;
+    static void FreeAVCodecDynamiclibDelayed();
 private:
     std::shared_ptr<Dynamiclib> avcodecLib_ = {nullptr};
     std::shared_ptr<AVCodecIntf> avcodecIntf_ = {nullptr};

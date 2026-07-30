@@ -58,5 +58,19 @@ int32_t AVCodecProxy::GetSupportedVideoCodecTypes(std::vector<int32_t>& supporte
     CHECK_RETURN_RET_ELOG(avcodecIntf_ == nullptr, MEDIA_ERR, "avcodecIntf_ is nullptr");
     return avcodecIntf_->GetSupportedVideoCodecTypes(supportedVideoCodecTypes);
 }
+
+void AVCodecProxy::FreeAVCodecDynamiclibDelayed()
+{
+    MEDIA_DEBUG_LOG("[DL] %{public}s is called", __FUNCTION__);
+    CameraDynamicLoader::FreeDynamicLibDelayed(MOVING_PHOTO_SO);
+}
+ 
+int32_t AVCodecProxy::GetCodecCapabilityInfo(std::vector<CodecCapabilityInfo>& codecCapabilityInfos)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_DEBUG_LOG("GetCodecCapabilityInfo is called");
+    CHECK_RETURN_RET_ELOG(avcodecIntf_ == nullptr, MEDIA_ERR, "avcodecIntf_ is nullptr");
+    return avcodecIntf_->GetCodecCapabilityInfo(codecCapabilityInfos);
+}
 } // namespace CameraStandard
 } // namespace OHOS
