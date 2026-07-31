@@ -16098,5 +16098,610 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_245, TestSize.Level0)
     input->Release();
     session->Release();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test UnlockFocusTracking when session is not committed
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnlockFocusTracking returns SESSION_NOT_CONFIG when session not committed
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_001, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    int32_t ret = session->UnlockFocusTracking();
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnlockFocusTracking when device does not support lock focus tracking
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnlockFocusTracking returns SUCCESS when device does not support lock focus tracking
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_002, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    int32_t ret = session->UnlockFocusTracking();
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnlockFocusTracking when LockForControl is called and device supports
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnlockFocusTracking with LockForControl returns SUCCESS on normal path
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_003, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    bool isSupported = false;
+    int32_t supportRet = session->IsLockFocusTrackingSupported(isSupported);
+    if (isSupported) {
+        session->LockForControl();
+        EXPECT_NE(session->changedMetadata_, nullptr);
+        int32_t ret = session->UnlockFocusTracking();
+        EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+        session->UnlockForControl();
+    }
+    EXPECT_EQ(supportRet, CameraErrorCode::SUCCESS);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test UnlockFocusTracking normal path
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test UnlockFocusTracking with changedMetadata set returns SUCCESS
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_004, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    bool isSupported = false;
+    int32_t supportRet = session->IsLockFocusTrackingSupported(isSupported);
+    if (isSupported) {
+        session->LockForControl();
+        EXPECT_NE(session->changedMetadata_, nullptr);
+        int32_t ret = session->UnlockFocusTracking();
+        EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+        session->UnlockForControl();
+    }
+    EXPECT_EQ(supportRet, CameraErrorCode::SUCCESS);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsSaturationSupported when session is not configured
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsSaturationSupported returns error when session is not configured
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_005, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    bool isSupported = true;
+    int32_t ret = session->IsSaturationSupported(isSupported);
+
+    EXPECT_NE(CameraErrorCode::SUCCESS, ret);
+    EXPECT_FALSE(isSupported);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsSaturationSupported when session is committed
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsSaturationSupported returns SUCCESS with meaningful isSupported value
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_006, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    bool isSupported = true;
+    int32_t ret = session->IsSaturationSupported(isSupported);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOISModeSupported with invalid oisMode (less than OFF)
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOISModeSupported with oisMode < OIS_MODE_OFF returns SUCCESS with false
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_007, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    bool isSupported = true;
+    int32_t ret = session->IsOISModeSupported(static_cast<OISMode>(-1), isSupported);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+    EXPECT_FALSE(isSupported);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOISModeSupported with invalid oisMode (greater than CUSTOM)
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOISModeSupported with oisMode > OIS_MODE_CUSTOM returns SUCCESS with false
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_008, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    bool isSupported = true;
+    int32_t ret = session->IsOISModeSupported(static_cast<OISMode>(static_cast<int32_t>(OIS_MODE_CUSTOM) + 1),
+        isSupported);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+    EXPECT_FALSE(isSupported);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOISModeSupported with session not committed
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOISModeSupported returns SESSION_NOT_CONFIG
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_009, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    bool isSupported = true;
+    int32_t ret = session->IsOISModeSupported(OIS_MODE_AUTO, isSupported);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+    EXPECT_FALSE(isSupported);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsOISModeSupported with valid oisMode when session committed
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsOISModeSupported exercises ParseSupportedOISModes through valid path
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_010, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    bool isSupported = false;
+    int32_t ret = session->IsOISModeSupported(OIS_MODE_AUTO, isSupported);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+
+    ret = session->IsOISModeSupported(OIS_MODE_OFF, isSupported);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+
+    ret = session->IsOISModeSupported(OIS_MODE_CUSTOM, isSupported);
+    EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedOISBiasRangeAndStep with session not committed
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedOISBiasRangeAndStep returns SESSION_NOT_CONFIG
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_011, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<float> biasRange;
+    float step = 0.0f;
+    int32_t ret = session->GetSupportedOISBiasRangeAndStep(OIS_AXES_PITCH, biasRange, step);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedOISBiasRangeAndStep with invalid oisAxis
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedOISBiasRangeAndStep with axis >= OIS_AXES_ROLL clamps to OIS_AXES_PITCH
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_012, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    std::vector<float> biasRange;
+    float step = 0.0f;
+    int32_t ret = session->GetSupportedOISBiasRangeAndStep(OIS_AXES_ROLL, biasRange, step);
+    EXPECT_EQ(ret, CameraErrorCode::OPERATION_NOT_ALLOWED);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedOISBiasRangeAndStep with valid pitch axis
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedOISBiasRangeAndStep exercises ParseSupportedOISBiasRangeAndStep
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_013, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    std::vector<float> biasRange;
+    float step = 0.0f;
+    int32_t ret = session->GetSupportedOISBiasRangeAndStep(OIS_AXES_PITCH, biasRange, step);
+    EXPECT_EQ(ret, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    if (biasRange.size() >= 2) {
+        EXPECT_GE(biasRange[1], biasRange[0]);
+        EXPECT_NE(step, 0.0f);
+    }
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test GetSupportedOISBiasRangeAndStep with valid yaw axis
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test GetSupportedOISBiasRangeAndStep with OIS_AXES_YAW exercises different axis
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_014, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    std::vector<float> biasRange;
+    float step = 0.0f;
+    int32_t ret = session->GetSupportedOISBiasRangeAndStep(OIS_AXES_YAW, biasRange, step);
+    EXPECT_EQ(ret, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    if (biasRange.size() >= 2) {
+        EXPECT_GE(biasRange[1], biasRange[0]);
+        EXPECT_NE(step, 0.0f);
+    }
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test LockFocusTracking with normal path
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test LockFocusTracking normal execution with valid input
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_015, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    bool isSupported = false;
+    int32_t supportRet = session->IsLockFocusTrackingSupported(isSupported);
+    if (isSupported) {
+        session->LockForControl();
+        Point point = {0.5, 0.5};
+        int32_t ret = session->LockFocusTracking(point);
+        EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+
+        ret = session->UnlockFocusTracking();
+        EXPECT_EQ(CameraErrorCode::SUCCESS, ret);
+        session->UnlockForControl();
+    }
+    EXPECT_EQ(supportRet, CameraErrorCode::SUCCESS);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test LockFocusTracking with invalid point
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test LockFocusTracking returns PARAMETER_ERROR for invalid point
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_016, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), CAMERA_OK);
+    EXPECT_EQ(session->AddInput(input), CAMERA_OK);
+    EXPECT_EQ(session->AddOutput(preview), CAMERA_OK);
+    EXPECT_EQ(session->CommitConfig(), CAMERA_OK);
+
+    Point invalidPoint1 = {-0.1, 0.5};
+    int32_t ret = session->LockFocusTracking(invalidPoint1);
+    EXPECT_EQ(CameraErrorCode::PARAMETER_ERROR, ret);
+
+    Point invalidPoint2 = {0.5, -0.1};
+    ret = session->LockFocusTracking(invalidPoint2);
+    EXPECT_EQ(CameraErrorCode::PARAMETER_ERROR, ret);
+
+    Point invalidPoint3 = {1.1, 0.5};
+    ret = session->LockFocusTracking(invalidPoint3);
+    EXPECT_EQ(CameraErrorCode::PARAMETER_ERROR, ret);
+
+    Point invalidPoint4 = {0.5, 1.1};
+    ret = session->LockFocusTracking(invalidPoint4);
+    EXPECT_EQ(CameraErrorCode::PARAMETER_ERROR, ret);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test LockFocusTracking when not committed
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test LockFocusTracking returns SESSION_NOT_CONFIG when not committed
+ */
+HWTEST_F(CaptureSessionUnitTest, capture_session_ext_unittest_017, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    Point point = {0.5, 0.5};
+    int32_t ret = session->LockFocusTracking(point);
+    EXPECT_EQ(CameraErrorCode::SESSION_NOT_CONFIG, ret);
+}
 }
 }
