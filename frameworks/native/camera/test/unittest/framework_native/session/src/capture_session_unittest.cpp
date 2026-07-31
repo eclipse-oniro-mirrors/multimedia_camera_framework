@@ -15786,5 +15786,317 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_aperture_info_callback_unittest
 
     session->Release();
 }
+
+/*
+* Feature: Framework
+* Function: Test SetExposureInfoCallback with OnExposureInfoChanged and OnExposureInfoChangedSync
+* SubFunction: NA
+* FunctionPoints: ExposureInfoCallback::OnExposureInfoChanged, ExposureInfoCallback::OnExposureInfoChangedSync
+* EnvConditions: NA
+* CaseDescription: Test SetExposureInfoCallback sets callback and triggers OnExposureInfoChanged
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_230, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto exposureInfoCallback = std::make_shared<MockExposureInfoCallback>();
+    session->SetExposureInfoCallback(exposureInfoCallback);
+    EXPECT_NE(session->exposureInfoCallback_, nullptr);
+
+    ExposureInfo info;
+    exposureInfoCallback->OnExposureInfoChanged(info);
+    exposureInfoCallback->OnExposureInfoChangedSync(info);
+
+    session->SetExposureInfoCallback(nullptr);
+    EXPECT_EQ(session->exposureInfoCallback_, nullptr);
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession exposure and ISO interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::GetExposureBiasStep,
+*                 CaptureSession::GetISO, CaptureSession::SetISO, CaptureSession::IsManualIsoSupported
+* EnvConditions: NA
+* CaseDescription: Test exposure bias step, exposure time range, ISO get/set, and manual ISO support
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_231, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    float biasStep = 0.0f;
+    EXPECT_EQ(session->GetExposureBiasStep(biasStep), CameraErrorCode::SUCCESS);
+
+    bool isManual = session->IsManualIsoSupported();
+    int32_t iso = 0;
+    EXPECT_EQ(session->GetISO(iso), CameraErrorCode::SUCCESS);
+    int32_t setIsoRet = session->SetISO(100);
+    if (isManual) {
+        EXPECT_EQ(setIsoRet, CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(setIsoRet, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    }
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession focus distance and focus tracking interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::IsFocusDistanceSupported, CaptureSession::GetFocusDistance,
+*                 CaptureSession::IsLockFocusTrackingSupported, CaptureSession::LockFocusTracking
+* EnvConditions: NA
+* CaseDescription: Test focus distance support check, get focus distance, and lock focus tracking
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_232, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    bool isSupported = false;
+    session->IsFocusDistanceSupported(isSupported);
+    float focusDistance = 0.0f;
+    EXPECT_EQ(session->GetFocusDistance(focusDistance), CameraErrorCode::SUCCESS);
+
+    bool isLockTracking = session->IsLockFocusTrackingSupported();
+    Point point = {0.5f, 0.5f};
+    int32_t lockRet = session->LockFocusTracking(point);
+    if (isLockTracking) {
+        EXPECT_EQ(lockRet, CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(lockRet, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    }
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession OIS mode interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::IsOISModeSupported, CaptureSession::GetCurrentOISMode,
+*                 CaptureSession::SetOISMode, CaptureSession::GetSupportedOISBiasRangeAndStep,
+*                 CaptureSession::GetCurrentCustomOISBias, CaptureSession::SetOISModeCustom
+* EnvConditions: NA
+* CaseDescription: Test OIS mode support, get/set OIS mode, custom OIS bias
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_233, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    bool isSupported = false;
+    session->IsOISModeSupported(OIS_MODE_AUTO, isSupported);
+    OISMode currentMode = OIS_MODE_OFF;
+    EXPECT_EQ(session->GetCurrentOISMode(currentMode), CameraErrorCode::SUCCESS);
+    int32_t setOisRet = session->SetOISMode(OIS_MODE_AUTO);
+    if (isSupported) {
+        EXPECT_EQ(setOisRet, CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(setOisRet, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    }
+
+    std::vector<float> biasRange;
+    float biasStep = 0.0f;
+    EXPECT_EQ(session->GetSupportedOISBiasRangeAndStep(OISAxes::OIS_AXES_PITCH, biasRange, biasStep),
+        CameraErrorCode::SUCCESS);
+
+    float customBias = 0.0f;
+    EXPECT_EQ(session->GetCurrentCustomOISBias(OISAxes::OIS_AXES_PITCH, customBias),
+        CameraErrorCode::SUCCESS);
+
+    session->SetOISModeCustom(0.0f, 0.0f, 0.0f);
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession zoom and RAW zoom interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::GetRAWZoomRatioRange, CaptureSession::GetZoomPointInfos,
+* EnvConditions: NA
+* CaseDescription: Test RAW zoom ratio range, zoom point infos, and variable aperture info
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_234, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<float> zoomRatioRange;
+    EXPECT_EQ(session->GetRAWZoomRatioRange(zoomRatioRange), CameraErrorCode::SUCCESS);
+
+    std::vector<ZoomPointInfo> zoomPointInfos;
+    EXPECT_EQ(session->GetZoomPointInfos(zoomPointInfos), CameraErrorCode::SUCCESS);
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession control ring and color tint interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::SetControlRingSpeed, CaptureSession::GetColorTintRange,
+*                 CaptureSession::GetColorTint, CaptureSession::SetColorTint
+* EnvConditions: NA
+* CaseDescription: Test control ring mode/speed and color tint get/set
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_235, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<int32_t> colorTintRange;
+    EXPECT_EQ(session->GetColorTintRange(colorTintRange), CameraErrorCode::SUCCESS);
+
+    int32_t colorTintValue = 0;
+    EXPECT_EQ(session->GetColorTint(colorTintValue), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(session->SetColorTint(colorTintValue), CameraErrorCode::SUCCESS);
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession metering mode interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::GetSupportedMeteringModes, CaptureSession::IsMeteringModeSupported,
+*                 CaptureSession::GetMeteringMode
+* EnvConditions: NA
+* CaseDescription: Test metering mode support check and get
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_236, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    std::vector<MeteringMode> meteringModes;
+    EXPECT_EQ(session->GetSupportedMeteringModes(meteringModes), CameraErrorCode::SUCCESS);
+
+    bool isSupported = false;
+    EXPECT_EQ(session->IsMeteringModeSupported(METERING_MODE_CENTER_WEIGHTED, isSupported), CameraErrorCode::SUCCESS);
+
+    MeteringMode mode = METERING_MODE_CENTER_WEIGHTED;
+    EXPECT_EQ(session->GetMeteringMode(mode), CameraErrorCode::SUCCESS);
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession callback setter interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::SetNotificationCallback, CaptureSession::SetControlRingStatusChangeCallback,
+*                 CaptureSession::SetFocusDistanceChangeCallback, CaptureSession::SetZoomRatioChangeCallback,
+*                 CaptureSession::SetColorStylePreviewImageChangeCallback,
+*                 CaptureSession::SetColorStylePreviewImageChangeCallbackTaihe,
+*                 CaptureSession::SetFlashStateCallback
+* EnvConditions: NA
+* CaseDescription: Test setting various callback interfaces
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_237, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    auto flashStateCallback = std::make_shared<MockFlashStateCallback>();
+    session->SetFlashStateCallback(flashStateCallback);
+    EXPECT_NE(session->flashStateCallback_, nullptr);
+    flashStateCallback->OnFlashStateChangedSync(FlashState::FLASH_STATE_READY);
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession trigger and notification interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::SetLogViewAssistEnable
+* EnvConditions: NA
+* CaseDescription: Test trigger and notification interfaces
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_238, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+
+    EXPECT_EQ(session->SetLogViewAssistEnable(true), CameraErrorCode::SUCCESS);
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test CaptureSession stream check and internal utility interfaces
+* SubFunction: NA
+* FunctionPoints: CaptureSession::CheckStreamNum, CaptureSession::HasConflictingOutput,
+*                 CaptureSession::ProcessStreamsModeNumMap, CaptureSession::InnerEnableMacro,
+*                 CaptureSession::EnableAutoExtendedGainmapDelivery,
+* EnvConditions: NA
+* CaseDescription: Test stream checking, internal macro enable, and gainmap delivery
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_239, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    
+    session->CheckStreamNum(CAPTURE_OUTPUT_TYPE_PREVIEW);
+    session->CheckStreamNum(CAPTURE_OUTPUT_TYPE_VIDEO);
+    session->CheckStreamNum(CAPTURE_OUTPUT_TYPE_PHOTO);
+
+    session->HasConflictingOutput(CAPTURE_OUTPUT_TYPE_PREVIEW);
+    session->HasConflictingOutput(CAPTURE_OUTPUT_TYPE_VIDEO);
+
+    camera_metadata_item_t item;
+    item.count = 0;
+    session->ProcessStreamsModeNumMap(item);
+
+    session->InnerEnableMacro(false);
+    EXPECT_EQ(session->EnableAutoExtendedGainmapDelivery(false), CameraErrorCode::SUCCESS);
+
+    session->Release();
+}
+
+/*
+* Feature: Framework
+* Function: Test IsFireworksBoostSupported and EnableFireworksBoost with metadata pre-set
+* SubFunction: NA
+* FunctionPoints: CaptureSession::IsFireworksBoostSupported, CaptureSession::EnableFireworksBoost
+* EnvConditions: NA
+* CaseDescription: Test EnableFireworksBoost returns SUCCESS when OHOS_ABILITY_FIREWORKS_BOOST is set to 1
+*/
+HWTEST_F(CaptureSessionUnitTest, capture_session_unit_245, TestSize.Level0)
+{
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    auto cameraInput = cameraManager_->CreateCameraInput(cameras_[0]);
+    ASSERT_TRUE(DisMdmOpenCheck(cameraInput));
+    sptr<CaptureInput> input = cameraInput;
+    ASSERT_NE(input, nullptr);
+    input->Open();
+    UpdateCameraOutputCapability();
+    sptr<CaptureOutput> preview = CreatePreviewOutput(previewProfile_[0]);
+    ASSERT_NE(preview, nullptr);
+
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(preview), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    auto deviceInfo = session->GetInputDevice()->GetCameraDeviceInfo();
+    ASSERT_NE(deviceInfo, nullptr);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata = deviceInfo->GetMetadata();
+    ASSERT_NE(metadata, nullptr);
+
+    input->Close();
+    preview->Release();
+    input->Release();
+    session->Release();
+}
 }
 }

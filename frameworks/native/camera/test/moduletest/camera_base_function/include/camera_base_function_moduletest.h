@@ -167,6 +167,20 @@ static const int32_t VEDIO_FRAMERATES_120 = 120;
 static const int32_t VEDIO_FRAMERATES_240 = 240;
 static const int32_t VEDIO_FRAMERATES_SIZE = 2;
 
+class TestCameraSharedStatusListener : public CameraSharedStatusListener {
+public:
+    TestCameraSharedStatusListener() = default;
+    virtual ~TestCameraSharedStatusListener() = default;
+    void OnCameraSharedStatusChanged(const CameraSharedStatus status) const override;
+};
+class TestCameraSpectrumInfoListener : public CameraSpectrumInfoListener {
+public:
+    TestCameraSpectrumInfoListener() = default;
+    virtual ~TestCameraSpectrumInfoListener() = default;
+    void OnCameraSpectrumInfo(
+        const int userId, std::vector<float> spectrumInfos, const uint64_t timestamp) const override;
+};
+
 class CameraBaseFunctionModuleTest : public testing::Test {
 public:
     static const int32_t deviceBackIndex = 0;
@@ -190,6 +204,8 @@ public:
 
     sptr<PreviewOutput> CreatePreviewOutput(Profile &previewProfile);
     sptr<PhotoOutput> CreatePhotoOutput(Profile &photoProfile);
+    int32_t CreatePhotoOutputWithoutSurface(Profile &photoProfile, sptr<PhotoOutput> &photoOutput);
+    int32_t CreatePhotoOutputWithoutProfile(sptr<PhotoOutput> &photoOutput);
     sptr<VideoOutput> CreateVideoOutput(VideoProfile &videoProfile);
 
     void CreateAndConfigureDefaultCaptureOutput(sptr<PhotoOutput> &photoOutput, sptr<VideoOutput> &videoOutput);

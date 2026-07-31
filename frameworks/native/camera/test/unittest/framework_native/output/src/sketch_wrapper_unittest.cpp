@@ -277,16 +277,13 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_004, TestSize.Le
 HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Level0)
 {
     std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    ASSERT_FALSE(cameras.empty());
     Size previewSize = { .width = 1440, .height = 1080 };
     sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
     sptr<Surface> surface = Surface::CreateSurfaceAsConsumer();
     ASSERT_NE(input, nullptr);
     sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
     camInput->SetCameraSettings(camInput->GetCameraSettings());
-    if (camInput->GetCameraDevice()) {
-        camInput->GetCameraDevice()->SetMdmCheck(false);
-        camInput->GetCameraDevice()->Open();
-    }
 
     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
     ASSERT_NE(session, nullptr);
@@ -328,6 +325,20 @@ HWTEST_F(CameraSketchWrapperOutputUnit, sketch_wrapper_unittest_005, TestSize.Le
     EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode2, 200.0f), -1.0f);
     EXPECT_EQ(sketchWrapper->GetSketchReferenceFovRatio(illegalFeaturesMode2, 100.0f), -1.0f);
     sketchWrapper->UpdateSketchReferenceFovRatio(item);
+
+    // Verify UpdateSketchReferenceFovRatio effect: since item does not contain OHOS_ABILITY_SKETCH_REFERENCE_FOV_RATIO,
+    // the global map should remain unchanged
+    size_t mapSizeBefore = SketchWrapper::g_sketchReferenceFovRatioMap_.size();
+    sketchWrapper->UpdateSketchReferenceFovRatio(item);
+    size_t mapSizeAfter = SketchWrapper::g_sketchReferenceFovRatioMap_.size();
+    // Fixed: assert UpdateSketchReferenceFovRatio has no effect with invalid item
+    EXPECT_EQ(mapSizeAfter, mapSizeBefore);
+
+    // Clean up global map to avoid affecting other test cases
+    SketchWrapper::g_sketchReferenceFovRatioMap_.clear();
+
+    delete sketchWrapper;
+    sketchWrapper = nullptr;
 
     EXPECT_EQ(preview->Release(), 0);
     EXPECT_EQ(input->Release(), 0);

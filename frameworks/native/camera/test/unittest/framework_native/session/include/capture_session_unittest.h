@@ -55,6 +55,23 @@ public:
     }
 };
 
+class MockExposureInfoCallback : public OHOS::CameraStandard::ExposureInfoCallback {
+public:
+    void OnExposureInfoChanged(ExposureInfo info) override
+    {
+        MEDIA_DEBUG_LOG("MockExposureInfoCallback::OnExposureInfoChanged");
+    }
+    void OnExposureInfoChangedSync(ExposureInfo info) override
+    {
+        MEDIA_DEBUG_LOG("MockExposureInfoCallback::OnExposureInfoChangedSync");
+    }
+};
+
+class MockFlashStateCallback : public OHOS::CameraStandard::FlashStateCallback {
+public:
+    void OnFlashStateChangedSync(FlashState info) override {}
+};
+
 class AppMacroStatusCallback : public MacroStatusCallback {
 public:
     void OnMacroStatusChanged(MacroStatus status)
