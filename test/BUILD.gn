@@ -116,6 +116,12 @@ group("camera_fuzz_test") {
       "fuzztest/videopostprocessor_fuzzer:fuzztest",
       "fuzztest/videoprocesscommand_fuzzer:fuzztest",
       "fuzztest/videostrategycenter_fuzzer:fuzztest",
+      "fuzztest/cameratypes_fuzzer:fuzztest",
+      "fuzztest/imageinfo_fuzzer:fuzztest",
+      "fuzztest/photoprocessresult_fuzzer:fuzztest",
+      "fuzztest/photostrategycenter_fuzzer:fuzztest",
+      "fuzztest/streamdepthdatastub_fuzzer:fuzztest",
+      "fuzztest/streammetadatacallbackproxy_fuzzer:fuzztest",
     ]
   }
 
