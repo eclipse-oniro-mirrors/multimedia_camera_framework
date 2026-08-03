@@ -28,6 +28,7 @@ public:
 static void CameraManagerFuzzTest1(FuzzedDataProvider& fdp);
 static void CameraManagerFuzzTest2(FuzzedDataProvider& fdp);
 static void CameraManagerFuzzTest3(FuzzedDataProvider& fdp);
+static void CameraManagerFuzzTest4(FuzzedDataProvider& fdp);
 };
 
 class IDeferredPhotoProcSessionCallbackFuzz : public IDeferredPhotoProcSessionCallback {
@@ -47,7 +48,7 @@ public:
 
 class ITorchServiceCallbackFuzz : public ITorchServiceCallback {
 public:
-    int32_t OnTorchStatusChange(const TorchStatus status, const float level) override
+    int32_t OnTorchStatusChange(const TorchStatus status,  const float level) override
     {
         return 0;
     }
@@ -107,6 +108,12 @@ public:
 class TorchListenerFuzz : public TorchListener {
 public:
     void OnTorchStatusChange(const TorchStatusInfo &torchStatusInfo) const override {}
+};
+
+class CameraSpectrumInfoListenerFuzz : public CameraSpectrumInfoListener {
+public:
+    void OnCameraSpectrumInfo(const int userId, std::vector<float> spectrumInfos,
+        const uint64_t timestamp) const override {}
 };
 } //CameraStandard
 } //OHOS

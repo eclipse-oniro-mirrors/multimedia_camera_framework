@@ -20,9 +20,32 @@
 #include <fuzzer/FuzzedDataProvider.h>
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
+#include "iremote_object.h"
+#include "ipc_object_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
+class MockIRemoteObject : public IPCObjectStub {
+public:
+    MockIRemoteObject() : IPCObjectStub(u"mock_i_remote_object") {
+        member_descriptor = u"mock_i_remote_object";
+        shouldFail = false;
+        errorCode = 0;
+    }
+
+    std::u16string member_descriptor;
+    bool shouldFail;
+    int32_t errorCode;
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override {
+        if (shouldFail) {
+            return errorCode;
+        }
+        reply.WriteInt32(0);
+        return 0;
+    }
+};
+
 class ITorchServiceCallbackFuzz : public ITorchServiceCallback {
 public:
     int32_t OnTorchStatusChange(const TorchStatus status, const float level) override
@@ -208,6 +231,7 @@ public:
     static void CameraServiceProxyTest22(FuzzedDataProvider &fdp);
     static void CameraServiceProxyTest23();
     static void CameraServiceProxyTest24(FuzzedDataProvider &fdp);
+    static void CameraServiceProxyTest25(FuzzedDataProvider &fdp);
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

@@ -110,6 +110,7 @@ ohos_fuzztest("AvcodecTaskManagerFuzzTest") {
     "hdf_core:libhdi",
     "hicollie:libhicollie",
     "hilog:libhilog",
+    "init:libbegetutil",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",

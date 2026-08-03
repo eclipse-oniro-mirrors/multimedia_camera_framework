@@ -33,6 +33,112 @@ const int32_t NUM_10 = 10;
 const int32_t NUM_100 = 100;
 std::shared_ptr<CameraDeviceServiceProxy> CameraDeviceServiceProxyFuzz::fuzz_{nullptr};
 
+void CameraDeviceServiceProxyFuzz::CameraDeviceServiceProxyTestWithMock(FuzzedDataProvider &fdp)
+{
+    auto mockObject = sptr<IRemoteObject>(new MockIRemoteObject());
+    if (mockObject == nullptr) {
+        return;
+    }
+    fuzz_ = std::make_shared<CameraDeviceServiceProxy>(mockObject);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
+
+    fuzz_->Open();
+    fuzz_->Close();
+    fuzz_->Release();
+
+    uint8_t vectorSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
+    std::vector<int32_t> results;
+    for (int i = 0; i < vectorSize; ++i) {
+        results.push_back(fdp.ConsumeIntegral<int32_t>());
+    }
+    fuzz_->GetEnabledResults(results);
+    fuzz_->EnableResult(results);
+    fuzz_->DisableResult(results);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn = nullptr;
+    metaIn = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut =
+        std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+    fuzz_->GetStatus(metaIn, metaOut);
+
+    auto value = fdp.ConsumeIntegral<uint8_t>();
+    fuzz_->SetUsedAsPosition(value);
+    int32_t concurrentTypeofcamera = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->Open(concurrentTypeofcamera);
+    fuzz_->SetDeviceRetryTime();
+    uint64_t secureSeqId = fdp.ConsumeIntegral<uint64_t>();
+    fuzz_->OpenSecureCamera(secureSeqId);
+    fuzz_->closeDelayed();
+    fuzz_->UnSetCallback();
+
+    bool isUsed = fdp.ConsumeBool();
+    fuzz_->SetUsePhysicalCameraOrientation(isUsed);
+
+    bool isNaturalDirectionCorrect = false;
+    fuzz_->GetNaturalDirectionCorrect(isNaturalDirectionCorrect);
+
+    bool mdmCheck = fdp.ConsumeBool();
+    fuzz_->SetMdmCheck(mdmCheck);
+
+    std::string originCameraId = "camera_" + std::to_string(fdp.ConsumeIntegral<int32_t>());
+    fuzz_->SetCameraIdTransform(originCameraId);
+
+    uint32_t tokenId = fdp.ConsumeIntegral<uint32_t>();
+    fuzz_->SetFirstCallerTokenID(tokenId);
+}
+
+void CameraDeviceServiceProxyFuzz::CameraDeviceServiceProxyTestUncoveredMethods(FuzzedDataProvider &fdp)
+{
+    auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (mgr == nullptr) {
+        return;
+    }
+    auto object = mgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    if (object == nullptr) {
+        return;
+    }
+    fuzz_ = std::make_shared<CameraDeviceServiceProxy>(object);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
+
+    bool isUsed = fdp.ConsumeBool();
+    fuzz_->SetUsePhysicalCameraOrientation(isUsed);
+
+    bool isNaturalDirectionCorrect = false;
+    fuzz_->GetNaturalDirectionCorrect(isNaturalDirectionCorrect);
+
+    bool mdmCheck = fdp.ConsumeBool();
+    fuzz_->SetMdmCheck(mdmCheck);
+
+    std::string originCameraId = "camera_" + std::to_string(fdp.ConsumeIntegral<int32_t>());
+    fuzz_->SetCameraIdTransform(originCameraId);
+
+    uint32_t tokenId = fdp.ConsumeIntegral<uint32_t>();
+    fuzz_->SetFirstCallerTokenID(tokenId);
+}
+
+void CameraDeviceServiceProxyFuzz::CameraDeviceServiceProxyTestErrorBranches(FuzzedDataProvider &fdp)
+{
+    auto mockObject = sptr<IRemoteObject>(new MockIRemoteObject());
+    if (mockObject == nullptr) {
+        return;
+    }
+    fuzz_ = std::make_shared<CameraDeviceServiceProxy>(mockObject);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
+
+    uint8_t vectorSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
+    std::vector<int32_t> results;
+    for (int i = 0; i < vectorSize; ++i) {
+        results.push_back(fdp.ConsumeIntegral<int32_t>());
+    }
+    fuzz_->EnableResult(results);
+    fuzz_->DisableResult(results);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaIn = nullptr;
+    metaIn = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metaOut = nullptr;
+    fuzz_->GetStatus(metaIn, metaOut);
+}
+
 void CameraDeviceServiceProxyFuzz::CameraDeviceServiceProxyTest(FuzzedDataProvider &fdp)
 {
     auto mgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -85,6 +191,9 @@ void FuzzTest(const uint8_t *rawData, size_t size)
         return;
     }
     cameraDeviceServiceProxy->CameraDeviceServiceProxyTest(fdp);
+    cameraDeviceServiceProxy->CameraDeviceServiceProxyTestWithMock(fdp);
+    cameraDeviceServiceProxy->CameraDeviceServiceProxyTestUncoveredMethods(fdp);
+    cameraDeviceServiceProxy->CameraDeviceServiceProxyTestErrorBranches(fdp);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

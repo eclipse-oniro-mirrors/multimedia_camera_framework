@@ -47,6 +47,7 @@ public:
 static std::shared_ptr<CaptureOutput> fuzz_;
 static CaptureOutputTest captureOutputTest;
 static void CaptureOutputFuzzTest(FuzzedDataProvider& fdp);
+static void CaptureOutputFuzzTest2(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

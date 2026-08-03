@@ -18,13 +18,43 @@
 
 #include "camera_device_service_proxy.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "message_parcel.h"
+#include "ipc_object_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
+class MockIRemoteObject : public IPCObjectStub {
+public:
+    MockIRemoteObject() : IPCObjectStub(u"mock_i_remote_object")
+    {
+        member_descriptor = u"mock_i_remote_object";
+        shouldFail = false;
+        errorCode = 0;
+    }
+
+    ~MockIRemoteObject() {}
+
+    std::u16string member_descriptor;
+    bool shouldFail;
+    int32_t errorCode;
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        if (shouldFail) {
+            return errorCode;
+        }
+        reply.WriteInt32(0);
+        return 0;
+    }
+};
+
 class CameraDeviceServiceProxyFuzz {
 public:
     static std::shared_ptr<CameraDeviceServiceProxy> fuzz_;
     static void CameraDeviceServiceProxyTest(FuzzedDataProvider &fdp);
+    static void CameraDeviceServiceProxyTestWithMock(FuzzedDataProvider &fdp);
+    static void CameraDeviceServiceProxyTestUncoveredMethods(FuzzedDataProvider &fdp);
+    static void CameraDeviceServiceProxyTestErrorBranches(FuzzedDataProvider &fdp);
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

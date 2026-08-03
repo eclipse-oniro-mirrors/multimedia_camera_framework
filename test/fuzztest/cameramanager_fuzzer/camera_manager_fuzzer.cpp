@@ -43,6 +43,8 @@ std::shared_ptr<CameraManagerCallbackFuzz> managerCallback_ = std::make_shared<C
 std::shared_ptr<CameraMuteListenerFuzz> muteListenerCallback_ = std::make_shared<CameraMuteListenerFuzz>();
 std::shared_ptr<FoldListenerFuzz> foldListenerCallback_ = std::make_shared<FoldListenerFuzz>();
 std::shared_ptr<TorchListenerFuzz> torchListenerCallback_ = std::make_shared<TorchListenerFuzz>();
+std::shared_ptr<CameraSpectrumInfoListenerFuzz> spectrumListener_ =
+    std::make_shared<CameraSpectrumInfoListenerFuzz>();
 
 void CameraManagerFuzzer::CameraManagerFuzzTest1(FuzzedDataProvider& fdp)
 {
@@ -160,11 +162,185 @@ void CameraManagerFuzzer::CameraManagerFuzzTest3(FuzzedDataProvider& fdp)
     manager->PrelaunchScanCamera(bundleName, pageName,
         static_cast<PrelaunchScanModeOhos>(preScanMode));
 }
+
+static CameraFormat FuzzPickFormat(FuzzedDataProvider& fdp)
+{
+    if (fdp.ConsumeBool()) {
+        return CAMERA_FORMAT_INVALID;
+    }
+    static const CameraFormat formats[] = {
+        CAMERA_FORMAT_YCBCR_420_888,
+        CAMERA_FORMAT_RGBA_8888,
+        CAMERA_FORMAT_DNG,
+        CAMERA_FORMAT_DNG_XDRAW,
+        CAMERA_FORMAT_YUV_420_SP,
+        CAMERA_FORMAT_NV12,
+        CAMERA_FORMAT_YUV_422_YUYV,
+        CAMERA_FORMAT_JPEG,
+        CAMERA_FORMAT_YCBCR_P010,
+        CAMERA_FORMAT_YCRCB_P010,
+        CAMERA_FORMAT_HEIC,
+    };
+    int32_t idx = fdp.ConsumeIntegralInRange<int32_t>(0, sizeof(formats) / sizeof(formats[0]) - 1);
+    return formats[idx];
+}
+
+static Size FuzzPickSize(FuzzedDataProvider& fdp)
+{
+    Size size;
+    size.width = fdp.ConsumeIntegralInRange<uint32_t>(0, 4096);
+    size.height = fdp.ConsumeIntegralInRange<uint32_t>(0, 4096);
+    return size;
+}
+
+static std::vector<int32_t> FuzzPickFrameRates(FuzzedDataProvider& fdp)
+{
+    std::vector<int32_t> rates;
+    uint32_t cnt = fdp.ConsumeIntegralInRange<uint32_t>(0, 4);
+    for (uint32_t i = 0; i < cnt; i++) {
+        rates.push_back(fdp.ConsumeIntegral<int32_t>());
+    }
+    return rates;
+}
+
+static DepthDataAccuracy FuzzPickDepthAccuracy(FuzzedDataProvider& fdp)
+{
+    int32_t idx = fdp.ConsumeIntegralInRange<int32_t>(0, 2);
+    switch (idx) {
+        case 0:
+            return DEPTH_DATA_ACCURACY_INVALID;
+        case 1:
+            return DEPTH_DATA_ACCURACY_RELATIVE;
+        default:
+            return DEPTH_DATA_ACCURACY_ABSOLUTE;
+    }
+}
+
+void CameraManagerFuzzer::CameraManagerFuzzTest4(FuzzedDataProvider& fdp)
+{
+    manager = CameraManager::GetInstance();
+    CHECK_RETURN_ELOG(!manager, "GetInstance Error");
+
+    {
+        Profile profile(FuzzPickFormat(fdp), FuzzPickSize(fdp));
+        sptr<PhotoOutput> photoOutput;
+        manager->CreatePhotoOutput(profile, &photoOutput);
+    }
+    {
+        Profile profile(FuzzPickFormat(fdp), FuzzPickSize(fdp));
+        sptr<IBufferProducer> producer;
+        sptr<PhotoOutput> photoOutput;
+        manager->CreatePhotoOutput(profile, producer, &photoOutput);
+    }
+    {
+        Profile profile(FuzzPickFormat(fdp), FuzzPickSize(fdp));
+        sptr<Surface> surface;
+        sptr<PreviewOutput> previewOutput;
+        manager->CreatePreviewOutput(profile, surface, &previewOutput);
+    }
+    {
+        VideoProfile vProfile(FuzzPickFormat(fdp), FuzzPickSize(fdp), FuzzPickFrameRates(fdp));
+        sptr<Surface> surface;
+        sptr<VideoOutput> videoOutput;
+        manager->CreateVideoOutput(vProfile, surface, &videoOutput);
+    }
+    {
+        VideoProfile vProfile(FuzzPickFormat(fdp), FuzzPickSize(fdp), FuzzPickFrameRates(fdp));
+        sptr<MovieFileOutput> movieFileOutput;
+        manager->CreateMovieFileOutput(vProfile, &movieFileOutput);
+    }
+    {
+        VideoProfile vProfile(FuzzPickFormat(fdp), FuzzPickSize(fdp), FuzzPickFrameRates(fdp));
+        sptr<UnifyMovieFileOutput> unifyMovieFileOutput;
+        manager->CreateMovieFileOutput(vProfile, &unifyMovieFileOutput);
+    }
+    {
+        DepthProfile depthProfile(FuzzPickFormat(fdp), FuzzPickDepthAccuracy(fdp), FuzzPickSize(fdp));
+        sptr<IBufferProducer> producer;
+        sptr<IStreamDepthData> streamDepthData;
+        manager->GetStreamDepthDataFromService(depthProfile, producer, streamDepthData);
+    }
+    {
+        Profile profile(FuzzPickFormat(fdp), FuzzPickSize(fdp));
+        sptr<PreviewOutput> previewOutput;
+        manager->CreateDeferredPreviewOutput(profile, &previewOutput);
+    }
+
+    std::vector<sptr<CameraDevice>> cameras = manager->GetSupportedCameras();
+    sptr<CameraDevice> camera = cameras.empty() ? nullptr : cameras[0];
+    bool useNullCamera = fdp.ConsumeBool();
+    sptr<CameraDevice> cameraArg = useNullCamera ? nullptr : camera;
+    int32_t mode = fdp.ConsumeIntegralInRange<int32_t>(0, 24);
+    bool completeRemove = fdp.ConsumeBool();
+    manager->GetSupportedOutputCapability(cameraArg, mode, completeRemove);
+    manager->GetSupportedFullOutputCapability(cameraArg, mode);
+    manager->GetSupportedModes(cameraArg);
+    std::vector<sptr<CameraDevice>> camArray;
+    if (cameraArg != nullptr) {
+        camArray.push_back(cameraArg);
+    }
+    manager->CheckConcurrentExecution(camArray);
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    sptr<MechSession> mechSession;
+    manager->CreateMechSession(userId, &mechSession);
+    manager->IsMechSupported();
+    sptr<CameraSwitchSession> switchSession;
+    manager->CreateCameraSwitchSession(&switchSession);
+    auto switchSessionDirect = manager->CreateCameraSwitchSession();
+    (void)switchSessionDirect;
+    bool useNullInput = fdp.ConsumeBool();
+    sptr<CameraDevice> inputCamera = useNullInput ? nullptr : camera;
+    sptr<CameraInput> cameraInput;
+    manager->CreateCameraInput(inputCamera, &cameraInput);
+
+    std::string prelaunchCameraId = fdp.ConsumeRandomLengthString(30);
+    int32_t restoreIdx = fdp.ConsumeIntegralInRange<int32_t>(0, 2);
+    RestoreParamTypeOhos restoreType = static_cast<RestoreParamTypeOhos>(restoreIdx);
+    int32_t activeTime = fdp.ConsumeIntegral<int32_t>();
+    EffectParam effectParam;
+    effectParam.skinSmoothLevel = fdp.ConsumeIntegral<int32_t>();
+    effectParam.faceSlender = fdp.ConsumeIntegral<int32_t>();
+    effectParam.skinTone = fdp.ConsumeIntegral<int32_t>();
+    effectParam.skinToneBright = fdp.ConsumeIntegral<int32_t>();
+    effectParam.eyeBigEyes = fdp.ConsumeIntegral<int32_t>();
+    effectParam.hairHairline = fdp.ConsumeIntegral<int32_t>();
+    effectParam.faceMakeUp = fdp.ConsumeIntegral<int32_t>();
+    effectParam.headShrink = fdp.ConsumeIntegral<int32_t>();
+    effectParam.noseSlender = fdp.ConsumeIntegral<int32_t>();
+    manager->SetPrelaunchConfig(prelaunchCameraId, restoreType, activeTime, effectParam);
+    int32_t policyIdx = fdp.ConsumeIntegralInRange<int32_t>(0, 1);
+    PolicyType policyType = static_cast<PolicyType>(policyIdx);
+    bool muteMode = fdp.ConsumeBool();
+    manager->MuteCameraPersist(policyType, muteMode);
+    std::string switchId = fdp.ConsumeRandomLengthString(30);
+    manager->PreSwitchCamera(switchId);
+    int32_t torchIdx = fdp.ConsumeIntegralInRange<int32_t>(0, 2);
+    TorchMode torchMode = static_cast<TorchMode>(torchIdx);
+    float level = fdp.ConsumeFloatingPointInRange<float>(0.0f, 1.0f);
+    manager->SetTorchModeOnWithLevel(torchMode, level);
+    manager->IsTorchModeSupported(torchMode);
+    manager->IsTorchLevelControlSupported();
+    SpectrumCallerInfo info;
+    info.cameraId = fdp.ConsumeRandomLengthString(30);
+    info.userId = fdp.ConsumeIntegral<int32_t>();
+    manager->RegisterSpectrumListener(info, spectrumListener_);
+    manager->UnregisterSpectrumListener(info, spectrumListener_);
+    std::string reason = fdp.ConsumeRandomLengthString(30);
+    int32_t memSize = fdp.ConsumeIntegral<int32_t>();
+    manager->RequireMemorySize(memSize);
+    int64_t storage = 0;
+    manager->GetCameraStorageSize(storage);
+    sptr<ControlCenterSession> ccSession;
+    manager->CreateControlCenterSession(ccSession);
+    manager->IsControlCenterActive();
+    bool frameCondition = fdp.ConsumeBool();
+    manager->SetControlCenterFrameCondition(frameCondition);
+    manager->GetControlCenterPrecondition();
 }
 
 void Test(uint8_t* data, size_t size)
 {
-    auto cameraManager = std::make_unique<CameraManagerFuzzer>();
+    auto cameraManager = std::make_unique<CameraStandard::CameraManagerFuzzer>();
     if (cameraManager == nullptr) {
         MEDIA_INFO_LOG("cameraManager is null");
         return;
