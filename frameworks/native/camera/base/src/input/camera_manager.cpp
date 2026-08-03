@@ -2739,6 +2739,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
         (isFoldV4 && curFoldStatus == FoldStatus::UNKNOWN_FOLD);
     bool isFrontCamera = (camera->GetPosition() == CameraPosition::CAMERA_POSITION_FRONT);
     std::string originCameraId = camera->GetID();
+    isDeviceReplaced_ = false;
     // LCOV_EXCL_START
     if (isApiCompatRequired && isFoldStatusValid && isFrontCamera) {
         std::vector<sptr<CameraDevice>> cameraObjList = GetCameraDevices(); //全量
@@ -2748,6 +2749,7 @@ int CameraManager::CreateCameraInput(sptr<CameraDevice> &camera, sptr<CameraInpu
                 cameraDevice != nullptr && cameraDevice->GetPosition() == CameraPosition::CAMERA_POSITION_FOLD_INNER;
             if (isFindDevice) {
                 camera = cameraDevice;
+                isDeviceReplaced_ = true;
                 break;
             }
         }

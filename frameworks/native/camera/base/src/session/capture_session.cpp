@@ -5629,14 +5629,16 @@ bool CaptureSession::ValidateOutputProfile(Profile& outputProfile, CaptureOutput
         ":%{public}d", outputProfile.size_.width, outputProfile.size_.height, outputProfile.format_, outputType);
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(!inputDevice, false, "CaptureSession::ValidateOutputProfile Failed inputDevice is nullptr");
-    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    sptr<CameraDevice> inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    auto modeName = GetMode();
+    CHECK_EXECUTE(CameraManager::GetInstance()->isDeviceReplaced_,
+        CameraManager::GetInstance()->GetSupportedFullOutputCapability(inputDeviceInfo, modeName));
     CHECK_RETURN_RET_ELOG(
         !inputDeviceInfo, false, "CaptureSession::ValidateOutputProfile Failed inputDeviceInfo is nullptr");
     CHECK_RETURN_RET_ILOG(
         outputType == CAPTURE_OUTPUT_TYPE_METADATA, true, "CaptureSession::ValidateOutputProfile MetadataOutput");
     CHECK_RETURN_RET_ILOG(
         outputType == CAPTURE_OUTPUT_TYPE_DEPTH_DATA, true, "CaptureSession::ValidateOutputProfile DepthDataOutput");
-    auto modeName = GetMode();
     auto validateOutputProfileFunc = [modeName](auto validateProfile, auto& profiles) -> bool {
         MEDIA_INFO_LOG("CaptureSession::ValidateOutputProfile in mode(%{public}d): "
                        "w(%{public}d),h(%{public}d),f(%{public}d), profiles size is:%{public}zu",
