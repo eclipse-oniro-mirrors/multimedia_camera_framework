@@ -57,6 +57,7 @@ ohos_fuzztest("HStreamOperatorFuzzTest") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/utils",
     "${multimedia_camera_framework_path}/services/camera_service/src",
     "${multimedia_camera_framework_path}/services/camera_service/binder",
+    "${multimedia_camera_framework_path}/test/test_common/include",
   ]
 
   cflags = [
@@ -75,6 +76,7 @@ ohos_fuzztest("HStreamOperatorFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service:camera_service",
     "${multimedia_camera_framework_path}/mediastream:media_stream",
     "${multimedia_camera_framework_path}/dynamic_libs:camera_dynamic_moving_photo",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
 
   external_deps = [
@@ -121,6 +123,7 @@ ohos_fuzztest("HStreamOperatorFuzzTest") {
     "media_foundation:native_media_core",
     "media_library:media_library",
     "media_library:media_library_manager",
+    "media_library:media_library_camera_helper",
     "memmgr:memmgrclient",
     "os_account:libaccountkits",
     "os_account:os_account_innerkits",

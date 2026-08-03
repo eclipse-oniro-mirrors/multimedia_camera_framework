@@ -41,6 +41,19 @@ void TestOther(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestOther2(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestOther3(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestAdd(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestZoomPointInfos(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestFocusDistance(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestDepthFusion(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestStageBoost(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestLcdFlash(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestTripodDetection(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestConstellationDrawing(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestImageStabilizationGuide(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestSuperMoon(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestImagingMode(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestCallbacks(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestSetUsageBranch(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestSetEffectSuggestionStatusBranch(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 
 class SessionCallbackMock : public SessionCallback {
 public:
@@ -82,6 +95,11 @@ private:
 class EffectSuggestionCallbackMock : public EffectSuggestionCallback {
 public:
     void OnEffectSuggestionChange(EffectSuggestionType effectSuggestionType) override {}
+};
+
+class LcdFlashStatusCallbackMock : public LcdFlashStatusCallback {
+public:
+    void OnLcdFlashStatusChanged(LcdFlashStatusInfo status) override {}
 };
 
 class ARCallbackMock : public ARCallback {

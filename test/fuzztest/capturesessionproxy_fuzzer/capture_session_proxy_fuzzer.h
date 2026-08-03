@@ -18,9 +18,56 @@
 
 #include "capture_session_proxy.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "iremote_object.h"
+#include "ipc_object_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
+class MockIRemoteObject : public IPCObjectStub {
+public:
+    MockIRemoteObject() : IPCObjectStub(u"mock_i_remote_object")
+    {
+        member_descriptor = u"mock_i_remote_object";
+        shouldFail = false;
+        errorCode = 0;
+    }
+
+    bool shouldFail;
+    int32_t errorCode;
+    std::u16string member_descriptor;
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        if (shouldFail) {
+            return errorCode;
+        }
+        reply.WriteInt32(0);
+        return 0;
+    }
+};
+
+class CameraSwitchSessionCallbackMock : public ICameraSwitchSessionCallback {
+public:
+    sptr<IRemoteObject> AsObject() override
+    {
+        return nullptr;
+    }
+    ErrCode OnCameraActive(const std::string& cameraId, bool isRegisterCameraSwitchCallback,
+        const CaptureSessionInfo& sessionInfo) override
+    {
+        return 0;
+    }
+
+    ErrCode OnCameraUnactive(const std::string& cameraId) override
+    {
+        return 0;
+    }
+
+    ErrCode OnCameraSwitch(const std::string& oriCameraId, const std::string& destCameraId, bool status) override
+    {
+        return 0;
+    }
+};
+
 class CaptureSessionProxyFuzz {
 public:
     static std::shared_ptr<CaptureSessionProxy> fuzz_;
@@ -33,6 +80,9 @@ public:
     static void CaptureSessionProxyFuzzTest7(FuzzedDataProvider &fdp);
     static void CaptureSessionProxyFuzzTest8(FuzzedDataProvider &fdp);
     static void CaptureSessionProxyFuzzTest9(FuzzedDataProvider &fdp);
+    static void CaptureSessionProxyTestWithMock(FuzzedDataProvider &fdp);
+    static void CaptureSessionProxyTestUncoveredMethods(FuzzedDataProvider &fdp);
+    static void CaptureSessionProxyTestErrorBranches(FuzzedDataProvider &fdp);
 };
 }  // namespace CameraStandard
 }  // namespace OHOS

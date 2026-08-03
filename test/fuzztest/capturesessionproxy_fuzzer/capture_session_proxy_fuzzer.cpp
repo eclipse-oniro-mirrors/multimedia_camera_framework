@@ -145,6 +145,127 @@ void CaptureSessionProxyFuzz::CaptureSessionProxyFuzzTest9(FuzzedDataProvider &f
     fuzz_->EnableKeyFrameReport(isKeyFrameReportEnabled);
 }
 
+void CaptureSessionProxyFuzz::CaptureSessionProxyTestWithMock(FuzzedDataProvider &fdp)
+{
+    sptr<MockIRemoteObject> mockRemote = new MockIRemoteObject();
+    fuzz_ = std::make_shared<CaptureSessionProxy>(mockRemote);
+
+    fuzz_->BeginConfig();
+    fuzz_->CommitConfig();
+    fuzz_->Start();
+    fuzz_->Stop();
+    fuzz_->Release();
+
+    bool results = false;
+    fuzz_->CanAddInput(nullptr, results);
+
+    CaptureSessionState sessionState = CaptureSessionState::SESSION_INIT;
+    fuzz_->GetSessionState(sessionState);
+
+    int32_t featureMode = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->SetFeatureMode(featureMode);
+
+    bool isNeedCommitting = fdp.ConsumeBool();
+    fuzz_->SetCommitConfigFlag(isNeedCommitting);
+
+    bool isKeyFrameReportEnabled = fdp.ConsumeBool();
+    fuzz_->EnableKeyFrameReport(isKeyFrameReportEnabled);
+}
+
+void CaptureSessionProxyFuzz::CaptureSessionProxyTestUncoveredMethods(FuzzedDataProvider &fdp)
+{
+    sptr<MockIRemoteObject> mockRemote = new MockIRemoteObject();
+    fuzz_ = std::make_shared<CaptureSessionProxy>(mockRemote);
+
+    bool status = fdp.ConsumeBool();
+    fuzz_->SetXtStyleStatus(status);
+
+    sptr<ICameraSwitchSessionCallback> callbackFunc = new CameraSwitchSessionCallbackMock();
+    fuzz_->SetCameraSwitchRequestCallback(callbackFunc);
+    fuzz_->UnSetCameraSwitchRequestCallback();
+
+    sptr<IRemoteObject> compositionStreamRemote = nullptr;
+    fuzz_->GetCompositionStream(compositionStreamRemote);
+
+    int32_t sensorRotation = 0;
+    fuzz_->GetSensorRotationOnce(sensorRotation);
+
+    bool value = false;
+    fuzz_->IsAutoFramingSupported(value);
+    fuzz_->GetAutoFramingStatus(value);
+
+    bool needPersist = fdp.ConsumeBool();
+    fuzz_->EnableAutoFraming(value, needPersist);
+
+    std::vector<int32_t> colorEffectMetadata;
+    uint8_t vectorSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
+    for (int i = 0; i < vectorSize; ++i) {
+        colorEffectMetadata.push_back(fdp.ConsumeIntegral<int32_t>());
+    }
+    fuzz_->GetColorEffectsMetadata(colorEffectMetadata);
+
+    int32_t colourEffect = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->GetColorEffect(colourEffect);
+    fuzz_->SetColorEffect(colourEffect);
+}
+
+void CaptureSessionProxyFuzz::CaptureSessionProxyTestErrorBranches(FuzzedDataProvider &fdp)
+{
+    sptr<MockIRemoteObject> mockRemote = new MockIRemoteObject();
+    mockRemote->shouldFail = true;
+    mockRemote->errorCode = -1;
+    fuzz_ = std::make_shared<CaptureSessionProxy>(mockRemote);
+
+    fuzz_->BeginConfig();
+    fuzz_->AddInput(nullptr);
+    fuzz_->RemoveInput(nullptr);
+    fuzz_->CommitConfig();
+    fuzz_->Start();
+    fuzz_->Stop();
+    fuzz_->Release();
+
+    sptr<ICaptureSessionCallback> captureSessionCallback = new CaptureSessionCallback();
+    fuzz_->SetCallback(captureSessionCallback);
+    captureSessionCallback = nullptr;
+    fuzz_->SetCallback(captureSessionCallback);
+
+    sptr<IPressureStatusCallback> pressureStatusCallback = new PressureStatusCallback();
+    fuzz_->SetPressureCallback(pressureStatusCallback);
+
+    bool isNeedCommitting = fdp.ConsumeBool();
+    fuzz_->SetCommitConfigFlag(isNeedCommitting);
+
+    bool isHasFitedRotation = fdp.ConsumeBool();
+    fuzz_->SetHasFitedRotation(isHasFitedRotation);
+
+    sptr<IRemoteObject> remote = nullptr;
+    sptr<ICameraRecorder> recorder = nullptr;
+    fuzz_->CreateRecorder(remote, recorder);
+
+    int32_t opMode = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->AddMultiStreamOutput(remote, opMode);
+    fuzz_->RemoveMultiStreamOutput(remote);
+
+    int32_t type = fdp.ConsumeIntegral<int32_t>();
+    std::vector<int32_t> range;
+    fuzz_->GetBeautyRange(range, type);
+
+    int32_t beautyValue = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->GetBeautyValue(type, beautyValue);
+
+    int32_t value = fdp.ConsumeIntegral<int32_t>();
+    bool needPersist = fdp.ConsumeBool();
+    fuzz_->SetBeautyValue(type, value, needPersist);
+
+    sptr<IControlCenterEffectStatusCallback> callbackFunc = new ControlCenterEffectStatusCallback();
+    fuzz_->SetControlCenterEffectStatusCallback(callbackFunc);
+    callbackFunc = nullptr;
+    fuzz_->SetControlCenterEffectStatusCallback(callbackFunc);
+
+    bool isKeyFrameReportEnabled = fdp.ConsumeBool();
+    fuzz_->EnableKeyFrameReport(isKeyFrameReportEnabled);
+}
+
 void FuzzTest(const uint8_t *rawData, size_t size)
 {
     FuzzedDataProvider fdp(rawData, size);
@@ -168,6 +289,9 @@ void FuzzTest(const uint8_t *rawData, size_t size)
     captureSessionProxy->CaptureSessionProxyFuzzTest7(fdp);
     captureSessionProxy->CaptureSessionProxyFuzzTest8(fdp);
     captureSessionProxy->CaptureSessionProxyFuzzTest9(fdp);
+    captureSessionProxy->CaptureSessionProxyTestWithMock(fdp);
+    captureSessionProxy->CaptureSessionProxyTestUncoveredMethods(fdp);
+    captureSessionProxy->CaptureSessionProxyTestErrorBranches(fdp);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

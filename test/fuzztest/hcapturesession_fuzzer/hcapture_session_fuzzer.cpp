@@ -45,8 +45,21 @@ static const int NUM_10 = 10;
 static const int NUM_100 = 100;
 static const int32_t OP_MODE = 0;
 
-sptr<HCameraService> g_cameraService;
-std::vector<sptr<HCaptureSession>> g_sessions;
+std::vector<sptr<HCaptureSession>>& GetSessions()
+{
+    static std::vector<sptr<HCaptureSession>> sessions;
+    return sessions;
+}
+
+sptr<ICameraService> GetService()
+{
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN_RET_ELOG(!samgr, nullptr, "samgr is nullptr");
+    auto object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN_RET_ELOG(!object, nullptr, "object is nullptr");
+    sptr<ICameraService> serviceProxy = iface_cast<ICameraService>(object);
+    return serviceProxy;
+}
 void HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp, sptr<HCaptureSession>& session)
 {
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
@@ -67,8 +80,9 @@ void HCaptureSessionFuzzTest1(FuzzedDataProvider& fdp, sptr<HCaptureSession>& se
     session->EnableMovingPhotoMirror(fdp.ConsumeBool(), fdp.ConsumeBool());
     int32_t getColorSpace;
     session->GetActiveColorSpace(getColorSpace);
-    constexpr int32_t executionModeCount = static_cast<int32_t>(ColorSpace::P3_PQ_LIMIT) + NUM_1;
-    ColorSpace colorSpace = static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount);
+    constexpr int32_t executionModeCount = static_cast<int32_t>(OHOS::CameraStandard::ColorSpace::P3_PQ_LIMIT) + NUM_1;
+    OHOS::CameraStandard::ColorSpace colorSpace =
+        static_cast<OHOS::CameraStandard::ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount);
     session->SetColorSpace(static_cast<int32_t>(colorSpace), fdp.ConsumeBool());
     session->GetopMode();
     std::vector<StreamInfo_V1_5> streamInfos;
@@ -171,7 +185,9 @@ sptr<ICameraDeviceService> GetDevice(FuzzedDataProvider& fdp)
     std::lock_guard<std::mutex> lock(mutex);
     static sptr<ICameraDeviceService> device;
     if (device == nullptr) {
-        g_cameraService->CreateCameraDevice(fdp.ConsumeRandomLengthString(MAX_STR_LEN), device);
+        auto service = GetService();
+        CHECK_RETURN_RET_ELOG(!service, nullptr, "service is nullptr");
+        service->CreateCameraDevice(fdp.ConsumeRandomLengthString(MAX_STR_LEN), device);
     }
     return device;
 }
@@ -194,7 +210,9 @@ sptr<IStreamCapture> GetPhotoOutput(FuzzedDataProvider& fdp)
     int32_t width = fdp.ConsumeIntegral<int32_t>() % MAX_W_H;
     int32_t height = fdp.ConsumeIntegral<int32_t>() % MAX_W_H;
     sptr<IStreamCapture> photoOutput;
-    g_cameraService->CreatePhotoOutput(format, width, height, photoOutput);
+    auto service = GetService();
+    CHECK_RETURN_RET_ELOG(!service, nullptr, "service is nullptr");
+    service->CreatePhotoOutput(format, width, height, photoOutput);
     return photoOutput;
 }
 
@@ -573,21 +591,16 @@ void GetCompositionStream(FuzzedDataProvider& fdp, sptr<HCaptureSession>& sessio
 void Init()
 {
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
-    const int32_t CAMERA_SERVICE_ID = 3008;
-    g_cameraService = new (std::nothrow) HCameraService(CAMERA_SERVICE_ID, true);
-    CHECK_RETURN_ELOG(!g_cameraService, "g_cameraService is nullptr");
-    g_cameraService->OnStart();
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     for (int32_t mode = 0; mode <= 2; ++mode) {
         sptr<HCaptureSession> session;
         HCaptureSession::NewInstance(callerToken, mode, session);
-        g_sessions.push_back(session);
+        GetSessions().push_back(session);
     }
 }
 
 void Test(FuzzedDataProvider& fdp)
 {
-    CHECK_RETURN_ELOG(g_cameraService == nullptr, "g_cameraService is nullptr");
     auto func = fdp.PickValueInArray({
         HCaptureSessionFuzzTest1,
         HCaptureSessionFuzzTest2,
@@ -657,9 +670,10 @@ void Test(FuzzedDataProvider& fdp)
         GetBeautyRange,
         GetBeautyValue,
         SetBeautyValue,
-        GetCompositionStream,
+        GetCompositionStream
     });
-    auto& session = g_sessions[fdp.ConsumeIntegral<uint8_t>() % g_sessions.size()];
+    auto& sessions = GetSessions();
+    auto& session = sessions[fdp.ConsumeIntegral<uint8_t>() % sessions.size()];
     CHECK_RETURN_ELOG(session == nullptr, "session is nullptr");
     func(fdp, session);
 }
