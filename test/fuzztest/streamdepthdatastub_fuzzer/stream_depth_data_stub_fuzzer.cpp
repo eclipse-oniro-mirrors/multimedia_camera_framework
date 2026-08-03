@@ -39,7 +39,8 @@ const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamDepthData";
 
 sptr<IBufferProducer> g_producer;
 
-HStreamDepthData& GetHStreamDepthData(){
+HStreamDepthData& GetHStreamDepthData()
+{
     static HStreamDepthData hstreamDepthData(g_producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
     return hstreamDepthData;
 }

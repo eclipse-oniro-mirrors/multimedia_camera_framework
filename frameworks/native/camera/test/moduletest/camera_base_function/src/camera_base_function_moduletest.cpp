@@ -53,6 +53,16 @@ void TestControlCenterStatusListener::OnControlCenterStatusChanged(bool status) 
 {
     MEDIA_INFO_LOG("TestControlCenterStatusListener::OnControlCenterStatusChanged called %{public}d", status);
 }
+
+void TestCameraSharedStatusListener::OnCameraSharedStatusChanged(const CameraSharedStatus status) const
+{
+    MEDIA_INFO_LOG("TestCameraSharedStatusListener::OnCameraSharedStatusChanged called %{public}d", status);
+}
+void TestCameraSpectrumInfoListener::OnCameraSpectrumInfo(
+    const int userId, std::vector<float> spectrumInfos, const uint64_t timestamp) const
+{
+    MEDIA_INFO_LOG("TestCameraSpectrumInfoListener::OnCameraSpectrumInfo called userId:%{public}d", userId);
+}
 void TestSessionCallback::OnError(int32_t errorCode)
 {
     MEDIA_INFO_LOG("TestSessionCallback::OnError called %{public}d", errorCode);
@@ -324,6 +334,29 @@ sptr<PhotoOutput> CameraBaseFunctionModuleTest::CreatePhotoOutput(Profile &photo
     sptr<IBufferProducer> bp = photoSurface->GetProducer();
 
     return cameraManager_->CreatePhotoOutput(photoProfile, bp);
+}
+
+int32_t CameraBaseFunctionModuleTest::CreatePhotoOutputWithoutSurface(Profile &photoProfile,
+    sptr<PhotoOutput> &photoOutput)
+{
+    MEDIA_INFO_LOG("CreatePhotoOutputWithoutSurface photo profile format:%{public}d, w:%{public}d , h:%{public}d",
+        photoProfile.GetCameraFormat(), photoProfile.GetSize().width, photoProfile.GetSize().height);
+
+    int32_t retCode = cameraManager_->CreatePhotoOutput(photoProfile, &photoOutput);
+    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput == nullptr), SERVICE_FATL_ERROR,
+        "CreatePhotoOutputWithoutSurface failed");
+    photoOutput->SetNativeSurface(true);
+    return SUCCESS;
+}
+
+int32_t CameraBaseFunctionModuleTest::CreatePhotoOutputWithoutProfile(sptr<PhotoOutput> &photoOutput)
+{
+    MEDIA_INFO_LOG("CreatePhotoOutputWithoutProfile");
+
+    int32_t retCode = cameraManager_->CreatePhotoOutputWithoutProfile(&photoOutput);
+    CHECK_RETURN_RET_ELOG((retCode != CameraErrorCode::SUCCESS || photoOutput == nullptr), SERVICE_FATL_ERROR,
+        "CreatePhotoOutputWithoutProfile failed");
+    return SUCCESS;
 }
 
 sptr<VideoOutput> CameraBaseFunctionModuleTest::CreateVideoOutput(VideoProfile &videoProfile)
@@ -8182,6 +8215,309 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_250, Test
     if (captureSession) {
         captureSession->Release();
     }
+}
+
+ /*
+* Feature: Camera base function
+* Function: Test createPhotoOutput(profile) interface - profile with value, no surface
+* SubFunction: NA
+* FunctionPoints: CameraManager::CreatePhotoOutput(Profile&, sptr<PhotoOutput>*)
+* EnvConditions: NA
+* CaseDescription: Test createPhotoOutput with profile parameter only (no surfaceId).
+*     This covers the new API: createPhotoOutput(profile?: Profile) when profile is provided.
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_251, TestSize.Level0)
+{
+    CreateNormalSession();
+    ASSERT_NE(cameraManager_, nullptr);
+    ASSERT_FALSE(photoProfiles_.empty());
+
+    sptr<PhotoOutput> photoOutput = nullptr;
+    EXPECT_EQ(CreatePhotoOutputWithoutSurface(photoProfiles_[0], photoOutput), SUCCESS);
+    ASSERT_NE(photoOutput, nullptr);
+
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+
+    ASSERT_EQ(captureSession_->BeginConfig(), SUCCESS);
+    ASSERT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    ASSERT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    ASSERT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    ASSERT_EQ(captureSession_->CommitConfig(), SUCCESS);
+
+    EXPECT_EQ(photoOutput->Release(), SUCCESS);
+    EXPECT_EQ(previewOutput->Release(), SUCCESS);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test createPhotoOutput() interface - profile omitted
+* SubFunction: NA
+* FunctionPoints: CameraManager::CreatePhotoOutputWithoutProfile(sptr<PhotoOutput>*)
+* EnvConditions: NA
+* CaseDescription: Test createPhotoOutput without profile parameter (no surfaceId).
+*     This covers the new API: createPhotoOutput(profile?: Profile) when profile is omitted.
+*     This creates a PhotoOutput with preconfig semantics - profile must be set via session.preconfig later.
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_252, TestSize.Level0)
+{
+    CreateNormalSession();
+    ASSERT_NE(cameraManager_, nullptr);
+
+    sptr<PhotoOutput> photoOutput = nullptr;
+    EXPECT_EQ(CreatePhotoOutputWithoutProfile(photoOutput), SUCCESS);
+    ASSERT_NE(photoOutput, nullptr);
+
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+
+    ASSERT_EQ(captureSession_->BeginConfig(), SUCCESS);
+    ASSERT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    ASSERT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    ASSERT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+    ASSERT_EQ(captureSession_->CommitConfig(), SUCCESS);
+
+    EXPECT_EQ(photoOutput->Release(), SUCCESS);
+    EXPECT_EQ(previewOutput->Release(), SUCCESS);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test MetadataOutput SetCallbackExt with MetadataObjectCallback and GetAppStateCallbackExt
+* SubFunction: NA
+* FunctionPoints: MetadataOutput::SetCallbackExt, MetadataOutput::GetAppStateCallbackExt
+* EnvConditions: NA
+* CaseDescription: Test SetCallbackExt sets MetadataObjectCallback and MetadataStateCallback,
+*                  and GetAppStateCallbackExt returns the state callback ext
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_253, TestSize.Level0)
+{
+    CreateNormalSession();
+    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+
+    sptr<CaptureOutput> metadataCaptureOutput = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadataCaptureOutput, nullptr);
+    EXPECT_EQ(captureSession_->AddOutput(metadataCaptureOutput), SUCCESS);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadataCaptureOutput;
+
+    std::shared_ptr<MetadataObjectCallback> objectCallback =
+        std::make_shared<TestMetadataOutputObjectCallback>("");
+    metaOutput->SetCallbackExt(objectCallback);
+
+    std::shared_ptr<MetadataStateCallback> stateCallback =
+        std::make_shared<TestMetadataStateCallback>();
+    metaOutput->SetCallbackExt(stateCallback);
+    EXPECT_EQ(metaOutput->GetAppStateCallbackExt(), stateCallback);
+
+    EXPECT_EQ(metadataCaptureOutput->Release(), SUCCESS);
+    EXPECT_EQ(previewOutput->Release(), SUCCESS);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test MetadataOutput IsLockMetadataObjectTrackingSupported with session committed
+* SubFunction: NA
+* FunctionPoints: MetadataOutput::IsLockMetadataObjectTrackingSupported
+* EnvConditions: NA
+* CaseDescription: Test IsLockMetadataObjectTrackingSupported returns expected value
+*                  when session is committed
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_254, TestSize.Level0)
+{
+    CreateNormalSession();
+    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+
+    sptr<CaptureOutput> metadataCaptureOutput = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadataCaptureOutput, nullptr);
+    EXPECT_EQ(captureSession_->AddOutput(metadataCaptureOutput), SUCCESS);
+    EXPECT_EQ(captureSession_->CommitConfig(), SUCCESS);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadataCaptureOutput;
+    bool isSupported = metaOutput->IsLockMetadataObjectTrackingSupported();
+    if (isSupported) {
+        Point point = {0.5, 0.5};
+        EXPECT_EQ(metaOutput->LockMetadataObjectTracking(point), SUCCESS);
+        EXPECT_EQ(metaOutput->UnlockMetadataObjectTracking(), SUCCESS);
+    }
+
+    EXPECT_EQ(metadataCaptureOutput->Release(), SUCCESS);
+    EXPECT_EQ(previewOutput->Release(), SUCCESS);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test MetadataOutput LockMetadataObjectTracking with invalid point
+* SubFunction: NA
+* FunctionPoints: MetadataOutput::LockMetadataObjectTracking
+* EnvConditions: NA
+* CaseDescription: Test LockMetadataObjectTracking returns PARAMETER_ERROR when point is out of range
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_255, TestSize.Level0)
+{
+    CreateNormalSession();
+    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+
+    sptr<CaptureOutput> metadataCaptureOutput = cameraManager_->CreateMetadataOutput();
+    ASSERT_NE(metadataCaptureOutput, nullptr);
+    EXPECT_EQ(captureSession_->AddOutput(metadataCaptureOutput), SUCCESS);
+
+    sptr<MetadataOutput> metaOutput = (sptr<MetadataOutput>&)metadataCaptureOutput;
+    Point invalidPoint = {2.0, 2.0};
+    EXPECT_EQ(metaOutput->LockMetadataObjectTracking(invalidPoint), CameraErrorCode::PARAMETER_ERROR);
+
+    EXPECT_EQ(metadataCaptureOutput->Release(), SUCCESS);
+    EXPECT_EQ(previewOutput->Release(), SUCCESS);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test HStreamCaptureCallbackImpl OnFrameShutterEnd and OnCaptureReady
+* SubFunction: NA
+* FunctionPoints: HStreamCaptureCallbackImpl::OnFrameShutterEnd, HStreamCaptureCallbackImpl::OnCaptureReady
+* EnvConditions: NA
+* CaseDescription: Test OnFrameShutterEnd and OnCaptureReady with nullptr photoOutput
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_256, TestSize.Level0)
+{
+    CreateNormalSession();
+    auto captureCallback = std::make_shared<HStreamCaptureCallbackImpl>(nullptr);
+
+    int32_t captureId = 2001;
+    uint64_t timestamp = 10;
+    EXPECT_EQ(captureCallback->OnFrameShutterEnd(captureId, timestamp), CAMERA_OK);
+    EXPECT_EQ(captureCallback->OnCaptureReady(captureId, timestamp), CAMERA_OK);
+
+    sptr<PreviewOutput> previewOutput = CreatePreviewOutput(previewProfiles_[0]);
+    ASSERT_NE(previewOutput, nullptr);
+    sptr<PhotoOutput> photoOutput = CreatePhotoOutput(photoProfiles_[0]);
+    ASSERT_NE(photoOutput, nullptr);
+    EXPECT_EQ(captureSession_->BeginConfig(), SUCCESS);
+    EXPECT_EQ(captureSession_->AddInput((sptr<CaptureInput>&)cameraInput_), SUCCESS);
+    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)previewOutput), SUCCESS);
+    EXPECT_EQ(captureSession_->AddOutput((sptr<CaptureOutput>&)photoOutput), SUCCESS);
+
+    std::shared_ptr<TestPhotoOutputCallback> callback = std::make_shared<TestPhotoOutputCallback>("");
+    photoOutput->SetCallback(callback);
+
+    auto captureCallback2 = new (std::nothrow) HStreamCaptureCallbackImpl(photoOutput);
+    ASSERT_NE(captureCallback2, nullptr);
+    EXPECT_EQ(captureCallback2->OnFrameShutterEnd(captureId, timestamp), CAMERA_OK);
+    EXPECT_EQ(captureCallback2->OnCaptureReady(captureId, timestamp), CAMERA_OK);
+
+    EXPECT_EQ(photoOutput->Release(), SUCCESS);
+    EXPECT_EQ(previewOutput->Release(), SUCCESS);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test CameraManager RegisterCameraSharedStatusListener and UnregisterCameraSharedStatusListener
+* SubFunction: NA
+* FunctionPoints: CameraManager::RegisterCameraSharedStatusListener,
+*                CameraManager::UnregisterCameraSharedStatusListener,
+*                CameraManager::GetCameraSharedStatusListenerManager
+* EnvConditions: NA
+* CaseDescription: Test register and unregister CameraSharedStatusListener
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_257, TestSize.Level0)
+{
+    auto cameraManager = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager, nullptr);
+
+    auto listenerManager = cameraManager->GetCameraSharedStatusListenerManager();
+    ASSERT_NE(listenerManager, nullptr);
+
+    auto listener = std::make_shared<TestCameraSharedStatusListener>();
+    ASSERT_NE(listener, nullptr);
+    cameraManager->RegisterCameraSharedStatusListener(listener);
+    EXPECT_EQ(listenerManager->GetListenerCount(), 1);
+
+    cameraManager->UnregisterCameraSharedStatusListener(listener);
+    EXPECT_EQ(listenerManager->GetListenerCount(), 0);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test CameraManager RegisterSpectrumListener and UnregisterSpectrumListener
+* SubFunction: NA
+* FunctionPoints: CameraManager::RegisterSpectrumListener,
+*                CameraManager::UnregisterSpectrumListener,
+*                CameraManager::GetCameraSpectrumListenerManager
+* EnvConditions: NA
+* CaseDescription: Test register and unregister SpectrumListener with invalid params
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_259, TestSize.Level0)
+{
+    auto cameraManager = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager, nullptr);
+
+    auto listenerManager = cameraManager->GetCameraSpectrumListenerManager();
+    ASSERT_NE(listenerManager, nullptr);
+
+    SpectrumCallerInfo info = {"", 0};
+    auto listener = std::make_shared<TestCameraSpectrumInfoListener>();
+    EXPECT_NE(cameraManager->RegisterSpectrumListener(info, listener), CAMERA_OK);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test CameraSharedStatusListenerManager OnCameraSharedStatusChanged
+* SubFunction: NA
+* FunctionPoints: CameraSharedStatusListenerManager::OnCameraSharedStatusChanged
+* EnvConditions: NA
+* CaseDescription: Test OnCameraSharedStatusChanged triggers registered listener
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_262, TestSize.Level0)
+{
+    auto cameraManager = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager, nullptr);
+
+    auto listenerManager = cameraManager->GetCameraSharedStatusListenerManager();
+    ASSERT_NE(listenerManager, nullptr);
+
+    auto listener = std::make_shared<TestCameraSharedStatusListener>();
+    cameraManager->RegisterCameraSharedStatusListener(listener);
+    EXPECT_EQ(listenerManager->GetListenerCount(), 1);
+
+    int32_t status = CAMERA_SHARED_STATUS_SHARED;
+    EXPECT_EQ(listenerManager->OnCameraSharedStatusChanged(status), CAMERA_OK);
+
+    cameraManager->UnregisterCameraSharedStatusListener(listener);
+}
+
+/*
+* Feature: Camera base function
+* Function: Test CameraSpectrumListenerManager OnCameraSpectrumInfo
+* SubFunction: NA
+* FunctionPoints: CameraSpectrumListenerManager::OnCameraSpectrumInfo
+* EnvConditions: NA
+* CaseDescription: Test OnCameraSpectrumInfo triggers registered listener
+*/
+HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_264, TestSize.Level0)
+{
+    auto cameraManager = CameraManager::GetInstance();
+    ASSERT_NE(cameraManager, nullptr);
+
+    auto listenerManager = cameraManager->GetCameraSpectrumListenerManager();
+    ASSERT_NE(listenerManager, nullptr);
+
+    std::vector<float> spectrumInfos = {1.0f, 2.0f};
+    EXPECT_EQ(listenerManager->OnCameraSpectrumInfo(0, spectrumInfos, 0), CAMERA_OK);
 }
 } // namespace CameraStandard
 } // namespace OHOS

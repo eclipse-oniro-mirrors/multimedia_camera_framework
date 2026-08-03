@@ -826,5 +826,408 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_013, TestSize.Level0
 
     input->Close();
 }
+
+/*
+ * Feature: Framework
+ * Function: Test CanPreconfig with valid preconfig type and ratio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanPreconfig returns true for valid preconfig type and RATIO_1_1
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_001, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    bool canConfig = videoSession->CanPreconfig(PRECONFIG_720P, RATIO_1_1);
+    EXPECT_TRUE(canConfig);
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CanPreconfig with valid preconfig type and ratio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanPreconfig returns true for valid preconfig type and RATIO_4_3
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    bool canConfig = videoSession->CanPreconfig(PRECONFIG_1080P, RATIO_4_3);
+    EXPECT_TRUE(canConfig);
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CanPreconfig with valid preconfig type and ratio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanPreconfig returns true for valid preconfig type and RATIO_16_9
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    bool canConfig = videoSession->CanPreconfig(PRECONFIG_4K, RATIO_16_9);
+    EXPECT_TRUE(canConfig);
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CanPreconfig with valid preconfig type and ratio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanPreconfig returns true for valid preconfig type and UNSPECIFIED
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+        
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    bool canConfig = videoSession->CanPreconfig(PRECONFIG_HIGH_QUALITY, UNSPECIFIED);
+    EXPECT_TRUE(canConfig);
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CanPreconfig with invalid preconfig type and ratio
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanPreconfig returns False for invalid preconfig type
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_005, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    bool canConfig = videoSession->CanPreconfig(
+        static_cast<PreconfigType>(static_cast<int32_t>(PRECONFIG_HIGH_QUALITY) + 1), RATIO_1_1);
+    EXPECT_FALSE(canConfig);
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Preconfig with valid preconfig type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Preconfig returns SUCCESS for PRECONFIG_720P valid preconfig
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_006, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    if (videoSession->CanPreconfig(PRECONFIG_720P, RATIO_1_1)) {
+        int32_t ret = videoSession->Preconfig(PRECONFIG_720P, RATIO_1_1);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Preconfig with valid preconfig type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Preconfig returns SUCCESS for PRECONFIG_1080P valid preconfig
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_007, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    if (videoSession->CanPreconfig(PRECONFIG_1080P, RATIO_4_3)) {
+        int32_t ret = videoSession->Preconfig(PRECONFIG_1080P, RATIO_4_3);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Preconfig with valid preconfig type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Preconfig returns SUCCESS for PRECONFIG_4K valid preconfig
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_008, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    if (videoSession->CanPreconfig(PRECONFIG_4K, RATIO_16_9)) {
+        int32_t ret = videoSession->Preconfig(PRECONFIG_4K, RATIO_16_9);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Preconfig with valid preconfig type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Preconfig returns SUCCESS for PRECONFIG_HIGH_QUALITY valid preconfig
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_009, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    if (videoSession->CanPreconfig(PRECONFIG_HIGH_QUALITY, RATIO_1_1)) {
+        int32_t ret = videoSession->Preconfig(PRECONFIG_HIGH_QUALITY, RATIO_1_1);
+        EXPECT_EQ(ret, CAMERA_OK);
+    }
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Preconfig with invalid preconfig type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Preconfig dont returns SUCCESS for invalid preconfig
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_010, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    int32_t ret = videoSession->Preconfig(
+        static_cast<PreconfigType>(static_cast<int32_t>(PRECONFIG_HIGH_QUALITY) + 1), RATIO_1_1);
+    EXPECT_NE(ret, CAMERA_OK);
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test Preconfig with invalid preconfig type
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Preconfig returns error for invalid preconfig type
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_011, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+
+    int ret = videoSession->Preconfig(
+        static_cast<PreconfigType>(999), RATIO_1_1);
+    EXPECT_NE(ret, CAMERA_OK);
+
+    input->Close();
+    videoSession->Release();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test CanSetFrameRateRange with committed session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CanSetFrameRateRange returns valid result when session is active
+ */
+HWTEST_F(CameraVideoSessionUnitTest, video_session_ext_unittest_012, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetSupportedCameras();
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        EXPECT_EQ(camInput->GetCameraDevice()->Open(), 0);
+    }
+
+    sptr<CaptureSession> videoSession = cameraManager_->CreateCaptureSession(SceneMode::VIDEO);
+    ASSERT_NE(videoSession, nullptr);
+    sptr<VideoSessionForSys> videoSessionForSys =
+        static_cast<VideoSessionForSys*>(cameraManagerForSys_->CreateCaptureSessionForSys(
+        SceneMode::VIDEO).GetRefPtr());
+    ASSERT_NE(videoSessionForSys, nullptr);
+
+    sptr<CaptureSessionForSys> sessionForSys = cameraManagerForSys_->CreateCaptureSessionForSys(SceneMode::VIDEO);
+    ASSERT_NE(sessionForSys, nullptr);
+    sptr<VideoSessionForSys> vsForSys = static_cast<VideoSessionForSys*>(sessionForSys.GetRefPtr());
+    ASSERT_NE(vsForSys, nullptr);
+
+    if (videoSession->CanPreconfig(PRECONFIG_720P, RATIO_1_1)) {
+        int32_t ret = videoSession->Preconfig(PRECONFIG_720P, RATIO_1_1);
+        EXPECT_EQ(ret, CAMERA_OK);
+
+        sptr<PreviewOutput> previewOutput = nullptr;
+        int32_t intResult = cameraManager_->CreatePreviewOutputWithoutProfile(
+            Surface::CreateSurfaceAsConsumer(), &previewOutput);
+        EXPECT_EQ(intResult, 0);
+        ASSERT_NE(previewOutput, nullptr);
+
+        videoSession->BeginConfig();
+        videoSession->AddInput(input);
+
+        sptr<CaptureOutput> previewOutputCaptureUpper = previewOutput;
+        videoSession->AddOutput(previewOutputCaptureUpper);
+        videoSession->CommitConfig();
+
+        bool canSet = videoSession->CanSetFrameRateRange(24, 30, previewOutput);
+        EXPECT_TRUE(canSet);
+
+        canSet = videoSession->CanSetFrameRateRange(15, 24, previewOutput);
+        EXPECT_TRUE(canSet);
+
+        videoSession->Release();
+        previewOutput->Release();
+    }
+
+    input->Close();
+}
 }
 }

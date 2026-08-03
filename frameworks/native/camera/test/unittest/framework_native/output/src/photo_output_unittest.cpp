@@ -2337,5 +2337,22 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_102, TestSize.Level0)
     input->Release();
     MEDIA_INFO_LOG("photo_output_unittest_102: END");
 }
+
+/*
+* Feature: Framework
+* Function: Test PhotoCaptureSetting with SetCompressionQuality and GetCompressionQuality
+* SubFunction: NA
+* FunctionPoints: PhotoCaptureSetting::SetCompressionQuality, PhotoCaptureSetting::GetCompressionQuality
+* EnvConditions: NA
+* CaseDescription: Test SetCompressionQuality and GetCompressionQuality
+*/
+HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_049, TestSize.Level0)
+{
+    std::shared_ptr<PhotoCaptureSetting> settings = std::make_shared<PhotoCaptureSetting>();
+    settings->SetCompressionQuality(85);
+    EXPECT_EQ(settings->GetCompressionQuality(), 85);
+    settings->SetCompressionQuality(50);
+    EXPECT_EQ(settings->GetCompressionQuality(), 50);
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -18,20 +18,21 @@
 #include <sync_fence.h>
 #include "native_mfmagic.h"
 #include "media_description.h"
-#include "avcodec_list.h"
+#include "codec_info_util.h"
 #include "video_types.h"
+#include <set>
 
 namespace OHOS {
 namespace CameraStandard {
-
 VideoEncoder::~VideoEncoder()
 {
     MEDIA_INFO_LOG("~VideoEncoder enter");
     CHECK_PRINT_ILOG(codecSurface_, "codecSurface refCount %{public}d", codecSurface_->GetSptrRefCount());
     Release();
 }
-VideoEncoder::VideoEncoder(VideoCodecType type, ColorSpace colorSpace) : videoCodecType_(type),
-    isHdr_(IsHdr(colorSpace))
+
+VideoEncoder::VideoEncoder(VideoCodecType type, ColorSpace colorSpace, bool isExtendImage) : videoCodecType_(type),
+    isHdr_(IsHdr(colorSpace)), isExtendImage_(isExtendImage)
 {
     rotation_ = 0;
     MEDIA_INFO_LOG("VideoEncoder enter");
@@ -97,7 +98,11 @@ int32_t VideoEncoder::GetSurface()
     std::lock_guard<std::mutex> surfaceLock(surfaceMutex_);
     codecSurface_ = encoder_->CreateInputSurface();
     CHECK_RETURN_RET_ELOG(codecSurface_ == nullptr, 1, "Surface is null");
-    codecSurface_->SetQueueSize(CODEC_SURFACE_SIZE);
+    if (isExtendImage_) {
+        codecSurface_->SetQueueSize(CODEC_EXTEND_SURFACE_SIZE);
+    } else {
+        codecSurface_->SetQueueSize(CODEC_SURFACE_SIZE);
+    }
     return 0;
     // LCOV_EXCL_STOP
 }
@@ -122,7 +127,8 @@ int32_t VideoEncoder::ReleaseSurfaceBuffer(sptr<FrameRecord> frameRecord)
 
 int32_t VideoEncoder::DetachCodecBuffer(sptr<SurfaceBuffer> &surfaceBuffer, sptr<FrameRecord> frameRecord)
 {
-    CHECK_RETURN_RET_ELOG(frameRecord == nullptr || frameRecord->GetFrameSize() == nullptr, 1, "frameRecord is null");
+    CHECK_RETURN_RET_ELOG(frameRecord == nullptr || frameRecord->GetFrameSize() == nullptr, 1,
+        "frameRecord is null or GetFrameSize() is null");
     std::lock_guard<std::mutex> lock(surfaceMutex_);
     CHECK_RETURN_RET_ELOG(codecSurface_ == nullptr, 1, "codecSurface_ is null");
     // LCOV_EXCL_START
@@ -164,9 +170,9 @@ int32_t VideoEncoder::NotifyEndOfStream()
 {
     std::lock_guard<std::mutex> lock(encoderMutex_);
     CHECK_RETURN_RET_ELOG(encoder_ == nullptr, 1, "Encoder is null");
+    // LCOV_EXCL_START
     int32_t ret = encoder_->NotifyEos();
     CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "Notify end of stream failed, ret: %{public}d", ret);
-    // LCOV_EXCL_START
     return 0;
     // LCOV_EXCL_STOP
 }
@@ -197,6 +203,7 @@ int32_t VideoEncoder::Stop()
 
 void VideoEncoder::SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation)
 {
+    // LCOV_EXCL_START
     MEDIA_INFO_LOG("VideoEncoder SetVideoCodec E videoCodecType_ = %{public}d", videoCodecType_);
     size_ = size;
     rotation_ = rotation;
@@ -205,6 +212,7 @@ void VideoEncoder::SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rota
     Config();
     GetSurface();
     MEDIA_INFO_LOG("VideoEncoder SetVideoCodec X");
+    // LCOV_EXCL_STOP
 }
 
 void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
@@ -227,6 +235,7 @@ void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
 
 bool VideoEncoder::ProcessOverTimeFrame(sptr<FrameRecord> frameRecord)
 {
+    // LCOV_EXCL_START
     std::lock_guard<std::mutex> OverTimeLock(overTimeMutex_);
     //overtime frame only be processed once
     CHECK_RETURN_RET_ILOG(frameRecord->IsEncoded(), true,
@@ -252,12 +261,21 @@ bool VideoEncoder::ProcessOverTimeFrame(sptr<FrameRecord> frameRecord)
     //no matter success or not ,bufferInfo already been released
     overTimeMap.Erase(frameRecord->GetTimeStamp());
     return false;
+    // LCOV_EXCL_STOP
 }
 
 bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord)
 {
     // LCOV_EXCL_START
-    MEDIA_DEBUG_LOG("EnqueueBuffer timestamp : %{public}s", frameRecord->GetFrameId().c_str());
+    if (isExtendImage_) {
+        std::lock_guard<std::mutex> lock(encoderMutex_);
+        MediaAVCodec::Format format = MediaAVCodec::Format();
+        format.PutIntValue(MediaDescriptionKey::MD_KEY_REQUEST_I_FRAME, true);
+        CHECK_RETURN_RET_ELOG(encoder_ == nullptr, false, "encoder_ is nullptr");
+        int32_t ret = encoder_->SetParameter(format);
+        CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, false, "EnqueueBuffer for extendImage set parameter failed");
+    }
+    MEDIA_DEBUG_LOG("EnqueueBuffer timestamp : %{public}llu", (long long unsigned)frameRecord->GetTimeStamp());
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
     CHECK_RETURN_RET_ELOG(buffer == nullptr, false, "Enqueue video buffer is empty");
     std::lock_guard<std::mutex> lock(surfaceMutex_);
@@ -365,10 +383,10 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
             tsLock.unlock();
             enqueueCond_.notify_all();
         }
-        MEDIA_DEBUG_LOG("EncodeSurfaceBuffer::timestamp:%{public}" PRIu64 ", enqueue result:%{public}d",
-            frameRecord->GetTimeStamp(), EnqueueRet);
-        CHECK_RETURN_RET_ELOG(
-            !EnqueueRet, false, "EnqueueBuffer failed,timestamp::%{public}" PRIu64, frameRecord->GetTimeStamp());
+        MEDIA_DEBUG_LOG("EncodeSurfaceBuffer::timestamp:%{public}llu, enqueue result:%{public}d",
+            (long long unsigned)frameRecord->GetTimeStamp(), EnqueueRet);
+        CHECK_RETURN_RET_ELOG(!EnqueueRet, false, "EnqueueBuffer failed,timestamp::%{public}llu",
+            (long long unsigned)frameRecord->GetTimeStamp());
     }
     std::unique_lock<std::mutex> contextLock(contextMutex_);
     CHECK_RETURN_RET_ELOG(context_ == nullptr, false, "VideoEncoder has been released");
@@ -390,14 +408,62 @@ bool VideoEncoder::EncodeSurfaceBuffer(sptr<FrameRecord> frameRecord)
     uint32_t seqNum = 0;
     CHECK_EXECUTE(frameRecord->GetSurfaceBuffer() != nullptr, seqNum = frameRecord->GetSurfaceBuffer()->GetSeqNum());
     MEDIA_INFO_LOG("Out buffer count: %{public}u, size: %{public}d, flag: %{public}u, pts:%{public}" PRIu64 ", "
-                   "timestamp:%{public}" PRIu64 ", SeqNum: %{public}" PRIu32,
+                   "timestamp:%{public}llu, SeqNum: %{public}" PRIu32,
         context_->outputFrameCount_, bufferInfo->buffer->memory_->GetSize(), bufferInfo->buffer->flag_,
-        bufferInfo->buffer->pts_, frameRecord->GetTimeStamp(), seqNum);
+        bufferInfo->buffer->pts_, (long long unsigned)frameRecord->GetTimeStamp(), seqNum);
     context_->outputBufferInfoMap_.erase(frameRecord->GetTimeStamp());
     context_->outputFrameCount_++;
     lock.unlock();
     contextLock.unlock();
     return ProcessEncodedBuffer(frameRecord, bufferInfo);
+    // LCOV_EXCL_STOP
+}
+
+bool VideoEncoder::EncodeExtendSurfaceBuffer(sptr<FrameRecord> frameRecord)
+{
+    // LCOV_EXCL_START
+    MEDIA_INFO_LOG("EncodeExtendSurfaceBuffer is called");
+    bool isSuccessed = EnqueueBuffer(frameRecord);
+    CHECK_RETURN_RET_ELOG(!isSuccessed, false,  "Encode Extend Surface Buffer failed");
+    int32_t retryCount = 5;
+    while (retryCount > 0) {
+        retryCount--;
+        std::unique_lock<std::mutex> contextLock(contextMutex_);
+        CHECK_RETURN_RET_ELOG(context_ == nullptr, false, "VideoEncoder has been released");
+        std::unique_lock<std::mutex> lock(context_->outputMutex_);
+        bool condRet = context_->outputCond_.wait_for(lock, std::chrono::milliseconds(QUEUE_WAIT_TIME),
+            [this]() { return !isStarted_ || !context_->outputBufferInfoMap_.empty(); });
+        CHECK_CONTINUE_WLOG(
+            context_->outputBufferInfoMap_.empty(), "Buffer queue is empty, continue, cond ret: %{public}d", condRet);
+        sptr<VideoCodecAVBufferInfo> bufferInfo = context_->outputBufferInfoMap_.begin()->second;
+        CHECK_RETURN_RET_ELOG(bufferInfo->buffer->memory_ == nullptr, false, "memory is alloced failed!");
+        MEDIA_INFO_LOG("Extend image out buffer count: %{public}u, size: %{public}d, flag: %{public}u,"
+            "pts:%{public}" PRIu64 ", ""timestamp:%{public}" PRIu64, context_->outputFrameCount_,
+            bufferInfo->buffer->memory_->GetSize(), bufferInfo->buffer->flag_, bufferInfo->buffer->pts_,
+            frameRecord->GetTimeStamp());
+        context_->outputBufferInfoMap_.erase(context_->outputBufferInfoMap_.begin());
+        context_->outputFrameCount_++;
+        lock.unlock();
+        contextLock.unlock();
+        std::lock_guard<std::mutex> encodeLock(encoderMutex_);
+        if (bufferInfo->buffer->flag_ == AVCODEC_BUFFER_FLAGS_SYNC_FRAME) {
+            // return I frame
+            std::shared_ptr<Media::AVBuffer> IDRBuffer = bufferInfo->GetCopyAVBuffer();
+            frameRecord->CacheBuffer(IDRBuffer);
+            frameRecord->SetIDRProperty(true);
+        } else {
+            MEDIA_ERR_LOG("Flag is not acceptted number: %{public}u", bufferInfo->buffer->flag_);
+            int32_t ret = FreeOutputData(bufferInfo->bufferIndex);
+            CHECK_BREAK_WLOG(ret != 0, "FreeOutputData failed");
+            continue;
+        }
+        int32_t ret = encoder_->ReleaseOutputBuffer(bufferInfo->bufferIndex);
+        CHECK_BREAK_WLOG(ret != 0, "FreeOutputData failed");
+        MEDIA_DEBUG_LOG("Extend Image Success frame id is : %{public}s, refCount: %{public}d",
+            frameRecord->GetFrameId().c_str(), frameRecord->GetSptrRefCount());
+        return true;
+    }
+    return false;
     // LCOV_EXCL_STOP
 }
 
@@ -438,6 +504,7 @@ void VideoEncoder::CallBack::OnOutputFormatChanged(const Format &format)
 
 std::shared_ptr<AVBuffer> VideoEncoder::CopyAVBuffer(std::shared_ptr<AVBuffer>& inputBuffer)
 {
+    // LCOV_EXCL_START
     // deep copy input buffer to output buffer
     auto allocator = Media::AVAllocatorFactory::CreateSharedAllocator(Media::MemoryFlag::MEMORY_READ_WRITE);
     CHECK_RETURN_RET_ELOG(allocator == nullptr, nullptr, "create allocator failed");
@@ -450,10 +517,12 @@ std::shared_ptr<AVBuffer> VideoEncoder::CopyAVBuffer(std::shared_ptr<AVBuffer>& 
     errno_t cpyRet = memcpy_s(reinterpret_cast<void*>(destAddr), inputBuffer->memory_->GetSize(),
         reinterpret_cast<void*>(sourceAddr), inputBuffer->memory_->GetSize());
     CHECK_PRINT_ELOG(0 != cpyRet, "CodecBufferInfo memcpy_s failed. %{public}d", cpyRet);
+    FrameRecord::TrackAddr(destAddr, destBuffer->memory_->GetFileDescriptor(), inputBuffer->pts_);
     destBuffer->pts_ = inputBuffer->pts_;
     destBuffer->flag_ = inputBuffer->flag_;
     destBuffer->memory_->SetSize(inputBuffer->memory_->GetSize());
     return destBuffer;
+    // LCOV_EXCL_STOP
 }
 
 std::shared_ptr<AVBuffer> VideoEncoder::GetXpsBuffer()
@@ -484,9 +553,12 @@ void VideoEncoder::CallBack::OnOutputBufferAvailable(uint32_t index, std::shared
     // LCOV_EXCL_START
     auto encoder = videoEncoder_.lock();
     CHECK_RETURN_ELOG(encoder == nullptr, "encoder is nullptr");
-    MEDIA_DEBUG_LOG("OnOutputBufferAvailable,index:%{public}u, pts:%{public}" PRIu64
-                    ",flag:%{public}d, bufferIndex:%{public}" PRId64 ",dts:%{public}" PRIu64,
-        index, buffer->pts_, buffer->flag_, encoder->muxerIndex, buffer->dts_);
+    MEDIA_DEBUG_LOG(
+        "OnOutputBufferAvailable,index:%{public}u, pts:%{public}llu, flag:%{public}d, bufferIndex:%{public}" PRId64
+        ",dts:%{public}" PRIu64,
+        index, (long long unsigned)buffer->pts_, buffer->flag_, encoder->muxerIndex, buffer->dts_);
+    FrameRecord::DumpBuffer(buffer->memory_->GetAddr(), buffer->memory_->GetSize(), buffer->pts_, "encoder_output_raw");
+    encoder->ProcessFrameInfo(buffer);
     OverTimeBufferInfo overTimeInfo;
     if (encoder->overTimeMap.Find(buffer->pts_, overTimeInfo)) {
         // means no contextCond_ waiting for this framerecord
@@ -530,14 +602,12 @@ int32_t VideoEncoder::SetCallback()
 int32_t VideoEncoder::Configure()
 {
     // LCOV_EXCL_START
-    BframeAbility_ = IsBframeSupported();
+    BframeAbility_ = CodecInfoUtil::IsBframeSupported(ProxyVideoCodecType::HEVC);
     int32_t baseBit = BframeAbility_ ? BITRATE_15M : BITRATE_22M;
     int32_t bitrate = static_cast<int32_t>(pow(float(size_->width) * float(size_->height) / DEFAULT_SIZE,
         VIDEO_BITRATE_CONSTANT) * baseBit);
     bitrate_ = videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_AVC
         ? static_cast<int32_t>(bitrate * HEVC_TO_AVC_FACTOR) : bitrate;
-    MEDIA_INFO_LOG("Current resolution is : %{public}d*%{public}d, encode type : %{public}d, set bitrate : %{public}d",
-        size_->width, size_->height, videoCodecType_, bitrate_);
     uint32_t sqrFactor = BframeAbility_ ? SQR_FACTOR_28 : SQR_FACTOR_27;
     MEDIA_INFO_LOG("Current resolution is : %{public}d*%{public}d, type[%{public}d], "
         "bitrate[%{public}d], sqrFactor[%{public}d]",
@@ -552,7 +622,10 @@ int32_t VideoEncoder::Configure()
     format.PutIntValue(MediaDescriptionKey::MD_KEY_VIDEO_ENCODER_SQR_FACTOR, sqrFactor);
     format.PutIntValue(Media::Tag::VIDEO_CODEC_SCENARIO, Media::Plugins::VideoCodecScenario::SCENARIO_MOVING_PHOTO);
     format.PutIntValue(Media::Tag::VIDEO_ENCODER_ENABLE_B_FRAME, BframeAbility_);
-    if (BframeAbility_) {
+    if (!isExtendImage_) {
+        format.PutIntValue(Media::Tag::VIDEO_ENCODER_ENABLE_B_FRAME, BframeAbility_);
+    }
+    if (BframeAbility_ && !isExtendImage_) {
         format.PutIntValue(Media::Tag::VIDEO_ENCODE_B_FRAME_GOP_MODE,
             static_cast<int32_t>(Media::Plugins::VideoEncodeBFrameGopMode::VIDEO_ENCODE_GOP_H3B_MODE));
     }
@@ -570,21 +643,29 @@ int32_t VideoEncoder::Configure()
     // LCOV_EXCL_STOP
 }
 
-bool VideoEncoder::IsBframeSupported()
-{
-    auto codecList = MediaAVCodec::AVCodecListFactory::CreateAVCodecList();
-    CHECK_RETURN_RET_ELOG(codecList == nullptr, false, "CodecList is nullptr.");
-    MediaAVCodec::CapabilityData* capabilityData =
-        codecList->GetCapability("video/hevc", true, MediaAVCodec::AVCodecCategory::AVCODEC_HARDWARE);
-    CHECK_RETURN_RET_ELOG(capabilityData == nullptr, false, "CapabilityData is nullptr.");
-    auto codecInfo = std::make_shared<MediaAVCodec::AVCodecInfo>(capabilityData);
-    bool isBFrame = codecInfo->IsFeatureSupported(MediaAVCodec::AVCapabilityFeature::VIDEO_ENCODER_B_FRAME);
-    return isBFrame;
-}
-
 int32_t VideoEncoder::GetEncoderBitrate()
 {
     return bitrate_;
+}
+
+void VideoEncoder::ProcessFrameInfo(std::shared_ptr<AVBuffer> buffer)
+{
+    // LCOV_EXCL_START
+    int64_t currentTimestamp = buffer->pts_;
+    uint32_t currentFlag = buffer->flag_;
+    int64_t currentMuxerIndex = muxerIndex;
+
+    // Check timestamp order (timestampSet_ keeps max 2 elements)
+    CheckTimestampOrder(currentTimestamp, currentMuxerIndex);
+
+    CHECK_EXECUTE_RETURN(!(currentFlag & AVCODEC_BUFFER_FLAGS_SYNC_FRAME), frameCountSinceLastIFrame_++);
+    // If I-frame, check interval, Skip check for the first I-frame
+    CHECK_PRINT_ELOG(lastIFrameTimestamp_ != 0 && frameCountSinceLastIFrame_ != IFRAME_INTERVAL,
+        "CheckMP: %{public}dframes, preIts=%{public}llu, curIts=%{public}llu", frameCountSinceLastIFrame_,
+        (long long unsigned)lastIFrameTimestamp_, (long long unsigned)currentTimestamp);
+    lastIFrameTimestamp_ = currentTimestamp;
+    frameCountSinceLastIFrame_ = 0;
+    // LCOV_EXCL_STOP
 }
 } // CameraStandard
 } // OHOS

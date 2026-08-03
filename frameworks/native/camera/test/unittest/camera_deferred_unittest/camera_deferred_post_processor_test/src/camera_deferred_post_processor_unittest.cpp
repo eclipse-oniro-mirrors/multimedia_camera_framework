@@ -936,5 +936,216 @@ HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_034, Te
     imageInfo.dpsMetaData_.Get("cloudFlag", val2);
     EXPECT_EQ(val2, cloudFlag);
 }
+
+class MockImageProcessSession : public HDI::Camera::V1_2::IImageProcessSession {
+public:
+    MOCK_METHOD(int32_t, GetCoucurrency,
+        (OHOS::HDI::Camera::V1_2::ExecutionMode mode, int32_t& taskCount), (override));
+    MOCK_METHOD(int32_t, GetPendingImages, (std::vector<std::string>& imageIds), (override));
+    MOCK_METHOD(int32_t, SetExecutionMode,
+        (OHOS::HDI::Camera::V1_2::ExecutionMode mode), (override));
+    MOCK_METHOD(int32_t, ProcessImage, (const std::string& imageId), (override));
+    MOCK_METHOD(int32_t, RemoveImage, (const std::string& imageId), (override));
+    MOCK_METHOD(int32_t, Interrupt, (), (override));
+    MOCK_METHOD(int32_t, Reset, (), (override));
+
+    MockImageProcessSession()
+    {
+        ON_CALL(*this, GetCoucurrency).WillByDefault(Return(OK));
+        ON_CALL(*this, GetPendingImages).WillByDefault(Return(OK));
+        ON_CALL(*this, SetExecutionMode).WillByDefault(Return(OK));
+        ON_CALL(*this, ProcessImage).WillByDefault(Return(OK));
+        ON_CALL(*this, RemoveImage).WillByDefault(Return(OK));
+        ON_CALL(*this, Interrupt).WillByDefault(Return(OK));
+        ON_CALL(*this, Reset).WillByDefault(Return(OK));
+    }
+};
+
+/*
+ * Feature: Framework
+ * Function: Test VideoPostProcessor RemoveNeedJbo with empty list
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test VideoPostProcessor RemoveNeedJbo with empty removeNeededList
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_035, TestSize.Level0)
+{
+    auto postProcessor = VideoPostProcessor::Create(userId_);
+    auto session = sptr<MockVideoProcessSession>::MakeSptr();
+    EXPECT_CALL(*session, RemoveVideo(_)).Times(0);
+
+    postProcessor->removeNeededList_.clear();
+    postProcessor->RemoveNeedJbo(session.GetRefPtr());
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoPostProcessor GetConcurrency with valid session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoPostProcessor GetConcurrency when session is valid
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_036, TestSize.Level0)
+{
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+    postProcessor->Initialize();
+
+    auto session = sptr<MockImageProcessSession>::MakeSptr();
+    postProcessor->SetPhotoSession(session.GetRefPtr());
+
+    int32_t ret = postProcessor->GetConcurrency(ExecutionMode::LOAD_BALANCE);
+    EXPECT_GE(ret, 1);
+    postProcessor->SetPhotoSession(nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoPostProcessor GetConcurrency with null session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoPostProcessor GetConcurrency when session is null
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_037, TestSize.Level0)
+{
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+
+    postProcessor->Initialize();
+    postProcessor->SetPhotoSession(nullptr);
+
+    int32_t ret = postProcessor->GetConcurrency(ExecutionMode::LOAD_BALANCE);
+    EXPECT_EQ(ret, 1);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoPostProcessor ProcessImage with null session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoPostProcessor ProcessImage when session is null
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_038, TestSize.Level0)
+{
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+
+    postProcessor->Initialize();
+    postProcessor->SetPhotoSession(nullptr);
+
+    std::string imageId = "testImageId";
+    postProcessor->ProcessImage(imageId);
+    EXPECT_EQ(postProcessor->runningId_.empty(), true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoPostProcessor RemoveImage with null session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoPostProcessor RemoveImage when session is null
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_039, TestSize.Level0)
+{
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+
+    postProcessor->Initialize();
+    postProcessor->SetPhotoSession(nullptr);
+
+    std::string imageId = "testImageId";
+    postProcessor->runningId_.emplace(imageId);
+    postProcessor->RemoveImage(imageId);
+    EXPECT_EQ(postProcessor->runningId_.empty(), true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoPostProcessor Interrupt with valid session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoPostProcessor Interrupt normal branch
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_040, TestSize.Level0)
+{
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+
+    postProcessor->Initialize();
+    auto session = sptr<MockImageProcessSession>::MakeSptr();
+    postProcessor->SetPhotoSession(session.GetRefPtr());
+
+    EXPECT_CALL(*session, Interrupt()).WillOnce(Return(OK));
+    EXPECT_CALL(*session, SetExecutionMode(_)).WillOnce(Return(OK));
+    postProcessor->Interrupt();
+    postProcessor->SetPhotoSession(nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoPostProcessor Interrupt with null session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoPostProcessor Interrupt when session is null, verify no crash
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_041, TestSize.Level0)
+{
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+
+    postProcessor->Initialize();
+    postProcessor->SetPhotoSession(nullptr);
+    postProcessor->Interrupt();
+    EXPECT_EQ(postProcessor->runningId_.empty(), true);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoPostProcessor Reset with valid session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoPostProcessor Reset normal branch
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_042, TestSize.Level0)
+{
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+
+    postProcessor->Initialize();
+    auto session = sptr<MockImageProcessSession>::MakeSptr();
+    postProcessor->SetPhotoSession(session.GetRefPtr());
+    EXPECT_CALL(*session, Reset()).WillOnce(Return(OK));
+
+    postProcessor->Reset();
+    postProcessor->SetPhotoSession(nullptr);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test PhotoPostProcessor Reset with null session
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test PhotoPostProcessor Reset when session is null, verify no crash
+ */
+HWTEST_F(DeferredPostPorcessorUnitTest, deferred_post_processor_unittest_043, TestSize.Level0)
+{
+    auto postProcessor = CreateShared<PhotoPostProcessor>(userId_);
+    ASSERT_NE(postProcessor, nullptr);
+
+    postProcessor->Initialize();
+    postProcessor->SetPhotoSession(nullptr);
+    postProcessor->Reset();
+    EXPECT_EQ(postProcessor->runningId_.empty(), true);
+}
+
 } // CameraStandard
 } // OHOS

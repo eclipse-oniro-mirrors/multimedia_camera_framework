@@ -1081,6 +1081,185 @@ HWTEST_F(DeferredPhotoJobUnitTest, photo_job_repository_unittest_037, TestSize.L
     repository->ReportEvent(job, IDeferredPhotoProcessingSessionIpcCode::COMMAND_CANCEL_PROCESS_IMAGE);
     EXPECT_EQ(repository->GetOfflineJobSize(), 1);
 }
+
+/*
+ * Feature: PhotoJobStateListener
+ * Function: Test UpdateRunningJob with valid repository
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: UpdateRunningJob should update the running state of a job
+ * when the repository is valid
+ */
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_state_listener_unittest_001, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    ASSERT_NE(repository, nullptr);
+
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata, SYSTEM_CAMERA);
+
+    auto listener = std::make_shared<PhotoJobStateListener>(repository);
+    listener->UpdateRunningJob(TEST_IMAGE_1, true);
+    EXPECT_TRUE(repository->IsRunningJob(TEST_IMAGE_1));
+
+    listener->UpdateRunningJob(TEST_IMAGE_1, false);
+    EXPECT_FALSE(repository->IsRunningJob(TEST_IMAGE_1));
+}
+
+/*
+ * Feature: PhotoJobStateListener
+ * Function: Test UpdateRunningJob with expired weak_ptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: UpdateRunningJob should not crash when the repository is destroyed
+ */
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_state_listener_unittest_002, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    std::weak_ptr<PhotoJobRepository> weakRepo = repository;
+
+    auto listener = std::make_shared<PhotoJobStateListener>(weakRepo);
+    repository.reset();
+
+    listener->UpdateRunningJob(TEST_IMAGE_1, true);
+    EXPECT_NE(listener, nullptr);
+}
+
+/*
+ * Feature: PhotoJobStateListener
+ * Function: Test UpdatePriorityJob with valid repository
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: UpdatePriorityJob should update priority counts correctly
+ */
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_state_listener_unittest_003, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    ASSERT_NE(repository, nullptr);
+
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata, SYSTEM_CAMERA);
+
+    auto listener = std::make_shared<PhotoJobStateListener>(repository);
+    int32_t normalBefore = repository->priorityToNum_.find(JobPriority::NORMAL)->second;
+    listener->UpdatePriorityJob(JobPriority::HIGH, JobPriority::NORMAL);
+
+    int32_t normalAfter = repository->priorityToNum_.find(JobPriority::NORMAL)->second;
+    int32_t highAfter = repository->priorityToNum_.find(JobPriority::HIGH)->second;
+
+    EXPECT_EQ(normalAfter, normalBefore - 1);
+    EXPECT_EQ(highAfter, 1);
+}
+
+/*
+ * Feature: PhotoJobStateListener
+ * Function: Test UpdatePriorityJob with expired weak_ptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: UpdatePriorityJob should not crash when repository is destroyed
+ */
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_state_listener_unittest_004, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    std::weak_ptr<PhotoJobRepository> weakRepo = repository;
+
+    auto listener = std::make_shared<PhotoJobStateListener>(weakRepo);
+    repository.reset();
+
+    listener->UpdatePriorityJob(JobPriority::HIGH, JobPriority::NORMAL);
+    EXPECT_NE(listener, nullptr);
+}
+
+/*
+ * Feature: PhotoJobStateListener
+ * Function: Test UpdateJobSize with valid repository
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: UpdateJobSize should invoke UpdateJobSizeUnLocked on the repository
+ */
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_state_listener_unittest_005, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    ASSERT_NE(repository, nullptr);
+
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata, SYSTEM_CAMERA);
+
+    auto listener = std::make_shared<PhotoJobStateListener>(repository);
+    listener->UpdateJobSize();
+    EXPECT_EQ(repository->GetOfflineJobSize(), 1);
+}
+
+/*
+ * Feature: PhotoJobStateListener
+ * Function: Test UpdateJobSize with expired weak_ptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: UpdateJobSize should not crash when repository is destroyed
+ */
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_state_listener_unittest_006, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    std::weak_ptr<PhotoJobRepository> weakRepo = repository;
+
+    auto listener = std::make_shared<PhotoJobStateListener>(weakRepo);
+    repository.reset();
+
+    listener->UpdateJobSize();
+    EXPECT_NE(listener, nullptr);
+}
+
+/*
+ * Feature: PhotoJobStateListener
+ * Function: Test TryDoNextJob with valid repository
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: TryDoNextJob should invoke NotifyJobChanged on valid repository
+ */
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_state_listener_unittest_007, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    ASSERT_NE(repository, nullptr);
+
+    DpsMetadata metadata;
+    metadata.Set(DEFERRED_PROCESSING_TYPE_KEY, DPS_OFFLINE);
+    repository->AddDeferredJob(TEST_IMAGE_1, true, metadata, SYSTEM_CAMERA);
+
+    auto listener = std::make_shared<PhotoJobStateListener>(repository);
+    listener->TryDoNextJob(TEST_IMAGE_1, true);
+    EXPECT_EQ(repository->GetOfflineJobSize(), 1);
+}
+
+/*
+ * Feature: PhotoJobStateListener
+ * Function: Test TryDoNextJob with expired weak_ptr
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: TryDoNextJob should not crash when repository is destroyed
+ */
+HWTEST_F(DeferredPhotoJobUnitTest, photo_job_state_listener_unittest_008, TestSize.Level0)
+{
+    auto repository = PhotoJobRepository::Create(USER_ID);
+    std::weak_ptr<PhotoJobRepository> weakRepo = repository;
+
+    auto listener = std::make_shared<PhotoJobStateListener>(weakRepo);
+    repository.reset();
+
+    listener->TryDoNextJob(TEST_IMAGE_1, true);
+    EXPECT_NE(listener, nullptr);
+}
+
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

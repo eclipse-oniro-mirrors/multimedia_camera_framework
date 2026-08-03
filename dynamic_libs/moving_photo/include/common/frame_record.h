@@ -17,6 +17,10 @@
 #define CAMERA_FRAMEWORK_FRAME_RECORD_H
 #include <condition_variable>
 #include <cstdint>
+#include <cstdlib>
+#include <climits>
+#include <fstream>
+#include <map>
 #include <queue>
 #include <refbase.h>
 #include <string>
@@ -28,6 +32,7 @@
 #include "sample_info.h"
 #include "surface_buffer.h"
 #include "surface_type.h"
+#include "parameters.h"
 #include "utils/camera_log.h"
 
 namespace OHOS {
@@ -131,6 +136,23 @@ public:
         return std::numeric_limits<uint64_t>::max();
     }
 
+    inline void SetManual()
+    {
+        int32_t isManual = 0;
+        auto surfaceBuffer = GetSurfaceBuffer();
+        CHECK_RETURN_ELOG(surfaceBuffer == nullptr, "SetManual: surfaceBuffer is nullptr");
+        sptr<BufferExtraData> extraData = surfaceBuffer->GetExtraData();
+        CHECK_RETURN_ELOG(extraData == nullptr, "SetManual: extraData is nullptr");
+        extraData->ExtraGet("isManualAeDropReference", isManual);
+        MEDIA_INFO_LOG("SetManual:%{public}d", isManual);
+        isManual_ = isManual != 0;
+    }
+
+    inline bool IsManual()
+    {
+        return isManual_;
+    }
+
     inline const std::string& GetFrameId() const
     {
         return frameId_;
@@ -217,11 +239,54 @@ public:
         { GRAPHIC_ROTATE_270, 90 },
     };
 
-    std::shared_ptr<Media::AVBuffer> encodedBuffer = nullptr;
+    static bool IsDumpEnabled()
+    {
+        return system::GetBoolParameter("avbuffer.dump.state", false);
+    }
+    struct AddrInfo {
+        int32_t fd;
+        int64_t timestamp;
+    };
+
+    static void TrackAddr(void* addr, int32_t fd, int64_t timestamp)
+    {
+        std::lock_guard<std::mutex> lock(addrTrackerMutex_);
+        auto it = addrTracker_.find(addr);
+        if (it != addrTracker_.end()) {
+            MEDIA_ERR_LOG("TrackAddr addr reused! curTs:%{public}" PRId64 ", curFd:%{public}d, "
+                          "prevTs:%{public}" PRId64 ", prevFd:%{public}d",
+                timestamp, fd, it->second.timestamp, it->second.fd);
+        }
+        addrTracker_[addr] = { fd, timestamp };
+    }
+
+    static void UntrackAddr(void* addr)
+    {
+        std::lock_guard<std::mutex> lock(addrTrackerMutex_);
+        addrTracker_.erase(addr);
+    }
+
+    static void DumpBuffer(void* addr, int32_t len, int64_t time, const std::string& tag)
+    {
+        const std::string FILE_DIR = "/data/service/el1/public/camera_service/";
+        char resolvedPath[PATH_MAX] = {0};
+        if (!IsDumpEnabled() || realpath(FILE_DIR.c_str(), resolvedPath) == nullptr) {
+            return;
+        }
+        std::string fileName = FILE_DIR + tag + '_' + std::to_string(time) +
+            "_len_" + std::to_string(len) + ".dat";
+        std::ofstream outFile(fileName, std::ofstream::out | std::ios::binary);
+        if (!outFile.is_open()) {
+            return;
+        }
+        outFile.write(reinterpret_cast<const char*>(addr), len);
+        outFile.close();
+    }
     std::string frameId_;
     std::mutex bufferMutex_;
-    int64_t muxerIndex_;
+    int64_t muxerIndex_ = 0;
 private:
+    std::shared_ptr<Media::AVBuffer> encodedBuffer = nullptr;
     static const int32_t STATUS_NONE = 0;
     static const int32_t STATUS_READY_CONVERT = 1;
     static const int32_t STATUS_FINISH_ENCODE = 2;
@@ -240,6 +305,9 @@ private:
     std::mutex metaBufferMutex_;
     sptr<SurfaceBuffer> metaBuffer_;
     bool isIDRFrame_ = false;
+    std::atomic<bool> isManual_ { false };
+    static std::mutex addrTrackerMutex_;
+    static std::map<void*, AddrInfo> addrTracker_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

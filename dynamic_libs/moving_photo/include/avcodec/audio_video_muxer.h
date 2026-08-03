@@ -37,7 +37,9 @@ const std::string STAGE_ENCODER_PARAM_KEY = "com.openharmony.encParam";
 enum TrackType {
     AUDIO_TRACK = 0,
     VIDEO_TRACK,
-    META_TRACK
+    META_TRACK,
+    MANUAL_TRACK,
+    MANUAL_META_TRACK
 };
 using namespace MediaAVCodec;
 class AudioVideoMuxer : public RefBase {
@@ -71,6 +73,8 @@ private:
     int audioTrackId_ = -1;
     int videoTrackId_ = -1;
     int metaTrackId_ = -1;
+    int manualTrackId_ = -1;
+    int manualMetaTrackId_ = -1;
     VideoType videoTp_ = VideoType::ORIGIN_VIDEO;
 };
 } // CameraStandard

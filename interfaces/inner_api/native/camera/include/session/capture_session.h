@@ -2329,7 +2329,6 @@ public:
     std::vector<NightSubMode> GetSupportedNightSubModeTypes();
     void SetPhotoQualityPrioritization(camera_photo_quality_prioritization_t quality);
     uint32_t GetIsoValue();
-    int32_t GetIsoRange(std::vector<int32_t>& isoRange);
     int32_t SetExposureMeteringMode(MeteringMode mode);
     int32_t GetSupportedMeteringModes(std::vector<MeteringMode>& meteringModes);
     bool CheckStreamsNum(CaptureOutputType outputType);
@@ -2674,7 +2673,7 @@ protected:
     atomic<bool> isAutoSwitchDevice_ = false;
     atomic<bool> isDeviceCapabilityChanged_ = false;
     atomic<bool> canAddFuncToMap_ = true;
-    std::atomic<bool> isVirtualApertureEnabled_;
+    std::atomic<bool> isVirtualApertureEnabled_ = false;
     bool isControlCenterEnabled_ = false;
     atomic<bool> isColorStyleWorking_ = false;
     atomic<bool> isApertureSupported_ = false;

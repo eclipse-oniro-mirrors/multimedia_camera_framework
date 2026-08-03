@@ -1127,7 +1127,6 @@ public:
         return cameraDeviceList;
     }
     std::string GetBundleName();
-    std::vector<sptr<CameraDevice>> AddPhysicalCameras();
     std::vector<sptr<CameraDevice>> GetCameraPhysicalDeviceListFromServer();
     void GetCameraStatusData(std::vector<CameraStatusData> &cameraStatusDataList);
     std::vector<sptr<CameraDevice>> GetCameraDevices();

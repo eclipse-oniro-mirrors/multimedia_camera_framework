@@ -69,6 +69,7 @@ common_sources = [
   "utils/camera_timer.cpp",
   "utils/camera_xcollie.cpp",
   "utils/camera_extend/src/camera_extend_proxy.cpp",
+  "utils/codec_info_util.cpp",
   "utils/media_manager/src/media_manager_proxy.cpp",
   "utils/media_stream/src/recorder_engine_proxy.cpp",
   "utils/movie_file/src/movie_file_proxy.cpp",

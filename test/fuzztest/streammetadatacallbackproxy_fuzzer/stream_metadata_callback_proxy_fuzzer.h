@@ -25,7 +25,8 @@ namespace OHOS {
 namespace CameraStandard {
 class MockIRemoteObject : public IPCObjectStub {
 public:
-    MockIRemoteObject() : IPCObjectStub(u"mock_i_remote_object") {
+    MockIRemoteObject() : IPCObjectStub(u"mock_i_remote_object")
+    {
         member_descriptor = u"mock_i_remote_object";
         shouldFail = false;
         errorCode = 0;
@@ -35,7 +36,8 @@ public:
     int32_t errorCode;
     std::u16string member_descriptor;
 
-    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override {
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
         if (shouldFail) {
             return errorCode;
         }

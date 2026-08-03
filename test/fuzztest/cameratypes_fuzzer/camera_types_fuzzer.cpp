@@ -27,7 +27,6 @@ static constexpr int32_t NUM_10 = 10;
 
 void CameraTypesFuzz::CameraTypesFuzzTest(FuzzedDataProvider& fdp)
 {
-
     int testType = fdp.ConsumeIntegralInRange<int>(0, 2);
 
     if (testType == 0) {
