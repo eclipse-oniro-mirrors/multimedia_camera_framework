@@ -25,8 +25,19 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 class AvcodecTaskManagerFuzzer {
 public:
-static std::shared_ptr<AvcodecTaskManager> fuzz_;
-static void AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fdp);
+    static std::shared_ptr<AvcodecTaskManager> fuzz_;
+    static void AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fdp);
+};
+
+class AudioTaskManagerFuzzer {
+public:
+    static sptr<AudioTaskManager> audioTaskFuzz_;
+    static void AudioTaskManagerFuzzTest(FuzzedDataProvider& fdp);
+};
+
+class AudioDeferredProcessSingleFuzzer {
+public:
+    static void AudioDeferredProcessSingleFuzzTest(FuzzedDataProvider& fdp);
 };
 } //CameraStandard
 } //OHOS

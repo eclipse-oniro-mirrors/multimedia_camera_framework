@@ -121,7 +121,6 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest4(FuzzedDataProvider &fdp)
     sptr<IStreamRepeat> previewOutput = nullptr;
     sptr<IStreamRepeat> videoOutput = nullptr;
     fuzz_->CreatePreviewOutput(producer, format, width, height, previewOutput);
-    fuzz_->CreateDeferredPreviewOutput(format, width, height, previewOutput);
     fuzz_->CreateVideoOutput(producer, format, width, height, videoOutput);
 }
 
@@ -413,8 +412,6 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest21(FuzzedDataProvider &fdp)
     bool condition = fdp.ConsumeBool();
     fuzz_->EnableControlCenter(status, needPersistEnable);
     fuzz_->SetControlCenterPrecondition(condition);
-    bool ability = fdp.ConsumeBool();
-    fuzz_->SetDeviceControlCenterAbility(ability);
     fuzz_->GetControlCenterStatus(status);
     fuzz_->CheckControlCenterPermission();
 }
@@ -455,18 +452,278 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest23()
 
 void CameraServiceProxyFuzz::CameraServiceProxyTest24(FuzzedDataProvider &fdp)
 {
-    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    CHECK_RETURN_ELOG(!samgr, "samgr is nullptr");
-    auto remote = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
-    CHECK_RETURN_ELOG(!remote, "remote is nullptr");
-    fuzz_ = std::make_shared<CameraServiceProxy>(remote);
+    auto mockRemote = sptr<IRemoteObject>(new MockIRemoteObject());
+    CHECK_RETURN_ELOG(!mockRemote, "mockRemote is nullptr");
+    fuzz_ = std::make_shared<CameraServiceProxy>(mockRemote);
     CHECK_RETURN_ELOG(!fuzz_, "fuzz_ is nullptr");
-    int32_t maxLength = 30;
-    std::string bundleName = fdp.ConsumeRandomLengthString().substr(0, maxLength);
-    std::string pageName = fdp.ConsumeRandomLengthString().substr(0, maxLength);
-    int32_t preScanMode = fdp.ConsumeIntegralInRange<int32_t>(0, 2);
-    fuzz_->PrelaunchScanCamera(bundleName, pageName,
-        static_cast<PrelaunchScanModeOhos>(preScanMode));
+
+    std::vector<std::string> bufferNames = {"cameraId1", "cameraId2", "cameraId3", "cameraId4", "cameraId5"};
+    size_t ind = fdp.ConsumeIntegral<size_t>() % bufferNames.size();
+    std::string cameraId = bufferNames[ind];
+    sptr<ICameraDeviceService> device = nullptr;
+    fuzz_->CreateCameraDevice(cameraId, device);
+
+    sptr<ICameraServiceCallback> serviceCallback = new ICameraServiceCallbackFuzz();
+    sptr<ITorchServiceCallback> torchCallback = new ITorchServiceCallbackFuzz();
+    sptr<IFoldServiceCallback> foldCallback = new IFoldServiceCallbackFuzz();
+    sptr<ICameraMuteServiceCallback> muteCallback = new ICameraMuteServiceCallbackFuzz();
+    fuzz_->SetCameraCallback(serviceCallback, true);
+    fuzz_->SetMuteCallback(muteCallback);
+    fuzz_->SetTorchCallback(torchCallback);
+    bool isInnerCallback = fdp.ConsumeBool();
+    fuzz_->SetFoldStatusCallback(foldCallback, isInnerCallback);
+    fuzz_->UnSetCameraCallback();
+    fuzz_->UnSetMuteCallback();
+    fuzz_->UnSetTorchCallback();
+    fuzz_->UnSetFoldStatusCallback();
+
+    uint8_t vectorSize = fdp.ConsumeIntegralInRange<uint8_t>(0, MAX_BUFFER_SIZE);
+    std::vector<std::shared_ptr<OHOS::Camera::CameraMetadata>> cameraAbilityList;
+    for (int i = 0; i < vectorSize; ++i) {
+        auto metadata = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+        cameraAbilityList.push_back(metadata);
+    }
+    fuzz_->GetCameras(bufferNames, cameraAbilityList);
+
+    sptr<ICaptureSession> session = nullptr;
+    int32_t operationMode = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->CreateCaptureSession(session, operationMode);
+
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    int32_t format = fdp.ConsumeIntegral<int32_t>();
+    int32_t width = fdp.ConsumeIntegral<int32_t>();
+    int32_t height = fdp.ConsumeIntegral<int32_t>();
+    sptr<IStreamCapture> photoOutput = nullptr;
+    fuzz_->CreatePhotoOutput(producer, format, width, height, photoOutput);
+    sptr<IStreamRepeat> previewOutput = nullptr;
+    sptr<IStreamRepeat> videoOutput = nullptr;
+    fuzz_->CreatePreviewOutput(producer, format, width, height, previewOutput);
+    fuzz_->CreateVideoOutput(producer, format, width, height, videoOutput);
+
+    fuzz_->SetListenerObject(mockRemote);
+
+    std::vector<int32_t> metadataTypes;
+    for (int i = 0; i < vectorSize; ++i) {
+        metadataTypes.push_back(fdp.ConsumeIntegral<int32_t>());
+    }
+    sptr<IStreamMetadata> metadataOutput = nullptr;
+    fuzz_->CreateMetadataOutput(producer, format, metadataTypes, metadataOutput);
+
+    bool muteMode = fdp.ConsumeBool();
+    fuzz_->IsCameraMuteSupported(muteMode);
+    bool isTorchSupported = fdp.ConsumeBool();
+    fuzz_->IsTorchSupported(isTorchSupported);
+    fuzz_->MuteCamera(muteMode);
+    fuzz_->IsCameraMuted(muteMode);
+    constexpr int32_t executionModeCount = static_cast<int32_t>(PolicyType::PRIVACY) + NUM_1;
+    PolicyType policyType = static_cast<PolicyType>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount);
+    fuzz_->MuteCameraPersist(policyType, muteMode);
+
+    int32_t flag = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->PrelaunchCamera(flag);
+    fuzz_->ResetRssPriority();
+
+    constexpr int32_t executionModeCount2 =
+        static_cast<int32_t>(RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS) + NUM_1;
+    RestoreParamTypeOhos restoreParamType =
+        static_cast<RestoreParamTypeOhos>(fdp.ConsumeIntegral<uint8_t>() % executionModeCount2);
+    int32_t activeTime = fdp.ConsumeIntegral<int32_t>();
+    EffectParam effectParam;
+    fuzz_->SetPrelaunchConfig(cameraId, restoreParamType, activeTime, effectParam);
+    fuzz_->PreSwitchCamera(cameraId);
+
+    float level = fdp.ConsumeFloatingPoint<float>();
+    fuzz_->SetTorchLevel(level);
+
+    int32_t userId = fdp.ConsumeIntegral<int32_t>();
+    sptr<IDeferredPhotoProcessingSessionCallback> callback = new IDeferredPhotoProcessingSessionCallbackFuzz();
+    sptr<IDeferredPhotoProcessingSession> photoSession = nullptr;
+    fuzz_->CreateDeferredPhotoProcessingSession(userId, callback, photoSession);
+    sptr<IDeferredVideoProcessingSessionCallback> videoCallback = new DeferredVideoProcessingSessionCallback();
+    sptr<IDeferredVideoProcessingSession> videoSession = nullptr;
+    fuzz_->CreateDeferredVideoProcessingSession(userId, videoCallback, videoSession);
+
+    std::shared_ptr<CameraMetadata> cameraAbility = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+    fuzz_->GetCameraIds(bufferNames);
+    fuzz_->GetCameraAbility(cameraId, cameraAbility);
+    int32_t pid = fdp.ConsumeIntegral<int32_t>();
+    int32_t status = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->GetCameraOutputStatus(pid, status);
+    fuzz_->DestroyStubObj();
+
+    std::set<int32_t> pidList = {
+        fdp.ConsumeIntegralInRange<int32_t>(1, MAX_BUFFER_SIZE),
+        fdp.ConsumeIntegralInRange<int32_t>(1, MAX_BUFFER_SIZE)
+    };
+    bool isProxy = fdp.ConsumeBool();
+    fuzz_->ProxyForFreeze(pidList, isProxy);
+    fuzz_->ResetAllFreezeStatus();
+    std::vector<dmDeviceInfo> deviceInfos = {};
+    fuzz_->GetDmDeviceInfo(deviceInfos);
+
+    sptr<IStreamDepthData> depthDataOutput = nullptr;
+    fuzz_->CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
+
+    int32_t memSize = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->RequireMemorySize(memSize);
+    int32_t cameraPosition = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->GetIdforCameraConcurrentType(cameraPosition, cameraId);
+    fuzz_->GetConcurrentCameraAbility(cameraId, cameraAbility);
+    fuzz_->GetTorchStatus(status);
+    int64_t size = fdp.ConsumeIntegral<int64_t>();
+    fuzz_->GetCameraStorageSize(size);
+
+    bool isInWhiteList = fdp.ConsumeBool();
+    fuzz_->CheckWhiteList(isInWhiteList);
+
+    sptr<IMechSession> mechSession = nullptr;
+    fuzz_->CreateMechSession(userId, mechSession);
+    bool isMechSupported = fdp.ConsumeBool();
+    fuzz_->IsMechSupported(isMechSupported);
+
+    fuzz_->GetVideoSessionForControlCenter(session);
+
+    sptr<IControlCenterStatusCallback> controlCallback = new IControlCenterStatusCallbackFuzz();
+    fuzz_->SetControlCenterCallback(controlCallback);
+    fuzz_->UnSetControlCenterStatusCallback();
+
+    bool controlCenterStatus = fdp.ConsumeBool();
+    bool needPersistEnable = fdp.ConsumeBool();
+    bool condition = fdp.ConsumeBool();
+    fuzz_->EnableControlCenter(controlCenterStatus, needPersistEnable);
+    fuzz_->SetControlCenterPrecondition(condition);
+    fuzz_->GetControlCenterStatus(controlCenterStatus);
+    fuzz_->CheckControlCenterPermission();
+
+    int32_t state = fdp.ConsumeIntegral<int32_t>();
+    bool canOpenCamera = fdp.ConsumeBool();
+    fuzz_->AllowOpenByOHSide(cameraId, state, canOpenCamera);
+    fuzz_->NotifyCameraState(cameraId, state);
+
+    sptr<ICameraBroker> brokerCallback = new CameraBrokerFuzz();
+    fuzz_->SetPeerCallback(brokerCallback);
+    fuzz_->UnsetPeerCallback();
+}
+
+void CameraServiceProxyFuzz::CameraServiceProxyTest25(FuzzedDataProvider &fdp)
+{
+    auto mockRemote = sptr<IRemoteObject>(new MockIRemoteObject());
+    auto mockFailRemote = sptr<MockIRemoteObject>(new MockIRemoteObject());
+    mockFailRemote->shouldFail = true;
+    mockFailRemote->errorCode = -1;
+
+    fuzz_ = std::make_shared<CameraServiceProxy>(mockFailRemote);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ is nullptr");
+
+    std::vector<std::string> bufferNames = {"cameraId1", "cameraId2"};
+    size_t ind = fdp.ConsumeIntegral<size_t>() % bufferNames.size();
+    std::string cameraId = bufferNames[ind];
+    sptr<ICameraDeviceService> device = nullptr;
+    fuzz_->CreateCameraDevice(cameraId, device);
+
+    sptr<ICameraServiceCallback> serviceCallback = new ICameraServiceCallbackFuzz();
+    fuzz_->SetCameraCallback(serviceCallback, true);
+    fuzz_->SetMuteCallback(nullptr);
+    fuzz_->SetTorchCallback(nullptr);
+    fuzz_->SetFoldStatusCallback(nullptr, true);
+
+    sptr<ICaptureSession> session = nullptr;
+    fuzz_->CreateCaptureSession(session, 0);
+
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    sptr<IBufferProducer> producer = photoSurface->GetProducer();
+    sptr<IStreamCapture> photoOutput = nullptr;
+    fuzz_->CreatePhotoOutput(producer, 0, 0, 0, photoOutput);
+    sptr<IStreamRepeat> previewOutput = nullptr;
+    fuzz_->CreatePreviewOutput(producer, 0, 0, 0, previewOutput);
+    sptr<IStreamRepeat> videoOutput = nullptr;
+    fuzz_->CreateVideoOutput(producer, 0, 0, 0, videoOutput);
+
+    fuzz_->SetListenerObject(nullptr);
+
+    std::vector<int32_t> metadataTypes;
+    sptr<IStreamMetadata> metadataOutput = nullptr;
+    fuzz_->CreateMetadataOutput(producer, 0, metadataTypes, metadataOutput);
+
+    bool muteMode = true;
+    fuzz_->IsCameraMuteSupported(muteMode);
+    fuzz_->IsTorchSupported(muteMode);
+    fuzz_->MuteCamera(muteMode);
+    fuzz_->IsCameraMuted(muteMode);
+    fuzz_->MuteCameraPersist(PolicyType::PRIVACY, muteMode);
+
+    fuzz_->PrelaunchCamera(0);
+    fuzz_->ResetRssPriority();
+
+    EffectParam effectParam;
+    fuzz_->SetPrelaunchConfig(cameraId, RestoreParamTypeOhos::TRANSIENT_ACTIVE_PARAM_OHOS, 0, effectParam);
+    fuzz_->PreSwitchCamera(cameraId);
+
+    fuzz_->SetTorchLevel(0.0f);
+
+    int32_t userId = 0;
+    sptr<IDeferredPhotoProcessingSessionCallback> callback = new IDeferredPhotoProcessingSessionCallbackFuzz();
+    sptr<IDeferredPhotoProcessingSession> photoSession = nullptr;
+    fuzz_->CreateDeferredPhotoProcessingSession(userId, callback, photoSession);
+    sptr<IDeferredVideoProcessingSessionCallback> videoCallback = new DeferredVideoProcessingSessionCallback();
+    sptr<IDeferredVideoProcessingSession> videoSession = nullptr;
+    fuzz_->CreateDeferredVideoProcessingSession(userId, videoCallback, videoSession);
+
+    std::shared_ptr<CameraMetadata> cameraAbility = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+    fuzz_->GetCameraIds(bufferNames);
+    fuzz_->GetCameraAbility(cameraId, cameraAbility);
+    int32_t temp;
+    fuzz_->GetCameraOutputStatus(0, temp);
+    fuzz_->DestroyStubObj();
+
+    std::set<int32_t> pidList = {1, 2};
+    fuzz_->ProxyForFreeze(pidList, true);
+    fuzz_->ResetAllFreezeStatus();
+    std::vector<dmDeviceInfo> deviceInfos = {};
+    fuzz_->GetDmDeviceInfo(deviceInfos);
+
+    sptr<IStreamDepthData> depthDataOutput = nullptr;
+    fuzz_->CreateDepthDataOutput(producer, 0, 0, 0, depthDataOutput);
+
+    fuzz_->RequireMemorySize(0);
+    fuzz_->GetIdforCameraConcurrentType(0, cameraId);
+    fuzz_->GetConcurrentCameraAbility(cameraId, cameraAbility);
+    int32_t status;
+    fuzz_->GetTorchStatus(status);
+    int64_t storeSize;
+    fuzz_->GetCameraStorageSize(storeSize);
+
+    bool isInWhiteList = false;
+    fuzz_->CheckWhiteList(isInWhiteList);
+
+    sptr<IMechSession> mechSession = nullptr;
+    fuzz_->CreateMechSession(userId, mechSession);
+    bool isMechSupported = false;
+    fuzz_->IsMechSupported(isMechSupported);
+
+    fuzz_->GetVideoSessionForControlCenter(session);
+
+    sptr<IControlCenterStatusCallback> controlCallback = new IControlCenterStatusCallbackFuzz();
+    fuzz_->SetControlCenterCallback(controlCallback);
+    fuzz_->UnSetControlCenterStatusCallback();
+
+    bool controlCenterStatus = false;
+    bool needPersistEnable = false;
+    bool condition = false;
+    fuzz_->EnableControlCenter(controlCenterStatus, needPersistEnable);
+    fuzz_->SetControlCenterPrecondition(condition);
+    fuzz_->GetControlCenterStatus(controlCenterStatus);
+    fuzz_->CheckControlCenterPermission();
+
+    int32_t state = 0;
+    bool canOpenCamera = false;
+    fuzz_->AllowOpenByOHSide(cameraId, state, canOpenCamera);
+    fuzz_->NotifyCameraState(cameraId, state);
+
+    sptr<ICameraBroker> brokerCallback = new CameraBrokerFuzz();
+    fuzz_->SetPeerCallback(brokerCallback);
+    fuzz_->UnsetPeerCallback();
 }
 
 void FuzzTest(const uint8_t *rawData, size_t size)
@@ -500,6 +757,8 @@ void FuzzTest(const uint8_t *rawData, size_t size)
     cameraServiceProxy->CameraServiceProxyTest21(fdp);
     cameraServiceProxy->CameraServiceProxyTest22(fdp);
     cameraServiceProxy->CameraServiceProxyTest23();
+    cameraServiceProxy->CameraServiceProxyTest24(fdp);
+    cameraServiceProxy->CameraServiceProxyTest25(fdp);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

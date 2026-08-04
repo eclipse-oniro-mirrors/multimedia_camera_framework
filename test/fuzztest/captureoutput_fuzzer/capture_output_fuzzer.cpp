@@ -30,17 +30,18 @@
 #include "nativetoken_kit.h"
 #include "accesstoken_kit.h"
 #include "securec.h"
+#include "iconsumer_surface.h"
 
 namespace OHOS {
 namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 8;
 
-std::shared_ptr<CaptureOutput> CaptureOutputFuzzer::fuzz_{nullptr};
+std::shared_ptr<CaptureOutput> CaptureOutputFuzzer::fuzz_ { nullptr };
 
 /*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
+ * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
+ * tips: only support basic type
+ */
 void CaptureOutputFuzzer::CaptureOutputFuzzTest(FuzzedDataProvider& fdp)
 {
     int32_t randomInt = fdp.ConsumeIntegral<int32_t>();
@@ -49,8 +50,8 @@ void CaptureOutputFuzzer::CaptureOutputFuzzTest(FuzzedDataProvider& fdp)
     sptr<IBufferProducer> bufferProducer = photoSurface->GetProducer();
     CHECK_RETURN_ELOG(bufferProducer, "GetProducer Error");
     sptr<IStreamCommon> stream;
-    CaptureOutputType randomOutputType = static_cast<CaptureOutputType>(
-    (randomInt % static_cast<int32_t>(CAPTURE_OUTPUT_TYPE_MAX)));
+    CaptureOutputType randomOutputType =
+        static_cast<CaptureOutputType>((randomInt % static_cast<int32_t>(CAPTURE_OUTPUT_TYPE_MAX)));
     fuzz_ = std::make_shared<CaptureOutputTest>(randomOutputType, StreamType::CAPTURE, bufferProducer, stream);
     CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
     fuzz_->GetBufferProducer();
@@ -63,6 +64,45 @@ void CaptureOutputFuzzer::CaptureOutputFuzzTest(FuzzedDataProvider& fdp)
     fuzz_->ClearProfiles();
     fuzz_->AddTag(CaptureOutput::Tag::DYNAMIC_PROFILE);
     fuzz_->RemoveTag(CaptureOutput::Tag::DYNAMIC_PROFILE);
+}
+
+void CaptureOutputFuzzer::CaptureOutputFuzzTest2(FuzzedDataProvider& fdp)
+{
+    int32_t randomInt = fdp.ConsumeIntegral<int32_t>();
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_RETURN_ELOG(photoSurface, "PhotoOutputFuzzer: create photoSurface Error");
+    sptr<IBufferProducer> bufferProducer = photoSurface->GetProducer();
+    CHECK_RETURN_ELOG(bufferProducer, "GetProducer Error");
+    sptr<IStreamCommon> stream;
+    CaptureOutputType randomOutputType =
+        static_cast<CaptureOutputType>((randomInt % static_cast<int32_t>(CAPTURE_OUTPUT_TYPE_MAX)));
+    fuzz_ = std::make_shared<CaptureOutputTest>(randomOutputType, StreamType::CAPTURE, bufferProducer, stream);
+    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
+
+    fuzz_->GetPhotoSurfaceId();
+    fuzz_->GetOutputType();
+    fuzz_->IsVideoProfileType();
+    fuzz_->GetOutputTypeString();
+    fuzz_->GetStreamType();
+    fuzz_->GetStream();
+    fuzz_->GetSession();
+    fuzz_->IsTagSetted(CaptureOutput::Tag::DYNAMIC_PROFILE);
+    fuzz_->IsHasEnableOfflinePhoto();
+
+    std::shared_ptr<Profile> profile = std::make_shared<Profile>();
+    if (profile != nullptr) {
+        fuzz_->SetPhotoProfile(*profile);
+        fuzz_->GetPhotoProfile();
+        fuzz_->SetPreviewProfile(*profile);
+        fuzz_->GetPreviewProfile();
+    }
+
+    VideoProfile videoProfile;
+    fuzz_->SetVideoProfile(videoProfile);
+    fuzz_->GetVideoProfile();
+
+    fuzz_->Release();
+    fuzz_->SetSession(nullptr);
 }
 
 void Test(uint8_t* data, size_t size)
