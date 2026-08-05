@@ -29,6 +29,8 @@ class StatusCallbackDemo : public HCameraHostManager::StatusCallback {
             CallbackInvoker invoker = CallbackInvoker::CAMERA_HOST) {}
         virtual void OnFlashlightStatus(const std::string& cameraId, FlashStatus status) {}
         virtual void OnTorchStatus(TorchStatus status) {}
+        virtual void OnAbilityReady() {}
+        virtual void clearPreScanConfig() {}
 };
 
 class HCameraHostManagerFuzzer {

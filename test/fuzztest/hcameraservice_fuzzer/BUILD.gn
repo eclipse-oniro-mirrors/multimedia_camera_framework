@@ -77,6 +77,9 @@ ohos_fuzztest("HCameraServiceFuzzTest") {
     "${multimedia_camera_framework_path}/mediastream/include/filter",
     "${multimedia_camera_framework_path}/mediastream/include/util",
     "${multimedia_camera_framework_path}/mediastream/include/buffer",
+    "${multimedia_camera_framework_path}/services/camera_service/include/kingkong",
+    "${multimedia_camera_framework_path}/services/camera_service/include/resource_manager_utils/",
+    "${multimedia_camera_framework_path}/services/camera_service/include/network_client",
   ]
 
   cflags = [
@@ -160,7 +163,7 @@ ohos_fuzztest("HCameraServiceFuzzTest") {
     "os_account:os_account_innerkits",
     "resource_schedule_service:ressched_client",
     "safwk:system_ability_fwk",
-    "samgr:samgr_proxy"
+    "samgr:samgr_proxy",
   ]
 }
 

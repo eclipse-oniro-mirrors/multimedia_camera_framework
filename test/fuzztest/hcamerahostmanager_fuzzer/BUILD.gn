@@ -59,6 +59,9 @@ ohos_fuzztest("HCameraHostManagerFuzzTest") {
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/avcodec",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/include/common",
     "${multimedia_camera_framework_path}/services/camera_service/include/recorder",
+    "${multimedia_camera_framework_path}/services/camera_service/include/kingkong",
+    "${multimedia_camera_framework_path}/services/camera_service/include/resource_manager_utils/",
+    "${multimedia_camera_framework_path}/services/camera_service/include/network_client",
   ]
 
   cflags = [

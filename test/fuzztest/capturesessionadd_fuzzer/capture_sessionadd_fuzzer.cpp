@@ -37,6 +37,8 @@
 #include "ipc_skeleton.h"
 #include "test_token.h"
 #include "camera_device_utils.h"
+#include "iconsumer_surface.h"
+#include "ability/camera_ability_const.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -117,6 +119,19 @@ void Test(uint8_t* data, size_t size)
     TestAdd(session, fdp);
     TestSession(session, fdp);
     TestOther2(session, fdp);
+    TestZoomPointInfos(session, fdp);
+    TestFocusDistance(session, fdp);
+    TestDepthFusion(session, fdp);
+    TestStageBoost(session, fdp);
+    TestLcdFlash(session, fdp);
+    TestTripodDetection(session, fdp);
+    TestConstellationDrawing(session, fdp);
+    TestImageStabilizationGuide(session, fdp);
+    TestSuperMoon(session, fdp);
+    TestImagingMode(session, fdp);
+    TestCallbacks(session, fdp);
+    TestSetUsageBranch(session, fdp);
+    TestSetEffectSuggestionStatusBranch(session, fdp);
     session->Release();
     session->Stop();
 }
@@ -293,7 +308,11 @@ void TestOther2(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->IsColorStyleSupported(isSupported);
     std::vector<ColorStyleSetting> defaultColorStyles;
     session->GetDefaultColorStyleSettings(defaultColorStyles);
-    ColorStyleSetting styleSetting = {static_cast<ColorStyleType>(1), 1, 1, 1};
+    ColorStyleSetting styleSetting;
+    styleSetting.type = static_cast<ColorStyleType>(1);
+    styleSetting.hue = 1;
+    styleSetting.saturation = 1;
+    styleSetting.tone = 1;
     session->SetColorStyleSetting(styleSetting);
     session->UnlockForControl();
 }
@@ -378,7 +397,7 @@ void TestOther3(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
         fdp.ConsumeIntegral<int32_t>() % (QualityPrioritization::HIGH_QUALITY + NUM_TWO));
     session->LockForControl();
     session->SetQualityPrioritization(qualityPrioritization);
-    
+
     session->ProcessProfilesAbilityId(g_sceneMode);
     Point point;
     session->CoordinateTransform(point);
@@ -420,6 +439,130 @@ void TestOther3(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->EnableAutoAigcPhoto(fdp.ConsumeBool());
     session->EnableAutoMotionBoostDelivery(fdp.ConsumeBool());
     session->EnableAutoBokehDataDelivery(fdp.ConsumeBool());
+}
+
+void TestZoomPointInfos(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    std::vector<ZoomPointInfo> zoomPointInfoList;
+    session->GetZoomPointInfos(zoomPointInfoList);
+}
+
+void TestFocusDistance(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    float focusDistance = 0.0f;
+    session->GetFocusDistance(focusDistance);
+}
+
+void TestDepthFusion(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    std::vector<float> depthFusionThreshold;
+    session->GetDepthFusionThreshold(depthFusionThreshold);
+    session->IsDepthFusionSupported();
+    session->IsDepthFusionEnabled();
+    session->LockForControl();
+    session->EnableDepthFusion(fdp.ConsumeBool());
+    session->UnlockForControl();
+}
+
+void TestStageBoost(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    session->IsStageBoostSupported();
+    session->LockForControl();
+    session->EnableStageBoost(fdp.ConsumeBool());
+    session->UnlockForControl();
+}
+
+void TestLcdFlash(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    session->IsLcdFlashSupported();
+    session->LockForControl();
+    session->EnableLcdFlashDetection(fdp.ConsumeBool());
+    session->EnableLcdFlash(fdp.ConsumeBool());
+    session->UnlockForControl();
+}
+
+void TestTripodDetection(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    session->IsTripodDetectionSupported();
+    session->LockForControl();
+    session->EnableTripodDetection(fdp.ConsumeBool());
+    session->UnlockForControl();
+}
+
+void TestConstellationDrawing(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    session->LockForControl();
+    session->EnableConstellationDrawingDetection(fdp.ConsumeBool());
+    session->UnlockForControl();
+}
+
+void TestImageStabilizationGuide(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    session->GetImageStabilizationGuideCallback();
+}
+
+void TestSuperMoon(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    session->EnableSuperMoonFeature(fdp.ConsumeBool());
+}
+
+void TestImagingMode(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    ImagingMode imagingMode = ImagingMode::IMAGING_MODE_AUTO;
+    session->GetImagingMode(imagingMode);
+    std::vector<ImagingMode> imagingModes;
+    session->GetSupportedImagingMode(imagingModes);
+    bool isSupported = false;
+    session->IsImagingModeSupported(imagingMode, isSupported);
+    session->SetImagingMode(imagingMode);
+}
+
+void TestCallbacks(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    std::shared_ptr<FeatureDetectionStatusCallback> featureDetectionCallback =
+        std::make_shared<FeatureDetectionStatusCallbackMock>(true);
+    session->SetFeatureDetectionStatusCallback(featureDetectionCallback);
+    std::shared_ptr<EffectSuggestionCallback> effectSuggestionCallback =
+        std::make_shared<EffectSuggestionCallbackMock>();
+    session->SetEffectSuggestionCallback(effectSuggestionCallback);
+    std::shared_ptr<LcdFlashStatusCallback> lcdFlashStatusCallback =
+        std::make_shared<LcdFlashStatusCallbackMock>();
+    session->SetLcdFlashStatusCallback(lcdFlashStatusCallback);
+}
+
+void TestSetUsageBranch(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    session->LockForControl();
+    session->SetUsage(UsageType::BOKEH, fdp.ConsumeBool());
+    session->UnlockForControl();
+}
+
+void TestSetEffectSuggestionStatusBranch(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
+    std::vector<EffectSuggestionStatus> effectSuggestionStatusList;
+    EffectSuggestionType type = static_cast<EffectSuggestionType>(
+        fdp.ConsumeIntegral<int32_t>() % (EffectSuggestionType::EFFECT_SUGGESTION_SUNRISE_SUNSET + NUM_TWO));
+    EffectSuggestionStatus status = {
+        type,
+        fdp.ConsumeBool(),
+    };
+    effectSuggestionStatusList.push_back(status);
+    session->LockForControl();
+    session->SetEffectSuggestionStatus(effectSuggestionStatusList);
+    session->UnlockForControl();
 }
 } // namespace StreamRepeatStubFuzzer
 } // namespace CameraStandard

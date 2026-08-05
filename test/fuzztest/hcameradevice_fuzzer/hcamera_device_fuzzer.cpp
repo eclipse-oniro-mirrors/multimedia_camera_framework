@@ -196,9 +196,6 @@ void HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp)
     g_hCameraDevice->GetCameraType();
     g_hCameraDevice->IsOpenedCameraDevice();
     bool isMoving = fdp.ConsumeIntegral<int32_t>() % 2;
-#ifdef CAMERA_MOVING_PHOTO
-    g_hCameraDevice->EnableMovingPhoto(isMoving);
-#endif
     g_hCameraDevice->SetDeviceMuteMode(isMoving);
     g_hCameraDevice->ResetDeviceSettings();
     g_hCameraDevice->DispatchDefaultSettingToHdi();
@@ -217,6 +214,7 @@ void HCameraDeviceFuzzTest3(FuzzedDataProvider& fdp)
     g_hCameraDevice->OpenDevice(true);
     g_hCameraDevice->CloseDevice();
 #ifdef CAMERA_MOVING_PHOTO
+    g_hCameraDevice->EnableMovingPhoto(isMoving);
     int32_t mode = fdp.ConsumeIntegral<int32_t>();
     g_hCameraDevice->CheckMovingPhotoSupported(mode);
 #endif
@@ -246,7 +244,7 @@ void HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp)
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult;
     cameraResult = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
     std::function<void(int64_t, int64_t)> callback = [](int64_t start, int64_t end) {
-        MEDIA_INFO_LOG("Start: %ld, End: %ld\n", start, end);
+        MEDIA_INFO_LOG("Start: %lld, End: %lld\n", start, end);
     };
     g_hCameraDevice->SetMovingPhotoStartTimeCallback(callback);
     g_hCameraDevice->SetMovingPhotoEndTimeCallback(callback);
@@ -256,6 +254,43 @@ void HCameraDeviceFuzzTest4(FuzzedDataProvider& fdp)
     g_hCameraDevice->RemoveResourceWhenHostDied();
     int32_t state = fdp.ConsumeIntegral<int32_t>();
     g_hCameraDevice->NotifyCameraStatus(state);
+}
+
+void HCameraDeviceFuzzTest5(FuzzedDataProvider& fdp)
+{
+    auto settings = std::make_shared<OHOS::Camera::CameraMetadata>(NUM_10, NUM_100);
+    g_hCameraDevice->UpdateCameraSwitchCameraId(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
+    g_hCameraDevice->SetFrameRateRange(ConsumeRandomVector<int32_t>(fdp));
+    g_hCameraDevice->SetIsHasFitedRotation(fdp.ConsumeBool());
+    g_hCameraDevice->SetLastDisplayMode(fdp.ConsumeIntegral<int32_t>());
+    g_hCameraDevice->SetCameraIdTransform(fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
+    g_hCameraDevice->SetFirstCallerTokenID(fdp.ConsumeIntegral<uint32_t>());
+    g_hCameraDevice->SetConcurrentCaptureTag(fdp.ConsumeBool());
+    g_hCameraDevice->EnableKeyFrameReport(fdp.ConsumeBool());
+    g_hCameraDevice->SetMechMetadataCallback([](std::shared_ptr<OHOS::Camera::CameraMetadata>) {});
+    g_hCameraDevice->CheckFocusChange(settings);
+    g_hCameraDevice->CheckVideoStabilizationChange(settings);
+    g_hCameraDevice->ReportMechMetadata(settings);
+    g_hCameraDevice->ReportZoomInfos(settings);
+    g_hCameraDevice->CanReportDeviceProtectionStatus(fdp.ConsumeIntegral<int32_t>());
+    g_hCameraDevice->GetKeyFrameInfoBuffer(fdp.ConsumeIntegral<int64_t>());
+    g_hCameraDevice->GetUseLogicCamera(fdp.ConsumeIntegral<int32_t>());
+    auto frameRateRange = ConsumeRandomVector<int32_t>(fdp);
+    g_hCameraDevice->UpdateCameraRotateAngleAndZoom(frameRateRange, fdp.ConsumeBool());
+    g_hCameraDevice->UpdateRotateAngleJudge(fdp.ConsumeIntegral<int32_t>());
+    g_hCameraDevice->UpdateCameraRotateAngle();
+    g_hCameraDevice->DebugLogTag(settings, fdp.ConsumeIntegral<uint32_t>(),
+        fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING), fdp.ConsumeRandomLengthString(MAX_LENGTH_STRING));
+    g_hCameraDevice->DebugLogForTargetSmoothZoom(settings, fdp.ConsumeIntegral<uint32_t>());
+    g_hCameraDevice->GetZoomRatio();
+    g_hCameraDevice->GetFocusMode();
+    g_hCameraDevice->GetVideoStabilizationMode();
+    g_hCameraDevice->GetFrameRateRange();
+    g_hCameraDevice->GetIsHasFitedRotation();
+    g_hCameraDevice->GetCameraOrientation();
+    g_hCameraDevice->GetOriginalCameraOrientation();
+    g_hCameraDevice->GetScanScene();
+    g_hCameraDevice->GetCameraRotateStrategyInfos();
 }
 
 void Init()
@@ -296,6 +331,7 @@ void Test(FuzzedDataProvider& fdp)
         HCameraDeviceFuzzTest2,
         HCameraDeviceFuzzTest3,
         HCameraDeviceFuzzTest4,
+        HCameraDeviceFuzzTest5,
     });
     func(fdp);
 }

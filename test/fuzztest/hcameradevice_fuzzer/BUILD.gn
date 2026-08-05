@@ -60,13 +60,13 @@ ohos_fuzztest("HCameraDeviceFuzzTest") {
     "-fno-access-control",
   ]
 
-  sources = [ "hcamera_device_fuzzer.cpp" ]
-
   defines = []
 
   if (camera_framework_feature_moving_photo) {
     defines += [ "CAMERA_MOVING_PHOTO" ]
   }
+
+  sources = [ "hcamera_device_fuzzer.cpp" ]
 
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",

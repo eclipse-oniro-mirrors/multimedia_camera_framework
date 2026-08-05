@@ -99,12 +99,34 @@ void CompositionEffectListenerTest(FuzzedDataProvider& fdp)
 
 }
 
+void CompositionFeatureDirectTest(FuzzedDataProvider& fdp)
+{
+    auto feature = std::make_shared<CompositionFeature>(nullptr);
+    bool isSupported = false;
+    feature->IsCompositionEffectPreviewSupported(isSupported);
+    feature->EnableCompositionEffectPreview(fdp.ConsumeBool());
+    std::vector<std::string> supportedLanguages;
+    feature->GetSupportedRecommendedInfoLanguage(supportedLanguages);
+    feature->SetRecommendedInfoLanguage(fdp.ConsumeRandomLengthString(MAX_STR_LEN));
+    feature->CheckMode();
+    feature->CheckCommonPreconditions();
+    feature->StartCompositionStream();
+    feature->StopCompositionStream();
+    sptr<SurfaceBuffer> nullBuffer;
+    CompositionEffectListener::Buffer2PixelMap(nullBuffer);
+
+    sptr<IConsumerSurface> nullSurface;
+    auto nullSurfaceListener = sptr<CompositionEffectListener>::MakeSptr(feature, nullSurface);
+    nullSurfaceListener->OnBufferAvailable();
+}
+
 void Test(uint8_t* data, size_t size)
 {
     FuzzedDataProvider fdp(data, size);
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetPermission error");
     CompositionFeatureUnitTest(fdp);
     CompositionEffectListenerTest(fdp);
+    CompositionFeatureDirectTest(fdp);
 }
 
 } // namespace CameraStandard

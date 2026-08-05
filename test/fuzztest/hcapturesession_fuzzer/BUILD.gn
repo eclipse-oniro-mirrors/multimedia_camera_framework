@@ -61,6 +61,9 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "${multimedia_camera_framework_path}/services/camera_service/include/smooth_zoom",
     "${multimedia_camera_framework_path}/services/camera_service/include/recorder",
     "${multimedia_camera_framework_path}/interfaces/kits/js/camera_napi/include",
+    "${multimedia_camera_framework_path}/services/camera_service/include/kingkong",
+    "${multimedia_camera_framework_path}/services/camera_service/include/resource_manager_utils/",
+    "${multimedia_camera_framework_path}/services/camera_service/include/network_client"
   ]
 
   cflags = [
