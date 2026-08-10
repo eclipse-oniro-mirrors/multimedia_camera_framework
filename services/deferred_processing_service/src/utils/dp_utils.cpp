@@ -130,7 +130,7 @@ uint64_t GetFolderSize(const std::string& path)
 bool CheckFilePath(const std::string& path)
 {
     const std::filesystem::path p(path);
-    const auto fileName = p.filename().string()
+    const auto fileName = p.filename().string();
     const auto filePath = p.parent_path().string();
     DP_DEBUG_LOG("CheckFilePath path: %{public}s, fileName:%{public}s", filePath.c_str(), fileName.c_str());
     DP_CHECK_ERROR_RETURN_RET_LOG(!std::filesystem::exists(filePath), false, "video path invalid.");
