@@ -32,8 +32,8 @@ namespace DeferredProcessing {
 namespace {
     const std::string MEDIA_ROOT = "/data/test/media/";
     const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
-    const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
-    const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
+    const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_tmp1.mp4";
+    const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_tmp2.mp4";
 }
 
 void MediaManagerAdapterUnittest::SetUpTestCase(void) {}

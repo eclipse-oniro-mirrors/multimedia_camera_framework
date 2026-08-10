@@ -16,17 +16,24 @@
 #include "video_info.h"
 
 #include "dp_log.h"
+#include "dp_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
 VideoInfo::VideoInfo(const std::string& srcPath, const std::string& temp1Path, const std::string& temp2Path,
     const std::string& moviePath)
-    : srcPath_(srcPath), temp1Path_(temp1Path), temp2Path_(temp2Path), moviePath_(moviePath) {}
+    : srcPath_(srcPath),
+      temp1Path_(temp1Path.empty() || CheckFilePath(temp1Path) ? temp1Path : ""),
+      temp2Path_(temp2Path.empty() || CheckFilePath(temp2Path) ? temp2Path : ""),
+      moviePath_(moviePath) {}
 
 VideoInfo::VideoInfo(const std::vector<std::string>& srcPaths, const std::string& temp1Path,
     const std::string& temp2Path, const std::string& moviePath)
-    : srcPaths_(srcPaths), temp1Path_(temp1Path), temp2Path_(temp2Path), moviePath_(moviePath)
+    : srcPaths_(srcPaths),
+      temp1Path_(temp1Path.empty() || CheckFilePath(temp1Path) ? temp1Path : ""),
+      temp2Path_(temp2Path.empty() || CheckFilePath(temp2Path) ? temp2Path : ""),
+      moviePath_(moviePath)
 {
     if (!srcPaths_.empty()) {
         srcPath_ = srcPaths_[0];
