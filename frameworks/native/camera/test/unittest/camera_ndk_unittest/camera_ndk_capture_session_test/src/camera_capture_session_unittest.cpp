@@ -47,6 +47,8 @@ void CameraCaptureSessionUnitTest::TearDown(void)
     ReleaseCamera();
 }
 
+void ExposureStateChangeCb(void* context, OH_Camera_ExposureState exposureState) {}
+
 /*
  * Feature: Framework
  * Function: Test register and unregister capture session callback
@@ -5011,6 +5013,161 @@ HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_119, Test
     ret = OH_CaptureSession_Release(captureSession);
     EXPECT_EQ(ret, CAMERA_OK);
     ReleaseImageReceiver();
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsFocusDistanceSupported when sceneMode is video
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsFocusDistanceSupported succeeds when sceneMode is VIDEO
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_120, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    bool isSupported = false;
+    ret = OH_CaptureSession_IsFocusDistanceSupported(captureSession, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_Release(previewOutput);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test IsFocusDistanceSupported when sceneMode is video
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test IsFocusDistanceSupported with abnormal branch when sceneMode is VIDEO
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_121, TestSize.Level0)
+{
+    Camera_ErrorCode ret = CAMERA_OK;
+    bool isSupported = false;
+    Camera_CaptureSession* captureSession = nullptr;
+    ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_IsFocusDistanceSupported(nullptr, &isSupported);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_IsFocusDistanceSupported(captureSession, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RegisterExposureStateChangeCallback and UnregisterExposureStateChangeCallback
+ *           when sceneMode is video
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test register and unregister exposure state callback succeed
+ *                  when sceneMode is VIDEO and valid parameters are entered
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_122, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_VIDEO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    ret = OH_CameraInput_Open(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_BeginConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_AddInput(captureSession, cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_PreviewOutput* previewOutput = CreatePreviewOutput();
+    ASSERT_NE(previewOutput, nullptr);
+    ret = OH_CaptureSession_AddPreviewOutput(captureSession, previewOutput);
+    EXPECT_EQ(ret, 0);
+    Camera_VideoOutput* videoOutput = CreateVideoOutput();
+    ASSERT_NE(videoOutput, nullptr);
+    ret = OH_CaptureSession_AddVideoOutput(captureSession, videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_CommitConfig(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_RegisterExposureStateChangeCallback(captureSession, nullptr, ExposureStateChangeCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_UnregisterExposureStateChangeCallback(captureSession, nullptr, ExposureStateChangeCb);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_VideoOutput_Release(videoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CameraInput_Release(cameraInput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_CaptureSession_Release(captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ret = OH_PreviewOutput_Release(previewOutput);
+    EXPECT_EQ(ret, 0);
+}
+
+/*
+ * Feature: Framework
+ * Function: Test RegisterExposureStateChangeCallback and UnregisterExposureStateChangeCallback
+ *           when sceneMode is video
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test register and unregister exposure state callback with abnormal branch
+ *                  when sceneMode is VIDEO
+ */
+HWTEST_F(CameraCaptureSessionUnitTest, camera_capture_session_unittest_123, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_RegisterExposureStateChangeCallback(nullptr, nullptr, ExposureStateChangeCb);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_RegisterExposureStateChangeCallback(captureSession, nullptr, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_UnregisterExposureStateChangeCallback(nullptr, nullptr, ExposureStateChangeCb);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    ret = OH_CaptureSession_UnregisterExposureStateChangeCallback(captureSession, nullptr, nullptr);
+    EXPECT_EQ(ret, CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
 }
 } // CameraStandard
 } // OHOS
