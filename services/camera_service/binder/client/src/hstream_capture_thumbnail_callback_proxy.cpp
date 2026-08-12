@@ -32,7 +32,7 @@ int32_t HStreamCaptureThumbnailCallbackProxy::OnThumbnailAvailable(sptr<SurfaceB
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    option.SetFlags(option.TF_ASYNC);
+    option.SetFlags(option.TF_ASYNC | 0x10000);
 
     data.WriteInterfaceToken(GetDescriptor());
     surfaceBuffer->WriteToMessageParcel(data);
