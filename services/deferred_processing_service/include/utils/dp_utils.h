@@ -178,6 +178,7 @@ struct DpsCallerInfo {
 DpsCallerInfo GetDpsCallerInfo();
 std::unordered_map<std::string, std::string> ParseKeyValue(const std::string& input);
 uint64_t GetFolderSize(const std::string& path);
+bool CheckFilePath(const std::string& path);
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

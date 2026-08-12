@@ -31,8 +31,8 @@ namespace OHOS {
 namespace CameraStandard {
 const std::string MEDIA_ROOT = "/data/test/media/";
 const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
-const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
-const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
+const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_tmp1.mp4";
+const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_tmp2.mp4";
 constexpr int32_t VIDEO_WIDTH = 1920;
 constexpr int32_t VIDEO_HIGHT = 1080;
 

@@ -33,8 +33,8 @@ namespace {
     const std::string MEDIA_ROOT = "/data/test/media/";
     const std::string VIDEO_PATH = MEDIA_ROOT + "test_video.mp4";
     const std::string VIDEO_TEMP_PATH = MEDIA_ROOT + "test_video_temp.mp4";
-    const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_temp1.mp4";
-    const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_temp2.mp4";
+    const std::string VIDEO_TEMP_PATH_1 = MEDIA_ROOT + "temp/" + "test_tmp1.mp4";
+    const std::string VIDEO_TEMP_PATH_2 = MEDIA_ROOT + "temp/" + "test_tmp2.mp4";
     const int32_t USER_ID = 0;
     const std::string VIDEO_ID_1 = "testVideo1";
     const std::string VIDEO_ID_2 = "testVideo2";

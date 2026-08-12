@@ -16,6 +16,8 @@
 #include "dp_utils.h"
 
 #include <dirent.h>
+#include <filesystem>
+#include <regex>
 #include <sys/stat.h>
 
 #include "bundle_mgr_interface.h"
@@ -123,6 +125,17 @@ uint64_t GetFolderSize(const std::string& path)
         totalSize = static_cast<uint64_t>(st.st_size);
     }
     return totalSize;
+}
+
+bool CheckFilePath(const std::string& path)
+{
+    const std::filesystem::path p(path);
+    const auto fileName = p.filename().string();
+    const auto filePath = p.parent_path().string();
+    DP_DEBUG_LOG("CheckFilePath path: %{public}s, fileName:%{public}s", filePath.c_str(), fileName.c_str());
+    DP_CHECK_ERROR_RETURN_RET_LOG(!std::filesystem::exists(filePath), false, "video path invalid.");
+    const std::regex pattern(R"(^[a-zA-Z0-9_-]+_tmp[12]\.mp4$)");
+    return std::regex_match(fileName, pattern);
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard
