@@ -604,7 +604,8 @@ Camera_ErrorCode Camera_CaptureSession::IsFocusModeSupported(Camera_FocusMode fo
 Camera_ErrorCode Camera_CaptureSession::IsFocusDistanceSupported(bool* isSupported) const
 {
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO,
+        Camera_ErrorCode::CAMERA_INVALID_ARGUMENT);
     int32_t ret = innerCaptureSession_->IsFocusDistanceSupported(*isSupported);
     return FrameworkToNdkCameraError(ret);
 }
@@ -1772,7 +1773,7 @@ Camera_ErrorCode Camera_CaptureSession::RegisterExposureStateCallback(
     void* context, OH_CaptureSession_OnExposureStateChange exposureStateChange) const
 {
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     shared_ptr<InnerCaptureSessionExposureStateCallback> innerExposureStateCallback =
         make_shared<InnerCaptureSessionExposureStateCallback>(this, context, exposureStateChange);
     CHECK_RETURN_RET_ELOG(
@@ -1786,7 +1787,7 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterExposureStateCallback(
 {
     MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterExposureStateCallback");
     SceneMode mode = innerCaptureSession_->GetMode();
-    CHECK_RETURN_RET(mode != SceneMode::CAPTURE, Camera_ErrorCode::CAMERA_OK);
+    CHECK_RETURN_RET(mode != SceneMode::CAPTURE && mode != SceneMode::VIDEO, Camera_ErrorCode::CAMERA_OK);
     innerCaptureSession_->SetExposureCallback(nullptr);
     return CAMERA_OK;
 }
