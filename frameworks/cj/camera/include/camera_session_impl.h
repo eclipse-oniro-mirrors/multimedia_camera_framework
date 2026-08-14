@@ -52,12 +52,8 @@ public:
 };
 
 class CJSession : public OHOS::FFI::FFIData {
+    DECL_TYPE(CJSession, OHOS::FFI::FFIData)
 public:
-    OHOS::FFI::RuntimeType *GetRuntimeType() override
-    {
-        return GetClassType();
-    }
-
     explicit CJSession(sptr<CameraStandard::CaptureSession> session);
 
     sptr<CameraStandard::CaptureSession> GetCaptureSession();
@@ -147,14 +143,6 @@ private:
     std::shared_ptr<CJSmoothZoomCallback> smoothZoomCallback_;
     std::shared_ptr<CJSessionCallback> errorCallback_;
     std::shared_ptr<CJFocusStateCallback> focusStateCallback_;
-
-    friend class OHOS::FFI::RuntimeType;
-    friend class OHOS::FFI::TypeBase;
-    static OHOS::FFI::RuntimeType *GetClassType()
-    {
-        static OHOS::FFI::RuntimeType runtimeType = OHOS::FFI::RuntimeType::Create<OHOS::FFI::FFIData>("CJSession");
-        return &runtimeType;
-    }
 };
 
 } // namespace CameraStandard
