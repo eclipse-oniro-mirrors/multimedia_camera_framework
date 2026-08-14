@@ -33,12 +33,8 @@ public:
 };
 
 class CJCameraInput : public OHOS::FFI::FFIData {
+    DECL_TYPE(CJCameraInput, OHOS::FFI::FFIData)
 public:
-    OHOS::FFI::RuntimeType *GetRuntimeType() override
-    {
-        return GetClassType();
-    }
-
     CJCameraInput(sptr<CameraInput> cameraInputInstance);
     ~CJCameraInput() override;
 
@@ -53,14 +49,6 @@ public:
 
 private:
     sptr<CameraStandard::CameraInput> cameraInput_;
-    friend class OHOS::FFI::RuntimeType;
-    friend class OHOS::FFI::TypeBase;
-    static OHOS::FFI::RuntimeType *GetClassType()
-    {
-        static OHOS::FFI::RuntimeType runtimeType = OHOS::FFI::RuntimeType::Create<OHOS::FFI::FFIData>("CJCameraInput");
-        return &runtimeType;
-    }
-
     std::shared_ptr<CJErrorCallbackListener> errorCallback_;
 };
 } // namespace CameraStandard
