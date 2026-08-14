@@ -122,7 +122,8 @@ Camera_ErrorCode OH_CameraManager_DeleteSupportedCameras(Camera_Manager* cameraM
 {
     CHECK_RETURN_RET_ELOG(
         cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
-    CHECK_RETURN_RET_ELOG(cameras == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameras is null!");
+    CHECK_RETURN_RET_ELOG(cameras == nullptr || size <= 0,
+        CAMERA_INVALID_ARGUMENT, "Invalid argument, cameras is null!");
     return cameraManager->DeleteSupportedCameras(cameras, size);
 }
 
