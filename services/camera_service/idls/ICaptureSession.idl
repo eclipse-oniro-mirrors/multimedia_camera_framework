@@ -23,6 +23,7 @@ import IControlCenterEffectStatusCallback;
 import ICameraSwitchSessionCallback;
 import ICameraRecorder;
 sequenceable OHOS.IRemoteObject;
+sequenceable IpcFileDescriptor..OHOS.IPCFileDescriptor;
 option_stub_hooks on;
 
 interface ICaptureSession{
@@ -75,4 +76,6 @@ interface ICaptureSession{
   [ipccode 46] void GetColorEffectsMetadata([out] List<int> colorEffectMetadata);
   [ipccode 47] void GetColorEffect([out] int colourEffect);
   [ipccode 48] void SetColorEffect([in] int colourEffect);
+  [ipccode 59] void EnableColorCube([in] sptr<IPCFileDescriptor> ipcFd, [in] long dataSize);
+  [ipccode 60] void DisableColorCube();
 }

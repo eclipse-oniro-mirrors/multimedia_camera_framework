@@ -53,7 +53,7 @@ napi_value VideoSessionNapi::Init(napi_env env, napi_value exports)
         quality_prioritization_props, macro_props, white_balance_props, control_center_props, iso_props,
         manual_iso_props, manual_exposure_props, manual_focus_props, exposure_cb_props, flash_cb_props, raw_props,
         physical_aperture_props, optical_image_stabilization_props, focus_tracking_normal_props, saturation_props,
-        aperture_info_cb_props };
+        aperture_info_cb_props, color_cube_props };
     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                VideoSessionNapiConstructor, nullptr,
@@ -267,14 +267,14 @@ void VideoSessionNapi::RegisterApertureInfoCallbackListener(const std::string& e
     }
     apertureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
- 
+
 void VideoSessionNapi::UnregisterApertureInfoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
     CHECK_RETURN_ELOG(apertureInfoCallback_ == nullptr, "%{public}s apertureInfoCallback is null", __func__);
     apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
 }
- 
+
 void VideoSessionNapi::RegisterFlashStateChangeCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {

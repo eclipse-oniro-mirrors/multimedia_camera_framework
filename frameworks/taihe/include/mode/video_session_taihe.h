@@ -36,6 +36,10 @@ public:
     }
     ~VideoSessionImpl() = default;
     void SetQualityPrioritization(QualityPrioritization quality);
+    int32_t GetSupportedCubeDimension();
+    bool IsColorCubeSupported();
+    void EnableColorCube(array_view<uint8_t> lutData);
+    void DisableColorCube();
     bool IsSaturationSupported();
     double GetSaturation();
     void SetSaturation(double saturationVal);

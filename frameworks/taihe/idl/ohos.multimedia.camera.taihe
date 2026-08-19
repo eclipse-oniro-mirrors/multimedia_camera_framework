@@ -854,6 +854,10 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
         }
   """)
 
+  IsColorCubeSupported(): bool;
+  EnableColorCube(lutData: Array<u8>): void;
+  DisableColorCube(): void;
+  GetSupportedCubeDimension(): i32;
   OnError(callback: (err: @sts_type("BusinessError<void>") Opaque)=> void): void;
   OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque)=> void>): void;
 

@@ -1584,6 +1584,35 @@ public:
     int32_t SetSaturation(float saturationVal);
 
     /**
+     * @brief Checks whether color cube (LUT) is supported.
+     * @param isSupported True if supported false otherwise.
+     * @return Returns errCode.
+     */
+    int32_t IsColorCubeSupported(bool &isSupported);
+
+    /**
+     * @brief Enable color cube (LUT) feature.
+     * @return Returns errCode.
+     */
+    int32_t EnableColorCube(const std::vector<uint8_t>& lutData);
+
+    /**
+     * @brief Disable color cube (LUT) feature.
+     * @return Returns errCode.
+     */
+    int32_t DisableColorCube();
+
+    /**
+     * @brief Queries the supported dimension value(s) for the Color Cube (LUT) feature.
+     * @param dimension [out] Receives the supported dimension value (e.g., 17, 33, 65).
+     * Note: If multiple dimensions are supported, this parameter should receive a list or the
+     * primary default dimension depending on implementation.
+     * @return Returns errCode. 0 indicates success. Returns an error if the feature is not supported or the dimension
+     * is invalid.
+     */
+    int32_t GetSupportedCubeDimension(int32_t &dimension);
+
+    /**
      * @brief Get default color style setttings.
      * @param defaultColorStyles default color style setttings.
      * @return Returns errCode.
@@ -2572,6 +2601,10 @@ protected:
     int32_t CheckCommonPreconditions(bool isSystemApp = true, bool isAfterSessionCommited = true);
 
     private:
+    void GetSaturationRangeForCurrentMode(const std::vector<int32_t> &saturationRange,
+        int32_t &minVal, int32_t &maxVal);
+    void GetRGBGainsRangeForCurrentMode(
+        const std::vector<int32_t>& rgbGainsRange, int32_t& minGain, int32_t& maxGain);
     int32_t ValidateSessionForZoom();
     
     int32_t GetZoomPointMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata>& metadata,
