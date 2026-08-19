@@ -129,7 +129,11 @@ protected:
         const std::vector<napi_value> &args, bool isOnce, bool isAsync = true) override;
     void UnregisterCameraSwitchRequestCallbackListener(
         const std::string &eventName, napi_env env, napi_value callback, const std::vector<napi_value> &args) override;
-};
+    void RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env,
+        napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync = true) override;
+    void UnregisterApertureInfoCallbackListener(
+        const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args) override;
+    };
 } // namespace CameraStandard
 } // namespace OHOS
 #endif /* VIDEO_SESSION_FOR_SYS_NAPI_H */
