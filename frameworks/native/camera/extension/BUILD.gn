@@ -134,6 +134,7 @@ ohos_shared_library("camera_framework_ex") {
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "ipc:ipc_core",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   defines = []

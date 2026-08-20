@@ -108,6 +108,7 @@ ohos_fuzztest("HStreamDepthDataFuzzTest") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libdm_lite",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 }
 

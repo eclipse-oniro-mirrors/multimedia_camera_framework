@@ -115,6 +115,8 @@ ohos_fuzztest("AudioVideoMuxerFuzzTest") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",
+    "graphic_surface:buffer_handle",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 }
 

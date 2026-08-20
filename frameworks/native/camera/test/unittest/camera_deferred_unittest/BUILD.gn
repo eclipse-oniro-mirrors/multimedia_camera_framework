@@ -158,6 +158,7 @@ ohos_unittest("camera_deferred_unittest") {
     "samgr:samgr_proxy",
     "sensor:sensor_interface_native",
     "window_manager:libdm_lite",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   defines = [ "private=public" ]

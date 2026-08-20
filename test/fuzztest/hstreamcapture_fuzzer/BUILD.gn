@@ -111,6 +111,7 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
     "window_manager:libdm_lite",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 }
 

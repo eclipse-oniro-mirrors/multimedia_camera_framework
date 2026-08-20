@@ -95,6 +95,7 @@ ohos_unittest("camera_ndk_test") {
     "safwk:system_ability_fwk",
     "sensor:sensor_interface_native",
     "window_manager:libdm",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   defines = [ "private=public" ]

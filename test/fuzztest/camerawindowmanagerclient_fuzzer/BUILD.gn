@@ -105,6 +105,7 @@ ohos_fuzztest("CameraWindowManagerClientFuzzTest") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libwm",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 }
 
