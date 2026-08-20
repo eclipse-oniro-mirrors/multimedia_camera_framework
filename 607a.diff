@@ -1,0 +1,1822 @@
+From 607a79bcdea1ff13928925f3422033bf4d7f0963 Mon Sep 17 00:00:00 2001
+From: wWX1062064 <wWX1062064@notesmail.huawei.com/>
+Date: Tue, 11 Aug 2026 09:56:15 +0800
+Subject: [PATCH] =?UTF-8?q?TicketNo:=20DTS2026080810527=20Description:=20?=
+ =?UTF-8?q?=E4=BE=9D=E8=B5=96=E5=BA=93=E8=B0=83=E6=95=B4=20Team:OTHERS=20F?=
+ =?UTF-8?q?eature=20or=20Bugfix:NA=20Binary=20Source:=20NA=20PrivateCode(Y?=
+ =?UTF-8?q?es/No):No=20cherry=20picked=20from=20commit=201a43a057e3efcabb2?=
+ =?UTF-8?q?7ba4d17ef0bfa96375ec879?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: Ic975bc6baad3cbf27292824e407cc9fef79d55b7
+---
+ common/BUILD.gn                                            | 1 +
+ dynamic_libs/BUILD.gn                                      | 3 +++
+ frameworks/cj/BUILD.gn                                     | 1 +
+ frameworks/native/camera/base/BUILD.gn                     | 1 +
+ frameworks/native/camera/extension/BUILD.gn                | 1 +
+ frameworks/native/camera/test/moduletest/BUILD.gn          | 7 +++++++
+ .../camera/test/unittest/camera_deferred_unittest/BUILD.gn | 1 +
+ .../camera/test/unittest/camera_ndk_unittest/BUILD.gn      | 1 +
+ .../native/camera/test/unittest/camera_service/BUILD.gn    | 1 +
+ .../native/camera/test/unittest/framework_native/BUILD.gn  | 2 ++
+ frameworks/native/camera/test/unittest/movie_file/BUILD.gn | 1 +
+ frameworks/taihe/BUILD.gn                                  | 1 +
+ interfaces/inner_api/native/test/BUILD.gn                  | 4 ++++
+ interfaces/kits/js/camera_napi/BUILD.gn                    | 1 +
+ interfaces/kits/js/camera_napi_for_sys/BUILD.gn            | 1 +
+ mediastream/BUILD.gn                                       | 1 +
+ moviefile/BUILD.gn                                         | 1 +
+ services/camera_service/BUILD.gn                           | 1 +
+ services/deferred_processing_service/BUILD.gn              | 3 +++
+ test/fuzztest/audiocapturersession_fuzzer/BUILD.gn         | 1 +
+ test/fuzztest/audiodeferredprocess_fuzzer/BUILD.gn         | 1 +
+ test/fuzztest/audioencoder_fuzzer/BUILD.gn                 | 2 ++
+ test/fuzztest/audiovideomuxer_fuzzer/BUILD.gn              | 2 ++
+ test/fuzztest/avcodectaskmanager_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/basicdefinitions_fuzzer/BUILD.gn             | 1 +
+ test/fuzztest/cameraability_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/cameraabilitybuilder_fuzzer/BUILD.gn         | 1 +
+ test/fuzztest/camerademuxer_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/cameradevice_fuzzer/BUILD.gn                 | 1 +
+ test/fuzztest/cameradeviceserviceproxy_fuzzer/BUILD.gn     | 1 +
+ test/fuzztest/cameradeviceservicestub_fuzzer/BUILD.gn      | 1 +
+ test/fuzztest/camerafwkmetadatautils_fuzzer/BUILD.gn       | 1 +
+ test/fuzztest/camerainput_fuzzer/BUILD.gn                  | 1 +
+ test/fuzztest/cameralistenerstub_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/cameramanager_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/cameraoutputcapability_fuzzer/BUILD.gn       | 1 +
+ test/fuzztest/camerareportdfxutils_fuzzer/BUILD.gn         | 1 +
+ test/fuzztest/camerarestoreparam_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/cameraserverphotoproxy_fuzzer/BUILD.gn       | 1 +
+ test/fuzztest/cameraservicejson_fuzzer/BUILD.gn            | 1 +
+ test/fuzztest/cameraserviceproxy_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/cameraswitchfeature_fuzzer/BUILD.gn          | 1 +
+ test/fuzztest/cameratimer_fuzzer/BUILD.gn                  | 1 +
+ test/fuzztest/cameratypes_fuzzer/BUILD.gn                  | 1 +
+ test/fuzztest/camerawindowmanagerclient_fuzzer/BUILD.gn    | 1 +
+ test/fuzztest/captureoutput_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/capturesession_fuzzer/BUILD.gn               | 1 +
+ test/fuzztest/capturesessionadd_fuzzer/BUILD.gn            | 1 +
+ test/fuzztest/capturesessioncallback_fuzzer/BUILD.gn       | 1 +
+ test/fuzztest/capturesessionproxy_fuzzer/BUILD.gn          | 1 +
+ test/fuzztest/cloudenhancesession_fuzzer/BUILD.gn          | 1 +
+ test/fuzztest/commandserver_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/commandserverimpl_fuzzer/BUILD.gn            | 1 +
+ test/fuzztest/compositionfeature_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/controlringfeature_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/cubicbezier_fuzzer/BUILD.gn                  | 1 +
+ .../deferredphotoprocessingsessionstub_fuzzer/BUILD.gn     | 1 +
+ .../deferredprocessingserviceeventmonitor_fuzzer/BUILD.gn  | 1 +
+ test/fuzztest/deferredprocessingstub_fuzzer/BUILD.gn       | 1 +
+ test/fuzztest/deferredvideocontroller_fuzzer/BUILD.gn      | 1 +
+ .../BUILD.gn                                               | 1 +
+ .../BUILD.gn                                               | 1 +
+ .../deferredvideoprocessingsessionproxy_fuzzer/BUILD.gn    | 1 +
+ .../deferredvideoprocessingsessionstub_fuzzer/BUILD.gn     | 1 +
+ test/fuzztest/deferredvideoprocessor_fuzzer/BUILD.gn       | 1 +
+ test/fuzztest/deferredvideoprocsession_fuzzer/BUILD.gn     | 1 +
+ test/fuzztest/dpsvideoreport_fuzzer/BUILD.gn               | 1 +
+ test/fuzztest/hcameradevice_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/hcameradevicemanager_fuzzer/BUILD.gn         | 1 +
+ test/fuzztest/hcamerahostmanager_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/hcameramoviefileoutput_fuzzer/BUILD.gn       | 1 +
+ test/fuzztest/hcamerapreconfig_fuzzer/BUILD.gn             | 1 +
+ test/fuzztest/hcameraservice_fuzzer/BUILD.gn               | 1 +
+ test/fuzztest/hcameraservicecallbackstub_fuzzer/BUILD.gn   | 1 +
+ test/fuzztest/hcameraswitchsession_fuzzer/BUILD.gn         | 1 +
+ test/fuzztest/hcapturesession_fuzzer/BUILD.gn              | 1 +
+ test/fuzztest/hmechsession_fuzzer/BUILD.gn                 | 1 +
+ test/fuzztest/hstreamcapture_fuzzer/BUILD.gn               | 1 +
+ test/fuzztest/hstreamcapturestub_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/hstreamdepthdata_fuzzer/BUILD.gn             | 1 +
+ .../fuzztest/hstreamdepthdatacallbackproxy_fuzzer/BUILD.gn | 1 +
+ test/fuzztest/hstreamdepthdatacallbackstub_fuzzer/BUILD.gn | 1 +
+ test/fuzztest/hstreamdepthdataproxy_fuzzer/BUILD.gn        | 1 +
+ test/fuzztest/hstreamdepthdatastub_fuzzer/BUILD.gn         | 1 +
+ test/fuzztest/hstreammetadata_fuzzer/BUILD.gn              | 1 +
+ test/fuzztest/hstreammetadatacallbackproxy_fuzzer/BUILD.gn | 1 +
+ test/fuzztest/hstreammetadatacallbackstub_fuzzer/BUILD.gn  | 1 +
+ test/fuzztest/hstreammetadatastub_fuzzer/BUILD.gn          | 1 +
+ test/fuzztest/hstreamoperator_fuzzer/BUILD.gn              | 1 +
+ test/fuzztest/hstreamrepeat_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/hstreamrepeatcallbackstub_fuzzer/BUILD.gn    | 1 +
+ test/fuzztest/hstreamrepeatstub_fuzzer/BUILD.gn            | 1 +
+ test/fuzztest/imageinfo_fuzzer/BUILD.gn                    | 1 +
+ test/fuzztest/lightscansession_fuzzer/BUILD.gn             | 1 +
+ test/fuzztest/mediamanager_fuzzer/BUILD.gn                 | 1 +
+ test/fuzztest/metadataoutput_fuzzer/BUILD.gn               | 1 +
+ test/fuzztest/mooncaptureboostfeature_fuzzer/BUILD.gn      | 1 +
+ test/fuzztest/movingphotomanager_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/movingphotoproxy_fuzzer/BUILD.gn             | 1 +
+ test/fuzztest/movingphotosurfacewrapper_fuzzer/BUILD.gn    | 1 +
+ test/fuzztest/mpegmanager_fuzzer/BUILD.gn                  | 1 +
+ test/fuzztest/photojobrepository_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/photooutput_fuzzer/BUILD.gn                  | 1 +
+ test/fuzztest/photopostprocessor_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/photoprocessresult_fuzzer/BUILD.gn           | 2 ++
+ test/fuzztest/photosession_fuzzer/BUILD.gn                 | 1 +
+ test/fuzztest/photostrategycenter_fuzzer/BUILD.gn          | 1 +
+ test/fuzztest/portraitsession_fuzzer/BUILD.gn              | 1 +
+ test/fuzztest/previewoutput_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/professionsession_fuzzer/BUILD.gn            | 1 +
+ test/fuzztest/reader_fuzzer/BUILD.gn                       | 1 +
+ test/fuzztest/sketchwrapper_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/slowmotionsession_fuzzer/BUILD.gn            | 1 +
+ test/fuzztest/smoothzoom_fuzzer/BUILD.gn                   | 1 +
+ test/fuzztest/streamcapture_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/streamcapturestub_fuzzer/BUILD.gn            | 1 +
+ test/fuzztest/streamdepthdataproxy_fuzzer/BUILD.gn         | 1 +
+ test/fuzztest/streamdepthdatastub_fuzzer/BUILD.gn          | 1 +
+ test/fuzztest/streammetadatacallbackproxy_fuzzer/BUILD.gn  | 1 +
+ test/fuzztest/streammetadatastub_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/streamrepeatproxy_fuzzer/BUILD.gn            | 1 +
+ test/fuzztest/streamrepeatstub_fuzzer/BUILD.gn             | 1 +
+ test/fuzztest/timebroker_fuzzer/BUILD.gn                   | 1 +
+ test/fuzztest/timelapsephotosession_fuzzer/BUILD.gn        | 1 +
+ test/fuzztest/timercore_fuzzer/BUILD.gn                    | 1 +
+ test/fuzztest/videoencoder_fuzzer/BUILD.gn                 | 1 +
+ test/fuzztest/videojobqueue_fuzzer/BUILD.gn                | 1 +
+ test/fuzztest/videojobrepository_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/videooutput_fuzzer/BUILD.gn                  | 1 +
+ test/fuzztest/videopostprocessor_fuzzer/BUILD.gn           | 1 +
+ test/fuzztest/videoprocesscommand_fuzzer/BUILD.gn          | 1 +
+ test/fuzztest/videostrategycenter_fuzzer/BUILD.gn          | 1 +
+ 132 files changed, 149 insertions(+)
+
+diff --git a/common/BUILD.gn b/common/BUILD.gn
+index c6751fffe1..3e49e61215 100644
+--- a/common/BUILD.gn
++++ b/common/BUILD.gn
+@@ -120,6 +120,7 @@ common_external_deps = [
+   "bundle_framework:appexecfwk_base",
+   "bundle_framework:appexecfwk_core",
+   "c_utils:utils",
++  "graphic_surface:buffer_handle",
+   "graphic_surface:surface",
+   "hilog:libhilog",
+   "hisysevent:libhisysevent",
+diff --git a/dynamic_libs/BUILD.gn b/dynamic_libs/BUILD.gn
+index 88d6324df7..9ef6e880fd 100644
+--- a/dynamic_libs/BUILD.gn
++++ b/dynamic_libs/BUILD.gn
+@@ -283,6 +283,7 @@ ohos_source_set("camera_dynamic_moving_photo") {
+     "bundle_framework:appexecfwk_core",
+     "c_utils:utils",
+     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+     "drivers_interface_camera:libcamera_proxy_1.0",
+     "drivers_interface_camera:libcamera_proxy_1.1",
+     "drivers_interface_camera:libcamera_proxy_1.2",
+@@ -395,6 +396,8 @@ ohos_source_set("camera_dynamic_media_manager") {
+     "drivers_interface_camera:libcamera_proxy_1.3",
+     "drivers_interface_camera:libcamera_proxy_1.4",
+     "drivers_interface_camera:libmap_data_sequenceable_1.0",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
++    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+     "drivers_interface_camera:metadata",
+     "hilog:libhilog",
+     "hisysevent:libhisysevent",
+diff --git a/frameworks/cj/BUILD.gn b/frameworks/cj/BUILD.gn
+index 075edcedcb..76ead3620e 100644
+--- a/frameworks/cj/BUILD.gn
++++ b/frameworks/cj/BUILD.gn
+@@ -95,6 +95,7 @@ ohos_shared_library("cj_camera_ffi") {
+       "node:node_header_notice",
+       "image_framework:cj_image_ffi",
+       "bounds_checking_function:libsec_shared",
++      "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+     ]
+     sources = [
+       "camera/src/camera_ffi.cpp",
+diff --git a/frameworks/native/camera/base/BUILD.gn b/frameworks/native/camera/base/BUILD.gn
+index cdfcfd3d01..49f84dc6b1 100644
+--- a/frameworks/native/camera/base/BUILD.gn
++++ b/frameworks/native/camera/base/BUILD.gn
+@@ -153,6 +153,7 @@ common_external_deps = [
+   "samgr:samgr_proxy",
+   "window_manager:libdm_lite",
+   "window_manager:libwm",
++  "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+ ]
+ 
+ ohos_shared_library("camera_framework") {
+diff --git a/frameworks/native/camera/extension/BUILD.gn b/frameworks/native/camera/extension/BUILD.gn
+index 6501baa9cd..defb791bbb 100644
+--- a/frameworks/native/camera/extension/BUILD.gn
++++ b/frameworks/native/camera/extension/BUILD.gn
+@@ -151,6 +151,7 @@ ohos_shared_library("camera_framework_ex") {
+     "hitrace:hitrace_meter",
+     "image_framework:image_native",
+     "ipc:ipc_core",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/frameworks/native/camera/test/moduletest/BUILD.gn b/frameworks/native/camera/test/moduletest/BUILD.gn
+index 6368690221..23c16a5cf1 100644
+--- a/frameworks/native/camera/test/moduletest/BUILD.gn
++++ b/frameworks/native/camera/test/moduletest/BUILD.gn
+@@ -59,6 +59,7 @@ ohos_moduletest("camera_base_function_moduletest") {
+     "ipc:ipc_core",
+     "image_framework:image_native",
+     "hilog:libhilog",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   cflags = [
+@@ -118,6 +119,7 @@ ohos_moduletest("camera_deferred_photo_moduletest") {
+     "image_framework:image_native",
+     "ipc:ipc_core",
+     "hilog:libhilog",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   cflags = [
+@@ -175,6 +177,7 @@ ohos_moduletest("camera_deferred_video_moduletest") {
+     "hisysevent:libhisysevent",
+     "hitrace:hitrace_meter",
+     "ipc:ipc_core",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   cflags = [
+@@ -234,6 +237,7 @@ ohos_moduletest("camera_format_YUV_moduletest") {
+     "ipc:ipc_core",
+     "os_account:os_account_innerkits",
+     "hilog:libhilog",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+@@ -307,6 +311,8 @@ ohos_moduletest("camera_moving_photo_moduletest") {
+     "os_account:os_account_innerkits",
+     "resource_management:librawfile",
+     "safwk:system_ability_fwk",
++    "graphic_surface:buffer_handle",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   cflags = [ "-fPIC" ]
+@@ -361,6 +367,7 @@ ohos_moduletest("camera_session_moduletest") {
+     "hitrace:hitrace_meter",
+     "init:libbegetutil",
+     "ipc:ipc_core",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   cflags = [
+diff --git a/frameworks/native/camera/test/unittest/camera_deferred_unittest/BUILD.gn b/frameworks/native/camera/test/unittest/camera_deferred_unittest/BUILD.gn
+index 9e588a284a..b36e8aa2d7 100644
+--- a/frameworks/native/camera/test/unittest/camera_deferred_unittest/BUILD.gn
++++ b/frameworks/native/camera/test/unittest/camera_deferred_unittest/BUILD.gn
+@@ -158,6 +158,7 @@ ohos_unittest("camera_deferred_unittest") {
+     "samgr:samgr_proxy",
+     "sensor:sensor_interface_native",
+     "window_manager:libdm_lite",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = [ "private=public" ]
+diff --git a/frameworks/native/camera/test/unittest/camera_ndk_unittest/BUILD.gn b/frameworks/native/camera/test/unittest/camera_ndk_unittest/BUILD.gn
+index f4b74cb675..7eb10e6cea 100644
+--- a/frameworks/native/camera/test/unittest/camera_ndk_unittest/BUILD.gn
++++ b/frameworks/native/camera/test/unittest/camera_ndk_unittest/BUILD.gn
+@@ -99,6 +99,7 @@ ohos_unittest("camera_ndk_test") {
+     "safwk:system_ability_fwk",
+     "sensor:sensor_interface_native",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = [ "private=public" ]
+diff --git a/frameworks/native/camera/test/unittest/camera_service/BUILD.gn b/frameworks/native/camera/test/unittest/camera_service/BUILD.gn
+index 116d2ec6c3..333cc2b3c9 100644
+--- a/frameworks/native/camera/test/unittest/camera_service/BUILD.gn
++++ b/frameworks/native/camera/test/unittest/camera_service/BUILD.gn
+@@ -179,6 +179,7 @@ ohos_unittest("camera_service_unittest") {
+     "sensor:sensor_interface_native",
+     "window_manager:libdm_lite",
+     "graphic_2d:color_manager",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = [
+diff --git a/frameworks/native/camera/test/unittest/framework_native/BUILD.gn b/frameworks/native/camera/test/unittest/framework_native/BUILD.gn
+index 33c41eb9a3..5696eb94c2 100644
+--- a/frameworks/native/camera/test/unittest/framework_native/BUILD.gn
++++ b/frameworks/native/camera/test/unittest/framework_native/BUILD.gn
+@@ -134,6 +134,8 @@ ohos_unittest("camera_framework_native_unittest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm_lite",
++    "graphic_surface:buffer_handle",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = [ "private=public" ]
+diff --git a/frameworks/native/camera/test/unittest/movie_file/BUILD.gn b/frameworks/native/camera/test/unittest/movie_file/BUILD.gn
+index 4d46e2fe86..12a877a0b4 100755
+--- a/frameworks/native/camera/test/unittest/movie_file/BUILD.gn
++++ b/frameworks/native/camera/test/unittest/movie_file/BUILD.gn
+@@ -110,6 +110,7 @@ ohos_unittest("camera_movie_file_unittest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm_lite",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = [ "private=public" ]
+diff --git a/frameworks/taihe/BUILD.gn b/frameworks/taihe/BUILD.gn
+index d4acb8e8b3..dd5f2c6db9 100644
+--- a/frameworks/taihe/BUILD.gn
++++ b/frameworks/taihe/BUILD.gn
+@@ -145,6 +145,7 @@ taihe_shared_library("camera_taihe") {
+     "node:node_header_notice",
+     "runtime_core:ani_helpers",
+     "graphic_2d:color_manager",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   sanitize = {
+diff --git a/interfaces/inner_api/native/test/BUILD.gn b/interfaces/inner_api/native/test/BUILD.gn
+index 685e90614c..f0da3f708b 100644
+--- a/interfaces/inner_api/native/test/BUILD.gn
++++ b/interfaces/inner_api/native/test/BUILD.gn
+@@ -61,6 +61,7 @@ ohos_executable("camera_video") {
+     "ipc:ipc_core",
+     "ipc:ipc_single",
+     "player_framework:media_client",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+   part_name = "camera_framework"
+   subsystem_name = "multimedia"
+@@ -99,6 +100,7 @@ ohos_executable("camera_capture") {
+     "hisysevent:libhisysevent",
+     "hitrace:hitrace_meter",
+     "ipc:ipc_core",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+   part_name = "camera_framework"
+   subsystem_name = "multimedia"
+@@ -137,6 +139,7 @@ ohos_executable("camera_capture_video") {
+     "hisysevent:libhisysevent",
+     "hitrace:hitrace_meter",
+     "ipc:ipc_core",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+   part_name = "camera_framework"
+   subsystem_name = "multimedia"
+@@ -175,6 +178,7 @@ ohos_executable("camera_capture_mode") {
+     "hisysevent:libhisysevent",
+     "hitrace:hitrace_meter",
+     "ipc:ipc_core",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+   part_name = "camera_framework"
+   subsystem_name = "multimedia"
+diff --git a/interfaces/kits/js/camera_napi/BUILD.gn b/interfaces/kits/js/camera_napi/BUILD.gn
+index 995a7ddd99..c6758bf320 100644
+--- a/interfaces/kits/js/camera_napi/BUILD.gn
++++ b/interfaces/kits/js/camera_napi/BUILD.gn
+@@ -296,6 +296,7 @@ ohos_shared_library("camera_napi_base") {
+     "qos_manager:qos",
+     "samgr:samgr_proxy",
+     "hilog:libhilog",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/interfaces/kits/js/camera_napi_for_sys/BUILD.gn b/interfaces/kits/js/camera_napi_for_sys/BUILD.gn
+index c5669d92eb..d1a034d3f8 100644
+--- a/interfaces/kits/js/camera_napi_for_sys/BUILD.gn
++++ b/interfaces/kits/js/camera_napi_for_sys/BUILD.gn
+@@ -77,6 +77,7 @@ ohos_shared_library("camera_napi_ex") {
+     "node:node_header_notice",
+     "libuv:uv",
+     "hilog:libhilog",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/mediastream/BUILD.gn b/mediastream/BUILD.gn
+index f09874cb18..5434b35ace 100644
+--- a/mediastream/BUILD.gn
++++ b/mediastream/BUILD.gn
+@@ -122,6 +122,7 @@ ohos_source_set("media_stream") {
+     "drivers_interface_camera:metadata",
+     "drivers_interface_camera:libcamera_proxy_1.0",
+     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+     "drivers_interface_camera:libmap_data_sequenceable_1.0",
+     "init:libbegetutil",
+     "safwk:system_ability_fwk",
+diff --git a/moviefile/BUILD.gn b/moviefile/BUILD.gn
+index 1b479a36e3..ff28284b4c 100644
+--- a/moviefile/BUILD.gn
++++ b/moviefile/BUILD.gn
+@@ -110,6 +110,7 @@ ohos_source_set("movie_file") {
+     "av_codec:native_media_acodec",
+     "av_codec:native_media_codecbase",
+     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+     "drivers_interface_camera:libmap_data_sequenceable_1.0",
+     "drivers_interface_camera:metadata",
+     "media_library:media_library_camera_helper",
+diff --git a/services/camera_service/BUILD.gn b/services/camera_service/BUILD.gn
+index 32300880aa..90f2fbd375 100644
+--- a/services/camera_service/BUILD.gn
++++ b/services/camera_service/BUILD.gn
+@@ -228,6 +228,7 @@ ohos_shared_library("camera_service") {
+     "window_manager:libwm",
+     "window_manager:libdm_lite",
+     "media_foundation:media_foundation",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/services/deferred_processing_service/BUILD.gn b/services/deferred_processing_service/BUILD.gn
+index e645c22a83..3e6f973a3c 100644
+--- a/services/deferred_processing_service/BUILD.gn
++++ b/services/deferred_processing_service/BUILD.gn
+@@ -218,6 +218,8 @@ ohos_shared_library("deferred_processing_service") {
+     "drivers_interface_camera:libcamera_proxy_1.7",
+     "drivers_interface_camera:libmap_data_sequenceable_1.0",
+     "drivers_interface_camera:metadata",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
++    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+     "graphic_2d:librender_service_client",
+     "graphic_surface:buffer_handle",
+     "graphic_surface:surface",
+@@ -233,6 +235,7 @@ ohos_shared_library("deferred_processing_service") {
+     "storage_service:storage_manager_sa_proxy",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libmap_data_sequenceable_1.0",
+   ]
+ 
+   if (use_musl) {
+diff --git a/test/fuzztest/audiocapturersession_fuzzer/BUILD.gn b/test/fuzztest/audiocapturersession_fuzzer/BUILD.gn
+index ac6a290f9b..f28213e22f 100644
+--- a/test/fuzztest/audiocapturersession_fuzzer/BUILD.gn
++++ b/test/fuzztest/audiocapturersession_fuzzer/BUILD.gn
+@@ -116,6 +116,7 @@ ohos_fuzztest("AudioCapturerSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/audiodeferredprocess_fuzzer/BUILD.gn b/test/fuzztest/audiodeferredprocess_fuzzer/BUILD.gn
+index a332ff2a99..4d25c6bb97 100644
+--- a/test/fuzztest/audiodeferredprocess_fuzzer/BUILD.gn
++++ b/test/fuzztest/audiodeferredprocess_fuzzer/BUILD.gn
+@@ -115,6 +115,7 @@ ohos_fuzztest("AudioDeferredProcessFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/audioencoder_fuzzer/BUILD.gn b/test/fuzztest/audioencoder_fuzzer/BUILD.gn
+index d79f6ea81f..38f4be5451 100644
+--- a/test/fuzztest/audioencoder_fuzzer/BUILD.gn
++++ b/test/fuzztest/audioencoder_fuzzer/BUILD.gn
+@@ -121,6 +121,8 @@ ohos_fuzztest("AudioEncoderFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "graphic_surface:buffer_handle",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/audiovideomuxer_fuzzer/BUILD.gn b/test/fuzztest/audiovideomuxer_fuzzer/BUILD.gn
+index 158b48cd99..7dfba19649 100644
+--- a/test/fuzztest/audiovideomuxer_fuzzer/BUILD.gn
++++ b/test/fuzztest/audiovideomuxer_fuzzer/BUILD.gn
+@@ -116,6 +116,8 @@ ohos_fuzztest("AudioVideoMuxerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "graphic_surface:buffer_handle",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/avcodectaskmanager_fuzzer/BUILD.gn b/test/fuzztest/avcodectaskmanager_fuzzer/BUILD.gn
+index 7b6d2584e7..dfefb90c4b 100644
+--- a/test/fuzztest/avcodectaskmanager_fuzzer/BUILD.gn
++++ b/test/fuzztest/avcodectaskmanager_fuzzer/BUILD.gn
+@@ -122,6 +122,7 @@ ohos_fuzztest("AvcodecTaskManagerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/basicdefinitions_fuzzer/BUILD.gn b/test/fuzztest/basicdefinitions_fuzzer/BUILD.gn
+index 92665a6381..ed5038ee28 100644
+--- a/test/fuzztest/basicdefinitions_fuzzer/BUILD.gn
++++ b/test/fuzztest/basicdefinitions_fuzzer/BUILD.gn
+@@ -76,6 +76,7 @@ ohos_fuzztest("BasicDefinitionsFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameraability_fuzzer/BUILD.gn b/test/fuzztest/cameraability_fuzzer/BUILD.gn
+index 4c91847eea..752dc9f4ac 100644
+--- a/test/fuzztest/cameraability_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameraability_fuzzer/BUILD.gn
+@@ -69,6 +69,7 @@ ohos_fuzztest("CameraAbilityFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameraabilitybuilder_fuzzer/BUILD.gn b/test/fuzztest/cameraabilitybuilder_fuzzer/BUILD.gn
+index a3253668d2..14d9bc5bfd 100644
+--- a/test/fuzztest/cameraabilitybuilder_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameraabilitybuilder_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("CameraAbilityBuilderFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/camerademuxer_fuzzer/BUILD.gn b/test/fuzztest/camerademuxer_fuzzer/BUILD.gn
+index 586f94d1fa..a7267e25d3 100644
+--- a/test/fuzztest/camerademuxer_fuzzer/BUILD.gn
++++ b/test/fuzztest/camerademuxer_fuzzer/BUILD.gn
+@@ -108,6 +108,7 @@ ohos_fuzztest("CameraDemuxerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameradevice_fuzzer/BUILD.gn b/test/fuzztest/cameradevice_fuzzer/BUILD.gn
+index c7ae1552f2..1dbbd0ea93 100644
+--- a/test/fuzztest/cameradevice_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameradevice_fuzzer/BUILD.gn
+@@ -100,6 +100,7 @@ ohos_fuzztest("CameraDeviceFuzzTest") {
+     "window_manager:libdm",
+     "data_share:datashare_common",
+     "data_share:datashare_consumer",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameradeviceserviceproxy_fuzzer/BUILD.gn b/test/fuzztest/cameradeviceserviceproxy_fuzzer/BUILD.gn
+index b958668688..fc49773f2a 100644
+--- a/test/fuzztest/cameradeviceserviceproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameradeviceserviceproxy_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("CameraDeviceServiceProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameradeviceservicestub_fuzzer/BUILD.gn b/test/fuzztest/cameradeviceservicestub_fuzzer/BUILD.gn
+index 58cff39e37..ad4d87ed73 100644
+--- a/test/fuzztest/cameradeviceservicestub_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameradeviceservicestub_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("CameraDeviceServiceStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/camerafwkmetadatautils_fuzzer/BUILD.gn b/test/fuzztest/camerafwkmetadatautils_fuzzer/BUILD.gn
+index e95350bf14..80d01ecfd4 100644
+--- a/test/fuzztest/camerafwkmetadatautils_fuzzer/BUILD.gn
++++ b/test/fuzztest/camerafwkmetadatautils_fuzzer/BUILD.gn
+@@ -75,6 +75,7 @@ ohos_fuzztest("CameraFwkMetadataUtilsFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/camerainput_fuzzer/BUILD.gn b/test/fuzztest/camerainput_fuzzer/BUILD.gn
+index 9df72bc970..9eb8d65b67 100644
+--- a/test/fuzztest/camerainput_fuzzer/BUILD.gn
++++ b/test/fuzztest/camerainput_fuzzer/BUILD.gn
+@@ -70,6 +70,7 @@ ohos_fuzztest("CameraInputFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameralistenerstub_fuzzer/BUILD.gn b/test/fuzztest/cameralistenerstub_fuzzer/BUILD.gn
+index 748498f200..968fc09d2b 100644
+--- a/test/fuzztest/cameralistenerstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameralistenerstub_fuzzer/BUILD.gn
+@@ -67,6 +67,7 @@ ohos_fuzztest("CameraListenerStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameramanager_fuzzer/BUILD.gn b/test/fuzztest/cameramanager_fuzzer/BUILD.gn
+index 948880faf1..887c629a5a 100644
+--- a/test/fuzztest/cameramanager_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameramanager_fuzzer/BUILD.gn
+@@ -69,6 +69,7 @@ ohos_fuzztest("CameraManagerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameraoutputcapability_fuzzer/BUILD.gn b/test/fuzztest/cameraoutputcapability_fuzzer/BUILD.gn
+index 2489f38332..c26b526074 100644
+--- a/test/fuzztest/cameraoutputcapability_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameraoutputcapability_fuzzer/BUILD.gn
+@@ -65,6 +65,7 @@ ohos_fuzztest("CameraOutputCapabilityFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+  
+diff --git a/test/fuzztest/camerareportdfxutils_fuzzer/BUILD.gn b/test/fuzztest/camerareportdfxutils_fuzzer/BUILD.gn
+index 2e2f4b0cdb..bf98d3acce 100644
+--- a/test/fuzztest/camerareportdfxutils_fuzzer/BUILD.gn
++++ b/test/fuzztest/camerareportdfxutils_fuzzer/BUILD.gn
+@@ -71,6 +71,7 @@ ohos_fuzztest("CameraReportDfxUtilsFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/camerarestoreparam_fuzzer/BUILD.gn b/test/fuzztest/camerarestoreparam_fuzzer/BUILD.gn
+index 0eb4d89d58..1aaf734f86 100644
+--- a/test/fuzztest/camerarestoreparam_fuzzer/BUILD.gn
++++ b/test/fuzztest/camerarestoreparam_fuzzer/BUILD.gn
+@@ -68,6 +68,7 @@ ohos_fuzztest("CameraRestoreParamFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameraserverphotoproxy_fuzzer/BUILD.gn b/test/fuzztest/cameraserverphotoproxy_fuzzer/BUILD.gn
+index bfcfb5e8f3..8d23f3de0f 100644
+--- a/test/fuzztest/cameraserverphotoproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameraserverphotoproxy_fuzzer/BUILD.gn
+@@ -115,6 +115,7 @@ ohos_fuzztest("CameraServerPhotoProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameraservicejson_fuzzer/BUILD.gn b/test/fuzztest/cameraservicejson_fuzzer/BUILD.gn
+index e455e48583..e2d0599086 100644
+--- a/test/fuzztest/cameraservicejson_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameraservicejson_fuzzer/BUILD.gn
+@@ -70,6 +70,7 @@ ohos_fuzztest("CameraServiceJsonFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameraserviceproxy_fuzzer/BUILD.gn b/test/fuzztest/cameraserviceproxy_fuzzer/BUILD.gn
+index 73987e5e8a..558b24b243 100644
+--- a/test/fuzztest/cameraserviceproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameraserviceproxy_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("CameraServiceProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameraswitchfeature_fuzzer/BUILD.gn b/test/fuzztest/cameraswitchfeature_fuzzer/BUILD.gn
+index 4ab168f5e3..26266870a3 100644
+--- a/test/fuzztest/cameraswitchfeature_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameraswitchfeature_fuzzer/BUILD.gn
+@@ -54,6 +54,7 @@ ohos_fuzztest("CameraSwitchFeatureFuzzTest") {
+     "hitrace:hitrace_meter",
+     "ipc:ipc_core",
+     "samgr:samgr_proxy",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   cflags = [
+diff --git a/test/fuzztest/cameratimer_fuzzer/BUILD.gn b/test/fuzztest/cameratimer_fuzzer/BUILD.gn
+index ecccd3f704..ef0c211681 100644
+--- a/test/fuzztest/cameratimer_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameratimer_fuzzer/BUILD.gn
+@@ -67,6 +67,7 @@ ohos_fuzztest("CameraTimerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cameratypes_fuzzer/BUILD.gn b/test/fuzztest/cameratypes_fuzzer/BUILD.gn
+index 17caac51e0..83a1c5c9a2 100644
+--- a/test/fuzztest/cameratypes_fuzzer/BUILD.gn
++++ b/test/fuzztest/cameratypes_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("CameraTypesFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/camerawindowmanagerclient_fuzzer/BUILD.gn b/test/fuzztest/camerawindowmanagerclient_fuzzer/BUILD.gn
+index ea1b9ed1ce..ff2289391e 100644
+--- a/test/fuzztest/camerawindowmanagerclient_fuzzer/BUILD.gn
++++ b/test/fuzztest/camerawindowmanagerclient_fuzzer/BUILD.gn
+@@ -105,6 +105,7 @@ ohos_fuzztest("CameraWindowManagerClientFuzzTest") {
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
+     "window_manager:libwm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/captureoutput_fuzzer/BUILD.gn b/test/fuzztest/captureoutput_fuzzer/BUILD.gn
+index 4900382fdf..2c6c6d38fe 100644
+--- a/test/fuzztest/captureoutput_fuzzer/BUILD.gn
++++ b/test/fuzztest/captureoutput_fuzzer/BUILD.gn
+@@ -65,6 +65,7 @@ ohos_fuzztest("CaptureOutputFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/capturesession_fuzzer/BUILD.gn b/test/fuzztest/capturesession_fuzzer/BUILD.gn
+index 73fd00a061..9394b750b2 100644
+--- a/test/fuzztest/capturesession_fuzzer/BUILD.gn
++++ b/test/fuzztest/capturesession_fuzzer/BUILD.gn
+@@ -72,6 +72,7 @@ ohos_fuzztest("CaptureSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/capturesessionadd_fuzzer/BUILD.gn b/test/fuzztest/capturesessionadd_fuzzer/BUILD.gn
+index edf0ffeca4..36adf2a219 100644
+--- a/test/fuzztest/capturesessionadd_fuzzer/BUILD.gn
++++ b/test/fuzztest/capturesessionadd_fuzzer/BUILD.gn
+@@ -78,6 +78,7 @@ ohos_fuzztest("CaptureSessionAddFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/capturesessioncallback_fuzzer/BUILD.gn b/test/fuzztest/capturesessioncallback_fuzzer/BUILD.gn
+index fb8bf1109c..787665949b 100644
+--- a/test/fuzztest/capturesessioncallback_fuzzer/BUILD.gn
++++ b/test/fuzztest/capturesessioncallback_fuzzer/BUILD.gn
+@@ -71,6 +71,7 @@ ohos_fuzztest("CaptureSessionCallbackFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/capturesessionproxy_fuzzer/BUILD.gn b/test/fuzztest/capturesessionproxy_fuzzer/BUILD.gn
+index 151aa8f191..4763e50f72 100644
+--- a/test/fuzztest/capturesessionproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/capturesessionproxy_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("CaptureSessionProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/cloudenhancesession_fuzzer/BUILD.gn b/test/fuzztest/cloudenhancesession_fuzzer/BUILD.gn
+index aaee71d52f..45743ab926 100644
+--- a/test/fuzztest/cloudenhancesession_fuzzer/BUILD.gn
++++ b/test/fuzztest/cloudenhancesession_fuzzer/BUILD.gn
+@@ -76,6 +76,7 @@ ohos_fuzztest("CloudEnhanceSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/commandserver_fuzzer/BUILD.gn b/test/fuzztest/commandserver_fuzzer/BUILD.gn
+index c0ba104c45..ac7727d9ba 100644
+--- a/test/fuzztest/commandserver_fuzzer/BUILD.gn
++++ b/test/fuzztest/commandserver_fuzzer/BUILD.gn
+@@ -72,6 +72,7 @@ ohos_fuzztest("CommandServerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/commandserverimpl_fuzzer/BUILD.gn b/test/fuzztest/commandserverimpl_fuzzer/BUILD.gn
+index e4374f8ad5..6028bb55b3 100644
+--- a/test/fuzztest/commandserverimpl_fuzzer/BUILD.gn
++++ b/test/fuzztest/commandserverimpl_fuzzer/BUILD.gn
+@@ -72,6 +72,7 @@ ohos_fuzztest("CommandServerImplFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/compositionfeature_fuzzer/BUILD.gn b/test/fuzztest/compositionfeature_fuzzer/BUILD.gn
+index d9fd5b5958..4b44c314b6 100755
+--- a/test/fuzztest/compositionfeature_fuzzer/BUILD.gn
++++ b/test/fuzztest/compositionfeature_fuzzer/BUILD.gn
+@@ -49,6 +49,7 @@ ohos_fuzztest("CompositionFeatureFuzzTest") {
+     "hisysevent:libhisysevent",
+     "hitrace:hitrace_meter",
+     "hilog:libhilog",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/controlringfeature_fuzzer/BUILD.gn b/test/fuzztest/controlringfeature_fuzzer/BUILD.gn
+index 2ec1897f70..1be216146f 100644
+--- a/test/fuzztest/controlringfeature_fuzzer/BUILD.gn
++++ b/test/fuzztest/controlringfeature_fuzzer/BUILD.gn
+@@ -62,6 +62,7 @@ ohos_fuzztest("ControlRingFeatureFuzzTest") {
+     "hitrace:hitrace_meter",
+     "ipc:ipc_core",
+     "samgr:samgr_proxy",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   cflags = [
+diff --git a/test/fuzztest/cubicbezier_fuzzer/BUILD.gn b/test/fuzztest/cubicbezier_fuzzer/BUILD.gn
+index e2d81b5e81..9742bc9675 100644
+--- a/test/fuzztest/cubicbezier_fuzzer/BUILD.gn
++++ b/test/fuzztest/cubicbezier_fuzzer/BUILD.gn
+@@ -67,6 +67,7 @@ ohos_fuzztest("CubicBezierFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/deferredphotoprocessingsessionstub_fuzzer/BUILD.gn b/test/fuzztest/deferredphotoprocessingsessionstub_fuzzer/BUILD.gn
+index 0fb025ef3c..22b4127aac 100644
+--- a/test/fuzztest/deferredphotoprocessingsessionstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredphotoprocessingsessionstub_fuzzer/BUILD.gn
+@@ -108,6 +108,7 @@ ohos_fuzztest("DeferredPhotoProcessingSessionStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_power_manager) {
+diff --git a/test/fuzztest/deferredprocessingserviceeventmonitor_fuzzer/BUILD.gn b/test/fuzztest/deferredprocessingserviceeventmonitor_fuzzer/BUILD.gn
+index 60f689b18d..d4b1d42a0a 100644
+--- a/test/fuzztest/deferredprocessingserviceeventmonitor_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredprocessingserviceeventmonitor_fuzzer/BUILD.gn
+@@ -105,6 +105,7 @@ ohos_fuzztest("DeferredProcessingServiceEventMonitor") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/deferredprocessingstub_fuzzer/BUILD.gn b/test/fuzztest/deferredprocessingstub_fuzzer/BUILD.gn
+index 27dbe87658..6daeab9ad8 100644
+--- a/test/fuzztest/deferredprocessingstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredprocessingstub_fuzzer/BUILD.gn
+@@ -104,6 +104,7 @@ ohos_fuzztest("DeferredProcessingStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/deferredvideocontroller_fuzzer/BUILD.gn b/test/fuzztest/deferredvideocontroller_fuzzer/BUILD.gn
+index 874d378673..b1e565e550 100644
+--- a/test/fuzztest/deferredvideocontroller_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredvideocontroller_fuzzer/BUILD.gn
+@@ -134,6 +134,7 @@ ohos_fuzztest("DeferredVideoControllerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_power_manager) {
+diff --git a/test/fuzztest/deferredvideoprocessingsessioncallbackproxy_fuzzer/BUILD.gn b/test/fuzztest/deferredvideoprocessingsessioncallbackproxy_fuzzer/BUILD.gn
+index b51aa65151..67bdd7eb21 100644
+--- a/test/fuzztest/deferredvideoprocessingsessioncallbackproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredvideoprocessingsessioncallbackproxy_fuzzer/BUILD.gn
+@@ -105,6 +105,7 @@ ohos_fuzztest("DeferredVideoProcessingSessionCallBackProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/deferredvideoprocessingsessioncallbackstub_fuzzer/BUILD.gn b/test/fuzztest/deferredvideoprocessingsessioncallbackstub_fuzzer/BUILD.gn
+index 947fb8b534..537839960f 100644
+--- a/test/fuzztest/deferredvideoprocessingsessioncallbackstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredvideoprocessingsessioncallbackstub_fuzzer/BUILD.gn
+@@ -106,6 +106,7 @@ ohos_fuzztest("DeferredVideoProcessingSessionCallBackStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/deferredvideoprocessingsessionproxy_fuzzer/BUILD.gn b/test/fuzztest/deferredvideoprocessingsessionproxy_fuzzer/BUILD.gn
+index 5fbd2ab38c..b6b1e454d8 100644
+--- a/test/fuzztest/deferredvideoprocessingsessionproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredvideoprocessingsessionproxy_fuzzer/BUILD.gn
+@@ -106,6 +106,7 @@ ohos_fuzztest("DeferredVideoProcessingSessionProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/deferredvideoprocessingsessionstub_fuzzer/BUILD.gn b/test/fuzztest/deferredvideoprocessingsessionstub_fuzzer/BUILD.gn
+index 2f95be2fc5..265747fc0a 100644
+--- a/test/fuzztest/deferredvideoprocessingsessionstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredvideoprocessingsessionstub_fuzzer/BUILD.gn
+@@ -105,6 +105,7 @@ ohos_fuzztest("DeferredVideoProcessingSessionStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/deferredvideoprocessor_fuzzer/BUILD.gn b/test/fuzztest/deferredvideoprocessor_fuzzer/BUILD.gn
+index c64b6d05f2..eeb6471c51 100644
+--- a/test/fuzztest/deferredvideoprocessor_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredvideoprocessor_fuzzer/BUILD.gn
+@@ -133,6 +133,7 @@ ohos_fuzztest("DeferredVideoProcessorFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_power_manager) {
+diff --git a/test/fuzztest/deferredvideoprocsession_fuzzer/BUILD.gn b/test/fuzztest/deferredvideoprocsession_fuzzer/BUILD.gn
+index 9ff3a08f01..e37b0a291c 100644
+--- a/test/fuzztest/deferredvideoprocsession_fuzzer/BUILD.gn
++++ b/test/fuzztest/deferredvideoprocsession_fuzzer/BUILD.gn
+@@ -68,6 +68,7 @@ ohos_fuzztest("DeferredVideoProcSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/dpsvideoreport_fuzzer/BUILD.gn b/test/fuzztest/dpsvideoreport_fuzzer/BUILD.gn
+index 204a246c7a..72aac4c090 100644
+--- a/test/fuzztest/dpsvideoreport_fuzzer/BUILD.gn
++++ b/test/fuzztest/dpsvideoreport_fuzzer/BUILD.gn
+@@ -75,6 +75,7 @@ ohos_fuzztest("DpsVideoReportFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hcameradevice_fuzzer/BUILD.gn b/test/fuzztest/hcameradevice_fuzzer/BUILD.gn
+index 72cdc51d69..7ffb9b18ea 100644
+--- a/test/fuzztest/hcameradevice_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcameradevice_fuzzer/BUILD.gn
+@@ -106,6 +106,7 @@ ohos_fuzztest("HCameraDeviceFuzzTest") {
+     "window_manager:libdm",
+     "data_share:datashare_common",
+     "data_share:datashare_consumer",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hcameradevicemanager_fuzzer/BUILD.gn b/test/fuzztest/hcameradevicemanager_fuzzer/BUILD.gn
+index ef2fc83357..481dca1728 100644
+--- a/test/fuzztest/hcameradevicemanager_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcameradevicemanager_fuzzer/BUILD.gn
+@@ -127,6 +127,7 @@ ohos_fuzztest("HCameraDeviceManagerFuzzTest") {
+     "window_manager:libdm",
+     "window_manager:libdm_lite",
+     "window_manager:libwm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hcamerahostmanager_fuzzer/BUILD.gn b/test/fuzztest/hcamerahostmanager_fuzzer/BUILD.gn
+index 4e52a2373d..d210779a4e 100644
+--- a/test/fuzztest/hcamerahostmanager_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcamerahostmanager_fuzzer/BUILD.gn
+@@ -127,6 +127,7 @@ ohos_fuzztest("HCameraHostManagerFuzzTest") {
+     "window_manager:libdm",
+     "window_manager:libdm_lite",
+     "window_manager:libwm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hcameramoviefileoutput_fuzzer/BUILD.gn b/test/fuzztest/hcameramoviefileoutput_fuzzer/BUILD.gn
+index 4992812616..f371b6d401 100644
+--- a/test/fuzztest/hcameramoviefileoutput_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcameramoviefileoutput_fuzzer/BUILD.gn
+@@ -108,6 +108,7 @@ ohos_fuzztest("HCameraMovieFileOutputFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hcamerapreconfig_fuzzer/BUILD.gn b/test/fuzztest/hcamerapreconfig_fuzzer/BUILD.gn
+index a65e9de2ab..db98a274f5 100644
+--- a/test/fuzztest/hcamerapreconfig_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcamerapreconfig_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HCameraPreConfigFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hcameraservice_fuzzer/BUILD.gn b/test/fuzztest/hcameraservice_fuzzer/BUILD.gn
+index 83edc207df..3aa71d90bc 100644
+--- a/test/fuzztest/hcameraservice_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcameraservice_fuzzer/BUILD.gn
+@@ -164,6 +164,7 @@ ohos_fuzztest("HCameraServiceFuzzTest") {
+     "resource_schedule_service:ressched_client",
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hcameraservicecallbackstub_fuzzer/BUILD.gn b/test/fuzztest/hcameraservicecallbackstub_fuzzer/BUILD.gn
+index 2c4535336b..f27896361c 100644
+--- a/test/fuzztest/hcameraservicecallbackstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcameraservicecallbackstub_fuzzer/BUILD.gn
+@@ -101,6 +101,7 @@ ohos_fuzztest("HCameraServiceCallbackStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/test/fuzztest/hcameraswitchsession_fuzzer/BUILD.gn b/test/fuzztest/hcameraswitchsession_fuzzer/BUILD.gn
+index c3cbcca7b5..6ce9c955b5 100644
+--- a/test/fuzztest/hcameraswitchsession_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcameraswitchsession_fuzzer/BUILD.gn
+@@ -138,6 +138,7 @@ ohos_fuzztest("HCameraSwitchSessionFuzzTest") {
+     "sensor:sensor_interface_native",
+     "window_manager:libdm",
+     "window_manager:libdm_lite",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/test/fuzztest/hcapturesession_fuzzer/BUILD.gn b/test/fuzztest/hcapturesession_fuzzer/BUILD.gn
+index ac94953574..b499c1aa2d 100644
+--- a/test/fuzztest/hcapturesession_fuzzer/BUILD.gn
++++ b/test/fuzztest/hcapturesession_fuzzer/BUILD.gn
+@@ -138,6 +138,7 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
+     "sensor:sensor_interface_native",
+     "window_manager:libdm",
+     "window_manager:libdm_lite",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/test/fuzztest/hmechsession_fuzzer/BUILD.gn b/test/fuzztest/hmechsession_fuzzer/BUILD.gn
+index 70e43c9263..e37dbe4d27 100644
+--- a/test/fuzztest/hmechsession_fuzzer/BUILD.gn
++++ b/test/fuzztest/hmechsession_fuzzer/BUILD.gn
+@@ -135,6 +135,7 @@ ohos_fuzztest("HMechSessionFuzzTest") {
+     "sensor:sensor_interface_native",
+     "window_manager:libdm",
+     "window_manager:libdm_lite",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/test/fuzztest/hstreamcapture_fuzzer/BUILD.gn b/test/fuzztest/hstreamcapture_fuzzer/BUILD.gn
+index 1599cab2bc..96c2ad1137 100644
+--- a/test/fuzztest/hstreamcapture_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamcapture_fuzzer/BUILD.gn
+@@ -112,6 +112,7 @@ ohos_fuzztest("HStreamCaptureFuzzTest") {
+     "window_manager:libdm_lite",
+     "data_share:datashare_common",
+     "data_share:datashare_consumer",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreamcapturestub_fuzzer/BUILD.gn b/test/fuzztest/hstreamcapturestub_fuzzer/BUILD.gn
+index b0c2a1de9d..abf0afa732 100644
+--- a/test/fuzztest/hstreamcapturestub_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamcapturestub_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamCaptureStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreamdepthdata_fuzzer/BUILD.gn b/test/fuzztest/hstreamdepthdata_fuzzer/BUILD.gn
+index 603ffe8211..99aa21921e 100644
+--- a/test/fuzztest/hstreamdepthdata_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamdepthdata_fuzzer/BUILD.gn
+@@ -108,6 +108,7 @@ ohos_fuzztest("HStreamDepthDataFuzzTest") {
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
+     "window_manager:libdm_lite",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreamdepthdatacallbackproxy_fuzzer/BUILD.gn b/test/fuzztest/hstreamdepthdatacallbackproxy_fuzzer/BUILD.gn
+index 6b362db32f..58da11f5c3 100644
+--- a/test/fuzztest/hstreamdepthdatacallbackproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamdepthdatacallbackproxy_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamDepthDataCallbackProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreamdepthdatacallbackstub_fuzzer/BUILD.gn b/test/fuzztest/hstreamdepthdatacallbackstub_fuzzer/BUILD.gn
+index adb3f8cf92..cc29df6c7d 100644
+--- a/test/fuzztest/hstreamdepthdatacallbackstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamdepthdatacallbackstub_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamDepthDataCallbackStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreamdepthdataproxy_fuzzer/BUILD.gn b/test/fuzztest/hstreamdepthdataproxy_fuzzer/BUILD.gn
+index 0e9d0255dd..4adb2837d3 100644
+--- a/test/fuzztest/hstreamdepthdataproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamdepthdataproxy_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamDepthDataProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreamdepthdatastub_fuzzer/BUILD.gn b/test/fuzztest/hstreamdepthdatastub_fuzzer/BUILD.gn
+index 46db455a25..49e464e489 100644
+--- a/test/fuzztest/hstreamdepthdatastub_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamdepthdatastub_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamDepthDataStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreammetadata_fuzzer/BUILD.gn b/test/fuzztest/hstreammetadata_fuzzer/BUILD.gn
+index 987a80e41f..2f2e917aeb 100644
+--- a/test/fuzztest/hstreammetadata_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreammetadata_fuzzer/BUILD.gn
+@@ -98,6 +98,7 @@ ohos_fuzztest("HStreamMetadataFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreammetadatacallbackproxy_fuzzer/BUILD.gn b/test/fuzztest/hstreammetadatacallbackproxy_fuzzer/BUILD.gn
+index 7eb9cdb2b5..bfc0658132 100644
+--- a/test/fuzztest/hstreammetadatacallbackproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreammetadatacallbackproxy_fuzzer/BUILD.gn
+@@ -70,6 +70,7 @@ ohos_fuzztest("HStreamMetadataCallbackProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreammetadatacallbackstub_fuzzer/BUILD.gn b/test/fuzztest/hstreammetadatacallbackstub_fuzzer/BUILD.gn
+index c6c0299e7c..2d86f1d855 100644
+--- a/test/fuzztest/hstreammetadatacallbackstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreammetadatacallbackstub_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamMetadataCallbackStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreammetadatastub_fuzzer/BUILD.gn b/test/fuzztest/hstreammetadatastub_fuzzer/BUILD.gn
+index 31f782adc9..b86a04d736 100644
+--- a/test/fuzztest/hstreammetadatastub_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreammetadatastub_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamMetadataStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreamoperator_fuzzer/BUILD.gn b/test/fuzztest/hstreamoperator_fuzzer/BUILD.gn
+index 347312acb6..5a500d682e 100644
+--- a/test/fuzztest/hstreamoperator_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamoperator_fuzzer/BUILD.gn
+@@ -132,6 +132,7 @@ ohos_fuzztest("HStreamOperatorFuzzTest") {
+     "sensor:sensor_interface_native",
+     "window_manager:libdm",
+     "window_manager:libdm_lite",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/test/fuzztest/hstreamrepeat_fuzzer/BUILD.gn b/test/fuzztest/hstreamrepeat_fuzzer/BUILD.gn
+index df592dbb58..a14ded5248 100644
+--- a/test/fuzztest/hstreamrepeat_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamrepeat_fuzzer/BUILD.gn
+@@ -99,6 +99,7 @@ ohos_fuzztest("HStreamRepeatFuzzTest") {
+     "window_manager:libdm",
+     "data_share:datashare_common",
+     "data_share:datashare_consumer",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   defines = []
+diff --git a/test/fuzztest/hstreamrepeatcallbackstub_fuzzer/BUILD.gn b/test/fuzztest/hstreamrepeatcallbackstub_fuzzer/BUILD.gn
+index a18f8acb57..2cd5d96c09 100644
+--- a/test/fuzztest/hstreamrepeatcallbackstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamrepeatcallbackstub_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamRepeatCallbackStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/hstreamrepeatstub_fuzzer/BUILD.gn b/test/fuzztest/hstreamrepeatstub_fuzzer/BUILD.gn
+index f9ee119f20..b122ed8643 100644
+--- a/test/fuzztest/hstreamrepeatstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/hstreamrepeatstub_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("HStreamRepeatStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/imageinfo_fuzzer/BUILD.gn b/test/fuzztest/imageinfo_fuzzer/BUILD.gn
+index 95141efe0a..e7d7b38abf 100644
+--- a/test/fuzztest/imageinfo_fuzzer/BUILD.gn
++++ b/test/fuzztest/imageinfo_fuzzer/BUILD.gn
+@@ -78,6 +78,7 @@ ohos_fuzztest("ImageInfoFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/lightscansession_fuzzer/BUILD.gn b/test/fuzztest/lightscansession_fuzzer/BUILD.gn
+index 6ee0c7e46c..f2c08dc85b 100644
+--- a/test/fuzztest/lightscansession_fuzzer/BUILD.gn
++++ b/test/fuzztest/lightscansession_fuzzer/BUILD.gn
+@@ -70,6 +70,7 @@ ohos_fuzztest("LightScanSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/mediamanager_fuzzer/BUILD.gn b/test/fuzztest/mediamanager_fuzzer/BUILD.gn
+index 9fc5a1acd1..017a77a6fa 100644
+--- a/test/fuzztest/mediamanager_fuzzer/BUILD.gn
++++ b/test/fuzztest/mediamanager_fuzzer/BUILD.gn
+@@ -108,6 +108,7 @@ ohos_fuzztest("MediaManagerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/metadataoutput_fuzzer/BUILD.gn b/test/fuzztest/metadataoutput_fuzzer/BUILD.gn
+index 2183776c8a..980260512a 100644
+--- a/test/fuzztest/metadataoutput_fuzzer/BUILD.gn
++++ b/test/fuzztest/metadataoutput_fuzzer/BUILD.gn
+@@ -107,6 +107,7 @@ ohos_fuzztest("MetadataOutputFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/mooncaptureboostfeature_fuzzer/BUILD.gn b/test/fuzztest/mooncaptureboostfeature_fuzzer/BUILD.gn
+index a8d4efab1b..e02f0d8236 100644
+--- a/test/fuzztest/mooncaptureboostfeature_fuzzer/BUILD.gn
++++ b/test/fuzztest/mooncaptureboostfeature_fuzzer/BUILD.gn
+@@ -66,6 +66,7 @@ ohos_fuzztest("MoonCaptureBoostFeatureFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/movingphotomanager_fuzzer/BUILD.gn b/test/fuzztest/movingphotomanager_fuzzer/BUILD.gn
+index 192fe8e339..b29c4eabe6 100644
+--- a/test/fuzztest/movingphotomanager_fuzzer/BUILD.gn
++++ b/test/fuzztest/movingphotomanager_fuzzer/BUILD.gn
+@@ -80,6 +80,7 @@ ohos_fuzztest("MovingPhotoManagerFuzzTest") {
+     "media_foundation:native_media_core",
+     "media_library:media_library_camera_helper",
+     "samgr:samgr_proxy",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/movingphotoproxy_fuzzer/BUILD.gn b/test/fuzztest/movingphotoproxy_fuzzer/BUILD.gn
+index de1c62324b..1502a52f51 100755
+--- a/test/fuzztest/movingphotoproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/movingphotoproxy_fuzzer/BUILD.gn
+@@ -75,6 +75,7 @@ ohos_fuzztest("MovingPhotoProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "media_foundation:media_foundation",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/movingphotosurfacewrapper_fuzzer/BUILD.gn b/test/fuzztest/movingphotosurfacewrapper_fuzzer/BUILD.gn
+index 3eb5f994d0..d56840a681 100644
+--- a/test/fuzztest/movingphotosurfacewrapper_fuzzer/BUILD.gn
++++ b/test/fuzztest/movingphotosurfacewrapper_fuzzer/BUILD.gn
+@@ -73,6 +73,7 @@ ohos_fuzztest("MovingPhotoSurfaceWrapperFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/mpegmanager_fuzzer/BUILD.gn b/test/fuzztest/mpegmanager_fuzzer/BUILD.gn
+index 942332f595..b7ad2a1ce4 100644
+--- a/test/fuzztest/mpegmanager_fuzzer/BUILD.gn
++++ b/test/fuzztest/mpegmanager_fuzzer/BUILD.gn
+@@ -104,6 +104,7 @@ ohos_fuzztest("MpegManagerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/photojobrepository_fuzzer/BUILD.gn b/test/fuzztest/photojobrepository_fuzzer/BUILD.gn
+index 62ff86e60b..35c31be7a2 100644
+--- a/test/fuzztest/photojobrepository_fuzzer/BUILD.gn
++++ b/test/fuzztest/photojobrepository_fuzzer/BUILD.gn
+@@ -132,6 +132,7 @@ ohos_fuzztest("PhotoJobRepositoryFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_battery_manager) {
+diff --git a/test/fuzztest/photooutput_fuzzer/BUILD.gn b/test/fuzztest/photooutput_fuzzer/BUILD.gn
+index 9e1e081fc6..5382d56b8e 100644
+--- a/test/fuzztest/photooutput_fuzzer/BUILD.gn
++++ b/test/fuzztest/photooutput_fuzzer/BUILD.gn
+@@ -70,6 +70,7 @@ ohos_fuzztest("PhotoOutputFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/photopostprocessor_fuzzer/BUILD.gn b/test/fuzztest/photopostprocessor_fuzzer/BUILD.gn
+index 1b5f99babc..f19a48da30 100644
+--- a/test/fuzztest/photopostprocessor_fuzzer/BUILD.gn
++++ b/test/fuzztest/photopostprocessor_fuzzer/BUILD.gn
+@@ -126,6 +126,7 @@ ohos_fuzztest("PhotoPostProcessorFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_battery_manager) {
+diff --git a/test/fuzztest/photoprocessresult_fuzzer/BUILD.gn b/test/fuzztest/photoprocessresult_fuzzer/BUILD.gn
+index cd0a213189..6a9933848d 100644
+--- a/test/fuzztest/photoprocessresult_fuzzer/BUILD.gn
++++ b/test/fuzztest/photoprocessresult_fuzzer/BUILD.gn
+@@ -58,6 +58,8 @@ ohos_fuzztest("PhotoProcessResultFuzzTest") {
+     "hitrace:hitrace_meter",
+     "ipc:ipc_core",
+     "samgr:samgr_proxy",
++    "graphic_surface:buffer_handle",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   cflags = [
+diff --git a/test/fuzztest/photosession_fuzzer/BUILD.gn b/test/fuzztest/photosession_fuzzer/BUILD.gn
+index 3313399258..19910d7d8c 100644
+--- a/test/fuzztest/photosession_fuzzer/BUILD.gn
++++ b/test/fuzztest/photosession_fuzzer/BUILD.gn
+@@ -68,6 +68,7 @@ ohos_fuzztest("PhotoSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/photostrategycenter_fuzzer/BUILD.gn b/test/fuzztest/photostrategycenter_fuzzer/BUILD.gn
+index 3f8b2699b3..6a598edbc4 100644
+--- a/test/fuzztest/photostrategycenter_fuzzer/BUILD.gn
++++ b/test/fuzztest/photostrategycenter_fuzzer/BUILD.gn
+@@ -123,6 +123,7 @@ ohos_fuzztest("PhotoStrategyCenterFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_power_manager) {
+diff --git a/test/fuzztest/portraitsession_fuzzer/BUILD.gn b/test/fuzztest/portraitsession_fuzzer/BUILD.gn
+index ab70dc4308..c82b0068cd 100644
+--- a/test/fuzztest/portraitsession_fuzzer/BUILD.gn
++++ b/test/fuzztest/portraitsession_fuzzer/BUILD.gn
+@@ -88,6 +88,7 @@ ohos_fuzztest("PortraitSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/previewoutput_fuzzer/BUILD.gn b/test/fuzztest/previewoutput_fuzzer/BUILD.gn
+index c121b91680..851a61f2bb 100644
+--- a/test/fuzztest/previewoutput_fuzzer/BUILD.gn
++++ b/test/fuzztest/previewoutput_fuzzer/BUILD.gn
+@@ -69,6 +69,7 @@ ohos_fuzztest("PreviewOutputFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/professionsession_fuzzer/BUILD.gn b/test/fuzztest/professionsession_fuzzer/BUILD.gn
+index 8589107296..c77b97d28e 100644
+--- a/test/fuzztest/professionsession_fuzzer/BUILD.gn
++++ b/test/fuzztest/professionsession_fuzzer/BUILD.gn
+@@ -71,6 +71,7 @@ ohos_fuzztest("ProfessionSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/reader_fuzzer/BUILD.gn b/test/fuzztest/reader_fuzzer/BUILD.gn
+index 2614eea422..200026372b 100644
+--- a/test/fuzztest/reader_fuzzer/BUILD.gn
++++ b/test/fuzztest/reader_fuzzer/BUILD.gn
+@@ -104,6 +104,7 @@ ohos_fuzztest("ReaderFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/sketchwrapper_fuzzer/BUILD.gn b/test/fuzztest/sketchwrapper_fuzzer/BUILD.gn
+index ea1c3cc792..200ac83c1a 100644
+--- a/test/fuzztest/sketchwrapper_fuzzer/BUILD.gn
++++ b/test/fuzztest/sketchwrapper_fuzzer/BUILD.gn
+@@ -66,6 +66,7 @@ ohos_fuzztest("SketchWrapperFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/slowmotionsession_fuzzer/BUILD.gn b/test/fuzztest/slowmotionsession_fuzzer/BUILD.gn
+index 801fb50972..38a15ca2c3 100644
+--- a/test/fuzztest/slowmotionsession_fuzzer/BUILD.gn
++++ b/test/fuzztest/slowmotionsession_fuzzer/BUILD.gn
+@@ -72,6 +72,7 @@ ohos_fuzztest("SlowMotionSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/smoothzoom_fuzzer/BUILD.gn b/test/fuzztest/smoothzoom_fuzzer/BUILD.gn
+index 53c31f3bd6..b409780270 100644
+--- a/test/fuzztest/smoothzoom_fuzzer/BUILD.gn
++++ b/test/fuzztest/smoothzoom_fuzzer/BUILD.gn
+@@ -67,6 +67,7 @@ ohos_fuzztest("SmoothZoomFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/streamcapture_fuzzer/BUILD.gn b/test/fuzztest/streamcapture_fuzzer/BUILD.gn
+index 68a04063f8..2af759eb52 100644
+--- a/test/fuzztest/streamcapture_fuzzer/BUILD.gn
++++ b/test/fuzztest/streamcapture_fuzzer/BUILD.gn
+@@ -67,6 +67,7 @@ ohos_fuzztest("StreamCaptureFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/streamcapturestub_fuzzer/BUILD.gn b/test/fuzztest/streamcapturestub_fuzzer/BUILD.gn
+index e6ba9211e7..f191cfd67a 100644
+--- a/test/fuzztest/streamcapturestub_fuzzer/BUILD.gn
++++ b/test/fuzztest/streamcapturestub_fuzzer/BUILD.gn
+@@ -66,6 +66,7 @@ ohos_fuzztest("StreamCaptureStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/streamdepthdataproxy_fuzzer/BUILD.gn b/test/fuzztest/streamdepthdataproxy_fuzzer/BUILD.gn
+index d8b8290a9b..3cca3fcebc 100644
+--- a/test/fuzztest/streamdepthdataproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/streamdepthdataproxy_fuzzer/BUILD.gn
+@@ -99,6 +99,7 @@ ohos_fuzztest("StreamDepthDataProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/streamdepthdatastub_fuzzer/BUILD.gn b/test/fuzztest/streamdepthdatastub_fuzzer/BUILD.gn
+index b333404e21..bed8dd621d 100644
+--- a/test/fuzztest/streamdepthdatastub_fuzzer/BUILD.gn
++++ b/test/fuzztest/streamdepthdatastub_fuzzer/BUILD.gn
+@@ -66,6 +66,7 @@ ohos_fuzztest("StreamDepthDataStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/streammetadatacallbackproxy_fuzzer/BUILD.gn b/test/fuzztest/streammetadatacallbackproxy_fuzzer/BUILD.gn
+index 43ce92c1ea..6741f40c0c 100644
+--- a/test/fuzztest/streammetadatacallbackproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/streammetadatacallbackproxy_fuzzer/BUILD.gn
+@@ -66,6 +66,7 @@ ohos_fuzztest("StreamMetadataCallbackProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/streammetadatastub_fuzzer/BUILD.gn b/test/fuzztest/streammetadatastub_fuzzer/BUILD.gn
+index b63cd46008..e7d9bece0f 100644
+--- a/test/fuzztest/streammetadatastub_fuzzer/BUILD.gn
++++ b/test/fuzztest/streammetadatastub_fuzzer/BUILD.gn
+@@ -68,6 +68,7 @@ ohos_fuzztest("StreamMetadataStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/streamrepeatproxy_fuzzer/BUILD.gn b/test/fuzztest/streamrepeatproxy_fuzzer/BUILD.gn
+index 0e3685c4e5..c65f647312 100644
+--- a/test/fuzztest/streamrepeatproxy_fuzzer/BUILD.gn
++++ b/test/fuzztest/streamrepeatproxy_fuzzer/BUILD.gn
+@@ -97,6 +97,7 @@ ohos_fuzztest("StreamRepeatProxyFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/streamrepeatstub_fuzzer/BUILD.gn b/test/fuzztest/streamrepeatstub_fuzzer/BUILD.gn
+index 0205ce5f17..2f4ac07e89 100644
+--- a/test/fuzztest/streamrepeatstub_fuzzer/BUILD.gn
++++ b/test/fuzztest/streamrepeatstub_fuzzer/BUILD.gn
+@@ -66,6 +66,7 @@ ohos_fuzztest("StreamRepeatStubFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/timebroker_fuzzer/BUILD.gn b/test/fuzztest/timebroker_fuzzer/BUILD.gn
+index 59af219031..e65374e57c 100644
+--- a/test/fuzztest/timebroker_fuzzer/BUILD.gn
++++ b/test/fuzztest/timebroker_fuzzer/BUILD.gn
+@@ -72,6 +72,7 @@ ohos_fuzztest("TimeBrokerFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/timelapsephotosession_fuzzer/BUILD.gn b/test/fuzztest/timelapsephotosession_fuzzer/BUILD.gn
+index 21c80d9293..b1d6c49157 100644
+--- a/test/fuzztest/timelapsephotosession_fuzzer/BUILD.gn
++++ b/test/fuzztest/timelapsephotosession_fuzzer/BUILD.gn
+@@ -69,6 +69,7 @@ ohos_fuzztest("TimeLapsePhotoSessionFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/timercore_fuzzer/BUILD.gn b/test/fuzztest/timercore_fuzzer/BUILD.gn
+index 6cb61415fb..aced783c4e 100644
+--- a/test/fuzztest/timercore_fuzzer/BUILD.gn
++++ b/test/fuzztest/timercore_fuzzer/BUILD.gn
+@@ -70,6 +70,7 @@ ohos_fuzztest("TimerCoreFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/videoencoder_fuzzer/BUILD.gn b/test/fuzztest/videoencoder_fuzzer/BUILD.gn
+index 38b414836d..1c6769eaa4 100644
+--- a/test/fuzztest/videoencoder_fuzzer/BUILD.gn
++++ b/test/fuzztest/videoencoder_fuzzer/BUILD.gn
+@@ -123,6 +123,7 @@ ohos_fuzztest("VideoEncoderFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/videojobqueue_fuzzer/BUILD.gn b/test/fuzztest/videojobqueue_fuzzer/BUILD.gn
+index 92b245c0fa..f1dedcdb4f 100644
+--- a/test/fuzztest/videojobqueue_fuzzer/BUILD.gn
++++ b/test/fuzztest/videojobqueue_fuzzer/BUILD.gn
+@@ -106,6 +106,7 @@ ohos_fuzztest("VideoJobQueueFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/videojobrepository_fuzzer/BUILD.gn b/test/fuzztest/videojobrepository_fuzzer/BUILD.gn
+index e8fd069af5..93c428370d 100644
+--- a/test/fuzztest/videojobrepository_fuzzer/BUILD.gn
++++ b/test/fuzztest/videojobrepository_fuzzer/BUILD.gn
+@@ -105,6 +105,7 @@ ohos_fuzztest("VideoJobRepositoryFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/videooutput_fuzzer/BUILD.gn b/test/fuzztest/videooutput_fuzzer/BUILD.gn
+index 18a117dbe5..b9312a2e8f 100644
+--- a/test/fuzztest/videooutput_fuzzer/BUILD.gn
++++ b/test/fuzztest/videooutput_fuzzer/BUILD.gn
+@@ -65,6 +65,7 @@ ohos_fuzztest("VideoOutputFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ }
+ 
+diff --git a/test/fuzztest/videopostprocessor_fuzzer/BUILD.gn b/test/fuzztest/videopostprocessor_fuzzer/BUILD.gn
+index 60b6864dac..cbab42ebf8 100644
+--- a/test/fuzztest/videopostprocessor_fuzzer/BUILD.gn
++++ b/test/fuzztest/videopostprocessor_fuzzer/BUILD.gn
+@@ -126,6 +126,7 @@ ohos_fuzztest("VideoPostProcessorFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_battery_manager) {
+diff --git a/test/fuzztest/videoprocesscommand_fuzzer/BUILD.gn b/test/fuzztest/videoprocesscommand_fuzzer/BUILD.gn
+index 1370d9d888..d46ca4bfe2 100644
+--- a/test/fuzztest/videoprocesscommand_fuzzer/BUILD.gn
++++ b/test/fuzztest/videoprocesscommand_fuzzer/BUILD.gn
+@@ -125,6 +125,7 @@ ohos_fuzztest("VideoProcessCommandFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_power_manager) {
+diff --git a/test/fuzztest/videostrategycenter_fuzzer/BUILD.gn b/test/fuzztest/videostrategycenter_fuzzer/BUILD.gn
+index 540cecf6a7..09b5f46b52 100644
+--- a/test/fuzztest/videostrategycenter_fuzzer/BUILD.gn
++++ b/test/fuzztest/videostrategycenter_fuzzer/BUILD.gn
+@@ -123,6 +123,7 @@ ohos_fuzztest("VideoStrategyCenterFuzzTest") {
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libdm",
++    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+   ]
+ 
+   if (use_power_manager) {
+-- 
+2.51.2.huawei.11
+
