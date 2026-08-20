@@ -105,6 +105,7 @@ ohos_unittest("camera_movie_file_unittest") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm_lite",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   defines = [ "private=public" ]

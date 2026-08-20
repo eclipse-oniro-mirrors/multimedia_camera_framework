@@ -106,6 +106,7 @@ ohos_fuzztest("HCameraDeviceFuzzTest") {
     "window_manager:libdm",
     "data_share:datashare_common",
     "data_share:datashare_consumer",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 }
 

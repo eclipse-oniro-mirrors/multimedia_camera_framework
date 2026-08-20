@@ -88,6 +88,7 @@ common_external_deps = [
   "bundle_framework:appexecfwk_base",
   "bundle_framework:appexecfwk_core",
   "c_utils:utils",
+  "graphic_surface:buffer_handle",
   "graphic_surface:surface",
   "hilog:libhilog",
   "hisysevent:libhisysevent",

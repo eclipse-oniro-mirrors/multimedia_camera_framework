@@ -73,6 +73,7 @@ ohos_fuzztest("CameraFwkMetadataUtilsFuzzTest") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libdm",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 }
 

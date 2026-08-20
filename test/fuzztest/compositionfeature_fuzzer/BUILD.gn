@@ -46,6 +46,7 @@ ohos_fuzztest("CompositionFeatureFuzzTest") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "hilog:libhilog",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 }
 

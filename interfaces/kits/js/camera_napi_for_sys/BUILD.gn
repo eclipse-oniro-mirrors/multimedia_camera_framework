@@ -71,6 +71,7 @@ ohos_shared_library("camera_napi_ex") {
     "napi:ace_napi",
     "node:node_header_notice",
     "libuv:uv",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   public_external_deps = [

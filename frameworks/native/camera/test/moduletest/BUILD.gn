@@ -50,6 +50,7 @@ ohos_moduletest("camera_base_function_moduletest") {
     "ipc:ipc_core",
     "image_framework:image_native",
     "hilog:libhilog",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   cflags = [
@@ -101,6 +102,7 @@ ohos_moduletest("camera_deferred_photo_moduletest") {
     "image_framework:image_native",
     "ipc:ipc_core",
     "hilog:libhilog",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   cflags = [
@@ -150,6 +152,7 @@ ohos_moduletest("camera_deferred_video_moduletest") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   cflags = [
@@ -201,6 +204,7 @@ ohos_moduletest("camera_format_YUV_moduletest") {
     "ipc:ipc_core",
     "os_account:os_account_innerkits",
     "hilog:libhilog",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   defines = []
@@ -272,6 +276,8 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "os_account:os_account_innerkits",
     "resource_management:librawfile",
     "safwk:system_ability_fwk",
+    "graphic_surface:buffer_handle",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   cflags = [ "-fPIC" ]
@@ -318,6 +324,7 @@ ohos_moduletest("camera_session_moduletest") {
     "hitrace:hitrace_meter",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   cflags = [

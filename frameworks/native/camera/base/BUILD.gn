@@ -137,6 +137,7 @@ common_external_deps = [
   "safwk:system_ability_fwk",
   "samgr:samgr_proxy",
   "window_manager:libdm_lite",
+  "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
 ]
 
 ohos_shared_library("camera_framework") {

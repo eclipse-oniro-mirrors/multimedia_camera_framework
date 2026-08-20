@@ -54,6 +54,8 @@ ohos_fuzztest("PhotoProcessResultFuzzTest") {
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
     "samgr:samgr_proxy",
+    "graphic_surface:buffer_handle",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   cflags = [
