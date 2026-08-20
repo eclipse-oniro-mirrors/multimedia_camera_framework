@@ -452,7 +452,7 @@ void VideoSessionForSysNapi::RegisterApertureInfoCallbackListener(const std::str
 {
     if (apertureInfoCallback_ == nullptr) {
         apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
-        cameraSession_->SetApertureInfoCallback(apertureInfoCallback_);
+        videoSessionForSys_->SetApertureInfoCallback(apertureInfoCallback_);
     }
     apertureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
 }
