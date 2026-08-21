@@ -446,5 +446,22 @@ void VideoSessionForSysNapi::UnregisterCameraSwitchRequestCallbackListener(
         cameraSwitchSessionNapiCallback_ = nullptr;
     }
 }
+
+void VideoSessionForSysNapi::RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env,
+    napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
+{
+    if (apertureInfoCallback_ == nullptr) {
+        apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
+        videoSessionForSys_->SetApertureInfoCallback(apertureInfoCallback_);
+    }
+    apertureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+ 
+void VideoSessionForSysNapi::UnregisterApertureInfoCallbackListener(
+    const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
+{
+    CHECK_RETURN_ELOG(apertureInfoCallback_ == nullptr, "%{public}s apertureInfoCallback is null", __func__);
+    apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
+}
 } // namespace CameraStandard
 } // namespace OHOS
