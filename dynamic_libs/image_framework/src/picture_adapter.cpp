@@ -349,6 +349,10 @@ void PictureAdapter::RotatePicture()
     if (linearMap) {
         RotatePixelMap(linearMap->GetContentPixel(), orientation);
     }
+    auto lhdrGainMap = picture->GetAuxiliaryPicture(Media::AuxiliaryPictureType::LHDR_GAINMAP);
+    if (lhdrGainMap) {
+        RotatePixelMap(lhdrGainMap->GetContentPixel(), orientation);
+    }
     MEDIA_INFO_LOG("PictureAdapter::RotatePicture X");
 }
 

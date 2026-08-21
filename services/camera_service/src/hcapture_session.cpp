@@ -2448,6 +2448,7 @@ int32_t HCaptureSession::Start()
         errorCode = hStreamOperatorSptr->StartPreviewStream(settings, cameraPosition);
         CHECK_EXECUTE(errorCode == CAMERA_OK, isSessionStarted_ = true);
         stateMachine_.Transfer(CaptureSessionState::SESSION_STARTED);
+        hStreamOperatorSptr->SetIsSessionStarted(isSessionStarted_);
         {
             std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
             if (mechDeliveryState_ == MechDeliveryState::NEED_ENABLE) {
@@ -2554,6 +2555,7 @@ int32_t HCaptureSession::Stop()
             isSessionStarted_ = false;
         }
         stateMachine_.Transfer(CaptureSessionState::SESSION_CONFIG_COMMITTED);
+        hStreamOperatorSptr->SetIsSessionStarted(isSessionStarted_);
         OnSessionStatusChange(false);
     });
     MEDIA_INFO_LOG("HCaptureSession::Stop execute success, sessionID: %{public}d", GetSessionId());
@@ -3375,6 +3377,33 @@ bool HCaptureSession::IsSessionConfiged()
         return true;
     }
     return false;
+}
+
+int32_t HCaptureSession::ExpandLhdrGainmapStream(bool isNeedLhdrGainmap)
+{
+    MEDIA_INFO_LOG("HCaptureSession ExpandLhdrGainmapStream() isNeedLhdrGainmap: %{public}d", isNeedLhdrGainmap);
+    int32_t retCode = CAMERA_OK;
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_RET_ELOG(hStreamOperatorSptr == nullptr, CAMERA_DEVICE_FATAL_ERROR, "hStreamOperator is nullptr");
+    retCode = hStreamOperatorSptr->SetIsNeedLhdrGainmap(isNeedLhdrGainmap);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
+        "HCaptureSession::ExpandLhdrGainmapStream SetIsNeedLhdrGainmap fail:%{public}d", retCode);
+    auto currentState = stateMachine_.GetCurrentState();
+    if (currentState == CaptureSessionState::SESSION_STARTED) {
+        retCode = Stop();
+        CHECK_RETURN_RET_ELOG(
+            retCode != CAMERA_OK, retCode, "HCaptureSession::ExpandLhdrGainmapStream Stop fail:%{public}d", retCode);
+        retCode = BeginConfig();
+        CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
+            "HCaptureSession::ExpandLhdrGainmapStream BeginConfig fail:%{public}d", retCode);
+        retCode = CommitConfig();
+        CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
+            "HCaptureSession::ExpandLhdrGainmapStream CommitConfig fail:%{public}d", retCode);
+        retCode = Start();
+        CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, retCode,
+            "HCaptureSession::ExpandLhdrGainmapStream Start fail:%{public}d", retCode);
+    }
+    return retCode;
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

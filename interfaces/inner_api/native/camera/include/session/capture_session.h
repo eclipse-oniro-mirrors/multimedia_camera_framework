@@ -2461,7 +2461,10 @@ public:
      * @return 0 on success, or a negative error code on failure.
      */
     int32_t EnableAutoExtendedGainmapDelivery(bool enabled);
+    int32_t ExpandLhdrGainmapStream(bool enabled);
+
     int32_t SetEnableOriginalImage(bool isEnable);
+
 protected:
     static const std::unordered_map<camera_flash_state_enum_t, FlashState> metaFlashStateMap_;
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

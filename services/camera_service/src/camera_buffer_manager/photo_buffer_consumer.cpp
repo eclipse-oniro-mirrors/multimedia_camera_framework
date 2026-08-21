@@ -194,6 +194,7 @@ void PhotoBufferConsumer::CleanAfterTransPicture(int32_t captureId)
     streamCapture->captureIdAuxiliaryCountMap_.erase(captureId);
     streamCapture->captureIdCountMap_.erase(captureId);
     streamCapture->captureIdHandleMap_.erase(captureId);
+    streamCapture->captureIdLhdrGainmapMap_.erase(captureId);
 }
 
 void PhotoBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId)
@@ -232,6 +233,13 @@ void PhotoBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t cap
         LoggingSurfaceBufferInfo(buffer, "debugSurfaceBuffer");
         picture->SetMaintenanceData(buffer);
         streamCapture->captureIdDebugMap_[captureId] = nullptr;
+    }
+    if (streamCapture->captureIdLhdrGainmapMap_[captureId] && picture) {
+        MEDIA_INFO_LOG("AssembleDeferredPicture lhdrGainmapSurfaceBuffer");
+        LoggingSurfaceBufferInfo(streamCapture->captureIdLhdrGainmapMap_[captureId], "lhdrGainmapSurfaceBuffer");
+        picture->SetAuxiliaryPicture(
+            streamCapture->captureIdLhdrGainmapMap_[captureId], CameraAuxiliaryPictureType::LHDR_GAINMAP);
+        streamCapture->captureIdLhdrGainmapMap_[captureId] = nullptr;
     }
     CHECK_RETURN_ELOG(!picture, "CreateMediaLibrary picture is nullptr");
     streamCapture->OnPhotoAvailable(picture);

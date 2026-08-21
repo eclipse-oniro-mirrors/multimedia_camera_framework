@@ -160,6 +160,7 @@ public:
         const std::shared_ptr<OHOS::Camera::CameraMetadata>& deviceSettings, int32_t operationMode);
     int32_t UpdateStreams(std::vector<StreamInfo_V1_5>& streamInfos);
     int32_t UpdateStreamInfos(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    int32_t SetIsNeedLhdrGainmap(bool isNeedLhdrGainmap);
     int32_t RemoveOutput(StreamType streamType, sptr<IStreamCommon> stream);
     int32_t RemoveOutputStream(sptr<HStreamCommon> stream);
 
@@ -242,6 +243,12 @@ public:
         MEDIA_INFO_LOG("xtStyleStatus: %{public}d", isXtStyleEnabled_);
         return isXtStyleEnabled_;
     }
+
+    inline void SetIsSessionStarted(bool isSessionStarted)
+    {
+        isSessionStarted_ = isSessionStarted;
+    }
+
     int32_t GetOfflineOutptSize();
 
     std::vector<int32_t> GetFrameRateRange();
