@@ -98,6 +98,8 @@ ohos_shared_library("cj_camera_ffi") {
     defines += [ "OHOS_PLATFORM" ]
   }
 
+  version_script = "libcj_camera.map"
+
   innerapi_tags = [ "platformsdk" ]
 
   subsystem_name = "multimedia"
@@ -175,6 +177,8 @@ ohos_shared_library("cj_camera_picker_ffi") {
   if (is_ohos) {
     defines += [ "OHOS_PLATFORM" ]
   }
+
+  version_script = "libcj_camera.map"
 
   innerapi_tags = [ "platformsdk" ]
 
