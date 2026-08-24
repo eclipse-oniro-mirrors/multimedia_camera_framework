@@ -232,6 +232,7 @@ public:
     // HCameraHostManager::StatusCallback
     void OnCameraStatus(const string& cameraId, CameraStatus status,
                         CallbackInvoker invoker) override;
+    void OnCameraSharedStatus(const string& cameraId, CameraSharedStatus sharedStatus);
     void OnFlashlightStatus(const string& cameraId, FlashStatus status) override;
     void OnTorchStatus(TorchStatus status) override;
     void OnAbilityReady() override;
@@ -479,6 +480,7 @@ private:
     map<uint32_t, sptr<ICameraServiceCallback>> cameraServiceCallbacks_;
     map<uint32_t, sptr<IControlCenterStatusCallback>> controlcenterCallbacks_;
     map<uint32_t, sptr<ICameraSharedServiceCallback>> cameraSharedServiceCallbacks_;
+    map<string, CameraSharedStatus> cameraSharedStatusCache_;
     map<uint32_t, sptr<ICameraSpectrumInfoCallback>> cameraSpectrumInfoCallbacks_;
     SafeMap<pid_t, sptr<IStandardCameraListener>> cameraListenerMap_;
 

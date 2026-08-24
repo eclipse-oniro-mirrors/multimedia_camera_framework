@@ -22,7 +22,6 @@
 #include "hap_token_info.h"
 #include "nativetoken_kit.h"
 #include "surface.h"
-#include "system_ability_definition.h"
 #include "test_common.h"
 #include "test_token.h"
 #include "token_setproc.h"
@@ -54,9 +53,11 @@ void TestControlCenterStatusListener::OnControlCenterStatusChanged(bool status) 
     MEDIA_INFO_LOG("TestControlCenterStatusListener::OnControlCenterStatusChanged called %{public}d", status);
 }
 
-void TestCameraSharedStatusListener::OnCameraSharedStatusChanged(const CameraSharedStatus status) const
+void TestCameraSharedStatusListener::OnCameraSharedStatusChanged(
+    const CameraSharedStatusInfo &cameraSharedStatusInfo) const
 {
-    MEDIA_INFO_LOG("TestCameraSharedStatusListener::OnCameraSharedStatusChanged called %{public}d", status);
+    MEDIA_INFO_LOG("TestCameraSharedStatusListener::OnCameraSharedStatusChanged called %{public}d",
+        cameraSharedStatusInfo.cameraSharedStatus);
 }
 void TestCameraSpectrumInfoListener::OnCameraSpectrumInfo(
     const int userId, std::vector<float> spectrumInfos, const uint64_t timestamp) const
@@ -8494,8 +8495,10 @@ HWTEST_F(CameraBaseFunctionModuleTest, camera_base_function_moduletest_262, Test
     cameraManager->RegisterCameraSharedStatusListener(listener);
     EXPECT_EQ(listenerManager->GetListenerCount(), 1);
 
-    int32_t status = CAMERA_SHARED_STATUS_SHARED;
-    EXPECT_EQ(listenerManager->OnCameraSharedStatusChanged(status), CAMERA_OK);
+    std::vector<sptr<CameraDevice>> cameraDevices = cameraManager->GetSupportedCameras();
+    std::string cameraId = cameraDevices.empty() ? "" : cameraDevices[0]->GetID();
+    int32_t status = CAMERA_STATUS_SHARED;
+    EXPECT_EQ(listenerManager->OnCameraSharedStatusChanged(cameraId, status), CAMERA_OK);
 
     cameraManager->UnregisterCameraSharedStatusListener(listener);
 }

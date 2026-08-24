@@ -191,6 +191,7 @@ CameraManager::CameraManager()
     foldStatusListenerManager_->SetCameraManager(this);
     controlCenterStatusListenerManager_->SetCameraManager(this);
     cameraSpectrumListenerManager_->SetCameraManager(this);
+    cameraSharedStatusListenerManager_->SetCameraManager(this);
 }
 
 CameraManager::~CameraManager()
@@ -1264,6 +1265,10 @@ void CameraManager::OnCameraServerAlive()
     if (foldStatusListenerManager_->GetListenerCount() > 0) {
         sptr<IFoldServiceCallback> callback = foldStatusListenerManager_;
         SetFoldServiceCallback(callback);
+    }
+    if (cameraSharedStatusListenerManager_->GetListenerCount() > 0) {
+        sptr<ICameraSharedServiceCallback> callback = cameraSharedStatusListenerManager_;
+        SetCameraSharedStatusCallback(callback);
     }
 }
 
@@ -3344,16 +3349,36 @@ int32_t ControlCenterStatusListenerManager::OnControlCenterStatusChanged(bool st
     // LCOV_EXCL_STOP
 }
 
-int32_t CameraSharedStatusListenerManager::OnCameraSharedStatusChanged(int32_t cameraSharedStatus)
+int32_t CameraSharedStatusListenerManager::OnCameraSharedStatusChanged(
+    const std::string& cameraId, const int32_t cameraSharedStatus)
 {
     // LCOV_EXCL_START
-    MEDIA_INFO_LOG("OnCameraSharedStatusChanged");
+    MEDIA_INFO_LOG("OnCameraSharedStatusChanged cameraId: %{public}s, status: %{public}d",
+        cameraId.c_str(), cameraSharedStatus);
     auto cameraManager = GetCameraManager();
-    CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_OK, "CameraManager is nullptr.");
-    auto listenerManager = cameraManager->GetControlCenterStatusListenerManager();
+    CHECK_RETURN_RET_ELOG(cameraManager == nullptr, CAMERA_OK, "OnCameraSharedStatusChanged CameraManager is nullptr");
+
+    sptr<CameraDevice> cameraDevice = cameraManager->GetCameraDeviceFromId(cameraId);
+    // Don't silently drop shared status events when the cached device list is stale: clear it and
+    // retry once, mirroring OnCameraStatusChanged. If still unresolved, log an error for debugging.
+    if (cameraDevice == nullptr && cameraManager->ShouldClearCache()) {
+        cameraManager->ClearCameraDeviceListCache();
+        cameraManager->ClearCameraPhysicalDeviceListCache();
+        cameraManager->ClearCameraDeviceAbilitySupportMap();
+        cameraDevice = cameraManager->GetCameraDeviceFromId(cameraId);
+    }
+    if (cameraDevice == nullptr) {
+        MEDIA_ERR_LOG("OnCameraSharedStatusChanged cameraDevice not found, cameraId: %{public}s", cameraId.c_str());
+        return CAMERA_OK;
+    }
+    CameraSharedStatusInfo cameraSharedStatusInfo;
+    cameraSharedStatusInfo.cameraDevice = cameraDevice;
+    cameraSharedStatusInfo.cameraSharedStatus = static_cast<CameraSharedStatus>(cameraSharedStatus);
+    auto listenerManager = cameraManager->GetCameraSharedStatusListenerManager();
     MEDIA_INFO_LOG("CameraSharedStatusListener size %{public}zu", listenerManager->GetListenerCount());
-    CameraSharedStatus status = static_cast<CameraSharedStatus>(cameraSharedStatus);
-    listenerManager->TriggerListener([&](auto listener) { listener->OnControlCenterStatusChanged(status); });
+    listenerManager->TriggerListener([&](auto listener) {
+        listener->OnCameraSharedStatusChanged(cameraSharedStatusInfo);
+    });
     return CAMERA_OK;
     // LCOV_EXCL_STOP
 }

@@ -917,7 +917,7 @@ std::shared_ptr<ImageStabilizationGuideCallback> CaptureSessionForSys::GetImageS
     return imageStabilizationGuideCallback_;
 }
 
-int32_t CaptureSessionForSys::GetImagingMode(ImagingMode& imagingMode)
+int32_t CaptureSessionForSys::GetImagingMode(CameraImagingMode& imagingMode)
 {
     MEDIA_DEBUG_LOG("CaptureSessionForSys::GetImagingMode is called");
     auto inputDevice = GetInputDevice();
@@ -926,8 +926,7 @@ int32_t CaptureSessionForSys::GetImagingMode(ImagingMode& imagingMode)
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
     CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS,
         "CaptureSessionForSys::GetImagingMode camera device is null");
-    imagingMode = ImagingMode::IMAGING_MODE_AUTO;
-    bool isSupported = false;
+    imagingMode = CameraImagingMode::IMAGING_MODE_RGB;
     sptr<CameraDevice> cameraObj_;
     cameraObj_ = inputDeviceInfo;
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj_->GetCachedMetadata();
@@ -939,27 +938,27 @@ int32_t CaptureSessionForSys::GetImagingMode(ImagingMode& imagingMode)
         auto itr = g_metaImagingModesMap_.find(static_cast<camera_imaging_mode_enum_t>(item.data.u8[0]));
         if (itr != g_metaImagingModesMap_.end()) {
             imagingMode = itr->second;
-            isSupported = true;
         }
     }
-    CHECK_PRINT_ELOG(!isSupported || ret != CAM_META_SUCCESS,
-        "CaptureSessionForSys::GetImagingMode Failed with return code %{public}d", ret);
     MEDIA_DEBUG_LOG("CaptureSessionForSys::GetImagingMode imagingMode: %{public}d", imagingMode);
     return CameraErrorCode::SUCCESS;
 }
 
-int32_t CaptureSessionForSys::SetImagingMode(ImagingMode imagingMode)
+int32_t CaptureSessionForSys::SetImagingMode(CameraImagingMode imagingMode)
 {
     MEDIA_DEBUG_LOG("CaptureSessionForSys::SetImagingMode is called with mode: %{public}d", imagingMode);
     bool isSupported = false;
     IsImagingModeSupported(imagingMode, isSupported);
-    CHECK_RETURN_RET(!isSupported, CameraErrorCode::OPERATION_NOT_ALLOWED);
+    if (!isSupported) {
+        imagingMode = CameraImagingMode::IMAGING_MODE_RGB;
+        MEDIA_DEBUG_LOG("CaptureSessionForSys::SetImagingMode is called with imagingMode to RGB");
+    }
 
     uint32_t count = 1;
     uint8_t imagingMode_ = imagingMode;
 
     this->LockForControl();
-    MEDIA_DEBUG_LOG("CaptureSessionForSys::SetImagingMode ImagingMode : %{public}d", imagingMode_);
+    MEDIA_DEBUG_LOG("CaptureSessionForSys::SetImagingMode CameraImagingMode : %{public}d", imagingMode_);
     if (!(this->changedMetadata_->addEntry(OHOS_CONTROL_IMAGING_MODE, &imagingMode_, count))) {
         MEDIA_DEBUG_LOG("CaptureSessionForSys::SetImagingMode Failed to set imaging mode");
     } else {
@@ -978,11 +977,11 @@ int32_t CaptureSessionForSys::SetImagingMode(ImagingMode imagingMode)
     return CameraErrorCode::SUCCESS;
 }
 
-int32_t CaptureSessionForSys::IsImagingModeSupported(ImagingMode imagingMode, bool& isSupported)
+int32_t CaptureSessionForSys::IsImagingModeSupported(CameraImagingMode imagingMode, bool& isSupported)
 {
     MEDIA_DEBUG_LOG("CaptureSessionForSys::IsImagingModeSupported is called with mode: %{public}d", imagingMode);
     isSupported = false;
-    std::vector<ImagingMode> imagingModes;
+    std::vector<CameraImagingMode> imagingModes;
     GetSupportedImagingMode(imagingModes);
     if (std::find(imagingModes.begin(), imagingModes.end(), imagingMode) !=
         imagingModes.end()) {
@@ -992,7 +991,7 @@ int32_t CaptureSessionForSys::IsImagingModeSupported(ImagingMode imagingMode, bo
     return CameraErrorCode::SUCCESS;
 }
 
-int32_t CaptureSessionForSys::GetSupportedImagingMode(std::vector<ImagingMode>& imagingMode)
+int32_t CaptureSessionForSys::GetSupportedImagingMode(std::vector<CameraImagingMode>& imagingMode)
 {
     MEDIA_DEBUG_LOG("CaptureSessionForSys::GetSupportedImagingMode is called");
     imagingMode.clear();

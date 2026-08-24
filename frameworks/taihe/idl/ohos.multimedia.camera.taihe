@@ -216,6 +216,11 @@ struct CameraStatusInfo {
   status: CameraStatus;
 }
 
+struct CameraSharedStatusInfo {
+  camera: CameraDevice;
+  sharedStatus: CameraSharedStatus;
+}
+
 enum VideoMetaType : i32 {
   VIDEO_META_MAKER_INFO = 0,
 }
@@ -1822,8 +1827,6 @@ interface CameraManager {
               this.onFoldStatusChange(callback as (err: BusinessError<void>, data: FoldStatusInfo)=> void);
             } else if (type === "torchStatusChange") {
               this.onTorchStatusChange(callback as (err: BusinessError<void>, data: TorchStatusInfo)=> void);
-            } else if (type === "cameraSharedStatus") {
-              this.onCameraSharedStatusChange(callback as (err: BusinessError<void>, data: CameraSharedStatus)=> void);
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1840,8 +1843,6 @@ interface CameraManager {
               this.offFoldStatusChange(callback as (((err: BusinessError<void>, data: FoldStatusInfo)=> void) | undefined));
             } else if (type === "torchStatusChange") {
               this.offTorchStatusChange(callback as (((err: BusinessError<void>, data: TorchStatusInfo)=> void) | undefined));
-            } else if (type === "cameraSharedStatus") {
-              this.offCameraSharedStatusChange(callback as (err: BusinessError<void>, data: CameraSharedStatus)=> void);
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1858,8 +1859,8 @@ interface CameraManager {
   OffTorchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void>): void;
   OnControlCenterStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
   OffControlCenterStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
-  OnCameraSharedStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void): void;
-  OffCameraSharedStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void>): void;
+  OnCameraSharedStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatusInfo)=> void): void;
+  OffCameraSharedStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatusInfo)=> void>): void;
   IsControlCenterActive(): bool;
   CreateControlCenterSession(): ControlCenterSession;
 }
@@ -2899,8 +2900,8 @@ interface QuickThumbnail {
 }
 
 enum CameraSharedStatus : i32 {
-  CAMERA_SHARED_STATUS_SHARED = 0,
-  CAMERA_SHARED_STATUS_UNSHARED = 1
+  CAMERA_STATUS_SHARED = 0,
+  CAMERA_STATUS_UNSHARED = 1
 }
 
 enum ImagingModeType : i32 {

@@ -147,6 +147,7 @@ HSharedCameraDevice::~HSharedCameraDevice()
     }
 
     UnregisterFromMap();
+    NotifyUnsharedStatus(); // 1->0 (camera released): report once, dedup against the ReleaseRef close path
 }
 
 void HSharedCameraDevice::UnregisterFromMap()
@@ -158,15 +159,50 @@ void HSharedCameraDevice::UnregisterFromMap()
     }
 }
 
-void HSharedCameraDevice::AddRef(pid_t pid)
+void HSharedCameraDevice::SetSharedStatusChangedCallback(std::function<void(const std::string&, bool)> callback)
 {
     std::lock_guard<std::mutex> lock(refMutex_);
-    refCount_[pid]++;
-    MEDIA_INFO_LOG("HSharedCameraDevice::AddRef pid: %{public}d, count: %{public}u", pid, refCount_[pid]);
+    sharedStatusChangedCallback_ = std::move(callback);
+}
+
+void HSharedCameraDevice::NotifySharedStatusChanged(bool isShared)
+{
+    std::function<void(const std::string&, bool)> callback;
+    {
+        std::lock_guard<std::mutex> lock(refMutex_);
+        callback = sharedStatusChangedCallback_;
+    }
+    if (callback) {
+        callback(cameraId_, isShared);
+    }
+}
+
+void HSharedCameraDevice::NotifyUnsharedStatus()
+{
+    // 1->0 (all clients released) is reported exactly once per device instance: the ReleaseRef close
+    // path reports it when possible, the destructor acts as a fallback for abnormal teardown.
+    if (!unsharedNotified_.exchange(true)) {
+        NotifySharedStatusChanged(false);
+    }
+}
+
+void HSharedCameraDevice::AddRef(pid_t pid)
+{
+    bool notifyShared = false;
+    {
+        std::lock_guard<std::mutex> lock(refMutex_);
+        refCount_[pid]++;
+        MEDIA_INFO_LOG("HSharedCameraDevice::AddRef pid: %{public}d, count: %{public}u", pid, refCount_[pid]);
+        notifyShared = (refCount_.size() == 2); // 1 -> 2 distinct apps, camera enters shared mode
+    }
+    if (notifyShared) {
+        NotifySharedStatusChanged(true);
+    }
 }
 
 void HSharedCameraDevice::ReleaseRef(pid_t pid)
 {
+    bool notifyUnshared = false;
     bool shouldClose = false;
     {
         std::lock_guard<std::mutex> lock(refMutex_);
@@ -180,8 +216,13 @@ void HSharedCameraDevice::ReleaseRef(pid_t pid)
             refCount_.erase(it);
             UnmarkNonPrivileged(pid);
         }
+        notifyUnshared = (refCount_.size() == 1); // 2 -> 1 distinct apps, camera back to exclusive use
         shouldClose = refCount_.empty();
         MEDIA_INFO_LOG("HSharedCameraDevice::ReleaseRef pid: %{public}d, shouldClose: %{public}d", pid, shouldClose);
+    }
+
+    if (notifyUnshared) {
+        NotifySharedStatusChanged(false);
     }
 
     if (!shouldClose) {
@@ -206,6 +247,7 @@ void HSharedCameraDevice::ReleaseRef(pid_t pid)
         }
     }
     UnregisterFromMap();
+    NotifyUnsharedStatus(); // 1->0 (all clients released), reported once
 }
 
 void HSharedCameraDevice::RegisterAppCallback(pid_t pid, const sptr<ICameraDeviceServiceCallback>& callback)

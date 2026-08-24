@@ -100,6 +100,10 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
             "ConnectionType", CreateObjectWithMap(env, "ConnectionType", mapConnectionType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CameraFormat", CreateObjectWithMap(env, "CameraFormat", mapCameraFormat, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CameraStatus", CreateObjectWithMap(env, "CameraStatus", mapCameraStatus, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CameraSharedStatus",
+            CreateObjectWithMap(env, "CameraSharedStatus", mapCameraSharedStatus, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CameraImagingMode",
+            CreateObjectWithMap(env, "CameraImagingMode", mapCameraImagingMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
             "ImageRotation", CreateObjectWithMap(env, "ImageRotation", mapImageRotation, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("QualityLevel", CreateObjectWithMap(env, "QualityLevel", mapQualityLevel, g_ignoreRef_)),

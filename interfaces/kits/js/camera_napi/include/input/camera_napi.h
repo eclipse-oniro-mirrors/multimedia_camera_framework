@@ -123,6 +123,17 @@ static const std::unordered_map<std::string, int32_t> mapCameraStatus = {
     {"CAMERA_STATUS_UNAVAILABLE", 3},
 };
 
+static const std::unordered_map<std::string, int32_t> mapCameraSharedStatus = {
+    {"CAMERA_STATUS_SHARED", 0},
+    {"CAMERA_STATUS_UNSHARED", 1},
+};
+
+static const std::unordered_map<std::string, int32_t> mapCameraImagingMode = {
+    {"AUTO", 0},
+    {"RGB", 1},
+    {"IR", 2}
+};
+
 static const std::unordered_map<std::string, int32_t> mapVideoStabilizationMode = {
     {"OFF", 0},
     {"LOW", 1},

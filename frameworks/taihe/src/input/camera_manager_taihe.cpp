@@ -107,34 +107,42 @@ CameraSharedStatusListenerAni::~CameraSharedStatusListenerAni()
 }
 
 void CameraSharedStatusListenerAni::OnCameraSharedStatusCallback(
-    const OHOS::CameraStandard::CameraSharedStatus status) const
+    const OHOS::CameraStandard::CameraSharedStatusInfo &cameraSharedStatusInfo) const
 {
+    OHOS::sptr<OHOS::CameraStandard::CameraDevice> cameraDeviceSptr(cameraSharedStatusInfo.cameraDevice);
+    CameraSharedStatusInfo sharedStatusInfo {
+        .camera = CameraUtilsTaihe::ToTaiheCameraDevice(cameraDeviceSptr),
+        .sharedStatus = static_cast<CameraSharedStatus::key_t>(cameraSharedStatusInfo.cameraSharedStatus),
+    };
     auto sharePtr = shared_from_this();
-    CameraSharedStatus cameraSharedStatus = static_cast<CameraSharedStatus::key_t>(status);
-    auto task = [cameraSharedStatus, sharePtr]() {
+    auto task = [sharedStatusInfo, sharePtr]() {
         CHECK_EXECUTE(sharePtr != nullptr,
-            sharePtr->ExecuteAsyncCallback("cameraSharedStatusChange", 0, "Callback is OK", cameraSharedStatus));
+            sharePtr->ExecuteAsyncCallback<CameraSharedStatusInfo const&>(
+                "cameraSharedStatusChange", 0, "Callback is OK", sharedStatusInfo));
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(
         task, "OnCameraSharedStatusChanged", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
-    MEDIA_DEBUG_LOG("OnCameraSharedStatusCallback is called, status: %{public}d", status);
+    MEDIA_DEBUG_LOG("OnCameraSharedStatusCallback is called, status: %{public}d",
+        static_cast<int32_t>(cameraSharedStatusInfo.cameraSharedStatus));
 }
 
 void CameraSharedStatusListenerAni::OnCameraSharedStatusChanged(
-    const OHOS::CameraStandard::CameraSharedStatus status) const
+    const OHOS::CameraStandard::CameraSharedStatusInfo &cameraSharedStatusInfo) const
 {
-    MEDIA_INFO_LOG("OnCameraSharedStatusChanged is called, status: %{public}d", status);
-    OnCameraSharedStatusCallback(status);
+    MEDIA_INFO_LOG("OnCameraSharedStatusChanged is called, status: %{public}d",
+        static_cast<int32_t>(cameraSharedStatusInfo.cameraSharedStatus));
+    OnCameraSharedStatusCallback(cameraSharedStatusInfo);
 }
 
-void CameraManagerImpl::OnCameraSharedStatusChange(callback_view<void(uintptr_t, CameraSharedStatus)> callback)
+void CameraManagerImpl::OnCameraSharedStatusChange(
+    callback_view<void(uintptr_t, CameraSharedStatusInfo const&)> callback)
 {
     ListenerTemplate<CameraManagerImpl>::On(this, callback, "cameraSharedStatusChange");
 }
 
 void CameraManagerImpl::OffCameraSharedStatusChange(
-    optional_view<callback<void(uintptr_t, CameraSharedStatus)>> callback)
+    optional_view<callback<void(uintptr_t, CameraSharedStatusInfo const&)>> callback)
 {
     ListenerTemplate<CameraManagerImpl>::Off(this, callback, "cameraSharedStatusChange");
 }
