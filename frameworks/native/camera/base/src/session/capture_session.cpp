@@ -7365,6 +7365,8 @@ void CaptureSession::GetSaturationRangeForCurrentMode(
 {
     // saturationRange format: [SceneMode, minVal, maxVal, terminator] per group
     constexpr size_t saturationGroupSize = 4;
+    constexpr size_t minValOffset = 1;
+    constexpr size_t maxValOffset = 2;
     CHECK_RETURN_ELOG(saturationRange.size() < saturationGroupSize,
         "GetSaturationRangeForCurrentMode saturationRange size is invalid");
     int32_t currentMode = static_cast<int32_t>(GetMode());
@@ -7375,20 +7377,20 @@ void CaptureSession::GetSaturationRangeForCurrentMode(
     for (size_t i = 0; i + saturationGroupSize <= saturationRange.size(); i += saturationGroupSize) {
         int32_t sceneMode = saturationRange[i];
         if (sceneMode == currentMode) {
-            minVal = saturationRange[i + 1];
-            maxVal = saturationRange[i + 2];
+            minVal = saturationRange[i + minValOffset];
+            maxVal = saturationRange[i + maxValOffset];
             modeMatched = true;
             break;
         }
-        if (sceneMode == 0 && !defaultFound) {
-            defaultMinVal = saturationRange[i + 1];
-            defaultMaxVal = saturationRange[i + 2];
+        if (sceneMode == SceneMode::NORMAL && !defaultFound) {
+            defaultMinVal = saturationRange[i + minValOffset];
+            defaultMaxVal = saturationRange[i + maxValOffset];
             defaultFound = true;
         }
     }
     if (!modeMatched) {
         CHECK_RETURN_ELOG(
-            !defaultFound, "GetSaturationRangeForCurrentMode no matching SceneMode and no default mode=0 found");
+            !defaultFound, "GetSaturationRangeForCurrentMode no matching SceneMode and no default mode found");
         minVal = defaultMinVal;
         maxVal = defaultMaxVal;
     }
@@ -8181,6 +8183,8 @@ void CaptureSession::GetRGBGainsRangeForCurrentMode(
 {
     // rgbGainsRange format: [SceneMode, minGain, maxGain, terminator] per group
     constexpr size_t rgbGainsGroupSize = 4;
+    constexpr size_t minGainOffset = 1;
+    constexpr size_t maxGainOffset = 2;
     CHECK_RETURN_ELOG(
         rgbGainsRange.size() < rgbGainsGroupSize, "GetRGBGainsRangeForCurrentMode rgbGainsRange size is invalid");
     int32_t currentMode = static_cast<int32_t>(GetMode());
@@ -8191,20 +8195,20 @@ void CaptureSession::GetRGBGainsRangeForCurrentMode(
     for (size_t i = 0; i + rgbGainsGroupSize <= rgbGainsRange.size(); i += rgbGainsGroupSize) {
         int32_t sceneMode = rgbGainsRange[i];
         if (sceneMode == currentMode) {
-            minGain = rgbGainsRange[i + 1];
-            maxGain = rgbGainsRange[i + 2];
+            minGain = rgbGainsRange[i + minGainOffset];
+            maxGain = rgbGainsRange[i + maxGainOffset];
             modeMatched = true;
             break;
         }
-        if (sceneMode == 0 && !defaultFound) {
-            defaultMinGain = rgbGainsRange[i + 1];
-            defaultMaxGain = rgbGainsRange[i + 2];
+        if (sceneMode == SceneMode::NORMAL && !defaultFound) {
+            defaultMinGain = rgbGainsRange[i + minGainOffset];
+            defaultMaxGain = rgbGainsRange[i + maxGainOffset];
             defaultFound = true;
         }
     }
     if (!modeMatched) {
         CHECK_RETURN_ELOG(
-            !defaultFound, "GetRGBGainsRangeForCurrentMode no matching SceneMode and no default mode=0 found");
+            !defaultFound, "GetRGBGainsRangeForCurrentMode no matching SceneMode and no default mode found");
         minGain = defaultMinGain;
         maxGain = defaultMaxGain;
     }
