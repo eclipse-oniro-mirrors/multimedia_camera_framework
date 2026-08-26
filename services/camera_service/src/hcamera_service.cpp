@@ -1033,6 +1033,8 @@ void HCameraService::MigrateOpenedClientsToSharedMode(const std::string& cameraI
 
     MEDIA_INFO_LOG("HCameraService::MigrateOpenedClientsToSharedMode cameraId:%{public}s, devices:%{public}zu, "
         "sessions:%{public}zu", cameraId.c_str(), deviceWrappers.size(), sessionWrappers.size());
+    // SHARED is reported by HSharedCameraDevice::AddRef when the user count crosses 1 -> 2. No
+    // unconditional report here: migrating zero other clients (only the owner) must NOT report SHARED.
 }
 
 int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraDeviceService>& device)
@@ -1062,6 +1064,12 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
             "HCameraService::CreateCameraDevice GetOrCreateSharedDevice failed");
         deviceForWrapper = sharedDevice;
         isSharedDevice = true;
+        sharedDevice->SetSharedStatusChangedCallback(
+            [this](const std::string& sharedCameraId, bool isShared) {
+                OnCameraSharedStatus(sharedCameraId,
+                    isShared ? CameraSharedStatus::CAMERA_STATUS_SHARED
+                             : CameraSharedStatus::CAMERA_STATUS_UNSHARED);
+            });
         MEDIA_INFO_LOG("HCameraService::CreateCameraDevice privilege app, using shared device");
     } else {
         HandleNonPrivilegedAppForSharedDevice(cameraId, callerPid, deviceForWrapper, isSharedDevice);
@@ -2167,12 +2175,21 @@ int32_t HCameraService::CheckControlCenterPermission()
 int32_t HCameraService::SetCameraSharedStatusCallback(const sptr<ICameraSharedServiceCallback>& callback)
 {
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
-    lock_guard<mutex> lock(cameraSharedStatusMutex_);
     pid_t pid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("HCameraService::SetCameraSharedStatusCallback pid = %{public}d", pid);
     CHECK_RETURN_RET_ELOG(
         callback == nullptr, CAMERA_INVALID_ARG, "HCameraService::SetCameraSharedStatusCallback callback is null");
-    cameraSharedServiceCallbacks_.insert(make_pair(pid, callback));
+    map<string, CameraSharedStatus> cachedStatus;
+    {
+        lock_guard<mutex> lock(cameraSharedStatusMutex_);
+        cameraSharedServiceCallbacks_.insert(make_pair(pid, callback));
+        cachedStatus = cameraSharedStatusCache_;
+    }
+    // Replay the current state of every known camera so a listener registering while a camera is
+    // already shared receives the current status without waiting for the next transition.
+    for (auto& [cameraId, sharedStatus] : cachedStatus) {
+        callback->OnCameraSharedStatusChanged(cameraId, static_cast<int32_t>(sharedStatus));
+    }
     return CAMERA_OK;
 }
 
@@ -2203,6 +2220,21 @@ int32_t HCameraService::UnSetCameraSharedStatusCallback(pid_t pid)
     MEDIA_INFO_LOG("HCameraService::UnSetCameraSharedStatusCallback after erase pid = %{public}d, size = %{public}zu",
         pid, cameraSharedServiceCallbacks_.size());
     return CAMERA_OK;
+}
+
+void HCameraService::OnCameraSharedStatus(const string& cameraId, CameraSharedStatus sharedStatus)
+{
+    std::lock_guard<std::mutex> lock(cameraSharedStatusMutex_);
+    MEDIA_INFO_LOG("HCameraService::OnCameraSharedStatus cameraId:%{public}s, sharedStatus:%{public}d, "
+        "callbacks size = %{public}zu", cameraId.c_str(), static_cast<int32_t>(sharedStatus),
+        cameraSharedServiceCallbacks_.size());
+    cameraSharedStatusCache_[cameraId] = sharedStatus; // keep current state for replay on registration
+    for (auto& [pid, callback] : cameraSharedServiceCallbacks_) {
+        if (callback == nullptr) {
+            continue;
+        }
+        callback->OnCameraSharedStatusChanged(cameraId, static_cast<int32_t>(sharedStatus));
+    }
 }
 
 int32_t HCameraService::SetTorchCallback(const sptr<ITorchServiceCallback>& callback)

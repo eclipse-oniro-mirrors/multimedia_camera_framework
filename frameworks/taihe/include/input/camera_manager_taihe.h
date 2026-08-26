@@ -102,10 +102,12 @@ class CameraSharedStatusListenerAni : public OHOS::CameraStandard::CameraSharedS
 public:
     explicit CameraSharedStatusListenerAni(ani_env *env);
     virtual ~CameraSharedStatusListenerAni();
-    void OnCameraSharedStatusChanged(const OHOS::CameraStandard::CameraSharedStatus status) const override;
+    void OnCameraSharedStatusChanged(
+        const OHOS::CameraStandard::CameraSharedStatusInfo &cameraSharedStatusInfo) const override;
 
 private:
-    void OnCameraSharedStatusCallback(const OHOS::CameraStandard::CameraSharedStatus status) const;
+    void OnCameraSharedStatusCallback(
+        const OHOS::CameraStandard::CameraSharedStatusInfo &cameraSharedStatusInfo) const;
 };
 
 class CameraManagerImpl : public CameraAniEventEmitter<CameraManagerImpl>,
@@ -143,8 +145,8 @@ public:
     void OffTorchStatusChange(optional_view<callback<void(uintptr_t, TorchStatusInfo const&)>> callback);
     void OnControlCenterStatusChange(callback_view<void(uintptr_t, bool)> callback);
     void OffControlCenterStatusChange(optional_view<callback<void(uintptr_t, bool)>> callback);
-    void OnCameraSharedStatusChange(callback_view<void(uintptr_t, CameraSharedStatus)> callback);
-    void OffCameraSharedStatusChange(optional_view<callback<void(uintptr_t, CameraSharedStatus)>> callback);
+    void OnCameraSharedStatusChange(callback_view<void(uintptr_t, CameraSharedStatusInfo const&)> callback);
+    void OffCameraSharedStatusChange(optional_view<callback<void(uintptr_t, CameraSharedStatusInfo const&)>> callback);
     PreviewOutput CreatePreviewOutput(Profile const& profile, string_view surfaceId) ;
     PreviewOutput CreatePreviewOutputWithoutProfile(string_view surfaceId);
     PreviewOutput CreateDeferredPreviewOutput(optional_view<Profile> profile);

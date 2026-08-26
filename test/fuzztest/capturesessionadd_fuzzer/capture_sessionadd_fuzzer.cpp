@@ -518,9 +518,9 @@ void TestSuperMoon(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 void TestImagingMode(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    ImagingMode imagingMode = ImagingMode::IMAGING_MODE_AUTO;
+    CameraImagingMode imagingMode = CameraImagingMode::IMAGING_MODE_AUTO;
     session->GetImagingMode(imagingMode);
-    std::vector<ImagingMode> imagingModes;
+    std::vector<CameraImagingMode> imagingModes;
     session->GetSupportedImagingMode(imagingModes);
     bool isSupported = false;
     session->IsImagingModeSupported(imagingMode, isSupported);

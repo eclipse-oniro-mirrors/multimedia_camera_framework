@@ -118,7 +118,7 @@ class CameraSharedStatusListenerNapi : public CameraSharedStatusListener, public
 public:
     explicit CameraSharedStatusListenerNapi(napi_env env);
     virtual ~CameraSharedStatusListenerNapi();
-    void OnCameraSharedStatusChanged(CameraSharedStatus status) const override;
+    void OnCameraSharedStatusChanged(const CameraSharedStatusInfo &cameraSharedStatusInfo) const override;
 
     inline void SetIsAsync(bool isAsync)
     {
@@ -126,18 +126,22 @@ public:
     }
 
 private:
-    void OnCameraSharedStatusCallback(CameraSharedStatus status) const;
-    void OnCameraSharedStatusCallbackAsync(CameraSharedStatus status) const;
+    void OnCameraSharedStatusCallback(const CameraSharedStatusInfo &cameraSharedStatusInfo) const;
+    void OnCameraSharedStatusCallbackAsync(const CameraSharedStatusInfo &cameraSharedStatusInfo) const;
 
     bool isAsync_ = true;
 };
 
 struct CameraSharedStatusCallbackInfo {
-    CameraSharedStatus cameraSharedStatus_;
+    CameraSharedStatusInfo info_;
     weak_ptr<const CameraSharedStatusListenerNapi> listener_;
-    CameraSharedStatusCallbackInfo(CameraSharedStatus status, shared_ptr<const CameraSharedStatusListenerNapi> listener)
-        : cameraSharedStatus_(status), listener_(listener) {}
-    ~CameraSharedStatusCallbackInfo() {}
+    CameraSharedStatusCallbackInfo(CameraSharedStatusInfo info,
+        shared_ptr<const CameraSharedStatusListenerNapi> listener)
+        : info_(info), listener_(listener) {}
+    ~CameraSharedStatusCallbackInfo()
+    {
+        listener_.reset();
+    }
 };
 
 struct CameraMuteCallbackInfo {

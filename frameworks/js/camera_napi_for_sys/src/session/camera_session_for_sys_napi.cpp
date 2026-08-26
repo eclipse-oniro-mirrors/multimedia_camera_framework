@@ -1643,7 +1643,7 @@ napi_value CameraSessionForSysNapi::IsImagingModeSupported(napi_env env, napi_ca
     if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
-        ImagingMode imagingMode = static_cast<ImagingMode>(value);
+        CameraImagingMode imagingMode = static_cast<CameraImagingMode>(value);
         bool isSupported;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->IsImagingModeSupported(imagingMode,
             isSupported);
@@ -1672,7 +1672,7 @@ napi_value CameraSessionForSysNapi::GetImagingMode(napi_env env, napi_callback_i
     CameraSessionForSysNapi* cameraSessionForSysNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionForSysNapi));
     if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
-        ImagingMode imagingMode;
+        CameraImagingMode imagingMode;
         int32_t retCode = cameraSessionForSysNapi->cameraSessionForSys_->GetImagingMode(imagingMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
@@ -1701,7 +1701,7 @@ napi_value CameraSessionForSysNapi::SetImagingMode(napi_env env, napi_callback_i
     if (status == napi_ok && cameraSessionForSysNapi != nullptr) {
         int32_t value;
         napi_get_value_int32(env, argv[PARAM0], &value);
-        ImagingMode imagingMode = static_cast<ImagingMode>(value);
+        CameraImagingMode imagingMode = static_cast<CameraImagingMode>(value);
         int retCode = cameraSessionForSysNapi->cameraSessionForSys_->SetImagingMode(imagingMode);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
             return nullptr;
@@ -2326,7 +2326,7 @@ void CameraSessionForSysNapi::Init(napi_env env)
         CameraSessionForSysNapi::camera_output_capability_sys_props, CameraSessionForSysNapi::beauty_sys_props,
         CameraSessionForSysNapi::color_effect_sys_props, CameraSessionForSysNapi::depth_fusion_sys_props,
         CameraSessionForSysNapi::manual_focus_sys_props, CameraSessionForSysNapi::scene_detection_sys_props,
-        color_style_props };
+        color_style_props, CameraSessionForSysNapi::imaging_mode_sys_props };
     std::vector<napi_property_descriptor> camera_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, CAMERA_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                CameraSessionNapiForSysConstructor, nullptr,

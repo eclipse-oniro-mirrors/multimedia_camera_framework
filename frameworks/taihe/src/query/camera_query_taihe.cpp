@@ -1661,7 +1661,7 @@ bool ImagingModeQueryImpl::IsImagingModeSupported(ImagingModeType mode)
         "IsImagingModeSupported captureSessionForSys_ is null");
     bool isSupported = false;
     int32_t retCode = captureSessionForSys_->IsImagingModeSupported(
-        static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()), isSupported);
+        static_cast<OHOS::CameraStandard::CameraImagingMode>(mode.get_value()), isSupported);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), false);
     return isSupported;
 }
@@ -1673,7 +1673,7 @@ ImagingModeType ImagingModeImpl::GetImagingMode()
         "SystemApi GetImagingMode is called!");
     CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, errType,
         "GetImagingMode captureSessionForSys_ is null");
-    OHOS::CameraStandard::ImagingMode mode;
+    OHOS::CameraStandard::CameraImagingMode mode;
     int32_t retCode = captureSessionForSys_->GetImagingMode(mode);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), errType);
     return ImagingModeType(static_cast<ImagingModeType::key_t>(mode));
@@ -1685,7 +1685,7 @@ void ImagingModeImpl::SetImagingMode(ImagingModeType mode)
         "SystemApi SetImagingMode is called!");
     CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "SetImagingMode captureSessionForSys_ is null!");
     int retCode = captureSessionForSys_->SetImagingMode(
-        static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()));
+        static_cast<OHOS::CameraStandard::CameraImagingMode>(mode.get_value()));
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "SetImagingMode call Failed!");
 }
 } // namespace Ani
