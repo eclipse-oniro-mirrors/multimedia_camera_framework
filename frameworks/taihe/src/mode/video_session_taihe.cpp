@@ -497,6 +497,9 @@ void VideoSessionImpl::UnregisterIsoInfoCallbackListener(const std::string& even
 void VideoSessionImpl::RegisterApertureInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback, bool isOnce)
 {
+    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi %{public}s is called!", __FUNCTION__);
     CHECK_RETURN_ELOG(videoSession_ == nullptr, "videoSession_ is null!");
     if (apertureInfoCallback_ == nullptr) {
         ani_env *env = get_env();
@@ -509,6 +512,9 @@ void VideoSessionImpl::RegisterApertureInfoCallbackListener(const std::string& e
 void VideoSessionImpl::UnregisterApertureInfoCallbackListener(const std::string& eventName,
     std::shared_ptr<uintptr_t> callback)
 {
+    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi %{public}s is called!", __FUNCTION__);
     CHECK_RETURN_ELOG(apertureInfoCallback_ == nullptr, "apertureInfoCallback is null");
     apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
 }

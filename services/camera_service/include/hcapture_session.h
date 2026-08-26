@@ -292,6 +292,8 @@ public:
         }
     }
 
+    int32_t ExpandLhdrGainmapStream(bool isNeedLhdrGainmap) override;
+
 private:
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     int32_t CreateRecorder4CinematicVideo(sptr<IStreamCommon> stream, sptr<ICameraRecorder> &movieRecorder);

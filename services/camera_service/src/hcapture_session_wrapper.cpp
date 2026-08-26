@@ -833,5 +833,14 @@ int32_t HCaptureSessionWrapper::DisableColorCube()
     MEDIA_ERR_LOG("HCaptureSessionWrapper::DisableColorCube session is null");
     return CAMERA_INVALID_STATE;
 }
+
+int32_t HCaptureSessionWrapper::ExpandLhdrGainmapStream(bool isNeedLhdrGainmap)
+{
+    if (session_ != nullptr) {
+        return session_->ExpandLhdrGainmapStream(isNeedLhdrGainmap);
+    }
+    MEDIA_ERR_LOG("HCaptureSessionWrapper::ExpandLhdrGainmapStream session is null");
+    return CAMERA_INVALID_STATE;
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -185,17 +185,25 @@ public:
     int32_t SetShotParam(int32_t captureId, const std::string& shotParam) override;
     int32_t EnableOriginalImage(bool enabled) override;
     bool IsOriginalImageEnable();
+    void FillingPictureExtendLhdrGainmapStreamInfos(StreamInfo_V1_5 &streamInfo);
+    inline void SetIsNeedLhdrGainmap(bool isNeedLhdrGainmap)
+    {
+        isNeedLhdrGainmap_ = isNeedLhdrGainmap;
+    }
     bool isYuvCapture_ = false;
+    bool isNeedLhdrGainmap_ = false;
     SpHolder<sptr<Surface>> gainmapSurface_;
     SpHolder<sptr<Surface>> deepSurface_;
     SpHolder<sptr<Surface>> exifSurface_;
     SpHolder<sptr<Surface>> debugSurface_;
     SpHolder<sptr<Surface>> rawSurface_;
     SpHolder<sptr<Surface>> thumbnailSurface_;
+    SpHolder<sptr<Surface>> lhdrGainmapSurface_;
     sptr<IBufferConsumerListener> gainmapListener_ = nullptr;
     sptr<IBufferConsumerListener> deepListener_ = nullptr;
     sptr<IBufferConsumerListener> exifListener_ = nullptr;
     sptr<IBufferConsumerListener> debugListener_ = nullptr;
+    sptr<IBufferConsumerListener> lhdrGainmapListener_ = nullptr;
     sptr<PictureAssembler> pictureAssembler_;
     std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
     SpHolder<std::shared_ptr<DeferredProcessing::TaskManager>> photoTask_;
@@ -260,6 +268,7 @@ private:
     SpHolder<sptr<BufferProducerSequenceable>> deepBufferQueue_;
     SpHolder<sptr<BufferProducerSequenceable>> exifBufferQueue_;
     SpHolder<sptr<BufferProducerSequenceable>> debugBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> lhdrGainmapBufferQueue_;
     int32_t modeName_;
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;

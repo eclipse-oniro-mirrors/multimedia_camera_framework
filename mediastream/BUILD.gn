@@ -103,6 +103,7 @@ ohos_shared_library("media_stream") {
     "drivers_interface_camera:metadata",
     "drivers_interface_camera:libcamera_proxy_1.0",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "init:libbegetutil",
     "safwk:system_ability_fwk",

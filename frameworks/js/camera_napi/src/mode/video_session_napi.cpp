@@ -261,18 +261,17 @@ void VideoSessionNapi::UnregisterExposureInfoCallbackListener(
 void VideoSessionNapi::RegisterApertureInfoCallbackListener(const std::string& eventName, napi_env env,
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
-    if (apertureInfoCallback_ == nullptr) {
-        apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
-        cameraSession_->SetApertureInfoCallback(apertureInfoCallback_);
-    }
-    apertureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);
+    MEDIA_ERR_LOG("SystemApi on ApertureInfo is called");
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
+        "System api can be invoked only by system applications");
 }
 
 void VideoSessionNapi::UnregisterApertureInfoCallbackListener(
     const std::string& eventName, napi_env env, napi_value callback, const std::vector<napi_value>& args)
 {
-    CHECK_RETURN_ELOG(apertureInfoCallback_ == nullptr, "%{public}s apertureInfoCallback is null", __func__);
-    apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
+    MEDIA_ERR_LOG("SystemApi off ApertureInfo is called");
+    CameraNapiUtils::ThrowError(env, CameraErrorCode::NO_SYSTEM_APP_PERMISSION,
+        "System api can be invoked only by system applications");
 }
 
 void VideoSessionNapi::RegisterFlashStateChangeCallbackListener(const std::string& eventName, napi_env env,

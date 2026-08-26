@@ -78,16 +78,16 @@ int32_t CameraDataShareHelper::UpdateOnce(const std::string key, std::string val
     DataShare::DataShareValueObject valueObj(value);
     bucket.Put(SETTINGS_DATA_FIELD_KEYWORD, keywordObj);
     bucket.Put(SETTINGS_DATA_FIELD_VALUE, valueObj);
-
-    if (dataShareHelper->Update(uri, predicates, bucket) <= 0) {
-        dataShareHelper->Insert(uri, bucket);
+    if (dataShareHelper->Update(uri, predicates, bucket) > 0) {
+        MEDIA_INFO_LOG("CameraDataShareHelper Update:%{public}s success", key.c_str());
         dataShareHelper->Release();
-        MEDIA_ERR_LOG("CameraDataShareHelper Update:%{public}s failed", key.c_str());
-        return CAMERA_INVALID_ARG;
+        return CAMERA_OK;
     }
-    MEDIA_INFO_LOG("CameraDataShareHelper Update:%{public}s success", key.c_str());
+    auto insertRet = dataShareHelper->Insert(uri, bucket);
     dataShareHelper->Release();
-    return CAMERA_OK;
+    CHECK_RETURN_RET(insertRet >= 0, CAMERA_OK);
+    MEDIA_ERR_LOG("CameraDataShareHelper Update:%{public}s failed", key.c_str());
+    return CAMERA_INVALID_ARG;
 }
 
 bool CameraDataShareHelper::IsDataShareReady()

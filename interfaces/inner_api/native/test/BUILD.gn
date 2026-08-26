@@ -57,6 +57,7 @@ ohos_executable("camera_video") {
     "ipc:ipc_core",
     "ipc:ipc_single",
     "player_framework:media_client",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"
@@ -92,6 +93,7 @@ ohos_executable("camera_capture") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"
@@ -127,6 +129,7 @@ ohos_executable("camera_capture_video") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"
@@ -162,6 +165,7 @@ ohos_executable("camera_capture_mode") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "ipc:ipc_core",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
   part_name = "camera_framework"
   subsystem_name = "multimedia"

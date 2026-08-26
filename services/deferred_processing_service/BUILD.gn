@@ -198,7 +198,10 @@ ohos_shared_library("deferred_processing_service") {
     "drivers_interface_camera:libcamera_proxy_1.4",
     "drivers_interface_camera:libcamera_proxy_1.5",
     "drivers_interface_camera:libcamera_proxy_1.6",
+    "drivers_interface_camera:libcamera_proxy_1.7",
     "drivers_interface_camera:metadata",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+    "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
     "graphic_2d:librender_service_client",
     "graphic_surface:buffer_handle",
     "graphic_surface:surface",
@@ -214,6 +217,7 @@ ohos_shared_library("deferred_processing_service") {
     "storage_service:storage_manager_sa_proxy",
     "samgr:samgr_proxy",
     "window_manager:libdm",
+    "drivers_interface_camera:libmap_data_sequenceable_1.0",
   ]
 
   public_external_deps =

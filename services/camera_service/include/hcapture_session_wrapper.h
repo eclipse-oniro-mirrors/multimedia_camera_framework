@@ -111,6 +111,7 @@ public:
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
     int32_t EnableColorCube(const sptr<IPCFileDescriptor>& ipcFd, int64_t dataSize) override;
     int32_t DisableColorCube() override;
+    int32_t ExpandLhdrGainmapStream(bool isNeedLhdrGainmap) override;
 private:
     pid_t ownerPid_;
     int32_t opMode_;

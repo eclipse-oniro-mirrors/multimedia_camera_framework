@@ -54,6 +54,7 @@
 #include "res_sched_client.h"
 #include "res_type.h"
 #include "json_parse.h"
+#include "v1_7/types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -200,6 +201,18 @@ void HStreamCapture::CreateAuxiliarySurfaces()
             retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
         }
     }
+    auto lhdrGainmapSurfaceObj = lhdrGainmapSurface_.Get();
+    if (lhdrGainmapSurfaceObj == nullptr) {
+        std::string bufferName = "lhdrGainmapImage";
+        lhdrGainmapSurface_.Set(Surface::CreateSurfaceAsConsumer(bufferName));
+        lhdrGainmapSurfaceObj = lhdrGainmapSurface_.Get();
+        if (lhdrGainmapSurfaceObj != nullptr) {
+            MEDIA_INFO_LOG("CreateAuxiliarySurfaces 5 surfaceId: %{public}" PRIu64,
+                lhdrGainmapSurfaceObj->GetUniqueId());
+            ret = SetBufferProducerInfo(bufferName, lhdrGainmapSurfaceObj->GetProducer());
+            retStr += (ret != CAMERA_OK ? bufferName + "," : retStr);
+        }
+    }
     MEDIA_INFO_LOG("CreateAuxiliarySurfaces X, res:%{public}s", retStr.c_str());
     // LCOV_EXCL_STOP
 }
@@ -314,6 +327,23 @@ void HStreamCapture::FillingRawAndThumbnailStreamInfo(StreamInfo_V1_5 &streamInf
     streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
 }
 
+void HStreamCapture::FillingPictureExtendLhdrGainmapStreamInfos(StreamInfo_V1_5 &streamInfo)
+{
+    MEDIA_INFO_LOG("HStreamCapture::FillingPictureExtendLhdrGainmapStreamInfos enter.");
+    streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
+    streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
+    HDI::Camera::V1_1::ExtendedStreamInfo extendedStreamInfo = {
+        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
+            HDI::Camera::V1_7::EXTENDED_STREAM_OHOS_ENHANCED_GAINMAP),
+        .width = width_,
+        .height = height_,
+        .format = GRAPHIC_PIXEL_FMT_YCRCB_420_SP,
+        .dataspace = dataSpace_,
+        .bufferQueue = lhdrGainmapBufferQueue_.Get(),
+    };
+    streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
+}
+
 void HStreamCapture::SetDataSpaceForCapture(StreamInfo_V1_5 &streamInfo)
 {
     // LCOV_EXCL_START
@@ -354,6 +384,13 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_5 &streamInfo)
         streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
         if (GetMode() != static_cast<int32_t>(HDI::Camera::V1_3::OperationMode::TIMELAPSE_PHOTO)) {
             FillingPictureExtendStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
+        }
+        bool isDeferredImageDeliveryEnabled = false;
+        auto hStreamOperatorSptr = hStreamOperator_.promote();
+        CHECK_EXECUTE(hStreamOperatorSptr != nullptr,
+            isDeferredImageDeliveryEnabled = hStreamOperatorSptr->GetDeferredImageDeliveryEnabled());
+        if (isNeedLhdrGainmap_ && !isDeferredImageDeliveryEnabled) {
+            FillingPictureExtendLhdrGainmapStreamInfos(streamInfo);
         }
     } else if (format_ == OHOS_CAMERA_FORMAT_DNG_XDRAW) {
         streamInfo.v1_0.encodeType_ =
@@ -458,6 +495,14 @@ int32_t HStreamCapture::SetBufferProducerInfo(const std::string& bufName, const 
             debugBufferQueue_.Set(new BufferProducerSequenceable(producer));
         } else {
             debugBufferQueue_.Set(nullptr);
+            resStr += bufName + ",";
+        }
+    }
+    if (bufName == "lhdrGainmapImage") {
+        if (producer != nullptr) {
+            lhdrGainmapBufferQueue_.Set(new BufferProducerSequenceable(producer));
+        } else {
+            lhdrGainmapBufferQueue_.Set(nullptr);
             resStr += bufName + ",";
         }
     }

@@ -73,9 +73,28 @@ void PictureAssembler::RegisterAuxiliaryConsumers()
         ret = debugSurfaceObj->RegisterConsumerListener((sptr<IBufferConsumerListener> &)streamCapture->debugListener_);
         retStr = ret != SURFACE_ERROR_OK ? retStr + "[debug]" : retStr;
     }
+    RegisterAuxiliaryConsumersForLhdr(streamCapture, retStr);
     CHECK_PRINT_ELOG(retStr != "", "register surface consumer listener failed! type = %{public}s", retStr.c_str());
     MEDIA_INFO_LOG("RegisterAuxiliaryConsumers X");
 }
+
+void PictureAssembler::RegisterAuxiliaryConsumersForLhdr(sptr<HStreamCapture> streamCapture, std::string &retStr)
+{
+    MEDIA_INFO_LOG("RegisterAuxiliaryConsumersForLhdr E");
+    auto lhdrGainmapSurfaceObj = streamCapture->lhdrGainmapSurface_.Get();
+    if (lhdrGainmapSurfaceObj != nullptr) {
+        MEDIA_INFO_LOG("RegisterAuxiliaryConsumers 5 surfaceId: %{public}" PRIu64,
+            lhdrGainmapSurfaceObj->GetUniqueId());
+        streamCapture->lhdrGainmapListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_LHDR_GAINMAP, streamCapture);
+        CHECK_RETURN_ELOG(streamCapture->lhdrGainmapListener_ == nullptr,
+            "streamCapture->lhdrGainmapListener_ is null");
+        SurfaceError ret = lhdrGainmapSurfaceObj->RegisterConsumerListener(
+            (sptr<IBufferConsumerListener> &)streamCapture->lhdrGainmapListener_);
+        retStr = ret != SURFACE_ERROR_OK ? retStr + "[lhdrGainmap]" : retStr;
+    }
+    MEDIA_INFO_LOG("RegisterAuxiliaryConsumersForLhdr X");
+}
+
 }  // namespace CameraStandard
 }  // namespace OHOS
 // LCOV_EXCL_STOP

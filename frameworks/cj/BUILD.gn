@@ -75,6 +75,7 @@ ohos_shared_library("cj_camera_ffi") {
       "napi:cj_bind_native",
       "image_framework:cj_image_ffi",
       "bounds_checking_function:libsec_shared",
+      "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
     ]
     sources = [
       "camera/src/camera_ffi.cpp",
@@ -96,6 +97,8 @@ ohos_shared_library("cj_camera_ffi") {
   if (is_ohos) {
     defines += [ "OHOS_PLATFORM" ]
   }
+
+  version_script = "libcj_camera.map"
 
   innerapi_tags = [ "platformsdk" ]
 
@@ -174,6 +177,8 @@ ohos_shared_library("cj_camera_picker_ffi") {
   if (is_ohos) {
     defines += [ "OHOS_PLATFORM" ]
   }
+
+  version_script = "libcj_camera.map"
 
   innerapi_tags = [ "platformsdk" ]
 

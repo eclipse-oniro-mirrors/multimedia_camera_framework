@@ -23,6 +23,7 @@
 #include "image_info.h"
 #include "picture_interface.h"
 #include "v1_5/types.h"
+#include "v1_7/types.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -118,6 +119,8 @@ public:
     int32_t ProcessPictureInfoV1_4(const std::string& imageId, const HDI::Camera::V1_5::ImageBufferInfo_V1_4& buffer);
     int32_t ProcessPictureInfoV1_6(
         const std::string& imageId, const std::vector<HDI::Camera::V1_5::ImageBufferInfo_V1_4>& buffers);
+    int32_t ProcessPictureInfoV1_7(
+        const std::string& imageId, const std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7>& buffers);
 
     template <typename BufferType>
     int32_t ProcessBufferInfo(const std::string& imageId, const BufferType& buffer)
@@ -150,6 +153,8 @@ public:
 private:
     int32_t JudgeBuffersType(
         const std::vector<HDI::Camera::V1_5::ImageBufferInfo_V1_4>& buffers, std::unique_ptr<ImageInfo>& imageInfo);
+    int32_t JudgeBuffersTypeV7(const std::string& imageId,
+        const std::vector<HDI::Camera::V1_7::ImageBufferInfo_V1_7>& buffers, std::unique_ptr<ImageInfo>& imageInfo);
     std::unique_ptr<ImageInfo> CreateFromMeta(int32_t defaultSize,
         const sptr<HDI::Camera::V1_0::MapDataSequenceable>& metadata);
     std::tuple<int32_t, bool, uint32_t, uint32_t, DpsMetadata> ParseMeta(
@@ -157,8 +162,14 @@ private:
     std::shared_ptr<PictureIntf> AssemblePicture(const HDI::Camera::V1_3::ImageBufferInfoExt& buffer);
     std::shared_ptr<PictureIntf> AssemblePictureV4(
         const HDI::Camera::V1_5::ImageBufferInfo_V1_4& bufferV4, bool isUseImageHandle);
+    std::shared_ptr<PictureIntf> AssemblePictureV7(
+        const std::string& imageId, const HDI::Camera::V1_7::ImageBufferInfo_V1_7& bufferV7, bool isUseImageHandle);
     std::vector<std::shared_ptr<PictureIntf>> AssemblePictureList(
         const HDI::Camera::V1_5::ImageBufferInfo_V1_4& buffer);
+    std::vector<std::shared_ptr<PictureIntf>> AssemblePictureListV7(const std::string& imageId,
+        const HDI::Camera::V1_7::ImageBufferInfo_V1_7& bufferV7);
+    int32_t ProcessPictureInfo1_7For1_4(
+        const std::string& imageId, const HDI::Camera::V1_7::ImageBufferInfo_V1_7& bufferV7);
     sptr<SurfaceBuffer> TransBufferHandleToSurfaceBuffer(const BufferHandle* bufferHandle);
     BufferHandle* CloneBufferHandle(const BufferHandle* handle);
     void SetAuxiliaryPicture(const std::shared_ptr<PictureIntf>& picture, BufferHandle *bufferHandle,
@@ -167,6 +178,8 @@ private:
         const std::shared_ptr<PictureIntf>& picture);
     void AssemleAuxilaryPictureV4(
         const HDI::Camera::V1_5::ImageBufferInfo_V1_4& bufferV4, const std::shared_ptr<PictureIntf>& picture);
+    void AssemleAuxilaryPictureV7(const HDI::Camera::V1_7::ImageBufferInfo_V1_7& bufferV7,
+        const std::shared_ptr<PictureIntf>& picture);
     void ReportEvent(const std::string& imageId);
 
     template <typename T>

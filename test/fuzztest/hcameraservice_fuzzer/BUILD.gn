@@ -164,6 +164,7 @@ ohos_fuzztest("HCameraServiceFuzzTest") {
     "resource_schedule_service:ressched_client",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 }
 

@@ -260,6 +260,7 @@ ohos_shared_library("camera_napi_base") {
     "libuv:uv",
     "qos_manager:qos",
     "samgr:samgr_proxy",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   public_external_deps = [

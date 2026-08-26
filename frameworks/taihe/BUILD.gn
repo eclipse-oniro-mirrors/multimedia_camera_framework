@@ -127,6 +127,7 @@ taihe_shared_library("camera_taihe") {
     "napi:ace_napi",
     "node:node_header_notice",
     "runtime_core:ani_helpers",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
   ]
 
   sanitize = {

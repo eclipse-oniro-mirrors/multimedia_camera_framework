@@ -8383,5 +8383,24 @@ int32_t CaptureSession::EnableAutoExtendedGainmapDelivery(bool enabled)
     UnlockForControl();
     return CameraErrorCode::SUCCESS;
 }
+
+int32_t CaptureSession::ExpandLhdrGainmapStream(bool enabled)
+{
+    MEDIA_INFO_LOG("CaptureSession::ExpandLhdrGainmapStream enabled:%{public}d", enabled);
+    CHECK_RETURN_RET_ELOG(!photoOutput_, CameraErrorCode::SERVICE_FATL_ERROR,
+        "CaptureSession::ExpandLhdrGainmapStream() photoOutput_ is nullptr");
+    sptr<PhotoOutput> photoOutput = (sptr<PhotoOutput>&)photoOutput_;
+    bool isNeedExpandLhdrGainmapStream =
+        (isDeferTypeSetted_ && !isImageDeferred_) || (!isDeferTypeSetted_ && !photoOutput->IsEnableDeferred());
+    if (isNeedExpandLhdrGainmapStream) {
+        auto captureSession = GetCaptureSession();
+        CHECK_RETURN_RET_ELOG(!captureSession, CameraErrorCode::SERVICE_FATL_ERROR,
+            "CaptureSession::ExpandLhdrGainmapStream() captureSession is nullptr");
+        int32_t errCode = captureSession->ExpandLhdrGainmapStream(enabled);
+        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
+            "Failed to ExpandLhdrGainmapStream, %{public}d", errCode);
+    }
+    return CameraErrorCode::SUCCESS;
+}
 } // namespace CameraStandard
 } // namespace OHOS

@@ -104,6 +104,7 @@ ohos_shared_library("movie_file") {
     "av_codec:native_media_acodec",
     "av_codec:native_media_codecbase",
     "drivers_interface_camera:libbuffer_handle_sequenceable_1.0",
+    "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
     "drivers_interface_camera:libmap_data_sequenceable_1.0",
     "drivers_interface_camera:metadata",
     "media_library:media_library_camera_helper",
