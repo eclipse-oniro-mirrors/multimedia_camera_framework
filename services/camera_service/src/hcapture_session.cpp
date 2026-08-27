@@ -3283,8 +3283,8 @@ std::vector<OutputInfo> HCaptureSession::GetOutputInfos()
 int32_t HCaptureSession::EnableMechDelivery(bool isEnableMech)
 {
     MEDIA_INFO_LOG("%{public}s is called, isEnableMech:%{public}d", __FUNCTION__, isEnableMech);
-    std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
     auto currentState = stateMachine_.GetCurrentState();
+    std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
     switch (currentState) {
         case CaptureSessionState::SESSION_INIT:
         case CaptureSessionState::SESSION_CONFIG_INPROGRESS:
