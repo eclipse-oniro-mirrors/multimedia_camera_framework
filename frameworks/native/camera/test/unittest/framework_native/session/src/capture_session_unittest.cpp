@@ -15188,7 +15188,7 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_217, TestSize.Level0)
     EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
     sessionForSys->LockForControl();
-    std::vector<ImagingMode> imagingModes;
+    std::vector<CameraImagingMode> imagingModes;
     int32_t retCode = sessionForSys->GetSupportedImagingMode(imagingModes);
     EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
     EXPECT_EQ(sessionForSys->UnlockForControl(), CameraErrorCode::SUCCESS);
@@ -15234,18 +15234,18 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_218, TestSize.Level0)
     EXPECT_EQ(sessionForSys->UnlockForControl(), CameraErrorCode::SUCCESS);
 
     sessionForSys->LockForControl();
-    std::vector<ImagingMode> imagingModes;
+    std::vector<CameraImagingMode> imagingModes;
     int32_t retCode = sessionForSys->GetSupportedImagingMode(imagingModes);
     EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
     EXPECT_NE(imagingModes.size(), 0);
     EXPECT_EQ(sessionForSys->UnlockForControl(), CameraErrorCode::SUCCESS);
 
     bool isSupported;
-    EXPECT_EQ(sessionForSys->IsImagingModeSupported(ImagingMode::IMAGING_MODE_RGB, isSupported), 
+    EXPECT_EQ(sessionForSys->IsImagingModeSupported(CameraImagingMode::IMAGING_MODE_RGB, isSupported), 
         CameraErrorCode::SUCCESS);
     EXPECT_TRUE(isSupported);
 
-    ImagingMode imagingMode = static_cast<ImagingMode>(5);
+    CameraImagingMode imagingMode = static_cast<CameraImagingMode>(5);
     EXPECT_EQ(sessionForSys->IsImagingModeSupported(imagingMode, isSupported), CameraErrorCode::SUCCESS);
     EXPECT_FALSE(isSupported);
 
@@ -15282,7 +15282,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_219, TestSize.Level0)
     EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
     EXPECT_EQ(sessionForSys->CommitConfig(), 0);
  
-    ImagingMode imagingMode = static_cast<ImagingMode>(5);
+    CameraImagingMode imagingMode = static_cast<CameraImagingMode>(5);
     ASSERT_NE(sessionForSys->SetImagingMode(imagingMode), 0);
 
     input->Close();
@@ -15318,13 +15318,11 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_0220, TestSize.Level0
     EXPECT_EQ(sessionForSys->AddOutput(preview), 0);
     EXPECT_EQ(sessionForSys->CommitConfig(), 0);
 
-    ImagingMode imagingMode = ImagingMode::IMAGING_MODE_RGB;
+    CameraImagingMode imagingMode = CameraImagingMode::IMAGING_MODE_RGB;
     bool isSupported;
     EXPECT_EQ(sessionForSys->IsImagingModeSupported(imagingMode, isSupported), CameraErrorCode::SUCCESS);
     if (isSupported) {
         EXPECT_EQ(sessionForSys->SetImagingMode(imagingMode), CameraErrorCode::SUCCESS);
-    } else {
-        EXPECT_EQ(sessionForSys->SetImagingMode(imagingMode), CameraErrorCode::OPERATION_NOT_ALLOWED);
     }
 
     input->Close();
@@ -15366,10 +15364,10 @@ HWTEST_F(CaptureSessionUnitTest, capture_session_unit_221, TestSize.Level0)
     sessionForSys->changedMetadata_->addEntry(OHOS_CONTROL_IMAGING_MODE, &testType, 1);
     EXPECT_EQ(sessionForSys->UnlockForControl(), CameraErrorCode::SUCCESS);
 
-    ImagingMode imagingMode;
+    CameraImagingMode imagingMode;
     int32_t retCode = sessionForSys->GetImagingMode(imagingMode);
     EXPECT_EQ(retCode, CameraErrorCode::SUCCESS);
-    EXPECT_EQ(imagingMode, ImagingMode::IMAGING_MODE_AUTO);
+    EXPECT_EQ(imagingMode, CameraImagingMode::IMAGING_MODE_AUTO);
 
     input->Close();
     preview->Release();

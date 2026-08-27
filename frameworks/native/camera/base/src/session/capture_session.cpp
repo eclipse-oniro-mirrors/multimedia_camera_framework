@@ -53,6 +53,7 @@
 #include "picture_interface.h"
 #include "features/composition_feature.h"
 #include "hstream_common.h"
+#include "shared_buffer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -6186,7 +6187,7 @@ int32_t CaptureSession::GetColorTintRange(std::vector<int32_t> &colorTintRange)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_COLOR_TINT_RANGE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetColorTintRange Failed with return code %{public}d", ret);
-    int32_t num = 4;
+    uint32_t num = 4;
     if (item.count == num) {
         colorTintRange.clear();
         colorTintRange.push_back(item.data.i32[1]);
@@ -6219,7 +6220,7 @@ int32_t CaptureSession::GetColorTint(int32_t &colorTintValue)
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_COLOR_TINT, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetColorTint Failed with return code %{public}d", ret);
-    int32_t num = 1;
+    uint32_t num = 1;
     if (item.count == num) {
         colorTintValue = item.data.i32[0];
         MEDIA_INFO_LOG("CaptureSession::GetColorTint: %{public}d", colorTintValue);
@@ -6240,7 +6241,7 @@ int32_t CaptureSession::SetColorTint(int32_t colorTintValue)
     
     std::vector<int32_t> range;
     int32_t retCode = GetColorTintRange(range);
-    int32_t num = 2;
+    size_t num = 2;
     if (retCode != CameraErrorCode::SUCCESS || range.size() < num) {
         MEDIA_ERR_LOG("CaptureSession::SetColorTint: failed to get color tint range");
         return (retCode == CameraErrorCode::SUCCESS) ? CameraErrorCode::INVALID_ARGUMENT : retCode;
@@ -8068,7 +8069,7 @@ bool CaptureSession::ValidateSceneModeLength(uint32_t currentIndex, uint32_t tot
     return true;
 }
 
-ZoomPointInfo CaptureSession::ParseZoomPointInfo(const camera_metadata_item_t& item, int32_t& index)
+ZoomPointInfo CaptureSession::ParseZoomPointInfo(const camera_metadata_item_t& item, uint32_t& index)
 {
     ZoomPointInfo zoomPointInfo;
     const float zoomScaleFloat = 100.f;
@@ -8084,7 +8085,7 @@ void CaptureSession::ProcessSceneModeData(const camera_metadata_item_t& item, Sc
                                           std::vector<ZoomPointInfo>& zoomPointInfoList)
 {
     const int32_t skipLen = 2;
-    for (int32_t i = 0; i < item.count;) {
+    for (uint32_t i = 0; i < item.count;) {
         SceneMode sceneMode = static_cast<SceneMode>(item.data.i32[i++]);
         MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfos scene mode:%{public}d", sceneMode);
 

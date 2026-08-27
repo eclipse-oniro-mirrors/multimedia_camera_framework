@@ -22,7 +22,6 @@
 
 namespace OHOS {
 namespace CameraStandard {
-namespace DeferredProcessing {
 // LCOV_EXCL_START
 SharedBuffer::SharedBuffer(int64_t capacity)
     : capacity_(capacity), name_("DPS ShareMemory")
@@ -96,6 +95,5 @@ int SharedBuffer::GetFd() const
     return ashmem_ != nullptr ? ashmem_->GetAshmemFd() : INVALID_FD;
 }
 // LCOV_EXCL_STOP
-} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

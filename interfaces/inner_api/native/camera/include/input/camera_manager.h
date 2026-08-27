@@ -88,6 +88,11 @@ struct CameraStatusInfo {
     std::string bundleName;
 };
 
+struct CameraSharedStatusInfo {
+    sptr<CameraDevice> cameraDevice;
+    CameraSharedStatus cameraSharedStatus;
+};
+
 struct TorchStatusInfo {
     bool isTorchAvailable;
     bool isTorchActive;
@@ -149,7 +154,7 @@ class CameraSharedStatusListener {
 public:
     CameraSharedStatusListener() = default;
     virtual ~CameraSharedStatusListener() = default;
-    virtual void OnCameraSharedStatusChanged(const CameraSharedStatus status) const = 0;
+    virtual void OnCameraSharedStatusChanged(const CameraSharedStatusInfo &cameraSharedStatusInfo) const = 0;
 };
 
 class CameraSpectrumInfoListener {
@@ -1461,7 +1466,7 @@ class CameraSharedStatusListenerManager : public CameraManagerGetter,
                                        public CameraSharedServiceCallbackStub,
                                        public CameraListenerManager<CameraSharedStatusListener> {
 public:
-    int32_t OnCameraSharedStatusChanged(const int32_t status) override;
+    int32_t OnCameraSharedStatusChanged(const std::string& cameraId, const int32_t status) override;
 };
 
 class CameraSpectrumListenerManager : public CameraManagerGetter,

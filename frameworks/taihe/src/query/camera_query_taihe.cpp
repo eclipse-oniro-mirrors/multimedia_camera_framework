@@ -1017,27 +1017,27 @@ bool WhiteBalanceQueryImpl::IsWhiteBalanceModeSupported(WhiteBalanceMode mode)
     return isSupported;
 }
 
-bool WhiteBalanceQueryImpl::IsWhiteBalanceGainsSupported()
+bool ColorControlsQueryImpl::IsRGBBiasSupported()
 {
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
-        "SystemApi IsWhiteBalanceGainsSupported is called!");
+        "SystemApi IsRGBBiasSupported is called!");
     bool isSupported = false;
     CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, isSupported,
-        "IsWhiteBalanceGainsSupported captureSession_ is null");
+        "IsRGBBiasSupported captureSession_ is null");
     int32_t retCode = captureSession_->IsWhiteBalanceGainsSupported(isSupported);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), isSupported);
     return isSupported;
 }
 
-void WhiteBalanceImpl::SetWhiteBalanceGains(WhiteBalanceGains gains)
+void ColorControlsImpl::SetRGBBias(RGBBias bias)
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi SetWhiteBalanceGains is called!");
-    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetWhiteBalanceGains captureSession_ is null");
+        "SystemApi SetRGBBias is called!");
+    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetRGBBias captureSession_ is null");
     std::vector<double> normalizedGains = {
-        gains.redGain,
-        gains.greenGain,
-        gains.blueGain
+        bias.redBias,
+        bias.greenBias,
+        bias.blueBias
     };
     captureSession_->LockForControl();
     int32_t retCode = captureSession_->SetWhiteBalanceGains(normalizedGains);
@@ -1045,25 +1045,25 @@ void WhiteBalanceImpl::SetWhiteBalanceGains(WhiteBalanceGains gains)
     CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
 }
 
-WhiteBalanceGains WhiteBalanceImpl::GetWhiteBalanceGains()
+RGBBias ColorControlsImpl::GetRGBBias()
 {
-    WhiteBalanceGains gains = {};
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), gains,
-        "SystemApi GetWhiteBalanceGains is called!");
-    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, gains, "GetWhiteBalanceGains captureSession_ is null");
+    RGBBias bias = {};
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), bias,
+        "SystemApi GetRGBBias is called!");
+    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, bias, "GetRGBBias captureSession_ is null");
     std::vector<double> vecWhiteBalanceGains;
     int32_t retCode = captureSession_->GetWhiteBalanceGains(vecWhiteBalanceGains);
-    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), gains);
-    MEDIA_INFO_LOG("GetWhiteBalanceGains len = %{public}zu", vecWhiteBalanceGains.size());
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), bias);
+    MEDIA_INFO_LOG("GetRGBBias len = %{public}zu", vecWhiteBalanceGains.size());
     constexpr int32_t rangeSize = 3;
-    CHECK_RETURN_RET(vecWhiteBalanceGains.size() != rangeSize, gains);
-    int32_t redGainIdx = 0;
-    int32_t greenGainIdx = 1;
-    int32_t blueGainIdx = 2;
-    gains.redGain = vecWhiteBalanceGains[redGainIdx];
-    gains.greenGain = vecWhiteBalanceGains[greenGainIdx];
-    gains.blueGain = vecWhiteBalanceGains[blueGainIdx];
-    return gains;
+    CHECK_RETURN_RET(vecWhiteBalanceGains.size() != rangeSize, bias);
+    int32_t redBiasIdx = 0;
+    int32_t greenBiasIdx = 1;
+    int32_t blueBiasIdx = 2;
+    bias.redBias = vecWhiteBalanceGains[redBiasIdx];
+    bias.greenBias = vecWhiteBalanceGains[greenBiasIdx];
+    bias.blueBias = vecWhiteBalanceGains[blueBiasIdx];
+    return bias;
 }
 
 array<int32_t> WhiteBalanceQueryImpl::GetWhiteBalanceRange()
@@ -1653,6 +1653,33 @@ void AutoDeviceSwitchImpl::EnableAutoDeviceSwitch(bool enabled)
         "AutoDeviceSwitchImpl::EnableAutoDeviceSwitch fail %{public}d", retCode);
 }
 
+double ColorControlsImpl::GetSaturation()
+{
+    float saturationVal = 0.0f;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        static_cast<double>(saturationVal), "SystemApi GetSaturation is called!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not GetSaturation in current session!");
+    return false;
+}
+
+void ColorControlsImpl::SetSaturation(double val)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetSaturation is called!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not SetSaturation in current session!");
+}
+
+bool ColorControlsQueryImpl::IsSaturationSupported()
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsSaturationSupported is called!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not IsSaturationSupported in current session!");
+    return false;
+}
+
 bool ImagingModeQueryImpl::IsImagingModeSupported(ImagingModeType mode)
 {
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
@@ -1661,7 +1688,7 @@ bool ImagingModeQueryImpl::IsImagingModeSupported(ImagingModeType mode)
         "IsImagingModeSupported captureSessionForSys_ is null");
     bool isSupported = false;
     int32_t retCode = captureSessionForSys_->IsImagingModeSupported(
-        static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()), isSupported);
+        static_cast<OHOS::CameraStandard::CameraImagingMode>(mode.get_value()), isSupported);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), false);
     return isSupported;
 }
@@ -1673,7 +1700,7 @@ ImagingModeType ImagingModeImpl::GetImagingMode()
         "SystemApi GetImagingMode is called!");
     CHECK_RETURN_RET_ELOG(captureSessionForSys_ == nullptr, errType,
         "GetImagingMode captureSessionForSys_ is null");
-    OHOS::CameraStandard::ImagingMode mode;
+    OHOS::CameraStandard::CameraImagingMode mode;
     int32_t retCode = captureSessionForSys_->GetImagingMode(mode);
     CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), errType);
     return ImagingModeType(static_cast<ImagingModeType::key_t>(mode));
@@ -1685,7 +1712,7 @@ void ImagingModeImpl::SetImagingMode(ImagingModeType mode)
         "SystemApi SetImagingMode is called!");
     CHECK_RETURN_ELOG(captureSessionForSys_ == nullptr, "SetImagingMode captureSessionForSys_ is null!");
     int retCode = captureSessionForSys_->SetImagingMode(
-        static_cast<OHOS::CameraStandard::ImagingMode>(mode.get_value()));
+        static_cast<OHOS::CameraStandard::CameraImagingMode>(mode.get_value()));
     CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(retCode), "SetImagingMode call Failed!");
 }
 } // namespace Ani

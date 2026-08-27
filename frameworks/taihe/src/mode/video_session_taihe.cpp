@@ -51,9 +51,7 @@ double VideoSessionImpl::GetSaturation()
         static_cast<double>(saturationVal), "SystemApi %{public}s is called!", __FUNCTION__);
     CHECK_RETURN_RET_ELOG(videoSession_ == nullptr, static_cast<double>(saturationVal),
         "%{public}s: videoSession_ is nullptr", __FUNCTION__);
-    videoSession_->LockForControl();
     int32_t retCode = videoSession_->GetSaturation(saturationVal);
-    videoSession_->UnlockForControl();
     CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
         "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
     return static_cast<double>(saturationVal);

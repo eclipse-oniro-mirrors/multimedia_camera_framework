@@ -442,24 +442,26 @@ CameraSharedStatusListenerNapi::~CameraSharedStatusListenerNapi()
     MEDIA_DEBUG_LOG("~CameraSharedStatusListenerNapi is called.");
 }
 
-void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallbackAsync(CameraSharedStatus status) const
+void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallbackAsync(
+    const CameraSharedStatusInfo &cameraSharedStatusInfo) const
 {
-    MEDIA_INFO_LOG("OnCameraSharedStatusCallbackAsync is called, status: %{public}d", status);
+    MEDIA_INFO_LOG("OnCameraSharedStatusCallbackAsync is called, status: %{public}d",
+        static_cast<int32_t>(cameraSharedStatusInfo.cameraSharedStatus));
     std::unique_ptr<CameraSharedStatusCallbackInfo> callbackInfo =
-        std::make_unique<CameraSharedStatusCallbackInfo>(status, shared_from_this());
+        std::make_unique<CameraSharedStatusCallbackInfo>(cameraSharedStatusInfo, shared_from_this());
     CameraSharedStatusCallbackInfo *event = callbackInfo.get();
     auto task = [event]() {
         CameraSharedStatusCallbackInfo* callbackInfo = reinterpret_cast<CameraSharedStatusCallbackInfo *>(event);
         if (callbackInfo) {
             auto listener = callbackInfo->listener_.lock();
             if (listener != nullptr) {
-                listener->OnCameraSharedStatusCallback(callbackInfo->cameraSharedStatus_);
+                listener->OnCameraSharedStatusCallback(callbackInfo->info_);
             }
             delete callbackInfo;
         }
     };
     std::unordered_map<std::string, std::string> params = {
-        {"status", std::to_string(status)},
+        {"status", std::to_string(cameraSharedStatusInfo.cameraSharedStatus)},
     };
     std::string taskName =
         CameraNapiUtils::GetTaskName("CameraSharedStatusListenerNapi::OnCameraSharedStatusCallbackAsync", params);
@@ -470,21 +472,36 @@ void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallbackAsync(CameraSha
     }
 }
 
-void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallback(CameraSharedStatus status) const
+void CameraSharedStatusListenerNapi::OnCameraSharedStatusCallback(
+    const CameraSharedStatusInfo &cameraSharedStatusInfo) const
 {
-    MEDIA_INFO_LOG("OnCameraSharedStatusCallback is called, status: %{public}d", status);
+    MEDIA_INFO_LOG("OnCameraSharedStatusCallback is called, status: %{public}d",
+        static_cast<int32_t>(cameraSharedStatusInfo.cameraSharedStatus));
+    CAMERA_NAPI_CHECK_NULL_PTR_RETURN_VOID(cameraSharedStatusInfo.cameraDevice, "callback cameraDevice is null");
     ExecuteCallbackScopeSafe("cameraSharedStatus", [&]() {
+        napi_value callbackObj;
+        napi_create_object(env_, &callbackObj);
+        napi_value cameraDeviceNapi =
+            CameraNapiObjCameraDevice(*cameraSharedStatusInfo.cameraDevice).GenerateNapiValue(env_);
+        napi_set_named_property(env_, callbackObj, "camera", cameraDeviceNapi);
+        int32_t jsSharedStatus = cameraSharedStatusInfo.cameraSharedStatus;
+        napi_value propValue;
+        napi_create_int64(env_, jsSharedStatus, &propValue);
+        napi_set_named_property(env_, callbackObj, "sharedStatus", propValue);
+        MEDIA_INFO_LOG("CameraId: %{public}s, CameraSharedStatus: %{public}d",
+            cameraSharedStatusInfo.cameraDevice->GetID().c_str(),
+            cameraSharedStatusInfo.cameraSharedStatus);
         napi_value errCode = CameraNapiUtils::GetUndefinedValue(env_);
-        napi_value result;
-        napi_create_int32(env_, static_cast<int32_t>(status), &result);
-        return ExecuteCallbackData(env_, errCode, result);
+        return ExecuteCallbackData(env_, errCode, callbackObj);
     }, isAsync_);
 }
 
-void CameraSharedStatusListenerNapi::OnCameraSharedStatusChanged(CameraSharedStatus status) const
+void CameraSharedStatusListenerNapi::OnCameraSharedStatusChanged(
+    const CameraSharedStatusInfo &cameraSharedStatusInfo) const
 {
-    MEDIA_INFO_LOG("OnCameraSharedStatusChanged is called, status: %{public}d", status);
-    OnCameraSharedStatusCallbackAsync(status);
+    MEDIA_INFO_LOG("OnCameraSharedStatusChanged is called, status: %{public}d",
+        static_cast<int32_t>(cameraSharedStatusInfo.cameraSharedStatus));
+    OnCameraSharedStatusCallbackAsync(cameraSharedStatusInfo);
 }
 
 TorchListenerNapi::TorchListenerNapi(napi_env env): ListenerBase(env)
@@ -781,7 +798,9 @@ napi_value CameraManagerNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getCameraStorageSize", GetCameraStorageSize),
         DECLARE_NAPI_FUNCTION("on", On),
         DECLARE_NAPI_FUNCTION("once", Once),
-        DECLARE_NAPI_FUNCTION("off", Off)
+        DECLARE_NAPI_FUNCTION("off", Off),
+        DECLARE_NAPI_FUNCTION("onCameraSharedStatus", OnCameraSharedStatus),
+        DECLARE_NAPI_FUNCTION("offCameraSharedStatus", OffCameraSharedStatus)
     };
 
     status = napi_define_class(env, CAMERA_MANAGER_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,

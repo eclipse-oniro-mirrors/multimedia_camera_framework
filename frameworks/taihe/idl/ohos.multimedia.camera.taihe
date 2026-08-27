@@ -216,6 +216,11 @@ struct CameraStatusInfo {
   status: CameraStatus;
 }
 
+struct CameraSharedStatusInfo {
+  camera: CameraDevice;
+  sharedStatus: CameraSharedStatus;
+}
+
 enum VideoMetaType : i32 {
   VIDEO_META_MAKER_INFO = 0,
 }
@@ -854,10 +859,6 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
         }
   """)
 
-  IsColorCubeSupported(): bool;
-  EnableColorCube(lutData: Array<u8>): void;
-  DisableColorCube(): void;
-  GetSupportedCubeDimension(): i32;
   OnError(callback: (err: @sts_type("BusinessError<void>") Opaque)=> void): void;
   OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque)=> void>): void;
 
@@ -992,9 +993,14 @@ struct ControlCenterStatusInfo {
   @readonly isActive: bool;
 }
 
-interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter, ManualIso, ManualFocus, ManualExposure, Aperture, OIS {
+interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter, ManualIso, ManualFocus, ManualExposure, Aperture, OIS, ColorControls {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
+
+  IsColorCubeSupported(): bool;
+  EnableColorCube(lutData: Array<u8>): void;
+  DisableColorCube(): void;
+  GetSupportedCubeDimension(): i32;
   @!sts_inject_into_interface("on(type: string, callback: (data: object)=> void): void;")
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
   @!sts_inject_into_class("""on(type: string, callback: object): void {
@@ -1052,9 +1058,6 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
         }
   """)
 
-  IsSaturationSupported(): bool;
-  GetSaturation(): f64;
-  SetSaturation(val: f64): void;
   OnError(callback: (err: @sts_type("BusinessError<void>") Opaque)=> void): void;
   OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque)=> void>): void;
 
@@ -1826,8 +1829,6 @@ interface CameraManager {
               this.onFoldStatusChange(callback as (err: BusinessError<void>, data: FoldStatusInfo)=> void);
             } else if (type === "torchStatusChange") {
               this.onTorchStatusChange(callback as (err: BusinessError<void>, data: TorchStatusInfo)=> void);
-            } else if (type === "cameraSharedStatus") {
-              this.onCameraSharedStatusChange(callback as (err: BusinessError<void>, data: CameraSharedStatus)=> void);
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1844,8 +1845,6 @@ interface CameraManager {
               this.offFoldStatusChange(callback as (((err: BusinessError<void>, data: FoldStatusInfo)=> void) | undefined));
             } else if (type === "torchStatusChange") {
               this.offTorchStatusChange(callback as (((err: BusinessError<void>, data: TorchStatusInfo)=> void) | undefined));
-            } else if (type === "cameraSharedStatus") {
-              this.offCameraSharedStatusChange(callback as (err: BusinessError<void>, data: CameraSharedStatus)=> void);
             } else {
               throw new Error(`Unknown type: ${type}`);
             }
@@ -1862,8 +1861,8 @@ interface CameraManager {
   OffTorchStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: TorchStatusInfo)=> void>): void;
   OnControlCenterStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void): void;
   OffControlCenterStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: bool)=> void>): void;
-  OnCameraSharedStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void): void;
-  OffCameraSharedStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatus)=> void>): void;
+  OnCameraSharedStatusChange(callback: (err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatusInfo)=> void): void;
+  OffCameraSharedStatusChange(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque, data: CameraSharedStatusInfo)=> void>): void;
   IsControlCenterActive(): bool;
   CreateControlCenterSession(): ControlCenterSession;
 }
@@ -2549,13 +2548,12 @@ interface WhiteBalanceQuery {
   IsWhiteBalanceModeSupported(mode: WhiteBalanceMode): bool;
   GetWhiteBalanceRange(): Array<i32>;
   GetColorTintRange(): Array<i32>;
-  IsWhiteBalanceGainsSupported(): bool;
 }
 
-struct WhiteBalanceGains {
-  redGain: f64;
-  greenGain: f64;
-  blueGain: f64;
+struct RGBBias {
+  redBias: f64;
+  greenBias: f64;
+  blueBias: f64;
 }
 
 interface WhiteBalance : WhiteBalanceQuery {
@@ -2565,8 +2563,6 @@ interface WhiteBalance : WhiteBalanceQuery {
   GetWhiteBalanceMode(): WhiteBalanceMode;
   SetColorTint(colorTint: i32): void;
   GetColorTint(): i32;
-  GetWhiteBalanceGains(): WhiteBalanceGains;
-  SetWhiteBalanceGains(gains: WhiteBalanceGains): void;
 }
 
 interface ManualIsoQuery {
@@ -2633,6 +2629,18 @@ interface AutoDeviceSwitchQuery {
 
 interface AutoDeviceSwitch : AutoDeviceSwitchQuery {
   EnableAutoDeviceSwitch(enabled: bool): void;
+}
+
+interface ColorControlsQuery {
+  IsSaturationSupported(): bool;
+  IsRGBBiasSupported(): bool;
+}
+
+interface ColorControls : ColorControlsQuery {
+  GetSaturation(): f64;
+  SetSaturation(val: f64): void;
+  GetRGBBias(): RGBBias;
+  SetRGBBias(bias: RGBBias): void;
 }
 
 enum MetadataObjectType: i32 {
@@ -2903,8 +2911,8 @@ interface QuickThumbnail {
 }
 
 enum CameraSharedStatus : i32 {
-  CAMERA_SHARED_STATUS_SHARED = 0,
-  CAMERA_SHARED_STATUS_UNSHARED = 1
+  CAMERA_STATUS_SHARED = 0,
+  CAMERA_STATUS_UNSHARED = 1
 }
 
 enum ImagingModeType : i32 {

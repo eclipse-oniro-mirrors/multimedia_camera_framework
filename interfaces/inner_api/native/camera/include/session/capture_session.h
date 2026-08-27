@@ -2614,7 +2614,7 @@ protected:
                                  camera_metadata_item_t& item);
     bool ValidateSceneModeLength(uint32_t currentIndex, uint32_t totalCount, int32_t length);
     
-    ZoomPointInfo ParseZoomPointInfo(const camera_metadata_item_t& item, int32_t& index);
+    ZoomPointInfo ParseZoomPointInfo(const camera_metadata_item_t& item, uint32_t& index);
     
     void ProcessSceneModeData(const camera_metadata_item_t& item, SceneMode currentMode,
                               std::vector<ZoomPointInfo>& zoomPointInfoList);

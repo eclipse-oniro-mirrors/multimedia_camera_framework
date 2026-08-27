@@ -171,7 +171,7 @@ class TestCameraSharedStatusListener : public CameraSharedStatusListener {
 public:
     TestCameraSharedStatusListener() = default;
     virtual ~TestCameraSharedStatusListener() = default;
-    void OnCameraSharedStatusChanged(const CameraSharedStatus status) const override;
+    void OnCameraSharedStatusChanged(const CameraSharedStatusInfo &cameraSharedStatusInfo) const override;
 };
 class TestCameraSpectrumInfoListener : public CameraSpectrumInfoListener {
 public:

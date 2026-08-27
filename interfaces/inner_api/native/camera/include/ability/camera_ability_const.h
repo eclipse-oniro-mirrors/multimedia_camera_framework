@@ -189,11 +189,11 @@ enum CameraStatus {
 };
 
 enum CameraSharedStatus {
-    CAMERA_SHARED_STATUS_SHARED = 0,
-    CAMERA_SHARED_STATUS_UNSHARED
+    CAMERA_STATUS_SHARED = 0,
+    CAMERA_STATUS_UNSHARED
 };
 
-enum ImagingMode {
+enum CameraImagingMode {
     IMAGING_MODE_AUTO = 0,
     IMAGING_MODE_RGB,
     IMAGING_MODE_IR
@@ -238,8 +238,8 @@ extern const std::unordered_map<camera_color_reservation_type_t, ColorReservatio
 extern const std::unordered_map<ColorReservationType, camera_color_reservation_type_t> g_fwkColorReservationTypeMap_;
 extern const std::unordered_map<NightSubMode, CameraNightSubMode> g_fwkNightSubModeMap_;
 extern const std::unordered_map<CameraNightSubMode, NightSubMode> g_metaNightSubModeMap_;
-extern const std::unordered_map<camera_imaging_mode_enum_t, ImagingMode> g_metaImagingModesMap_;
-extern const std::unordered_map<ImagingMode, camera_imaging_mode_enum_t> g_fwkImagingModesMap_;
+extern const std::unordered_map<camera_imaging_mode_enum_t, CameraImagingMode> g_metaImagingModesMap_;
+extern const std::unordered_map<CameraImagingMode, camera_imaging_mode_enum_t> g_fwkImagingModesMap_;
 
 template <typename S, typename T>
 void g_transformValidData(

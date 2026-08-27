@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 #include <atomic>
+#include <functional>
 #include <refbase.h>
 
 #include "hcamera_device.h"
@@ -58,6 +59,11 @@ public:
     void UnmarkNonPrivileged(pid_t pid);
     void EjectUser(pid_t pid);
     void SendErrorToPid(pid_t pid, int32_t errorType, int32_t errorMsg);
+
+    // Notify the service when the camera's shared state changes: SHARED when the number of distinct
+    // app users grows from 1 to 2; UNSHARED when it drops from 2 to 1 (back to exclusive) or from 1 to
+    // 0 (camera released).
+    void SetSharedStatusChangedCallback(std::function<void(const std::string&, bool)> callback);
 
     std::string GetCameraId() const;
 
@@ -112,7 +118,11 @@ private:
 
     int32_t OnRealDeviceOpened();
     void UnregisterFromMap();
+    void NotifySharedStatusChanged(bool isShared);
+    void NotifyUnsharedStatus(); // 1->0 (all clients released) UNSHARED, reported once per device instance
     std::atomic<bool> isOpened_{false}; // Prevent duplicate Open
+    std::atomic<bool> unsharedNotified_{false}; // Dedup the 1->0 UNSHARED report (ReleaseRef close path vs destructor)
+    std::function<void(const std::string&, bool)> sharedStatusChangedCallback_;
 };
 
 } // namespace CameraStandard

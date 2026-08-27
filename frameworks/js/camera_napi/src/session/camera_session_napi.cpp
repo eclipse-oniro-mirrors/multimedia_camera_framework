@@ -318,9 +318,6 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::white_balance_pro
     DECLARE_NAPI_FUNCTION("getColorTintRange", CameraSessionNapi::GetColorTintRange),
     DECLARE_NAPI_FUNCTION("getColorTint", CameraSessionNapi::GetColorTint),
     DECLARE_NAPI_FUNCTION("setColorTint", CameraSessionNapi::SetColorTint),
-    DECLARE_NAPI_FUNCTION("isWhiteBalanceGainsSupported", CameraSessionNapi::IsWhiteBalanceGainsSupported),
-    DECLARE_NAPI_FUNCTION("getWhiteBalanceGains", CameraSessionNapi::GetWhiteBalanceGains),
-    DECLARE_NAPI_FUNCTION("setWhiteBalanceGains", CameraSessionNapi::SetWhiteBalanceGains),
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::auto_switch_props = {
@@ -6744,15 +6741,12 @@ napi_value CameraSessionNapi::GetWhiteBalanceGains(napi_env env, napi_callback_i
         CHECK_RETURN_RET(vecWhiteBalanceGains.size() != rangeSize, result);
         napi_value redGain;
         napi_create_double(env, vecWhiteBalanceGains[redGainIndex], &redGain);
-        napi_set_named_property(env, result, "redGain", redGain);
         napi_set_named_property(env, result, "redBias", redGain);
         napi_value greenGain;
         napi_create_double(env, vecWhiteBalanceGains[greenGainIndex], &greenGain);
-        napi_set_named_property(env, result, "greenGain", greenGain);
         napi_set_named_property(env, result, "greenBias", greenGain);
         napi_value blueGain;
         napi_create_double(env, vecWhiteBalanceGains[blueGainIndex], &blueGain);
-        napi_set_named_property(env, result, "blueGain", blueGain);
         napi_set_named_property(env, result, "blueBias", blueGain);
     } else {
         MEDIA_ERR_LOG("GetWhiteBalanceGains call Failed!");
@@ -6761,27 +6755,6 @@ napi_value CameraSessionNapi::GetWhiteBalanceGains(napi_env env, napi_callback_i
 }
 
 bool ParseWhiteBalanceGainsParam(napi_env env, napi_value root, std::vector<double> &whiteBalanceGains)
-{
-    const char* propertyNames[] = {"redGain", "greenGain", "blueGain"};
-
-    for (const char* prop : propertyNames) {
-        napi_value item = nullptr;
-        if (napi_get_named_property(env, root, prop, &item) == napi_ok) {
-            double gain;
-            if (napi_get_value_double(env, item, &gain) == napi_ok) {
-                if (gain < -1 || gain > 1) {
-                    return false;
-                }
-                whiteBalanceGains.emplace_back(gain);
-                continue;
-            }
-        }
-        whiteBalanceGains.emplace_back(0);
-    }
-    return true;
-}
-
-bool ParseWhiteBalanceGainsParam2(napi_env env, napi_value root, std::vector<double> &whiteBalanceGains)
 {
     const char* propertyNames[] = {"redBias", "greenBias", "blueBias"};
     for (const char* prop : propertyNames) {
@@ -6796,6 +6769,7 @@ bool ParseWhiteBalanceGainsParam2(napi_env env, napi_value root, std::vector<dou
                 continue;
             }
         }
+        whiteBalanceGains.emplace_back(0);
     }
     return true;
 }
@@ -6820,13 +6794,8 @@ napi_value CameraSessionNapi::SetWhiteBalanceGains(napi_env env, napi_callback_i
     CameraSessionNapi* cameraSessionNapi = nullptr;
     status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&cameraSessionNapi));
     if (status == napi_ok && cameraSessionNapi != nullptr && cameraSessionNapi->cameraSession_ != nullptr) {
-        size_t size_3 = 3;
         std::vector<double> whiteBalanceGains;
-        bool isSuccess = ParseWhiteBalanceGainsParam2(env, whiteBalanceGainsObject, whiteBalanceGains);
-        if (!isSuccess || whiteBalanceGains.size() != size_3) {
-            whiteBalanceGains = {};
-            isSuccess = ParseWhiteBalanceGainsParam(env, whiteBalanceGainsObject, whiteBalanceGains);
-        }
+        bool isSuccess = ParseWhiteBalanceGainsParam(env, whiteBalanceGainsObject, whiteBalanceGains);
         CHECK_RETURN_RET_ELOG(!isSuccess, result, "ParseWhiteBalanceGainsParam call failed");
         cameraSessionNapi->cameraSession_->LockForControl();
         int32_t retCode = cameraSessionNapi->cameraSession_->SetWhiteBalanceGains(whiteBalanceGains);
@@ -6894,11 +6863,10 @@ napi_value CameraSessionNapi::IsSaturationSupported(napi_env env, napi_callback_
     napi_value result = nullptr;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
-    auto result = CameraNapiUtils::GetUndefinedValue(env);
     if (jsParamParser.IsStatusOk() && cameraSessionNapi->cameraSession_ != nullptr) {
         int32_t retCode = cameraSessionNapi->cameraSession_->IsSaturationSupported(isSupported);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
-            return result;
+            return CameraNapiUtils::GetUndefinedValue(env);
         }
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::IsSaturationSupported get native object fail");
@@ -6973,7 +6941,7 @@ napi_value CameraSessionNapi::GetSupportedCubeDimension(napi_env env, napi_callb
 {
     MEDIA_DEBUG_LOG("GetSupportedCubeDimension is called.");
     int32_t dimension = -1;
-    auto result = nullptr;
+    napi_value result = nullptr;
     CameraSessionNapi* cameraSessionNapi = nullptr;
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
     if (jsParamParser.IsStatusOk() && cameraSessionNapi->cameraSession_ != nullptr) {
@@ -6990,17 +6958,17 @@ napi_value CameraSessionNapi::GetSupportedCubeDimension(napi_env env, napi_callb
 
 napi_value CameraSessionNapi::EnableColorCube(napi_env env, napi_callback_info info)
 {
-    MEDIA_DEBUG_LOG("EnableColorCube is called.");
+    MEDIA_INFO_LOG("EnableColorCube is called.");
     auto result = CameraNapiUtils::GetUndefinedValue(env);
     CameraSessionNapi* cameraSessionNapi = nullptr;
     napi_value argv[ARGS_ONE] = {0};
-    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, argv[PARAM0]);
     CHECK_RETURN_RET_ELOG(!jsParamParser.AssertStatus(PARAMETER_ERROR, "parse parameter occur error"), nullptr,
         "CameraSessionNapi::EnableColorCube parse parameter occur error");
     napi_status status;
     bool is_typed_array = false;
     status = napi_is_typedarray(env, argv[PARAM0], &is_typed_array);
-    if (status ! =napi_ok || !is_typed_array) {
+    if (status != napi_ok || !is_typed_array) {
         CameraNapiUtils::ThrowError(env, PARAMETER_ERROR, "EnableColorCube Incorrect lutData type.");
         return result;
     }
@@ -7017,9 +6985,8 @@ napi_value CameraSessionNapi::EnableColorCube(napi_env env, napi_callback_info i
     std::vector<uint8_t> lutData;
     lutData.assign(static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + length);
     if (cameraSessionNapi->cameraSession_ != nullptr) {
-        int32_t retCode = cameraSessionNapi->cameraSession_->EnableColorCube(std::move(lutData));
+        int32_t retCode = cameraSessionNapi->cameraSession_->EnableColorCube(lutData);
         if (!CameraNapiUtils::CheckError(env, retCode)) {
-            napi_get_boolean(env, isSupported, &result);
             return result;
         }
     } else {
@@ -7031,8 +6998,8 @@ napi_value CameraSessionNapi::EnableColorCube(napi_env env, napi_callback_info i
 napi_value CameraSessionNapi::DisableColorCube(napi_env env, napi_callback_info info)
 {
     MEDIA_DEBUG_LOG("DisableColorCube is called.");
-    auto result = CameraNapiUtils::GetUndefinedValue(env);
     CameraSessionNapi* cameraSessionNapi = nullptr;
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
     CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
     if (jsParamParser.IsStatusOk() && cameraSessionNapi->cameraSession_ != nullptr) {
         int32_t retCode = cameraSessionNapi->cameraSession_->DisableColorCube();
