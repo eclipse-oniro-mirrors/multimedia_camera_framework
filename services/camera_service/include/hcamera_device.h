@@ -242,6 +242,7 @@ private:
     std::shared_ptr<OHOS::Camera::CameraMetadata> cachedSettings_;
     int32_t cameraConcurrentType_ = 0;
     std::atomic<bool> isDeviceOpenedByConcurrent_ = false;
+    std::atomic<bool> isDirectorModeActive_ = false;
 
     sptr<HCameraHostManager> cameraHostManager_;
     std::string cameraID_;
@@ -314,6 +315,7 @@ private:
     void CheckZoomChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void CheckFocusChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void CheckVideoStabilizationChange(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
+    void CheckDirectorMode(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void UnPrepareZoom();
     int32_t OpenDevice(bool isEnableSecCam = false);
     void HandleFoldableDevice();

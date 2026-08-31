@@ -750,6 +750,11 @@ public:
     static napi_value GetSaturation(napi_env env, napi_callback_info info);
     static napi_value SetSaturation(napi_env env, napi_callback_info info);
 
+    static napi_value IsColorCubeSupported(napi_env env, napi_callback_info info);
+    static napi_value EnableColorCube(napi_env env, napi_callback_info info);
+    static napi_value DisableColorCube(napi_env env, napi_callback_info info);
+    static napi_value GetSupportedCubeDimension(napi_env env, napi_callback_info info);
+
     static napi_value OnExposureStateChange(napi_env env, napi_callback_info info);
     static napi_value OnExposureStateChangeSync(napi_env env, napi_callback_info info);
     static napi_value OffExposureStateChange(napi_env env, napi_callback_info info);
@@ -931,7 +936,7 @@ public:
     static const std::vector<napi_property_descriptor> optical_image_stabilization_props;
     static const std::vector<napi_property_descriptor> saturation_props;
     static const std::vector<napi_property_descriptor> aperture_info_cb_props;
-
+    static const std::vector<napi_property_descriptor> color_cube_props;
     void RegisterExposureCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterExposureCallbackListener(

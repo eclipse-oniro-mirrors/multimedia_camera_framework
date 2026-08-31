@@ -244,7 +244,6 @@ public:
     virtual bool IsWhiteBalanceModeSupported(WhiteBalanceMode mode);
     virtual array<int32_t> GetWhiteBalanceRange();
     virtual array<int32_t> GetColorTintRange();
-    virtual bool IsWhiteBalanceGainsSupported();
 };
 
 class WhiteBalanceImpl : public WhiteBalanceQueryImpl {
@@ -257,8 +256,6 @@ public:
     virtual WhiteBalanceMode GetWhiteBalanceMode();
     virtual void SetColorTint(int32_t colorTint);
     virtual int32_t GetColorTint();
-    virtual void SetWhiteBalanceGains(WhiteBalanceGains gains);
-    virtual WhiteBalanceGains GetWhiteBalanceGains();
 };
 
 class ManualExposureQueryImpl : virtual public SessionBase, virtual public FunctionBase {
@@ -407,6 +404,24 @@ public:
     explicit AutoDeviceSwitchImpl() {}
     virtual ~AutoDeviceSwitchImpl() = default;
     void EnableAutoDeviceSwitch(bool enabled);
+};
+
+class ColorControlsQueryImpl : virtual public SessionBase {
+public:
+    explicit ColorControlsQueryImpl() {}
+    virtual ~ColorControlsQueryImpl() = default;
+    virtual bool IsSaturationSupported();
+    virtual bool IsRGBBiasSupported();
+};
+
+class ColorControlsImpl : public ColorControlsQueryImpl {
+public:
+    explicit ColorControlsImpl() {}
+    virtual ~ColorControlsImpl() = default;
+    virtual double GetSaturation();
+    virtual void SetSaturation(double val);
+    virtual void SetRGBBias(RGBBias bias);
+    virtual RGBBias GetRGBBias();
 };
 
 class ImagingModeQueryImpl : virtual public SessionBase {

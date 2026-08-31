@@ -26,7 +26,8 @@ using namespace ohos::multimedia::camera;
 class VideoSessionImpl : public SessionImpl, public FlashImpl, public ZoomImpl, public StabilizationImpl,
                          public AutoExposureImpl, public ColorManagementImpl, public AutoDeviceSwitchImpl,
                          public FocusImpl, public WhiteBalanceImpl, public MacroImpl, public ManualIsoImpl,
-                         public ManualFocusImpl, public ManualExposureImpl, public ApertureImpl, public OISImpl {
+                         public ManualFocusImpl, public ManualExposureImpl, public ApertureImpl, public OISImpl,
+                         public ColorControlsImpl {
 public:
     explicit VideoSessionImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : SessionImpl(obj)
     {
@@ -36,9 +37,10 @@ public:
     }
     ~VideoSessionImpl() = default;
     void SetQualityPrioritization(QualityPrioritization quality);
-    bool IsSaturationSupported();
-    double GetSaturation();
-    void SetSaturation(double saturationVal);
+    int32_t GetSupportedCubeDimension();
+    bool IsColorCubeSupported();
+    void EnableColorCube(array_view<uint8_t> lutData);
+    void DisableColorCube();
     void Preconfig(PreconfigType preconfigType, optional_view<PreconfigRatio> preconfigRatio);
     bool CanPreconfig(PreconfigType preconfigType, optional_view<PreconfigRatio> preconfigRatio);
     taihe::array<VideoFunctions> GetSessionFunctions(CameraOutputCapability const& outputCapability);
@@ -69,6 +71,9 @@ public:
     void SetPhysicalAperture(double aperture) override;
     double GetPhysicalAperture() override;
     array<double> GetRAWCaptureZoomRatioRange() override;
+    double GetSaturation() override;
+    void SetSaturation(double val) override;
+    bool IsSaturationSupported() override;
 protected:
     sptr<OHOS::CameraStandard::CaptureSession> videoSession_ = nullptr;
     std::shared_ptr<PressureCallbackListener> pressureCallback_ = nullptr;

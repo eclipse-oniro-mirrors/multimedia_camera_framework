@@ -766,7 +766,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_012, TestSize.Level0
     intResult = mControlCenterSession->EnableAutoFraming(enable);
     expectResult = intResult == CAMERA_INVALID_STATE || intResult == CAMERA_OK;
     EXPECT_EQ(expectResult, true);
- 
+
     input->Close();
 }
 

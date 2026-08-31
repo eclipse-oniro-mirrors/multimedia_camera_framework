@@ -993,9 +993,14 @@ struct ControlCenterStatusInfo {
   @readonly isActive: bool;
 }
 
-interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter, ManualIso, ManualFocus, ManualExposure, Aperture, OIS {
+interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter, ManualIso, ManualFocus, ManualExposure, Aperture, OIS, ColorControls {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
+
+  IsColorCubeSupported(): bool;
+  EnableColorCube(lutData: Array<u8>): void;
+  DisableColorCube(): void;
+  GetSupportedCubeDimension(): i32;
   @!sts_inject_into_interface("on(type: string, callback: (data: object)=> void): void;")
   @!sts_inject_into_interface("on(type: string, callback: (err: BusinessError<void>, data: object)=> void): void;")
   @!sts_inject_into_class("""on(type: string, callback: object): void {
@@ -1053,9 +1058,6 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
         }
   """)
 
-  IsSaturationSupported(): bool;
-  GetSaturation(): f64;
-  SetSaturation(val: f64): void;
   OnError(callback: (err: @sts_type("BusinessError<void>") Opaque)=> void): void;
   OffError(callback: Optional<(err: @sts_type("BusinessError<void>") Opaque)=> void>): void;
 
@@ -2546,13 +2548,12 @@ interface WhiteBalanceQuery {
   IsWhiteBalanceModeSupported(mode: WhiteBalanceMode): bool;
   GetWhiteBalanceRange(): Array<i32>;
   GetColorTintRange(): Array<i32>;
-  IsWhiteBalanceGainsSupported(): bool;
 }
 
-struct WhiteBalanceGains {
-  redGain: f64;
-  greenGain: f64;
-  blueGain: f64;
+struct RGBBias {
+  redBias: f64;
+  greenBias: f64;
+  blueBias: f64;
 }
 
 interface WhiteBalance : WhiteBalanceQuery {
@@ -2562,8 +2563,6 @@ interface WhiteBalance : WhiteBalanceQuery {
   GetWhiteBalanceMode(): WhiteBalanceMode;
   SetColorTint(colorTint: i32): void;
   GetColorTint(): i32;
-  GetWhiteBalanceGains(): WhiteBalanceGains;
-  SetWhiteBalanceGains(gains: WhiteBalanceGains): void;
 }
 
 interface ManualIsoQuery {
@@ -2630,6 +2629,18 @@ interface AutoDeviceSwitchQuery {
 
 interface AutoDeviceSwitch : AutoDeviceSwitchQuery {
   EnableAutoDeviceSwitch(enabled: bool): void;
+}
+
+interface ColorControlsQuery {
+  IsSaturationSupported(): bool;
+  IsRGBBiasSupported(): bool;
+}
+
+interface ColorControls : ColorControlsQuery {
+  GetSaturation(): f64;
+  SetSaturation(val: f64): void;
+  GetRGBBias(): RGBBias;
+  SetRGBBias(bias: RGBBias): void;
 }
 
 enum MetadataObjectType: i32 {
