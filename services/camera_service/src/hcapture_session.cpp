@@ -1170,22 +1170,6 @@ int32_t HCaptureSession::SetColorEffect(int32_t colourEffect)
     return CAMERA_OK;
 }
 
-int32_t HCaptureSession::EnableColorCube(const sptr<IPCFileDescriptor>& ipcFd, int64_t dataSize)
-{
-    CHECK_RETURN_RET_ELOG(
-        ipcFd == nullptr || dataSize <= 0, CAMERA_INVALID_ARG, "EnableColorCube invalid args");
-    auto device = GetCameraDevice();
-    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
-    return CAMERA_OK;
-}
-
-int32_t HCaptureSession::DisableColorCube()
-{
-    auto device = GetCameraDevice();
-    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
-    return CAMERA_OK;
-}
-
 int32_t HCaptureSession::GetBeautyRange(std::vector<int32_t>& range, int32_t type)
 {
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
@@ -3299,8 +3283,8 @@ std::vector<OutputInfo> HCaptureSession::GetOutputInfos()
 int32_t HCaptureSession::EnableMechDelivery(bool isEnableMech)
 {
     MEDIA_INFO_LOG("%{public}s is called, isEnableMech:%{public}d", __FUNCTION__, isEnableMech);
-    auto currentState = stateMachine_.GetCurrentState();
     std::lock_guard<std::mutex> lock(mechDeliveryStateLock_);
+    auto currentState = stateMachine_.GetCurrentState();
     switch (currentState) {
         case CaptureSessionState::SESSION_INIT:
         case CaptureSessionState::SESSION_CONFIG_INPROGRESS:

@@ -936,10 +936,6 @@ int32_t HCameraDevice::CloseDevice()
 {
     MEDIA_INFO_LOG("HCameraDevice::CloseDevice start");
     CAMERA_SYNC_TRACE;
-    if (isDirectorModeActive_.load()) {
-        CameraReportUtils::GetInstance().RecordDirectorModeClose();
-        isDirectorModeActive_.store(false);
-    }
     ReleaseSessionBeforeCloseDevice();
     bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
@@ -1435,29 +1431,6 @@ std::vector<CameraRotateStrategyInfo> HCameraDevice::GetCameraRotateStrategyInfo
     return cameraRotateStrategyInfos_;
 }
 
-void HCameraDevice::CheckDirectorMode(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
-{
-    CHECK_RETURN_ELOG(settings == nullptr, "HCameraDevice::CheckDirectorMode settings is null");
-    camera_metadata_item_t item;
-    int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_APP_HINT, &item);
-    CHECK_RETURN(ret != CAM_META_SUCCESS || item.count == 0);
-
-    bool isLiveBroadcast = (item.data.ui32[0] & OHOS_CAMERA_APP_HINT_LIVE_BROADCAST) != 0;
-    MEDIA_INFO_LOG("CheckDirectorMode appHint=%{public}u, isLiveBroadcast=%{public}d, "
-                   "isDirectorModeActive_=%{public}d",
-                   item.data.ui32[0], isLiveBroadcast, isDirectorModeActive_.load());
-
-    if (isLiveBroadcast && !isDirectorModeActive_.load()) {
-        std::string bundleName = GetClientName();
-        CameraReportUtils::GetInstance().RecordDirectorModeOpen(
-            bundleName, cameraPid_, IPCSkeleton::GetCallingUid());
-        isDirectorModeActive_.store(true);
-    } else if (!isLiveBroadcast && isDirectorModeActive_.load()) {
-        CameraReportUtils::GetInstance().RecordDirectorModeClose();
-        isDirectorModeActive_.store(false);
-    }
-}
-
 int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
 {
     CAMERA_SYNC_TRACE;
@@ -1465,7 +1438,7 @@ int32_t HCameraDevice::UpdateSetting(const std::shared_ptr<OHOS::Camera::CameraM
     CheckZoomChange(settings);
     CheckFocusChange(settings);
     CheckVideoStabilizationChange(settings);
-    CheckDirectorMode(settings);
+
     uint32_t count = OHOS::Camera::GetCameraMetadataItemCount(settings->get());
     CHECK_RETURN_RET_ELOG(!count, CAMERA_OK, "HCameraDevice::UpdateSetting Nothing to update");
     std::lock_guard<std::mutex> lock(opMutex_);
@@ -2125,10 +2098,6 @@ void HCameraDevice::RemoveResourceWhenHostDied()
 {
     MEDIA_DEBUG_LOG("HCameraDevice::RemoveResourceWhenHostDied start");
     CAMERA_SYNC_TRACE;
-    if (isDirectorModeActive_.load()) {
-        CameraReportUtils::GetInstance().RecordDirectorModeClose();
-        isDirectorModeActive_.store(false);
-    }
     bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     if (isFoldable) {
         UnregisterFoldStatusListener();

@@ -13,26 +13,35 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_CAMERA_DPS_I_BUFFER_H
-#define OHOS_CAMERA_DPS_I_BUFFER_H
+#ifndef OHOS_CAMERA_DPS_SHARED_BUFFER_H
+#define OHOS_CAMERA_DPS_SHARED_BUFFER_H
 
-#include <cstdint>
+#include <ashmem.h>
+
+#include "ibuffer.h"
 
 namespace OHOS {
 namespace CameraStandard {
-constexpr int INVALID_FD = -1;
-
-class IBuffer {
+namespace DeferredProcessing {
+class SharedBuffer : public IBuffer {
 public:
-    IBuffer() = default;
-    virtual ~IBuffer() = default;
+    explicit SharedBuffer(int64_t capacity);
+    ~SharedBuffer();
+
+    int32_t Initialize();
+    int64_t GetSize() override;
+    int32_t CopyFrom(uint8_t* address, int64_t bytes) override;
+    void Reset() override;
+    int GetFd() const override;
 
 private:
-    virtual int64_t GetSize() = 0;
-    virtual int32_t CopyFrom(uint8_t* address, int64_t bytes) = 0;
-    virtual void Reset() = 0;
-    virtual int GetFd() const = 0;
+    int32_t AllocateAshmemUnlocked();
+    void DeallocAshmem();
+
+    const int64_t capacity_;
+    sptr<Ashmem> ashmem_ {nullptr};
 };
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
-#endif // OHOS_CAMERA_DPS_I_BUFFER_H
+#endif // OHOS_CAMERA_DPS_SHARED_BUFFER_H
