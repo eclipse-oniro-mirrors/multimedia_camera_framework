@@ -70,55 +70,6 @@ void VideoSessionImpl::SetSaturation(double saturationVal)
         "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
 }
 
-int32_t VideoSessionImpl::GetSupportedCubeDimension()
-{
-    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
-    int32_t dimension = -1;
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        dimension, "SystemApi %{public}s is called!", __FUNCTION__);
-    CHECK_RETURN_RET_ELOG(videoSession_ == nullptr, dimension, "%{public}s videoSession_ is nullptr", __FUNCTION__);
-    int32_t retCode = videoSession_->GetSupportedCubeDimension(dimension);
-    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS, dimension,
-        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
-    return dimension;
-}
-
-bool VideoSessionImpl::IsColorCubeSupported()
-{
-    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        false, "SystemApi %{public}s is called!", __FUNCTION__);
-    CHECK_RETURN_RET_ELOG(videoSession_ == nullptr, false, "%{public}s videoSession_ is nullptr", __FUNCTION__);
-    bool isSupported = false;
-    int32_t retCode = videoSession_->IsColorCubeSupported(isSupported);
-    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS, false,
-        "%{public}s call failed， retCode: %{public}d", __FUNCTION__, retCode);
-    return isSupported;
-}
-
-void VideoSessionImpl::EnableColorCube(array_view<uint8_t> lutData)
-{
-    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi %{public}s is called!", __FUNCTION__);
-    CHECK_RETURN_ELOG(videoSession_ == nullptr, "%{public}s videoSession_ is nullptr", __FUNCTION__);
-    std::vector<uint8_t> lutDataVec(lutData.begin(), lutData.end());
-    int32_t retCode = videoSession_->EnableColorCube(lutDataVec);
-    CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
-        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
-}
-
-void VideoSessionImpl::DisableColorCube()
-{
-    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi %{public}s is called!", __FUNCTION__);
-    CHECK_RETURN_ELOG(videoSession_ == nullptr, "%{public}s videoSession_ is nullptr", __FUNCTION__);
-    int32_t retCode = videoSession_->DisableColorCube();
-    CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
-        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
-}
-
 void VideoSessionImpl::Preconfig(PreconfigType preconfigType, optional_view<PreconfigRatio> preconfigRatio)
 {
     CHECK_RETURN_ELOG(videoSession_ == nullptr, "videoSession_ is nullptr");

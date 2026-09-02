@@ -816,24 +816,6 @@ int32_t HCaptureSessionWrapper::CallbackExit([[maybe_unused]] uint32_t code, [[m
     return CAMERA_INVALID_STATE;
 }
 
-int32_t HCaptureSessionWrapper::EnableColorCube(const sptr<IPCFileDescriptor>& ipcFd, int64_t dataSize)
-{
-    if (session_ != nullptr) {
-        return session_->EnableColorCube(ipcFd, dataSize);
-    }
-    MEDIA_ERR_LOG("HCaptureSessionWrapper::EnableColorCube session is null");
-    return CAMERA_INVALID_STATE;
-}
-
-int32_t HCaptureSessionWrapper::DisableColorCube()
-{
-    if (session_ != nullptr) {
-        return session_->DisableColorCube();
-    }
-    MEDIA_ERR_LOG("HCaptureSessionWrapper::DisableColorCube session is null");
-    return CAMERA_INVALID_STATE;
-}
-
 int32_t HCaptureSessionWrapper::ExpandLhdrGainmapStream(bool isNeedLhdrGainmap)
 {
     if (session_ != nullptr) {

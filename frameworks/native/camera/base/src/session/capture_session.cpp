@@ -53,7 +53,6 @@
 #include "picture_interface.h"
 #include "features/composition_feature.h"
 #include "hstream_common.h"
-#include "shared_buffer.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -84,6 +83,7 @@ const std::string AUDIO_EXTRA_PARAM_AUDIO_EFFECT = "audio_effect";
 const std::string AUDIO_EXTRA_PARAM_ZOOM_RATIO = "zoom_ratio";
 constexpr float SATURATION_VALUE_MIN = -1.0f;
 constexpr float SATURATION_VALUE_MAX = 1.0f;
+constexpr uint32_t SATURATION_RANGE_SIZE_MIN = 2;
 } // namespace
 
 static const std::unordered_map<CaptureOutputType, std::set<CaptureOutputType>> typeConflictMap = {
@@ -6241,7 +6241,7 @@ int32_t CaptureSession::SetColorTint(int32_t colorTintValue)
     
     std::vector<int32_t> range;
     int32_t retCode = GetColorTintRange(range);
-    size_t num = 2;
+    uint32_t num = 2;
     if (retCode != CameraErrorCode::SUCCESS || range.size() < num) {
         MEDIA_ERR_LOG("CaptureSession::SetColorTint: failed to get color tint range");
         return (retCode == CameraErrorCode::SUCCESS) ? CameraErrorCode::INVALID_ARGUMENT : retCode;
@@ -7260,87 +7260,10 @@ int32_t CaptureSession::IsColorStyleSupported(bool &isSupported)
     return CameraErrorCode::SUCCESS;
 }
 
-int32_t CaptureSession::IsColorCubeSupported(bool &isSupported)
-{
-    MEDIA_DEBUG_LOG("Enter IsColorCubeSupported");
-    isSupported = false;
-    CHECK_RETURN_RET_ELOG(
-        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "IsColorCubeSupported SystemApi called");
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), SESSION_NOT_CONFIG, "IsColorCubeSupported not committed");
-    auto captureSession = GetCaptureSession();
-    CHECK_RETURN_RET_ELOG(!captureSession, SUCCESS, "IsColorCubeSupported captureSession is null");
-    int32_t dimension = -1;
-    int32_t errCode = GetSupportedCubeDimension(dimension);
-    CHECK_PRINT_ELOG(
-        errCode != SUCCESS, "IsColorCubeSupported failed, err: %{public}d, dim: %{public}d", errCode, dimension);
-    CHECK_EXECUTE(errCode == SUCCESS && dimension != -1, isSupported = true);
-    return SUCCESS;
-}
-
-int32_t CaptureSession::EnableColorCube(const std::vector<uint8_t>& lutData)
-{
-    CHECK_RETURN_RET_ELOG(
-        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "EnableColorCube SystemApi called!");
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), SESSION_NOT_CONFIG, "EnableColorCube not committed");
-    CHECK_RETURN_RET_ELOG(lutData.empty(), PARAMETER_ERROR, "EnableColorCube invalid argument");
-    bool isSupported = false;
-    int32_t errCode = IsColorCubeSupported(isSupported);
-    CHECK_RETURN_RET_ELOG(errCode != SUCCESS || !isSupported, PARAMETER_ERROR, "EnableColorCube unsupported");
-    auto captureSession = GetCaptureSession();
-    CHECK_RETURN_RET_ELOG(!captureSession, SUCCESS, "EnableColorCube captureSession is null");
-    auto dataSize = lutData.size();
-    std::shared_ptr<SharedBuffer> sharedBuffer = std::make_shared<SharedBuffer>(dataSize, "LUT Data");
-    errCode = sharedBuffer->Initialize();
-    CHECK_RETURN_RET_ELOG(errCode != MEDIA_OK, SUCCESS, "EnableColorCube init shared buffer failed");
-    errCode = sharedBuffer->CopyFrom(const_cast<uint8_t*>(lutData.data()), dataSize);
-    CHECK_RETURN_RET_ELOG(errCode != MEDIA_OK, SUCCESS, "EnableColorCube copy data failed");
-    auto fd = sharedBuffer->GetFd();
-    CHECK_RETURN_RET_ELOG(fd == -1, SUCCESS, "EnableColorCube fd generation failed");
-    auto duplicatedFd = dup(fd);
-    CHECK_RETURN_RET_ELOG(duplicatedFd == -1, SUCCESS, "EnableColorCube dup failed");
-    sptr<IPCFileDescriptor> ipcFd = sptr<IPCFileDescriptor>::MakeSptr(duplicatedFd);
-    errCode = captureSession->EnableColorCube(ipcFd, dataSize);
-    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "EnableColorCube failed, err: %{public}d", errCode);
-    return SUCCESS;
-}
-
-int32_t CaptureSession::GetSupportedCubeDimension(int32_t &dimension)
-{
-    MEDIA_DEBUG_LOG("Enter GetSupportedCubeDimension");
-    dimension = -1;
-    CHECK_RETURN_RET_ELOG(
-        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "GetCubeDimension SystemApi called!");
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), SESSION_NOT_CONFIG, "GetCubeDimension not committed");
-    auto captureSession = GetCaptureSession();
-    CHECK_RETURN_RET_ELOG(!captureSession, SUCCESS, "GetCubeDimension captureSession is null");
-    auto cameraInput = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(cameraInput == nullptr, SUCCESS, "GetCubeDimension camera input is null");
-    auto deviceInfo = cameraInput->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, SUCCESS, "GetCubeDimension camera device is null");
-    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
-    CHECK_RETURN_RET_ELOG(metadata == nullptr, SUCCESS, "GetCubeDimension camera metadata is null");
-    return SUCCESS;
-}
-
-int32_t CaptureSession::DisableColorCube()
-{
-    MEDIA_DEBUG_LOG("Enter DisableColorCube");
-    CHECK_RETURN_RET_ELOG(
-        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "DisableColorCube SystemApi called!");
-    CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
-        "DisableColorCube not committed");
-    auto captureSession = GetCaptureSession();
-    CHECK_RETURN_RET_ELOG(!captureSession, CameraErrorCode::SUCCESS,
-        "DisableColorCube captureSession is null");
-    int32_t errCode = captureSession->DisableColorCube();
-    CHECK_PRINT_ELOG(errCode != CAMERA_OK, "DisableColorCube failed, err: %{public}d", errCode);
-    return CameraErrorCode::SUCCESS;
-}
-
 int32_t CaptureSession::GetSupportedSaturationRange(std::vector<int32_t> &saturationRange)
 {
     CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
-                          "GetSupportedSaturationRange not committed");
+                          "GetSupportedSaturationRange Session is not Commited.");
     auto inputDevice = GetInputDevice();
     CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SUCCESS,
                           "GetSupportedSaturationRange camera device is null");
@@ -7354,75 +7277,40 @@ int32_t CaptureSession::GetSupportedSaturationRange(std::vector<int32_t> &satura
     int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_SATURATION_RANGE, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
                           "GetSupportedSaturationRange Failed with return code %{public}d", ret);
+    std::vector<int32_t> saturationRangeTemp;
     for (uint32_t i = 0; i < item.count; i++) {
-        MEDIA_DEBUG_LOG("GetSupportedSaturationRange i: %{public}d, dumpMeta:%{public}d", i, item.data.i32[i]);
-        saturationRange.emplace_back(item.data.i32[i]);
+        MEDIA_INFO_LOG("GetSupportedSaturationRange i: %{public}d, dumpMeta:%{public}d", i, item.data.i32[i]);
+        saturationRangeTemp.push_back(item.data.i32[i]);
     }
+    CHECK_RETURN_RET_ELOG(saturationRangeTemp.size() < SATURATION_RANGE_SIZE_MIN,
+                          CameraErrorCode::CAPABILITY_NOT_SUPPORTED, "saturationRange size < minRangeSize");
+    std::sort(saturationRangeTemp.begin(), saturationRangeTemp.end());
+    int32_t minVal = std::min(saturationRangeTemp.front(), saturationRangeTemp.back());
+    saturationRange.push_back(minVal);
+    int32_t maxVal = std::max(saturationRangeTemp.front(), saturationRangeTemp.back());
+    saturationRange.push_back(maxVal);
     return CameraErrorCode::SUCCESS;
-}
-
-void CaptureSession::GetSaturationRangeForCurrentMode(
-    const std::vector<int32_t> &saturationRange, int32_t &minVal, int32_t &maxVal)
-{
-    // saturationRange format: [SceneMode, minVal, maxVal, terminator] per group
-    constexpr size_t saturationGroupSize = 4;
-    constexpr size_t minValOffset = 1;
-    constexpr size_t maxValOffset = 2;
-    CHECK_RETURN_ELOG(saturationRange.size() < saturationGroupSize,
-        "GetSaturationRangeForCurrentMode saturationRange size is invalid");
-    int32_t currentMode = static_cast<int32_t>(GetMode());
-    bool modeMatched = false;
-    int32_t defaultMinVal = 0;
-    int32_t defaultMaxVal = 0;
-    bool defaultFound = false;
-    for (size_t i = 0; i + saturationGroupSize <= saturationRange.size(); i += saturationGroupSize) {
-        int32_t sceneMode = saturationRange[i];
-        if (sceneMode == currentMode) {
-            minVal = saturationRange[i + minValOffset];
-            maxVal = saturationRange[i + maxValOffset];
-            modeMatched = true;
-            break;
-        }
-        if (sceneMode == SceneMode::NORMAL && !defaultFound) {
-            defaultMinVal = saturationRange[i + minValOffset];
-            defaultMaxVal = saturationRange[i + maxValOffset];
-            defaultFound = true;
-        }
-    }
-    if (!modeMatched) {
-        CHECK_RETURN_ELOG(
-            !defaultFound, "GetSaturationRangeForCurrentMode no matching SceneMode and no default mode found");
-        minVal = defaultMinVal;
-        maxVal = defaultMaxVal;
-    }
 }
 
 int32_t CaptureSession::IsSaturationSupported(bool &isSupported)
 {
-    isSupported = false;
     CHECK_RETURN_RET_ELOG(
         !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "IsSaturationSupported SystemApi called!");
+    MEDIA_INFO_LOG("Enter CaptureSession::IsSaturationSupported");
+    isSupported = false;
     std::vector<int32_t> saturationRange;
-    (void)GetSupportedSaturationRange(saturationRange);
-    constexpr size_t saturationGroupSize = 4;
-    if (saturationRange.size() < saturationGroupSize) {
-        MEDIA_ERR_LOG("saturationRange.size < saturationGroupSize");
-        return CameraErrorCode::SUCCESS;
-    }
-    int32_t currentMode = static_cast<int32_t>(GetMode());
-    for (size_t i = 0; i + saturationGroupSize <= saturationRange.size(); i += saturationGroupSize) {
-        if (saturationRange[i] == currentMode || saturationRange[i] == 0) {
-            isSupported = true;
-            return CameraErrorCode::SUCCESS;
-        }
-    }
-    MEDIA_INFO_LOG("IsSaturationSupported isSupported: %{public}d", isSupported);
+    auto ret = GetSupportedSaturationRange(saturationRange);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
+                          "CaptureSession::IsSaturationSupported Failed with return code %{public}d", ret);
+    CHECK_RETURN_RET_ELOG(
+        saturationRange.empty() || (!saturationRange.empty() && saturationRange.size() < SATURATION_RANGE_SIZE_MIN),
+        CameraErrorCode::SUCCESS, "saturationRange is empty or saturationRange size < minRangeSize");
+    isSupported = true;
     return CameraErrorCode::SUCCESS;
 }
 
 int32_t CaptureSession::GetSaturation(float &saturationVal)
 {
-    saturationVal = 0.0f;
     CHECK_RETURN_RET_ELOG(
         !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "GetSaturation SystemApi called!");
     CHECK_RETURN_RET_ELOG(
@@ -7438,16 +7326,14 @@ int32_t CaptureSession::GetSaturation(float &saturationVal)
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
                           "GetSaturation Failed with return code %{public}d", ret);
     int32_t saturationValTemp = item.data.i32[0];
-    std::vector<int32_t> saturationRangeAll;
-    (void)GetSupportedSaturationRange(saturationRangeAll);
-    int32_t minVal = 0;
-    int32_t maxVal = 0;
-    GetSaturationRangeForCurrentMode(saturationRangeAll, minVal, maxVal);
-    if (maxVal > 0 && maxVal > minVal) {
-        int32_t clamped_val = std::clamp(saturationValTemp, minVal, maxVal);
-        saturationVal = static_cast<float>(clamped_val) / maxVal;
+    std::vector<int32_t> saturationRange;
+    GetSupportedSaturationRange(saturationRange);
+    if (!saturationRange.empty() && saturationRange.size() >= SATURATION_RANGE_SIZE_MIN && saturationRange[1] != 0) {
+        int32_t clamped_val = std::clamp(saturationValTemp, saturationRange[0], saturationRange[1]);
+        saturationVal = static_cast<float>(clamped_val) / saturationRange[1];
     }
-    MEDIA_INFO_LOG("Get saturationVal: %{public}d, clamped_val: %{public}f", saturationValTemp, saturationVal);
+    MEDIA_INFO_LOG(
+        "GetSaturation saturationVal: %{public}d, clamped_val: %{public}f", saturationValTemp, saturationVal);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -7457,21 +7343,17 @@ int32_t CaptureSession::SetSaturation(float saturationVal)
         !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "SetSaturation SystemApi called!");
     MEDIA_INFO_LOG("SetSaturation is called");
     CHECK_RETURN_RET_ELOG(
-        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "SetSaturation not committed");
+        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "SetSaturation Session is not Commited");
     CHECK_RETURN_RET_ELOG(
-        changedMetadata_ == nullptr, CameraErrorCode::SUCCESS, "SetSaturation changedMetadata is null");
+        changedMetadata_ == nullptr, CameraErrorCode::SUCCESS, "SetSaturation changedMetadata_ is null");
     float saturationValTemp = std::clamp(saturationVal, SATURATION_VALUE_MIN, SATURATION_VALUE_MAX);
-    std::vector<int32_t> saturationRangeAll;
-    auto ret = GetSupportedSaturationRange(saturationRangeAll);
-    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
-        "SetSaturation Failed to get supported saturation range, ret:%{public}d", ret);
-    int32_t minVal = 0;
-    int32_t maxVal = 0;
-    GetSaturationRangeForCurrentMode(saturationRangeAll, minVal, maxVal);
-    CHECK_RETURN_RET_ELOG(maxVal <= minVal, CameraErrorCode::SUCCESS,
-        "SetSaturation Failed to get saturation range for current mode");
-    int32_t clamped_val = static_cast<int32_t>(saturationValTemp * static_cast<float>(maxVal));
-    MEDIA_INFO_LOG("Set saturationVal: %{public}f, clamped_val: %{public}d", saturationValTemp, clamped_val);
+    std::vector<int32_t> saturationRange;
+    auto ret = GetSupportedSaturationRange(saturationRange);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS || saturationRange.empty() ||
+                          saturationRange.size() < SATURATION_RANGE_SIZE_MIN,
+                          ret, "SetSaturation Failed with return code %{public}d", ret);
+    int32_t clamped_val = static_cast<int32_t>(saturationValTemp * static_cast<float>(saturationRange[1]));
+    MEDIA_INFO_LOG("SetSaturation saturationVal: %{public}f, clamped_val: %{public}d", saturationValTemp, clamped_val);
     bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_SATURATION, &clamped_val, 1);
     CHECK_PRINT_ELOG(!status, "SetSaturation Failed to set saturationVal");
     return CameraErrorCode::SUCCESS;
@@ -8073,7 +7955,7 @@ ZoomPointInfo CaptureSession::ParseZoomPointInfo(const camera_metadata_item_t& i
 {
     ZoomPointInfo zoomPointInfo;
     const float zoomScaleFloat = 100.f;
-    const uint zoomScaleInt = 100;
+    const int zoomScaleInt = 100;
 
     zoomPointInfo.zoomRatio = item.data.i32[index++] / zoomScaleFloat;
     zoomPointInfo.equivalentFocalLength = item.data.i32[index++] / zoomScaleInt;
@@ -8084,7 +7966,7 @@ ZoomPointInfo CaptureSession::ParseZoomPointInfo(const camera_metadata_item_t& i
 void CaptureSession::ProcessSceneModeData(const camera_metadata_item_t& item, SceneMode currentMode,
                                           std::vector<ZoomPointInfo>& zoomPointInfoList)
 {
-    const int32_t skipLen = 2;
+    const uint32_t skipLen = 2;
     for (uint32_t i = 0; i < item.count;) {
         SceneMode sceneMode = static_cast<SceneMode>(item.data.i32[i++]);
         MEDIA_DEBUG_LOG("CaptureSession::GetZoomPointInfos scene mode:%{public}d", sceneMode);
@@ -8173,46 +8055,9 @@ int32_t CaptureSession::GetSupportedRGBGainsRange(std::vector<int32_t> &supporte
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS, CameraErrorCode::SUCCESS,
         "CaptureSession::GetSupportedRGBGainsRange Failed with return code %{public}d", ret);
     for (uint32_t i = 0; i < item.count; i++) {
-        MEDIA_DEBUG_LOG("GetSupportedRGBGainsRange i: %{public}d, v: %{public}d", i, item.data.i32[i]);
         supportedRGBGainsRange.emplace_back(item.data.i32[i]);
     }
     return CameraErrorCode::SUCCESS;
-}
-
-void CaptureSession::GetRGBGainsRangeForCurrentMode(
-    const std::vector<int32_t> &rgbGainsRange, int32_t &minGain, int32_t &maxGain)
-{
-    // rgbGainsRange format: [SceneMode, minGain, maxGain, terminator] per group
-    constexpr size_t rgbGainsGroupSize = 4;
-    constexpr size_t minGainOffset = 1;
-    constexpr size_t maxGainOffset = 2;
-    CHECK_RETURN_ELOG(
-        rgbGainsRange.size() < rgbGainsGroupSize, "GetRGBGainsRangeForCurrentMode rgbGainsRange size is invalid");
-    int32_t currentMode = static_cast<int32_t>(GetMode());
-    bool modeMatched = false;
-    int32_t defaultMinGain = 0;
-    int32_t defaultMaxGain = 0;
-    bool defaultFound = false;
-    for (size_t i = 0; i + rgbGainsGroupSize <= rgbGainsRange.size(); i += rgbGainsGroupSize) {
-        int32_t sceneMode = rgbGainsRange[i];
-        if (sceneMode == currentMode) {
-            minGain = rgbGainsRange[i + minGainOffset];
-            maxGain = rgbGainsRange[i + maxGainOffset];
-            modeMatched = true;
-            break;
-        }
-        if (sceneMode == SceneMode::NORMAL && !defaultFound) {
-            defaultMinGain = rgbGainsRange[i + minGainOffset];
-            defaultMaxGain = rgbGainsRange[i + maxGainOffset];
-            defaultFound = true;
-        }
-    }
-    if (!modeMatched) {
-        CHECK_RETURN_ELOG(
-            !defaultFound, "GetRGBGainsRangeForCurrentMode no matching SceneMode and no default mode found");
-        minGain = defaultMinGain;
-        maxGain = defaultMaxGain;
-    }
 }
 
 int32_t CaptureSession::IsWhiteBalanceGainsSupported(bool &isSupported)
@@ -8223,19 +8068,7 @@ int32_t CaptureSession::IsWhiteBalanceGainsSupported(bool &isSupported)
         "CaptureSession::IsWhiteBalanceGainsSupported Session is not Commited");
     std::vector<int32_t> vecSupportedRGBGainsRange;
     (void)this->GetSupportedRGBGainsRange(vecSupportedRGBGainsRange);
-    constexpr size_t rgbGainsGroupSize = 4;
-    if (vecSupportedRGBGainsRange.size() < rgbGainsGroupSize) {
-        isSupported = false;
-        return CameraErrorCode::SUCCESS;
-    }
-    int32_t currentMode = static_cast<int32_t>(GetMode());
-    for (size_t i = 0; i + rgbGainsGroupSize <= vecSupportedRGBGainsRange.size(); i += rgbGainsGroupSize) {
-        if (vecSupportedRGBGainsRange[i] == currentMode || vecSupportedRGBGainsRange[i] == 0) {
-            isSupported = true;
-            return CameraErrorCode::SUCCESS;
-        }
-    }
-    isSupported = false;
+    isSupported = (vecSupportedRGBGainsRange.size() > 0);
     return CameraErrorCode::SUCCESS;
 }
 
@@ -8268,11 +8101,13 @@ int32_t CaptureSession::GetWhiteBalanceGains(std::vector<double>& whiteBalanceGa
     ret = GetSupportedRGBGainsRange(supportedRGBGainsRange);
     CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
         "CaptureSession::GetWhiteBalanceGains Failed to get supported RGB gains range, ret:%{public}d", ret);
-    int32_t minGain = 0;
-    int32_t maxGain = 0;
-    GetRGBGainsRangeForCurrentMode(supportedRGBGainsRange, minGain, maxGain);
-    CHECK_RETURN_RET_ELOG(maxGain <= minGain, CameraErrorCode::SUCCESS,
-        "CaptureSession::GetWhiteBalanceGains Failed to get RGB gains range for current mode");
+    constexpr size_t normalizedRangeSize = 2;
+    CHECK_RETURN_RET_ELOG(supportedRGBGainsRange.size() < normalizedRangeSize, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetWhiteBalanceGains supported RGB gains range size is invalid");
+    const int32_t minGain = supportedRGBGainsRange[0];
+    const int32_t maxGain = supportedRGBGainsRange[1];
+    CHECK_RETURN_RET_ELOG(maxGain == minGain, CameraErrorCode::SUCCESS,
+        "CaptureSession::GetWhiteBalanceGains supported RGB gains range is invalid");
     const double gainRange = static_cast<double>(maxGain - minGain);
 
     for (uint32_t i = 0; i < item.count; i++) {
@@ -8324,11 +8159,13 @@ int32_t CaptureSession::SetWhiteBalanceGains(std::vector<double> whiteBalanceGai
     int32_t ret = GetSupportedRGBGainsRange(supportedRGBGainsRange);
     CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
         "CaptureSession::SetWhiteBalanceGains Failed to get supported RGB gains range, ret:%{public}d", ret);
-    int32_t minGain = 0;
-    int32_t maxGain = 0;
-    GetRGBGainsRangeForCurrentMode(supportedRGBGainsRange, minGain, maxGain);
-    CHECK_RETURN_RET_ELOG(maxGain <= minGain, CameraErrorCode::SUCCESS,
-        "CaptureSession::SetWhiteBalanceGains Failed to get RGB gains range for current mode");
+    constexpr size_t normalizedRangeSize = 2;
+    CHECK_RETURN_RET_ELOG(supportedRGBGainsRange.size() < normalizedRangeSize, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetWhiteBalanceGains supported RGB gains range size is invalid");
+    const int32_t minGain = supportedRGBGainsRange[0];
+    const int32_t maxGain = supportedRGBGainsRange[1];
+    CHECK_RETURN_RET_ELOG(maxGain == minGain, CameraErrorCode::SUCCESS,
+        "CaptureSession::SetWhiteBalanceGains supported RGB gains range is invalid");
 
     const double gainRange = static_cast<double>(maxGain - minGain);
     std::vector<int32_t> denormalizedGains;

@@ -18,26 +18,21 @@
 #include <cerrno>
 #include <unistd.h>
 
-#include "camera_log.h"
+#include "dp_log.h"
 
 namespace OHOS {
 namespace CameraStandard {
+namespace DeferredProcessing {
 // LCOV_EXCL_START
 SharedBuffer::SharedBuffer(int64_t capacity)
-    : capacity_(capacity), name_("DPS ShareMemory")
+    : capacity_(capacity)
 {
-    MEDIA_DEBUG_LOG("entered, capacity = %{public}" PRId64, capacity_);
-}
-
-SharedBuffer::SharedBuffer(int64_t capacity, const std::string& name)
-    : capacity_(capacity), name_(name)
-{
-    MEDIA_DEBUG_LOG("entered, capacity = %{public}" PRId64, capacity_);
+    DP_DEBUG_LOG("entered, capacity = %{public}" PRId64, capacity_);
 }
 
 SharedBuffer::~SharedBuffer()
 {
-    MEDIA_DEBUG_LOG("entered.");
+    DP_DEBUG_LOG("entered.");
     DeallocAshmem();
 }
 
@@ -53,41 +48,42 @@ int64_t SharedBuffer::GetSize()
 
 int32_t SharedBuffer::CopyFrom(uint8_t* address, int64_t bytes)
 {
-    CHECK_RETURN_RET_ELOG(bytes > capacity_, MEDIA_INVALID_PARAM,
+    DP_CHECK_ERROR_RETURN_RET_LOG(bytes > capacity_, DP_INVALID_PARAM,
         "buffer failed due to invalid size: %{public}" PRId64 ", capacity: %{public}" PRId64, bytes, capacity_);
-    CHECK_RETURN_RET_ELOG(ashmem_ == nullptr, MEDIA_INIT_FAIL, "ashmem is nullptr.");
-    MEDIA_DEBUG_LOG("capacity: %{public}" PRId64 ", bytes: %{public}" PRId64, capacity_, bytes);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ashmem_ == nullptr, DP_INIT_FAIL, "ashmem is nullptr.");
+    DP_DEBUG_LOG("capacity: %{public}" PRId64 ", bytes: %{public}" PRId64, capacity_, bytes);
     auto ret = ashmem_->WriteToAshmem(address, bytes, 0);
-    CHECK_RETURN_RET_ELOG(!ret, MEDIA_ERR, "copy failed.");
-    return MEDIA_OK;
+    DP_CHECK_ERROR_RETURN_RET_LOG(!ret, DP_ERR, "copy failed.");
+    return DP_OK;
 }
 
 void SharedBuffer::Reset()
 {
     auto offset = lseek(GetFd(), 0, SEEK_SET);
-    CHECK_RETURN_ELOG(offset != MEDIA_OK, "failed to reset, error = %{public}s.", std::strerror(errno));
-    MEDIA_INFO_LOG("reset success.");
+    DP_CHECK_ERROR_PRINT_LOG(offset != DP_OK, "failed to reset, error = %{public}s.", std::strerror(errno));
+    DP_INFO_LOG("reset success.");
 }
 
 int32_t SharedBuffer::AllocateAshmemUnlocked()
 {
-    ashmem_ = Ashmem::CreateAshmem(name_.data(), capacity_);
-    CHECK_RETURN_RET_ELOG(ashmem_ == nullptr, MEDIA_INIT_FAIL,
+    std::string_view name = "DPS ShareMemory";
+    ashmem_ = Ashmem::CreateAshmem(name.data(), capacity_);
+    DP_CHECK_ERROR_RETURN_RET_LOG(ashmem_ == nullptr, DP_INIT_FAIL,
         "buffer create ashmem failed. capacity: %{public}" PRId64, capacity_);
     int fd = ashmem_->GetAshmemFd();
-    MEDIA_DEBUG_LOG("size: %{public}" PRId64 ", fd: %{public}d", capacity_, fd);
+    DP_DEBUG_LOG("size: %{public}" PRId64 ", fd: %{public}d", capacity_, fd);
     auto ret = ashmem_->MapReadAndWriteAshmem();
-    CHECK_RETURN_RET_ELOG(!ret, MEDIA_ERR, "mmap failed.");
-    return MEDIA_OK;
+    DP_CHECK_ERROR_RETURN_RET_LOG(!ret, DP_MEM_MAP_FAILED, "mmap failed.");
+    return DP_OK;
 }
 
 void SharedBuffer::DeallocAshmem()
 {
-    CHECK_RETURN(ashmem_ == nullptr);
+    DP_CHECK_RETURN(ashmem_ == nullptr);
     ashmem_->UnmapAshmem();
     ashmem_->CloseAshmem();
     ashmem_ = nullptr;
-    MEDIA_DEBUG_LOG("dealloc ashmem capacity(%{public}" PRId64 ") success.", capacity_);
+    DP_DEBUG_LOG("dealloc ashmem capacity(%{public}" PRId64 ") success.", capacity_);
 }
 
 int SharedBuffer::GetFd() const
@@ -95,5 +91,6 @@ int SharedBuffer::GetFd() const
     return ashmem_ != nullptr ? ashmem_->GetAshmemFd() : INVALID_FD;
 }
 // LCOV_EXCL_STOP
+} // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS
