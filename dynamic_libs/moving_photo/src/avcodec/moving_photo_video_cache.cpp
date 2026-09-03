@@ -53,7 +53,7 @@ MovingPhotoVideoCache::MovingPhotoVideoCache(sptr<AvcodecTaskManager> taskManage
 {
 }
 
-void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
+void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord, bool isOfflioneProcess)
 {
     MEDIA_DEBUG_LOG("CacheFrame enter");
     if (frameRecord->IsManual()) {
@@ -62,7 +62,7 @@ void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
         if (manualTaskManager_) {
             frameRecord->SetStatusReadyConvertStatus();
             auto thisPtr = sptr<MovingPhotoVideoCache>(this);
-            manualTaskManager_->EncodeVideoExtendBuffer(frameRecord,
+            manualTaskManager_->EncodeVideoExtendBuffer(frameRecord, isOfflioneProcess,
                 [thisPtr](sptr<FrameRecord> frameRecord, bool encodeResult) {
                     thisPtr->OnManualImageEncoded(frameRecord, encodeResult);
             });
@@ -72,8 +72,9 @@ void MovingPhotoVideoCache::CacheFrame(sptr<FrameRecord> frameRecord)
         if (taskManager_) {
             frameRecord->SetStatusReadyConvertStatus();
             auto thisPtr = sptr<MovingPhotoVideoCache>(this);
-            taskManager_->EncodeVideoBuffer(frameRecord, [thisPtr](sptr<FrameRecord> frameRecord, bool encodeResult) {
-                thisPtr->OnImageEncoded(frameRecord, encodeResult);
+            taskManager_->EncodeVideoBuffer(frameRecord, isOfflioneProcess,
+                [thisPtr](sptr<FrameRecord> frameRecord, bool encodeResult) {
+                    thisPtr->OnImageEncoded(frameRecord, encodeResult);
             });
         }
     }

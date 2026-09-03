@@ -14,6 +14,8 @@
  */
 
 #include "moving_photo_listener.h"
+#include "moving_photo_lifecycle_manager.h"
+#include "moving_photo_warp_grid_surface_wrapper.h"
 #include "camera_log.h"
 #include "sync_fence.h"
 #include "moving_photo_video_cache.h"
@@ -44,26 +46,26 @@ SessionDrainImageCallback::~SessionDrainImageCallback()
     // LCOV_EXCL_STOP
 }
 
-void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame)
+void SessionDrainImageCallback::OnDrainImage(sptr<FrameRecord> frame, bool isOfflioneProcess)
 {
     // LCOV_EXCL_START
-    MEDIA_DEBUG_LOG("OnDrainImage enter");
+    MEDIA_INFO_LOG("OnDrainImage enter");
     {
         std::lock_guard<std::mutex> lock(mutex_);
         frameCacheList_.push_back(frame);
     }
-    OnDrainFrameRecord(frame);
+    OnDrainFrameRecord(frame, isOfflioneProcess);
     // LCOV_EXCL_STOP
 }
 
-void SessionDrainImageCallback::OnDrainFrameRecord(sptr<FrameRecord> frame)
+void SessionDrainImageCallback::OnDrainFrameRecord(sptr<FrameRecord> frame, bool isOfflioneProcess)
 {
-    MEDIA_DEBUG_LOG("OnDrainFrameRecord start");
+    MEDIA_INFO_LOG("OnDrainFrameRecord start");
     CHECK_RETURN_ELOG(frame == nullptr, "frame is null");
     auto videoCache = movingPhotoVideoCache_.promote();
     CHECK_RETURN_ELOG(videoCache == nullptr, "movingPhotoVideoCache is null");
     if (frame->IsIdle() && videoCache) {
-        videoCache->CacheFrame(frame);
+        videoCache->CacheFrame(frame, isOfflioneProcess);
     } else if (frame->IsFinishCache() && videoCache) {
         videoCache->OnImageEncoded(frame, frame->IsEncoded());
     } else if (frame->IsReadyConvert()) {
@@ -153,7 +155,7 @@ void MovingPhotoListener::SetClearFlag()
 
 void MovingPhotoListener::StopDrainOut()
 {
-    MEDIA_INFO_LOG("StopDrainOut drainImageManagerVec_ Start %d", callbackMap_.Size());
+    MEDIA_INFO_LOG("StopDrainOut drainImageManagerVec_ Start %{public}d", callbackMap_.Size());
     callbackMap_.Iterate([](const sptr<SessionDrainImageCallback> callback, sptr<DrainImageManager> manager) {
         manager->DrainFinish(false);
     });
@@ -182,11 +184,13 @@ void MovingPhotoListener::OnBufferArrival(sptr<SurfaceBuffer> buffer, int64_t ti
     }
     frameRecord->SetManual();
     recorderBufferQueue_.Push(frameRecord);
-    auto metaPair =
+    if (metaCache_) {
+        auto metaPair =
         metaCache_->find_if([timestamp](const MetaElementType &value) { return value.first == timestamp; });
-    if (metaPair.has_value()) {
-        MEDIA_DEBUG_LOG("frame has meta");
-        frameRecord->SetMetaBuffer(metaPair.value().second);
+        if (metaPair.has_value()) {
+            MEDIA_DEBUG_LOG("frame has meta");
+            frameRecord->SetMetaBuffer(metaPair.value().second);
+        }
     }
     FrameTimestampInfo currentFrameInfo(buffer->GetSeqNum(), timestamp);
     CheckFrameTimestampJump(prevFrameInfo_, currentFrameInfo);
@@ -213,16 +217,19 @@ void MovingPhotoListener::ReleaseOldestBufferWhenFull()
 
 void MovingPhotoListener::NotifyDrainImageCallbacks(const sptr<FrameRecord>& frameRecord)
 {
-    vector<sptr<SessionDrainImageCallback>> callbacks;
-    callbackMap_.Iterate(
-        [frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback, sptr<DrainImageManager> manager) {
-            callbacks.push_back(callback);
-        });
-    for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
-        sptr<DrainImageManager> drainImageManager;
-        if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
-            std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
-            drainImageManager->DrainImage(frameRecord);
+    if (!livePhotoStageEisEnableFlag_) {
+        vector<sptr<SessionDrainImageCallback>> callbacks;
+        callbackMap_.Iterate(
+            [frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback, sptr<DrainImageManager> manager) {
+                callbacks.push_back(callback);
+            });
+        for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
+            sptr<DrainImageManager> drainImageManager;
+            if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
+                std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
+                bool isStageEisEnabled = frameRecord->CheckVideoBufferStageEisStatus();
+                CHECK_EXECUTE(!isStageEisEnabled, drainImageManager->DrainImage(frameRecord));
+            }
         }
     }
 }
@@ -272,7 +279,7 @@ uint32_t MovingPhotoListener::FrameAlign(sptr<SessionDrainImageCallback> drainIm
 
 bool MovingPhotoListener::RefillMeta(sptr<SurfaceBuffer> buffer, int64_t timestamp)
 {
-    std::queue<sptr<FrameRecord>> tempRecordQueue;
+    BlockingQueue<sptr<FrameRecord>> tempRecordQueue{"tempMetaBuffer", 60};
     bool isFind = false;
     while (!recorderBufferQueue_.Empty()) {
         if (recorderBufferQueue_.Back()->GetTimeStamp() == timestamp) {
@@ -282,14 +289,58 @@ bool MovingPhotoListener::RefillMeta(sptr<SurfaceBuffer> buffer, int64_t timesta
         if (recorderBufferQueue_.Back()->GetTimeStamp() <= timestamp) {
             break;
         }
-        tempRecordQueue.push(recorderBufferQueue_.PopBack());
+        tempRecordQueue.Push(recorderBufferQueue_.PopBack());
     }
-    MEDIA_DEBUG_LOG("tempRecordQueue.size():%{public}zu isFind:%{public}d", tempRecordQueue.size(), isFind);
-    while (!tempRecordQueue.empty()) {
-        recorderBufferQueue_.Push(tempRecordQueue.front());
-        tempRecordQueue.pop();
+    MEDIA_DEBUG_LOG("tempRecordQueue.size():%{public}zu isFind:%{public}d", tempRecordQueue.Size(), isFind);
+    while (!tempRecordQueue.Empty()) {
+        recorderBufferQueue_.Push(tempRecordQueue.Back());
+        tempRecordQueue.PopBack();
     }
     return isFind;
+}
+
+bool MovingPhotoListener::RefillStageEis(sptr<SurfaceBuffer> buffer, int64_t timestamp, sptr<FrameRecord> &frame)
+{
+    MEDIA_DEBUG_LOG("MovingPhotoListener::RefillStageEis RefillStageEis time: %{public}llu",
+        (long long unsigned)timestamp);
+    bool isFind = false;
+    vector<sptr<FrameRecord>> temVec = recorderBufferQueue_.GetAllElements();
+    for (auto tempFrame : temVec) {
+        if (tempFrame->GetTimeStamp() == timestamp) {
+            frame = tempFrame;
+            MEDIA_INFO_LOG("MovingPhotoListener::RefillStageEis find video Buffer");
+            return true;
+        }
+    }
+    MEDIA_ERR_LOG("MovingPhotoListener::RefillStageEis not find video buffer");
+    return isFind;
+}
+
+int32_t MovingPhotoListener::StageEisSesionProcess(sptr<SurfaceBuffer> warpBuffer, sptr<FrameRecord> frame)
+{
+    MEDIA_INFO_LOG("MovingPhotoListener::StageEisSesionProcess is called");
+    CHECK_RETURN_RET_ELOG(frame == nullptr, -1,
+        "MovingPhotoListener::StageEisSesionProcess current frameRecord is nullptr");
+    bool isStageEisEnabled = frame->CheckVideoBufferStageEisStatus();
+    CHECK_RETURN_RET_ELOG(!isStageEisEnabled, -1, "MovingPhotoListener::StageEisSesionProcess is not enable StageEIS");
+    if (!movingPhotoOfflineSession_) {
+        MEDIA_INFO_LOG("MovingPhotoListener::StageEisSesionProcess movingPhotoOfflineSession is nullptr");
+    }
+    if (movingPhotoOfflineSession_) {
+        sptr<SurfaceBuffer> surfaceBuffer = frame->GetSurfaceBuffer();
+        sptr<SurfaceBuffer> warpGridBuffer = warpBuffer;
+        sptr<SurfaceBuffer> metaBuffer = frame->GetMetaBuffer();
+        if (surfaceBuffer != nullptr && warpGridBuffer != nullptr) {
+            int32_t ret = movingPhotoOfflineSession_->RequestBuffer(surfaceBuffer, warpGridBuffer,
+                metaBuffer, frame->GetTimeStamp());
+            frame->UnLockMetaBuffer();
+            return ret;
+        } else {
+            MEDIA_ERR_LOG("MovingPhotoListener::StageEisSesionProcess surfaceBuffer or warpGridBuffer is null");
+        }
+    }
+    frame->UnLockMetaBuffer();
+    return -1;
 }
 
 void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainImageCallback)
@@ -316,7 +367,41 @@ void MovingPhotoListener::DrainOutImage(sptr<SessionDrainImageCallback> drainIma
             drainImageCallback->SetPrevFrameInfo(currentFrameInfo);
         }
         MEDIA_DEBUG_LOG("DrainOutImage enter DrainImage");
-        drainImageManager->DrainImage(frame);
+        bool isStageEisEnabled = frame->CheckVideoBufferStageEisStatus();
+        CHECK_EXECUTE(!isStageEisEnabled, drainImageManager->DrainImage(frame));
+    }
+}
+
+void MovingPhotoListener::SetCallbackMap(sptr<SessionDrainImageCallback> imageCallback,
+                                         sptr<DrainImageManager> drainImageManager)
+{
+    callbackMap_.Insert(imageCallback, drainImageManager);
+}
+
+void MovingPhotoListener::DrainOutStageEisImage(sptr<FrameRecord> frameRecord, bool isEosFlag)
+{
+    MEDIA_INFO_LOG("MovingPhotoListener::DrainOutStageEisImage is called");
+    vector<sptr<SessionDrainImageCallback>> callbacks;
+    callbackMap_.Iterate([frameRecord, &callbacks](const sptr<SessionDrainImageCallback> callback,
+                                                   sptr<DrainImageManager> manager) { callbacks.push_back(callback); });
+    for (sptr<SessionDrainImageCallback> drainImageCallback : callbacks) {
+        sptr<DrainImageManager> drainImageManager;
+        if (callbackMap_.Find(drainImageCallback, drainImageManager)) {
+            std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
+            drainImageManager->DrainImage(frameRecord, isEosFlag, true);
+        }
+    }
+}
+
+void MovingPhotoListener::DrainOutCacheStageEisImage(sptr<DrainImageManager> drainImageManager,
+    std::vector<sptr<FrameRecord>>& cacheBuffers)
+{
+    CHECK_RETURN_ELOG(cacheBuffers.empty(), "current cacheBuffers is empty");
+    std::lock_guard<std::mutex> lock(drainImageManager->drainImageLock_);
+    for (const auto& frame : cacheBuffers) {
+        auto surfaceBuffer = frame->GetSurfaceBuffer();
+        MEDIA_DEBUG_LOG("DrainOutCacheStageEisImage enter DrainImage");
+        drainImageManager->DrainImage(frame, false, true);
     }
 }
 

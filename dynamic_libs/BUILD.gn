@@ -210,6 +210,8 @@ ohos_shared_library("camera_dynamic_moving_photo") {
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/common/sample_info.cpp",
     "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/moving_photo_surface_wrapper.cpp",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base/src/output/camera_photo_proxy.cpp",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/moving_photo_warp_grid_surface_wrapper.cpp",
+    "${multimedia_camera_framework_path}/dynamic_libs/moving_photo/src/common/moving_photo_lifecycle_manager.cpp",
   ]
   cflags = [
     "-fPIC",
@@ -270,6 +272,7 @@ ohos_shared_library("camera_dynamic_moving_photo") {
     "media_foundation:native_media_core",
     "media_library:media_library_camera_helper",
     "samgr:samgr_proxy",
+    "init:libbegetutil",
   ]
   defines = []
 

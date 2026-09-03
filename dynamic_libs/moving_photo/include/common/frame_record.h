@@ -49,6 +49,7 @@ public:
     void ReleaseMetaBuffer(sptr<Surface> surface, bool reuse);
     void NotifyBufferRelease();
     void DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<SurfaceBuffer> surfaceBuffer) const;
+    bool CheckVideoBufferStageEisStatus();
 
     inline void SetStatusReadyConvertStatus()
     {
@@ -148,6 +149,16 @@ public:
         isManual_ = isManual != 0;
     }
 
+    inline void SetStageEisManual(sptr<SurfaceBuffer>& buffer)
+    {
+        int32_t isManual = 0;
+        sptr<BufferExtraData> extraData = buffer->GetExtraData();
+        CHECK_RETURN_ELOG(extraData == nullptr, "SetStageEisManual: extraData is nullptr");
+        extraData->ExtraGet("isManualAeDropReference", isManual);
+        MEDIA_DEBUG_LOG("SetStageEisManual: %{public}d", isManual);
+        isManual_ = isManual != 0;
+    }
+
     inline bool IsManual()
     {
         return isManual_;
@@ -166,6 +177,11 @@ public:
     inline int64_t GetTimeStamp()
     {
         return timestamp_;
+    }
+
+    inline GraphicTransformType GetTransformType()
+    {
+        return transformType_;
     }
 
     inline shared_ptr<Size> GetFrameSize()
@@ -216,12 +232,34 @@ public:
         return isIDRFrame_;
     }
 
+    inline bool GetOfflineStatus()
+    {
+        return isOfflineProcessed_;
+    }
+
+    inline void SetOfflineStatus(bool isProcessed)
+    {
+        isOfflineProcessed_ = isProcessed;
+    }
+
     struct HashFunction {
         std::size_t operator()(const sptr<FrameRecord>& obj) const
         {
             return std::hash<std::string>()(obj->GetFrameId());
         }
     };
+
+    inline void SetWarpGridBuffer(sptr<SurfaceBuffer> buffer)
+    {
+        std::unique_lock<std::mutex> lock(warpGridBufferMutex_);
+        warpGridBuffer_ = buffer;
+    }
+
+    inline sptr<SurfaceBuffer> GetWarpGridBuffer()
+    {
+        std::unique_lock<std::mutex> lock(warpGridBufferMutex_);
+        return warpGridBuffer_;
+    }
 
     struct EqualFunction {
         bool operator()(const sptr<FrameRecord>& obj1, const sptr<FrameRecord>& obj2) const
@@ -292,6 +330,7 @@ private:
     static const int32_t STATUS_FINISH_ENCODE = 2;
     std::atomic<int32_t> status = STATUS_NONE;
     std::atomic<bool> isEncoded_ { false };
+    std::atomic<bool> isOfflineProcessed_ {false};
     std::atomic<bool> isCover_ { false };
     shared_ptr<Size> size;
     uint32_t bufferSize;
@@ -308,6 +347,9 @@ private:
     std::atomic<bool> isManual_ { false };
     static std::mutex addrTrackerMutex_;
     static std::map<void*, AddrInfo> addrTracker_;
+    sptr<SurfaceBuffer> warpGridBuffer_;
+    std::mutex warpGridBufferMutex_;
+    std::atomic<bool> isStageEisEnabled_ = false;
 };
 } // namespace CameraStandard
 } // namespace OHOS

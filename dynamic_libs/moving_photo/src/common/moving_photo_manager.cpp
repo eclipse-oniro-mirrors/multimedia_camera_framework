@@ -20,8 +20,16 @@
 #include "audio_session_manager.h"
 #include "moving_photo_video_cache.h"
 #include "moving_photo_adapter.h"
+#include "moving_photo_warp_grid_surface_wrapper.h"
+#include "parameters.h"
+#include "moving_photo_lifecycle_manager.h"
 
 namespace OHOS::CameraStandard {
+
+namespace {
+constexpr uint32_t PROFILE_INDEX_WIDTH = 2;
+constexpr uint32_t PROFILE_INDEX_HEIGHT = 3;
+}
 
 void MovingPhotoResource::SetXtStyleType(VideoType type)
 {
@@ -39,6 +47,12 @@ void MovingPhotoResource::StartOnceRecord(uint64_t timestamp, int32_t rotation, 
     livephotoListener_->ClearCache(timestamp);
     avcodecTaskManagerProxy_->RecordVideoType(captureId, livephotoListener_->GetXtStyleType());
     livephotoListener_->DrainOutImage(imageCallback);
+}
+
+void MovingPhotoResource::StartStageEisRecord(sptr<DrainImageManager> drainImageManager, int64_t timestamp)
+{
+    CHECK_RETURN_ELOG(!livephotoListener_, "StartOnceRecord livephotoListener_ is null");
+    offlineSessionCallback_->OnDrainCachedVideoBuffer(drainImageManager, timestamp);
 }
 
 void MovingPhotoResource::StartProcessAudioTask(int32_t captureId, int64_t middleTimeStamp)
@@ -104,11 +118,13 @@ void MovingPhotoResource::CreateMovingPhotoVideoCache()
 MovingPhotoManager::MovingPhotoManager()
 {
     MEDIA_INFO_LOG("MovingPhotoManager ctor is callled");
+    lifecycleManager_ = new MovingPhotoLifecycleManager();
 }
  
 MovingPhotoManager::~MovingPhotoManager()
 {
     MEDIA_INFO_LOG("MovingPhotoManager dtor is callled");
+    lifecycleManager_ = nullptr;
 }
 
 void MovingPhotoManager::StartAudioCapture()
@@ -133,7 +149,7 @@ void MovingPhotoManager::ReleaseStreamStruct(VideoType videoType)
     std::lock_guard<std::mutex> lock(GetLock(videoType));
     streamStruct.livephotoListener_ = nullptr;
     streamStruct.livephotoMetaListener_ = nullptr;
-    streamStruct.movingPhotoVideoCache_ = nullptr;
+    streamStruct.livephotoStageEisListener_ = nullptr;
 }
 
 void MovingPhotoManager::ChangeListenerSetXtStyleType(bool isXtStyleEnabled)
@@ -157,11 +173,31 @@ void MovingPhotoManager::StartRecord(uint64_t timestamp, int32_t rotation, int32
     CHECK_RETURN(movingPhotoResource_.avcodecTaskManagerProxy_ == nullptr);
     // LCOV_EXCL_START
     auto weakThis = wptr<MovingPhotoManager>(this);
-    movingPhotoResource_.avcodecTaskManagerProxy_->SubmitTask([weakThis, timestamp, rotation, captureId]() {
-        auto manager = weakThis.promote();
-        CHECK_RETURN(!manager);
-        manager->StartOnceRecord(timestamp, rotation, captureId, ORIGIN_VIDEO);
-    });
+    if (movingPhotoStageEisEnabledFlag_) {
+        std::vector<sptr<FrameRecord>> frameCacheList;
+        if (movingPhotoResource_.movingPhotoVideoCache_ == nullptr) {
+            MEDIA_ERR_LOG("MovingPhotoManager::StartRecord movingPhotoVideoCache is nullptr");
+        }
+        sptr<SessionDrainImageCallback> imageCallback =
+            new SessionDrainImageCallback(frameCacheList, movingPhotoResource_.livephotoListener_,
+                                          movingPhotoResource_.movingPhotoVideoCache_, timestamp, rotation, captureId);
+        auto size = movingPhotoResource_.livephotoListener_->GetQueueSize();
+        sptr<DrainImageManager> drainImageManager = new DrainImageManager(imageCallback, size + postCacheFrameCount_);
+        movingPhotoResource_.livephotoListener_->SetCallbackMap(imageCallback, drainImageManager);
+        int64_t shutterTimeStamp =  movingPhotoResource_.livephotoListener_->GetBackTimeStamp();
+        movingPhotoResource_.avcodecTaskManagerProxy_->SubmitTask([weakThis, drainImageManager, shutterTimeStamp]() {
+            auto manager = weakThis.promote();
+            CHECK_RETURN(!manager);
+            manager->StartStageEisRecord(drainImageManager, shutterTimeStamp);
+        });
+    } else {
+        movingPhotoResource_.avcodecTaskManagerProxy_->SubmitTask([weakThis, timestamp, rotation, captureId]() {
+            auto manager = weakThis.promote();
+            CHECK_RETURN(!manager);
+            manager->StartOnceRecord(timestamp, rotation, captureId, ORIGIN_VIDEO);
+        });
+    }
+
     auto weakThisForAudioTask = wptr<MovingPhotoManager>(this);
     CHECK_RETURN_ELOG(!movingPhotoResource_.livephotoListener_,
         "MovingPhotoResource livephotoListener is nullptr");
@@ -188,6 +224,13 @@ void MovingPhotoManager::StartOnceRecord(uint64_t timestamp, int32_t rotation, i
     std::lock_guard<std::mutex> lock(GetLock(videoType));
     streamStruct.StartOnceRecord(timestamp, rotation, captureId);
     MEDIA_INFO_LOG("StartOnceRecord END");
+}
+
+void MovingPhotoManager::StartStageEisRecord(sptr<DrainImageManager> drainImageManager, int64_t timestamp)
+{
+    auto& streamStruct = GetMovingPhotoResource(ORIGIN_VIDEO);
+    std::lock_guard<std::mutex> lock(GetLock(ORIGIN_VIDEO));
+    streamStruct.StartStageEisRecord(drainImageManager, timestamp);
 }
 
 void MovingPhotoManager::StartProcessAudioTask(int32_t captureId, int64_t middleTimeStamp)
@@ -244,11 +287,37 @@ void MovingPhotoManager::Release()
     MEDIA_DEBUG_LOG("MovingPhotoManager::Release is callled");
     {
         std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-        movingPhotoResource_ = {};
+        if (movingPhotoResource_.livephotoStageEisListener_ != nullptr) {
+            movingPhotoResource_.livephotoStageEisListener_->UnregisterFromSurface();
+        }
+        if (movingPhotoResource_.movingPhotoOfflineSession_ != nullptr) {
+            movingPhotoResource_.movingPhotoOfflineSession_->SetStageEisResultCb(nullptr);
+        }
+        if (movingPhotoResource_.livephotoListener_ != nullptr) {
+            movingPhotoResource_.livephotoListener_->SetOfflineSession(nullptr);
+        }
+        // Note: movingPhotoVideoCache_ will be released in the async thread after all tasks complete
+        movingPhotoResource_.livephotoListener_ = nullptr;
+        movingPhotoResource_.livephotoMetaListener_ = nullptr;
+        movingPhotoResource_.livephotoStageEisListener_ = nullptr;
+        movingPhotoResource_.movingPhotoOfflineSession_ = nullptr;
     }
     {
         std::lock_guard<std::mutex> lock(xtStyleMovingPhotoStatusLock_);
-        xtStyleMovingPhotoResource_ = {};
+        if (xtStyleMovingPhotoResource_.livephotoStageEisListener_ != nullptr) {
+            xtStyleMovingPhotoResource_.livephotoStageEisListener_->UnregisterFromSurface();
+        }
+        if (xtStyleMovingPhotoResource_.livephotoListener_ != nullptr) {
+            xtStyleMovingPhotoResource_.livephotoListener_->SetOfflineSession(nullptr);
+        }
+        // Note: movingPhotoVideoCache_ will be released in the async thread after all tasks complete
+        xtStyleMovingPhotoResource_.livephotoListener_ = nullptr;
+        xtStyleMovingPhotoResource_.livephotoMetaListener_ = nullptr;
+        xtStyleMovingPhotoResource_.livephotoStageEisListener_ = nullptr;
+    }
+    // Clear lifecycleManager listeners to prevent dangling references
+    if (lifecycleManager_ != nullptr) {
+        lifecycleManager_->movingPhotoListener_ = nullptr;
     }
 }
 
@@ -257,7 +326,7 @@ void MovingPhotoManager::StopMovingPhoto(VideoType type)
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("MovingPhotoManager::StopMovingPhoto is called");
     std::lock_guard<std::mutex> lock(movingPhotoStatusLock_);
-    movingPhotoResource_.StopDrainOut();
+    CHECK_EXECUTE(!movingPhotoStageEisEnabledFlag_, movingPhotoResource_.StopDrainOut());
     auto audioCaptureSessionProxy = sptr<AudioCapturerSessionIntf>(audioCapturerSessionProxy_);
     std::thread asyncAudioReleaseThread = thread([audioCaptureSessionProxy]() {
         CHECK_PRINT_ELOG(!audioCaptureSessionProxy, "audioCapturerSessionProxy is nullptr");
@@ -269,6 +338,12 @@ void MovingPhotoManager::StopMovingPhoto(VideoType type)
     asyncAudioReleaseThread.detach();
     CHECK_EXECUTE((type == VideoType::ORIGIN_VIDEO || type == VideoType::XT_ORIGIN_VIDEO),
         xtStyleMovingPhotoResource_.StopDrainOut());
+}
+
+void MovingPhotoManager::RecordStreamStopStatus(bool isStreamStop)
+{
+    CHECK_RETURN_ELOG(lifecycleManager_ == nullptr, "lifecycleManager is nullptr");
+    lifecycleManager_->RecordStopStatus(isStreamStop);
 }
 
 uint32_t Duration2FrameCount(uint32_t duration)
@@ -298,6 +373,12 @@ void MovingPhotoManager::SetBrotherListener()
     bListener->SetBrotherListener(aListener);
 }
 
+void MovingPhotoManager::SetMovingPhotoStageEisSupport(bool isSupport)
+{
+    MEDIA_DEBUG_LOG("MovingPhotoManager::SetMovingPhotoStageEisSupport support: %{public}d", isSupport);
+    movingPhotoStageEisSupport_ = isSupport;
+}
+
 void MovingPhotoManager::ExpandMovingPhoto(VideoType videoType, int32_t width, int32_t height, ColorSpace colorspace,
     sptr<Surface> videoSurface, sptr<Surface> metaSurface, sptr<AvcodecTaskManagerIntf>& avcodecTaskManager)
 {
@@ -309,8 +390,9 @@ void MovingPhotoManager::ExpandMovingPhoto(VideoType videoType, int32_t width, i
         "HStreamOperator::ExpandMovingPhotoRepeatStream CreateMovingPhotoSurfaceWrapper fail.");
     CHECK_RETURN_ELOG(metaSurface == nullptr, "metaSurface is nullptr");
     auto metaCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(8);
+    uint32_t cacheSize = movingPhotoStageEisSupport_ ? MOVING_PHOTO_STAGE_EIS_CACHE_SIZE : preCacheFrameCount_;
     streamStruct.livephotoListener_ = new (std::nothrow) MovingPhotoListener(surfaceWrapper,
-        metaSurface, metaCache, preCacheFrameCount_, postCacheFrameCount_, videoType);
+        metaSurface, metaCache, cacheSize, postCacheFrameCount_, videoType);
     CHECK_RETURN_ELOG(streamStruct.livephotoListener_ == nullptr, "failed to new livephotoListener_!");
     surfaceWrapper->SetSurfaceBufferListener(streamStruct.livephotoListener_);
     sptr<MovingPhotoMetaListener> metaListener = new(std::nothrow) MovingPhotoMetaListener(
@@ -342,6 +424,148 @@ void MovingPhotoManager::ExpandMovingPhoto(VideoType videoType, int32_t width, i
     }
     CreateManualTaskManager(streamStruct, videoSurface, colorspace);
     streamStruct.CreateMovingPhotoVideoCache();
+}
+
+void MovingPhotoManager::ConfigMovingPhotoStageEisStream(std::vector<int32_t> movingPhotoStageProfile,
+                                                         sptr<Surface> fisrtStageEisSurface)
+{
+    MEDIA_INFO_LOG("MovingPhotoManager::ConfigMovingPhotoStageEisStream is called");
+    auto &streamStruct = GetMovingPhotoResource(ORIGIN_VIDEO);
+    CHECK_RETURN_ELOG(streamStruct.livephotoListener_ == nullptr,
+        "ConfigMovingPhotoStageEisStream livephotoListener is nullptr");
+    auto stageEisCache = make_shared<FixedSizeList<pair<int64_t, sptr<SurfaceBuffer>>>>(8);
+    streamStruct.livephotoListener_->SetStageEisCache(stageEisCache);
+    sptr<MovingPhotoStageEisListener> stageEisListener = new (std::nothrow)
+        MovingPhotoStageEisListener(fisrtStageEisSurface, streamStruct.livephotoListener_, stageEisCache);
+    streamStruct.livephotoStageEisListener_ = stageEisListener;
+    CHECK_RETURN_ELOG(stageEisListener == nullptr, "stageEisListener is nullptr");
+    fisrtStageEisSurface->RegisterConsumerListener((sptr<IBufferConsumerListener> &)stageEisListener);
+}
+
+void MovingPhotoManager::SetStageEisFlag(bool stageEisFlag)
+{
+    CHECK_RETURN_ELOG(movingPhotoResource_.avcodecTaskManagerProxy_ == nullptr,
+                      "SetLivePhotoFireworkFlag callback taskManager is null");
+    movingPhotoResource_.avcodecTaskManagerProxy_->SetLivePhotoStageEisFlag(stageEisFlag);
+    CHECK_EXECUTE(movingPhotoResource_.avcodecManualTaskManagerProxy_,
+        movingPhotoResource_.avcodecManualTaskManagerProxy_->SetLivePhotoStageEisEnableFlag(stageEisFlag));
+}
+
+void MovingPhotoManager::SetStageEisEnabledFlag(bool isEnable)
+{
+    movingPhotoStageEisEnabledFlag_ = isEnable;
+    auto &streamStruct = GetMovingPhotoResource(ORIGIN_VIDEO);
+    streamStruct.livephotoListener_->SetLivePhotoStageEisEnableFlag(isEnable);
+}
+
+void MovingPhotoManager::SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback)
+{
+    MEDIA_DEBUG_LOG("MovingPhotoManager::SetVideoFdMapEmptyCallback is called");
+    CHECK_RETURN_ELOG(movingPhotoResource_.avcodecTaskManagerProxy_ == nullptr,
+                      "SetVideoFdMapEmptyCallback callback taskManager_ is null");
+    movingPhotoResource_.avcodecTaskManagerProxy_->SetVideoFdMapEmptyCallback(callback);
+}
+
+void MovingPhotoManager::SetLivePhotoOfflineSession(sptr<MovingPhotoOfflineSessionProxy> offlineSession)
+{
+    CHECK_RETURN_ELOG(offlineSession == nullptr, "offlineSession is nullptr");
+    auto &streamStruct = GetMovingPhotoResource(ORIGIN_VIDEO);
+    CHECK_RETURN_ELOG(streamStruct.livephotoListener_ == nullptr, "livephotoListener_ is nullptr");
+    streamStruct.livephotoListener_->SetOfflineSession(offlineSession);
+    streamStruct.movingPhotoOfflineSession_ = offlineSession;
+}
+
+void MovingPhotoManager::SetOfflineSessionCallback()
+{
+    auto &streamStruct = GetMovingPhotoResource(ORIGIN_VIDEO);
+    CHECK_RETURN_ELOG(streamStruct.livephotoListener_ == nullptr,
+        "SetOfflineSessionCallback livephotoListener is nullptr");
+    sptr<MovingPhotoMediaOfflineSessionListener> offlineSessionCallback = new (std::nothrow)
+        MovingPhotoMediaOfflineSessionListener(streamStruct.livephotoListener_);
+    streamStruct.offlineSessionCallback_ = offlineSessionCallback;
+    CHECK_EXECUTE(streamStruct.movingPhotoOfflineSession_ != nullptr,
+                  streamStruct.movingPhotoOfflineSession_->SetStageEisResultCb(offlineSessionCallback));
+    if (lifecycleManager_ != nullptr) {
+        lifecycleManager_->SetMovingPhotoListener(streamStruct.livephotoListener_);
+        lifecycleManager_->SetStageEisListener(streamStruct.livephotoStageEisListener_);
+        lifecycleManager_->SetOfflineSessionListener(streamStruct.offlineSessionCallback_);
+        lifecycleManager_->SetOfflineSession(streamStruct.movingPhotoOfflineSession_);
+        lifecycleManager_->SetVideoCache(movingPhotoResource_.movingPhotoVideoCache_);
+
+        streamStruct.livephotoListener_->SetLifecycleManager(lifecycleManager_);
+        if (streamStruct.livephotoStageEisListener_ != nullptr) {
+            streamStruct.livephotoStageEisListener_->SetLifecycleManager(lifecycleManager_);
+        }
+        if (streamStruct.offlineSessionCallback_ != nullptr) {
+            streamStruct.offlineSessionCallback_->SetLifecycleManager(lifecycleManager_);
+        }
+    }
+}
+
+void MovingPhotoManager::SetMovingPhotoMirror(bool isMirror)
+{
+    auto &streamStruct = GetMovingPhotoResource(ORIGIN_VIDEO);
+    CHECK_EXECUTE(streamStruct.movingPhotoOfflineSession_ != nullptr,
+        streamStruct.movingPhotoOfflineSession_->SetMovingPhotoMirror(isMirror));
+}
+
+void MovingPhotoManager::StartReleaseAndWaitForComplete(bool isOfflineSessionProcess)
+{
+    MEDIA_INFO_LOG("MovingPhotoManager::StartReleaseAndWaitForComplete is called");
+    CHECK_RETURN(!movingPhotoStageEisEnabledFlag_);
+    if (lifecycleManager_ == nullptr) {
+        return;
+    }
+    if (isAsyncReleaseStarted_.exchange(true)) {
+        MEDIA_INFO_LOG("StartReleaseAndWaitForComplete async thread already started, skip");
+        return;
+    }
+    auto thisPtr = wptr<MovingPhotoManager>(this);
+    sptr<MovingPhotoLifecycleManager> lifecycleManager = lifecycleManager_;
+    // Hold strong references to video caches to ensure they stay alive during async callbacks
+    std::thread asyncThread([thisPtr, lifecycleManager, isOfflineSessionProcess]() mutable {
+        CAMERA_SYNC_TRACE;
+        MEDIA_INFO_LOG("StartReleaseAndWaitForComplete async thread start");
+        if (lifecycleManager == nullptr) {
+            MEDIA_ERR_LOG("StartReleaseAndWaitForComplete lifecycleManager is null");
+            return;
+        }
+        if (isOfflineSessionProcess) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(MOVING_PHOTO_OFFLINE_WAIT_TIME));
+        }
+        MEDIA_INFO_LOG("StartReleaseAndWaitForComplete async thread done, lifecycleManager ref will release");
+        if (lifecycleManager->movingPhotoListener_ != nullptr) {
+            lifecycleManager->movingPhotoListener_->StopDrainOut();
+        } else {
+            MEDIA_INFO_LOG("StartReleaseAndWaitForComplete movingPhotoListener is null, skip StopDrainOut");
+        }
+        // Release video caches after all tasks are complete
+        MEDIA_INFO_LOG("StartReleaseAndWaitForComplete releasing video caches");
+        auto sharedThis = thisPtr.promote();
+        CHECK_EXECUTE(sharedThis != nullptr, sharedThis->Release());
+    });
+    asyncThread.detach();
+}
+
+void MovingPhotoManager::SetLivePhotoOfflineEisSurface(std::vector<int32_t> movingPhotoStageProfile,
+    sptr<Surface> offlineEisSurface, sptr<Surface> offlineEisMetaSurface)
+{
+    CHECK_RETURN_ELOG(offlineEisSurface == nullptr, "offlineEisSurface is nullptr");
+    offlineEisSurface->SetDefaultUsage(BUFFER_USAGE_VIDEO_ENCODER);
+    offlineEisSurface->SetDefaultWidthAndHeight(movingPhotoStageProfile[PROFILE_INDEX_WIDTH],
+        movingPhotoStageProfile[PROFILE_INDEX_HEIGHT]);
+    CHECK_RETURN_ELOG(offlineEisMetaSurface == nullptr, "offlineEisMetaSurface is nullptr");
+    offlineEisMetaSurface->SetDefaultUsage(BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA);
+    CHECK_RETURN_ELOG(movingPhotoResource_.movingPhotoOfflineSession_ == nullptr,
+        "movingPhotoOfflineSession_ is nullptr");
+    bool result = movingPhotoResource_.movingPhotoOfflineSession_->SetSurface(offlineEisSurface, offlineEisMetaSurface);
+    CHECK_RETURN_ELOG(result == false, "movingPhotoOfflineSession_ SetSurface failed!");
+
+    CHECK_RETURN_ELOG(movingPhotoResource_.avcodecTaskManagerProxy_ == nullptr, "avcodecTaskManagerProxy_ is nullptr");
+    movingPhotoResource_.avcodecTaskManagerProxy_->SetLivePhotoOfflineEisSurface(offlineEisSurface);
+    if (movingPhotoResource_.avcodecManualTaskManagerProxy_) {
+        movingPhotoResource_.avcodecManualTaskManagerProxy_->SetLivePhotoOfflineEisSurface(offlineEisSurface);
+    }
 }
 
 void MovingPhotoManager::CreateManualTaskManager(MovingPhotoResource& streamStruct, sptr<Surface> videoSurface,

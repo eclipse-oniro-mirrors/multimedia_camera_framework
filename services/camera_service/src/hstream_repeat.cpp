@@ -41,14 +41,19 @@
 #include "camera_rotate_plugin.h"
 #endif
 #include "av_codec_proxy.h"
+#include "display/composer/v1_1/display_composer_type.h"
 
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;
 using CM_ColorSpaceType_V2_1 = OHOS::HDI::Display::Graphic::Common::V2_1::CM_ColorSpaceType;
+using namespace OHOS::HDI::Display::Graphic::Common::V2_1;
+using namespace OHOS::HDI::Display::Composer::V1_1;
 constexpr int32_t INT32_ZERO = 0;
 constexpr int32_t INT32_ONE = 1;
 constexpr int32_t INT32_TWO = 2;
+constexpr uint32_t PROFILE_INDEX_WIDTH = 2;
+constexpr uint32_t PROFILE_INDEX_HEIGHT = 3;
 HStreamRepeat::HStreamRepeat(
     sptr<OHOS::IBufferProducer> producer, int32_t format, int32_t width, int32_t height, RepeatStreamType type)
     : HStreamCommon(StreamType::REPEAT, producer, format, width, height), repeatStreamType_(type)
@@ -179,19 +184,12 @@ bool HStreamRepeat::CheckVideoModeForSystemApp(int32_t sceneMode)
 void HStreamRepeat::SetStreamInfo(StreamInfo_V1_5& streamInfo)
 {
     HStreamCommon::SetStreamInfo(streamInfo);
-    auto metaProducerSequenceable = metaProducer_ == nullptr ? nullptr : new BufferProducerSequenceable(metaProducer_);
-    HDI::Camera::V1_1::ExtendedStreamInfo metaExtendedStreamInfo {
-        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(4), .width = 0, .height = 0, .format = 0,
-        .dataspace = 0, .bufferQueue = metaProducerSequenceable
-    };
     switch (repeatStreamType_) {
         case RepeatStreamType::LIVEPHOTO_XTSTYLE_RAW:
-            UpdateStreamSupplementaryInfoSettings(cameraAbility_);
-            [[fallthrough]];
+            SetLivePhotoStreamInfo(streamInfo, true);
+            break;
         case RepeatStreamType::LIVEPHOTO:
-            streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
-            streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
-            streamInfo.extendedStreamInfos = { metaExtendedStreamInfo };
+            SetLivePhotoStreamInfo(streamInfo, false);
             break;
         case RepeatStreamType::VIDEO:
             SetVideoStreamInfo(streamInfo);
@@ -219,6 +217,48 @@ void HStreamRepeat::SetStreamInfo(StreamInfo_V1_5& streamInfo)
             SetCompositionStreamInfo(streamInfo);
             break;
     }
+}
+
+void HStreamRepeat::SetLivePhotoStreamInfo(StreamInfo_V1_5& streamInfo, bool isXtStyleRaw)
+{
+    auto metaProducerSequenceable = metaProducer_ == nullptr ? nullptr : new BufferProducerSequenceable(metaProducer_);
+    HDI::Camera::V1_1::ExtendedStreamInfo metaExtendedStreamInfo {
+        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(4), .width = 0, .height = 0, .format = 0,
+        .dataspace = 0, .bufferQueue = metaProducerSequenceable
+    };
+    auto stageEisProducerSequenceable =
+        stageEisProducer_ == nullptr ? nullptr : new BufferProducerSequenceable(stageEisProducer_);
+    HDI::Camera::V1_1::ExtendedStreamInfo stageEisStreamInfo{
+        .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(17),
+        .width = 0,
+        .height = 0,
+        .format = 0,
+        .dataspace = 0,
+        .bufferQueue = stageEisProducerSequenceable};
+    CHECK_EXECUTE(isXtStyleRaw, UpdateStreamSupplementaryInfoSettings(cameraAbility_));
+    streamInfo.v1_0.intent_ = StreamIntent::VIDEO;
+    streamInfo.v1_0.encodeType_ = ENCODE_TYPE_H264;
+    streamInfo.v1_0.width_ =
+        stageEisStreamProfile_.empty() ? streamInfo.v1_0.width_ : stageEisStreamProfile_[PROFILE_INDEX_WIDTH];
+    streamInfo.v1_0.height_ =
+        stageEisStreamProfile_.empty() ? streamInfo.v1_0.height_ : stageEisStreamProfile_[PROFILE_INDEX_HEIGHT];
+    if (!stageEisStreamProfile_.empty()) {
+        int32_t pixelFormat = OHOS::HDI::Display::Composer::V1_1::PIXEL_FMT_YCRCB_420_SP;
+        auto it = g_cameraToPixelFormat.find(stageEisStreamProfile_[0]);
+        if (it != g_cameraToPixelFormat.end()) {
+            pixelFormat = it->second;
+        }
+        streamInfo.v1_0.format_ = pixelFormat;
+    }
+    streamInfo.extendedStreamInfos = { metaExtendedStreamInfo, stageEisStreamInfo };
+}
+
+void HStreamRepeat::SetStageEisSurface(sptr<OHOS::IBufferProducer> stageEisProducer)
+{
+}
+
+void HStreamRepeat::SetStageEisStreamProfile(std::vector<int32_t> stageEisStreamProfile)
+{
 }
 
 void HStreamRepeat::DataSpaceLimit2Full(StreamInfo_V1_5& streamInfo)

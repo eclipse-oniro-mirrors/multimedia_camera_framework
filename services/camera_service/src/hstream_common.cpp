@@ -31,6 +31,7 @@
 #include "camera_util.h"
 #include "image_receiver.h"
 
+
 namespace OHOS {
 namespace CameraStandard {
 using namespace OHOS::HDI::Camera::V1_0;

@@ -2494,6 +2494,12 @@ public:
 
     int32_t SetEnableOriginalImage(bool isEnable);
 
+    /**
+     * @brief Update Startburs Status
+     * @param isSetStarburstEnable The starburst enable.
+     */
+    void UpdateStarbursStatus(bool isSetStarburstEnable);
+
 protected:
     static const std::unordered_map<camera_flash_state_enum_t, FlashState> metaFlashStateMap_;
     static const std::unordered_map<camera_awb_mode_t, WhiteBalanceMode> metaWhiteBalanceModeMap_;

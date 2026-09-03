@@ -842,5 +842,10 @@ int32_t HCaptureSessionWrapper::ExpandLhdrGainmapStream(bool isNeedLhdrGainmap)
     MEDIA_ERR_LOG("HCaptureSessionWrapper::ExpandLhdrGainmapStream session is null");
     return CAMERA_INVALID_STATE;
 }
+
+int32_t HCaptureSessionWrapper::UpdateStarbursStatus(bool isSetStarburstEnable)
+{
+    return 0;
+}
 } // namespace CameraStandard
 } // namespace OHOS

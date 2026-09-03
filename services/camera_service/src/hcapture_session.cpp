@@ -1662,7 +1662,10 @@ void HCaptureSession::ExpandMovingPhotoRepeatStream()
     CHECK_RETURN(!hStreamOperatorSptr->IsCaptureStreamExist()); // ExpandMovingPhoto when photoOuput not null
     CHECK_RETURN(hStreamOperatorSptr->IsLivephotoStreamExist());
     MEDIA_INFO_LOG("Pipeline::Start enter.");
-    hStreamOperatorSptr->ExpandMovingPhotoRepeatStream(ORIGIN_VIDEO);
+    vector<int32_t> movingPhotoStageProfile;
+    bool isMovingPhotoStageSupport = CheckMovingPhotoStageEis(movingPhotoStageProfile);
+    CHECK_PRINT_ELOG(!isMovingPhotoStageSupport, "current not supported moving photo StageEis");
+    hStreamOperatorSptr->ExpandMovingPhotoRepeatStream(ORIGIN_VIDEO, isMovingPhotoStageSupport);
     MEDIA_INFO_LOG("ExpandMovingPhotoRepeatStream Exit");
 }
 
@@ -1822,6 +1825,65 @@ int32_t HCaptureSession::CreateRecorder(const sptr<IRemoteObject>& remoteObj, sp
 #endif
 }
 
+#ifdef CAMERA_MOVING_PHOTO
+bool HCaptureSession::CheckMovingPhotoStageEis(vector<int32_t>& movingPhotoStageProfile)
+{
+    bool isSystemApp = CheckSystemApp();
+    CHECK_RETURN_RET_ELOG(!isSystemApp, false, "current only supported system app");
+    auto device = GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(!device, false, "camera invalid state");
+    auto settings = device->GetDeviceAbility();
+    CHECK_RETURN_RET_ELOG(settings == nullptr, false, "metadata is nullptr");
+    camera_metadata_item_t item;
+    int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_ABILITY_LIVEPHOTO_EIS_SUPPORTED, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, false,
+        "HCaptureSession::GetMovingPhotoFirstStageAbility Failed with return code: %{public}d", ret);
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_RET(hStreamOperatorSptr == nullptr, false);
+    sptr<HStreamRepeat> streamRepeat = hStreamOperatorSptr->FindPreviewStreamRepeat();
+    CHECK_RETURN_RET(streamRepeat == nullptr, false);
+    int32_t targetWidth = streamRepeat->width_;
+    int32_t targetHeight = streamRepeat->height_;
+    bool isModeSupport = false;
+    bool isSizeSupport = false;
+    for (size_t index = 0; index < item.count; index++) {
+        CHECK_CONTINUE(item.data.i32[index] != opMode_);
+        CHECK_CONTINUE(index >= PROFILE_INDEX_F && item.data.i32[index - PROFILE_INDEX_F] != INDEX_INVALID);
+        isModeSupport = item.data.i32[index] == opMode_;
+        CHECK_BREAK_ELOG(index + PROFILE_INDEX_F >= (item.count - PROFILE_INDEX_F), "invalid argument");
+        movingPhotoStageProfile.push_back(item.data.i32[index + PROFILE_INDEX_F]);
+        movingPhotoStageProfile.push_back(item.data.i32[index + PROFILE_INDEX_S]);
+        while (item.data.i32[index] != INDEX_INVALID && index < (item.count - PROFILE_INDEX_F)) {
+            if (item.data.i32[index] == targetWidth &&
+                item.data.i32[index + PROFILE_INDEX_F] == targetHeight) {
+                CHECK_BREAK(index + PROFILE_INDEX_WEIGHT >= (item.count - PROFILE_INDEX_F));
+                movingPhotoStageProfile.push_back(item.data.i32[index + PROFILE_INDEX_WEIGHT]);
+                movingPhotoStageProfile.push_back(item.data.i32[index + PROFILE_INDEX_HEIGHT]);
+                isSizeSupport = true;
+                break;
+            }
+            index++;
+        }
+        CHECK_BREAK(isSizeSupport);
+    }
+    return isModeSupport && isSizeSupport;
+}
+
+int32_t HCaptureSession::GetMovingPhotoFirstStageAbility()
+{
+    vector<int32_t> movingPhotoStageProfile;
+    bool isSupported = CheckMovingPhotoStageEis(movingPhotoStageProfile);
+    CHECK_RETURN_RET_ELOG(!isSupported, CAMERA_OK, "not support moving photo stageEis");
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_RET(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG);
+    isMovingPhotoStageAbility_ = isSupported;
+    hStreamOperatorSptr->SetMovingPhotoStageEisFlag(isMovingPhotoStageAbility_);
+    hStreamOperatorSptr->ExpandMovingPhotoStageEisStream(movingPhotoStageProfile);
+
+    return CAMERA_OK;
+}
+#endif
+
 int32_t HCaptureSession::CommitConfig()
 {
     CAMERA_SYNC_TRACE;
@@ -1846,12 +1908,14 @@ int32_t HCaptureSession::CommitConfig()
         if (!IsNeedDynamicConfig()) {
 #ifdef CAMERA_MOVING_PHOTO
             ExpandMovingPhotoRepeatStream();
+            GetMovingPhotoFirstStageAbility();
 #endif
             ExpandSketchRepeatStream();
             ExpandCompositionRepeatStream();
         }
 #ifdef CAMERA_MOVING_PHOTO
         ExpandXtStyleMovingPhotoRepeatStream();
+        
 #endif
         auto device = GetCameraDevice();
         if (device == nullptr) {
@@ -2360,6 +2424,8 @@ int32_t HCaptureSession::EnableMovingPhoto(bool isEnable)
     if (cameraDevice != nullptr) {
         settings = cameraDevice->CloneCachedSettings();
     }
+
+    CHECK_EXECUTE(isMovingPhotoStageAbility_, hStreamOperatorSptr->EnableMovingPhotoStageEis(isEnable));
     if (hStreamOperatorSptr->GetSupportRedoXtStyle() == ORIGIN_AND_EFFECT && isXtStyleEnabled_) {
         MEDIA_INFO_LOG("ENABLE_LIVEPHOTO_DYNAMIC_CONFIG");
         if (!isEnable) {
@@ -2386,6 +2452,14 @@ int32_t HCaptureSession::SetXtStyleStatus(bool status)
     auto hStreamOperatorSptr = GetStreamOperator();
     CHECK_RETURN_RET_ELOG(hStreamOperatorSptr == nullptr, CAMERA_OK, "hStreamOperatorSptr is null");
     hStreamOperatorSptr->SetXtStyleStatus(status);
+#ifdef CAMERA_MOVING_PHOTO
+    // Update Live Photo Stage Eis Status
+    MEDIA_INFO_LOG("HCaptureSession::SetXtStyleStatus livePhoto ability :%{public}d, %{public}d",
+        isMovingPhotoStageAbility_.load(), isMovingPhotoEnabled_);
+    if (isMovingPhotoStageAbility_ && isMovingPhotoEnabled_) {
+        hStreamOperatorSptr->SetStageEisStatus(status);
+    }
+#endif
     isXtStyleEnabled_ = status;
     // 状态变化时需要启/停流
     if (hStreamOperatorSptr->GetSupportRedoXtStyle() == ORIGIN_AND_EFFECT) {
@@ -2407,6 +2481,16 @@ int32_t HCaptureSession::SetXtStyleStatus(bool status)
         }
 #endif
     }
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::UpdateStarbursStatus(bool isSetStarburstEnable)
+{
+    auto hStreamOperatorSptr = GetStreamOperator();
+    CHECK_RETURN_RET_ELOG(hStreamOperatorSptr == nullptr, CAMERA_INVALID_ARG, "hStreamOperatorSptr is nullptr");
+#ifdef CAMERA_MOVING_PHOTO
+    hStreamOperatorSptr->SetStageEisStatus(isSetStarburstEnable);
+#endif
     return CAMERA_OK;
 }
 

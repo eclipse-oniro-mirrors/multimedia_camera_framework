@@ -112,6 +112,7 @@ public:
     int32_t EnableColorCube(const sptr<IPCFileDescriptor>& ipcFd, int64_t dataSize) override;
     int32_t DisableColorCube() override;
     int32_t ExpandLhdrGainmapStream(bool isNeedLhdrGainmap) override;
+    int32_t UpdateStarbursStatus(bool isSetStarburstEnable) override;
 private:
     pid_t ownerPid_;
     int32_t opMode_;

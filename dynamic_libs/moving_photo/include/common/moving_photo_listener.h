@@ -24,8 +24,11 @@
 #include "fixed_size_list.h"
 #include "blocking_queue.h"
 #include "avcodec/video_encoder.h"
+#include "avcodec/moving_photo_video_cache.h"
 
 namespace OHOS::CameraStandard {
+class MovingPhotoLifecycleManager;
+class MovingPhotoStageEisListener;
 class SessionDrainImageCallback;
 using MetaElementType = std::pair<int64_t, sptr<SurfaceBuffer>>;
 using OnceRecordTimeInfo = std::pair<int64_t, int64_t>;
@@ -58,6 +61,26 @@ public:
     {
         return timestampDiff <= 0 || std::abs(timestampDiff) > TIMESTAMP_DIFF_MAX;
     }
+    bool RefillStageEis(sptr<SurfaceBuffer> buffer, int64_t timestamp, sptr<FrameRecord> &frame);
+    void SetCallbackMap(sptr<SessionDrainImageCallback> imageCallback, sptr<DrainImageManager> drainImageManager);
+    void DrainOutStageEisImage(sptr<FrameRecord> frameRecord, bool isEosFlag);
+    int32_t StageEisSesionProcess(sptr<SurfaceBuffer> warpBuffer, sptr<FrameRecord> frame);
+    inline void SetOfflineSession(sptr<MovingPhotoOfflineSessionProxy> offlineSession)
+    {
+        movingPhotoOfflineSession_ = offlineSession;
+    }
+
+    inline void SetLifecycleManager(wptr<MovingPhotoLifecycleManager> lifecycleManager)
+    {
+        lifecycleManager_ = lifecycleManager;
+    }
+
+    void SetStageEisListener(wptr<MovingPhotoStageEisListener> stageEisListener);
+
+    inline void SetLivePhotoStageEisEnableFlag(bool stageEisFlag)
+    {
+        livePhotoStageEisEnableFlag_ = stageEisFlag;
+    }
 
     inline int64_t GetQueueFrontTimestamp()
     {
@@ -69,6 +92,11 @@ public:
     {
         CHECK_RETURN_RET_ELOG(recorderBufferQueue_.Empty(), 0, "recorderBufferQueue_ is empty");
         return recorderBufferQueue_.Back()->GetTimeStamp();
+    }
+
+    inline GraphicTransformType GetFrontTransformType()
+    {
+        return recorderBufferQueue_.Front()->GetTransformType();
     }
 
     inline void SetBrotherListener(sptr<MovingPhotoListener> anotherListener)
@@ -99,6 +127,29 @@ public:
         return 0;
     }
     sptr<MovingPhotoSurfaceWrapper> movingPhotoSurfaceWrapper_;
+    std::vector<sptr<FrameRecord>> GetQueueFrameList()
+    {
+        return recorderBufferQueue_.GetAllElements();
+    }
+
+    SafeMap<sptr<SessionDrainImageCallback>, sptr<DrainImageManager>> &GetCallbackMap()
+    {
+        return callbackMap_;
+    }
+
+    int32_t GetQueueSize()
+    {
+        return recorderBufferQueue_.Size();
+    }
+
+    void SetStageEisCache(std::shared_ptr<FixedSizeList<MetaElementType>> &stageEisCache)
+    {
+        std::lock_guard<mutex> lock(stageEisMutex_);
+        stageEisCache_ = stageEisCache;
+    }
+
+    void DrainOutCacheStageEisImage(sptr<DrainImageManager> drainImageManager,
+        std::vector<sptr<FrameRecord>>& cacheBuffers);
 private:
     void NotifyDrainImageCallbacks(const sptr<FrameRecord>& frameRecord);
     void ReleaseOldestBufferWhenFull();
@@ -116,6 +167,12 @@ private:
     mutex brotherListenerMutex_;
     mutex xtTypeMutex_;
     FrameTimestampInfo prevFrameInfo_;
+    mutex stageEisMutex_;
+    std::shared_ptr<FixedSizeList<MetaElementType>> stageEisCache_;
+    sptr<MovingPhotoOfflineSessionProxy> movingPhotoOfflineSession_;
+    std::atomic<bool> livePhotoStageEisEnableFlag_ = {false};
+    wptr<MovingPhotoLifecycleManager> lifecycleManager_;
+    wptr<MovingPhotoStageEisListener> stageEisListener_;
 };
 
 class MovingPhotoMetaListener : public IBufferConsumerListener {
@@ -124,6 +181,7 @@ public:
         wptr<MovingPhotoListener> videoListener);
     ~MovingPhotoMetaListener();
     void OnBufferAvailable() override;
+    
 private:
     wptr<Surface> surface_;
     shared_ptr<FixedSizeList<MetaElementType>> metaCache_;
@@ -139,7 +197,7 @@ public:
                                        int32_t rotation,
                                        int32_t captureId);
     ~SessionDrainImageCallback();
-    void OnDrainImage(sptr<FrameRecord> frame) override;
+    void OnDrainImage(sptr<FrameRecord> frame, bool isOfflioneProcess) override;
     void OnDrainImageFinish(bool isFinished) override;
     inline uint64_t GetTimestamp()
     {
@@ -158,7 +216,7 @@ public:
         prevFrameInfo_ = prevFrameInfo;
     }
 private:
-    void OnDrainFrameRecord(sptr<FrameRecord> frame);
+    void OnDrainFrameRecord(sptr<FrameRecord> frame, bool isOfflioneProcess);
     std::mutex mutex_;
     std::vector<sptr<FrameRecord>> frameCacheList_;
     wptr<MovingPhotoListener> listener_;

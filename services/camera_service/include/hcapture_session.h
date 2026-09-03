@@ -52,6 +52,12 @@
 namespace OHOS {
 namespace CameraStandard {
 
+constexpr int32_t INDEX_INVALID = -1;
+constexpr uint32_t PROFILE_INDEX_F = 1;
+constexpr uint32_t PROFILE_INDEX_S = 2;
+constexpr uint32_t PROFILE_INDEX_WEIGHT = 2;
+constexpr uint32_t PROFILE_INDEX_HEIGHT = 3;
+
 enum class CaptureSessionReleaseType : int32_t {
     RELEASE_TYPE_CLIENT = 0,
     RELEASE_TYPE_CLIENT_DIED,
@@ -293,6 +299,9 @@ public:
     }
 
     int32_t ExpandLhdrGainmapStream(bool isNeedLhdrGainmap) override;
+    bool CheckMovingPhotoStageEis(vector<int32_t>& movingPhotoStageProfile);
+    int32_t GetMovingPhotoFirstStageAbility();
+    int32_t UpdateStarbursStatus(bool isSetStarburstEnable) override;
 
 private:
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
@@ -432,6 +441,7 @@ private:
     std::mutex mechDeliveryStateLock_;
     MechDeliveryState mechDeliveryState_ = MechDeliveryState::NOT_ENABLED;
     UpdateControlCenterCallback updateControlCenterCallback_;
+    std::atomic<bool> isMovingPhotoStageAbility_ = false;
 #ifdef CAMERA_MOVIE_FILE
     wptr<HCameraMovieFileOutput> weakCameraMovieFileOutput_;
 #endif

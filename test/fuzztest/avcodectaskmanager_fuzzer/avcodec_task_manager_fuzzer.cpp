@@ -123,7 +123,7 @@ void AvcodecTaskManagerFuzzer::AvcodecTaskManagerFuzzTest(FuzzedDataProvider& fd
     fuzz_->SubmitTask(task);
 
     CacheCbFunc cacheCallback = [](sptr<FrameRecord> frame, bool isEncodeSuccess) {};
-    fuzz_->EncodeVideoBuffer(frameRecord, cacheCallback);
+    fuzz_->EncodeVideoBuffer(frameRecord, false, cacheCallback);
 
     vector<sptr<FrameRecord>> frameRecords = CreateFrameRecordVector(fdp, FRAME_RECORD_COUNT, timestamp);
     vector<sptr<FrameRecord>> extendFrameRecords =
