@@ -29,6 +29,8 @@ void Test_HandleSetThumbnail(uint8_t *rawData, size_t size);
 void Test_HandleSetBufferProducerInfo(uint8_t *rawData, size_t size);
 void Test_HandleEnableDeferredType(uint8_t *rawData, size_t size);
 void Test_HandleSetCallback(uint8_t *rawData, size_t size);
+void Test_UncoveredCommands(uint8_t *rawData, size_t size);
+void Test_ErrorBranches(uint8_t *rawData, size_t size);
 
 void CheckPermission();
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size);

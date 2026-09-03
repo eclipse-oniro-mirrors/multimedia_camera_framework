@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,115 +13,168 @@
  * limitations under the License.
  */
 
-#include "timer_core_fuzzer.h"
-#include "camera_log.h"
-#include "message_parcel.h"
-#include "securec.h"
+#include <fuzzer/FuzzedDataProvider.h>
 #include <memory>
-#include "include/timer/timer.h"
+#include <string>
+#include <functional>
+#include "camera_log.h"
+#include "fuzz_util.h"
+#include "test_token.h"
+#include "timer/timer.h"
+#include "timer/core/timer_core.h"
+#include "timer/steady_clock.h"
 
-namespace OHOS {
-namespace CameraStandard {
-using namespace DeferredProcessing;
-static constexpr int32_t MAX_CODE_LEN = 512;
-static constexpr int32_t MIN_SIZE_NUM = 4;
-static const uint8_t* RAW_DATA = nullptr;
-const size_t THRESHOLD = 10;
-static size_t g_dataSize = 0;
-static size_t g_pos;
-std::shared_ptr<TimerCore> TimerCoreFuzzer::fuzz_{nullptr};
+using namespace OHOS;
+using namespace OHOS::CameraStandard;
+using namespace OHOS::CameraStandard::DeferredProcessing;
 
-/*
-* describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-* tips: only support basic type
-*/
-template<class T>
-T GetData()
+static constexpr uint32_t TIMER_DELAY_MS = 1000;
+static constexpr uint32_t TIMER_PERIOD_MS = 500;
+static constexpr uint32_t TIMER_REPEAT_DELAY_MS = 200;
+static constexpr uint32_t TIMER_START_MAX_MS = 5000;
+static constexpr uint64_t TIMER_START_OFFSET_MIN_MS = 1000;
+static constexpr uint64_t TIMER_START_OFFSET_MAX_MS = 100000;
+
+static void TestInitialize(FuzzedDataProvider& fdp)
 {
-    T object {};
-    size_t objectSize = sizeof(object);
-    if (RAW_DATA == nullptr || objectSize > g_dataSize - g_pos) {
-        return object;
-    }
-    errno_t ret = memcpy_s(&object, objectSize, RAW_DATA + g_pos, objectSize);
-    if (ret != EOK) {
-        return {};
-    }
-    g_pos += objectSize;
-    return object;
+    (void)fdp;
+    TimerCore::GetInstance().Initialize();
+    TimerCore::GetInstance().Initialize();
 }
 
-template<class T>
-uint32_t GetArrLength(T& arr)
+static void TestRegisterTimer(FuzzedDataProvider& fdp)
 {
-    if (arr == nullptr) {
-        MEDIA_INFO_LOG("%{public}s: The array length is equal to 0", __func__);
-        return 0;
-    }
-    return sizeof(arr) / sizeof(arr[0]);
+    uint64_t timestampMs = fdp.ConsumeIntegral<uint64_t>();
+    auto timer = Timer::Create("fuzz_timer_once", TimerType::ONCE, TIMER_DELAY_MS, []() {});
+    (void)TimerCore::GetInstance().RegisterTimer(timestampMs, timer);
 }
 
-void TimerCoreFuzzer::TimerCoreFuzzTest()
+static void TestRegisterTimerPeriodic(FuzzedDataProvider& fdp)
 {
-    if ((RAW_DATA == nullptr) || (g_dataSize > MAX_CODE_LEN) || (g_dataSize < MIN_SIZE_NUM)) {
-        return;
-    }
-
-    fuzz_ = std::make_shared<TimerCore>();
-    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
-    fuzz_->Initialize();
-    uint64_t timestampMs = 0;
-    std::function<void()> timerCallback;
-    std::shared_ptr<Timer> temp;
-    const std::shared_ptr<Timer>& timer = temp;
-    fuzz_->GetInstance();
-    fuzz_->RegisterTimer(timestampMs, timer);
-    fuzz_->DeregisterTimer(timestampMs, timer);
+    uint64_t timestampMs = fdp.ConsumeIntegral<uint64_t>();
+    auto timer = Timer::Create("fuzz_timer_periodic", TimerType::PERIODIC, TIMER_PERIOD_MS, []() {});
+    (void)TimerCore::GetInstance().RegisterTimer(timestampMs, timer);
 }
 
-void Test()
+static void TestRegisterTimerNullptr(FuzzedDataProvider& fdp)
 {
-    auto timercore = std::make_unique<TimerCoreFuzzer>();
-    if (timercore == nullptr) {
-        MEDIA_INFO_LOG("TimerCore is null");
-        return;
-    }
-    timercore->TimerCoreFuzzTest();
+    uint64_t timestampMs = fdp.ConsumeIntegral<uint64_t>();
+    std::shared_ptr<Timer> timer = nullptr;
+    (void)TimerCore::GetInstance().RegisterTimer(timestampMs, timer);
 }
 
-typedef void (*TestFuncs[1])();
-
-TestFuncs g_testFuncs = {
-    Test,
-};
-
-bool FuzzTest(const uint8_t* rawData, size_t size)
+static void TestDeregisterTimer(FuzzedDataProvider& fdp)
 {
-    // initialize data
-    RAW_DATA = rawData;
-    g_dataSize = size;
-    g_pos = 0;
-
-    uint32_t code = GetData<uint32_t>();
-    uint32_t len = GetArrLength(g_testFuncs);
-    if (len > 0) {
-        g_testFuncs[code % len]();
-    } else {
-        MEDIA_INFO_LOG("%{public}s: The len length is equal to 0", __func__);
-    }
-
-    return true;
+    uint64_t timestampMs = fdp.ConsumeIntegral<uint64_t>();
+    auto timer = Timer::Create("fuzz_timer", TimerType::ONCE, TIMER_DELAY_MS, []() {});
+    (void)TimerCore::GetInstance().DeregisterTimer(timestampMs, timer);
 }
-} // namespace CameraStandard
-} // namespace OHOS
 
-/* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
+static void TestDeregisterTimerNullptr(FuzzedDataProvider& fdp)
 {
-    if (size < OHOS::CameraStandard::THRESHOLD) {
-        return 0;
-    }
+    uint64_t timestampMs = fdp.ConsumeIntegral<uint64_t>();
+    std::shared_ptr<Timer> timer = nullptr;
+    (void)TimerCore::GetInstance().DeregisterTimer(timestampMs, timer);
+}
 
-    OHOS::CameraStandard::FuzzTest(data, size);
+static void TestRegisterMultipleTimersSameTimestamp(FuzzedDataProvider& fdp)
+{
+    uint64_t timestampMs = fdp.ConsumeIntegral<uint64_t>();
+    auto timer1 = Timer::Create("fuzz_timer_1", TimerType::ONCE, TIMER_DELAY_MS, []() {});
+    auto timer2 = Timer::Create("fuzz_timer_2", TimerType::ONCE, TIMER_DELAY_MS, []() {});
+    auto timer3 = Timer::Create("fuzz_timer_3", TimerType::PERIODIC, TIMER_PERIOD_MS, []() {});
+    (void)TimerCore::GetInstance().RegisterTimer(timestampMs, timer1);
+    (void)TimerCore::GetInstance().RegisterTimer(timestampMs, timer2);
+    (void)TimerCore::GetInstance().RegisterTimer(timestampMs, timer3);
+    (void)TimerCore::GetInstance().DeregisterTimer(timestampMs, timer1);
+    (void)TimerCore::GetInstance().DeregisterTimer(timestampMs, timer2);
+    (void)TimerCore::GetInstance().DeregisterTimer(timestampMs, timer3);
+}
+
+static void TestTimerStart(FuzzedDataProvider& fdp)
+{
+    uint32_t delayMs = fdp.ConsumeIntegralInRange<uint32_t>(0, TIMER_START_MAX_MS);
+    auto timer = Timer::Create("fuzz_timer_start", TimerType::ONCE, TIMER_DELAY_MS, []() {});
+    if (timer) {
+        (void)timer->Start(delayMs);
+        (void)timer->Stop();
+    }
+}
+
+static void TestTimerStartPeriodic(FuzzedDataProvider& fdp)
+{
+    uint32_t delayMs = fdp.ConsumeIntegralInRange<uint32_t>(0, TIMER_START_MAX_MS);
+    auto timer = Timer::Create("fuzz_timer_start_periodic", TimerType::PERIODIC, TIMER_PERIOD_MS, []() {});
+    if (timer) {
+        (void)timer->Start(delayMs);
+        (void)timer->IsActive();
+        (void)timer->GetName();
+        (void)timer->Stop();
+    }
+}
+
+static void TestTimerStartAt(FuzzedDataProvider& fdp)
+{
+    uint64_t timestampMs = SteadyClock::GetTimestampMilli() +
+        fdp.ConsumeIntegralInRange<uint64_t>(TIMER_START_OFFSET_MIN_MS, TIMER_START_OFFSET_MAX_MS);
+    auto timer = Timer::Create("fuzz_timer_start_at", TimerType::ONCE, TIMER_DELAY_MS, []() {});
+    if (timer) {
+        (void)timer->StartAt(timestampMs);
+    }
+}
+
+static void TestTimerMultipleStartStop(FuzzedDataProvider& fdp)
+{
+    auto timer = Timer::Create("fuzz_timer_multi", TimerType::PERIODIC, TIMER_REPEAT_DELAY_MS, []() {});
+    if (timer) {
+        (void)timer->Start(100);
+        (void)timer->Start(TIMER_REPEAT_DELAY_MS);
+        (void)timer->Stop();
+        (void)timer->Stop();
+    }
+}
+
+static void TestRegisterAndDeregister(FuzzedDataProvider& fdp)
+{
+    uint64_t timestampMs = fdp.ConsumeIntegral<uint64_t>();
+    auto timer = Timer::Create("fuzz_timer", TimerType::ONCE, TIMER_DELAY_MS, []() {});
+    (void)TimerCore::GetInstance().RegisterTimer(timestampMs, timer);
+    (void)TimerCore::GetInstance().DeregisterTimer(timestampMs, timer);
+}
+
+static void Init()
+{
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
+}
+
+static void Test(FuzzedDataProvider& fdp)
+{
+    auto func = fdp.PickValueInArray({
+        TestInitialize,
+        TestRegisterTimer,
+        TestRegisterTimerPeriodic,
+        TestRegisterTimerNullptr,
+        TestDeregisterTimer,
+        TestDeregisterTimerNullptr,
+        TestRegisterMultipleTimersSameTimestamp,
+        TestTimerStart,
+        TestTimerStartPeriodic,
+        TestTimerStartAt,
+        TestTimerMultipleStartStop,
+        TestRegisterAndDeregister,
+    });
+    func(fdp);
+}
+
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+    FuzzedDataProvider fdp(data, size);
+    Test(fdp);
+    return 0;
+}
+
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
+{
+    Init();
     return 0;
 }

@@ -39,7 +39,7 @@ namespace CameraStandard {
 static constexpr int32_t MIN_SIZE_NUM = 64;
 static constexpr int32_t ITEM_COUNT = 10;
 static constexpr int32_t DATA_SIZE = 100;
-std::shared_ptr<StreamCaptureProxy> StreamCaptureProxyFuzzer::fuzz_{nullptr};
+std::shared_ptr<StreamCaptureProxy> StreamCaptureProxyFuzzer::fuzz_ { nullptr };
 
 void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest1(FuzzedDataProvider& fdp)
 {
@@ -177,8 +177,7 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest10(FuzzedDataProvider& 
 {
     sptr<IRemoteObject> remote = nullptr;
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    std::vector<std::string> bufferNames = {"rawImage",
-        "gainmapImage", "deepImage", "exifImage", "debugImage"};
+    std::vector<std::string> bufferNames = { "rawImage", "gainmapImage", "deepImage", "exifImage", "debugImage" };
     size_t ind = fdp.ConsumeIntegral<size_t>() % bufferNames.size();
     std::string name = bufferNames[ind];
     sptr<IBufferProducer> producer = nullptr;
@@ -353,12 +352,12 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest21(FuzzedDataProvider& 
 {
     sptr<IRemoteObject> remote = nullptr;
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
-    sptr<CameraPhotoProxy> photoProxy = new(std::nothrow) CameraPhotoProxy();
-    std::vector<std::string> bufferNames1 = {"uri1", "uri2", "uri3", "uri4", "uri5"};
+    sptr<CameraPhotoProxy> photoProxy = new (std::nothrow) CameraPhotoProxy();
+    std::vector<std::string> bufferNames1 = { "uri1", "uri2", "uri3", "uri4", "uri5" };
     size_t ind = fdp.ConsumeIntegral<size_t>() % bufferNames1.size();
     std::string uri = bufferNames1[ind];
     int32_t cameraShotType = fdp.ConsumeIntegral<int32_t>();
-    std::vector<std::string> bufferNames2 = {"key1", "key2", "key3", "key4", "key5"};
+    std::vector<std::string> bufferNames2 = { "key1", "key2", "key3", "key4", "key5" };
     ind = fdp.ConsumeIntegral<size_t>() % bufferNames2.size();
     std::string burstKey = bufferNames2[ind];
     int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
@@ -370,6 +369,146 @@ void StreamCaptureProxyFuzzer::StreamCaptureProxyFuzzTest21(FuzzedDataProvider& 
     fuzz_ = std::make_shared<StreamCaptureProxy>(remote);
     CHECK_RETURN_ELOG(!fuzz_, "fuzz_ nullptr");
     fuzz_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+}
+
+void StreamCaptureProxyFuzzer::StreamCaptureProxyTestWithMock(FuzzedDataProvider& fdp)
+{
+    sptr<MockIRemoteObject> mockRemote = new MockIRemoteObject();
+    fuzz_ = std::make_shared<StreamCaptureProxy>(mockRemote);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability;
+    ability = std::make_shared<OHOS::Camera::CameraMetadata>(
+        fdp.ConsumeIntegralInRange(0, ITEM_COUNT), fdp.ConsumeIntegralInRange(0, DATA_SIZE));
+    fuzz_->Capture(ability);
+
+    fuzz_->CancelCapture();
+
+    sptr<IStreamCaptureCallback> callback;
+    fuzz_->SetCallback(callback);
+
+    fuzz_->Release();
+
+    bool isEnabled = fdp.ConsumeBool();
+    fuzz_->SetThumbnail(isEnabled);
+
+    fuzz_->ConfirmCapture();
+
+    int32_t type = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->DeferImageDeliveryFor(type);
+
+    fuzz_->IsDeferredPhotoEnabled();
+    fuzz_->IsDeferredVideoEnabled();
+}
+
+void StreamCaptureProxyFuzzer::StreamCaptureProxyTestUncoveredMethods(FuzzedDataProvider& fdp)
+{
+    sptr<MockIRemoteObject> mockRemote = new MockIRemoteObject();
+    fuzz_ = std::make_shared<StreamCaptureProxy>(mockRemote);
+
+    bool isUltraHighResPhoto = fdp.ConsumeBool();
+    fuzz_->SetUltraHighResPhoto(isUltraHighResPhoto);
+
+    std::string editData = "test_edit_data";
+    fuzz_->SetEditData(editData);
+
+    bool enabled = fdp.ConsumeBool();
+    fuzz_->EnableOriginalImage(enabled);
+
+    int32_t captureID = fdp.ConsumeIntegral<int32_t>();
+    std::string shotData = "test_shot_data";
+    fuzz_->SetShotParam(captureID, shotData);
+}
+
+static void PrepareFailingStreamCaptureProxy(FuzzedDataProvider& fdp)
+{
+    sptr<MockIRemoteObject> mockRemote = new MockIRemoteObject();
+    mockRemote->shouldFail = true;
+    mockRemote->errorCode = -1;
+    StreamCaptureProxyFuzzer::fuzz_ = std::make_shared<StreamCaptureProxy>(mockRemote);
+
+    auto ability = std::make_shared<OHOS::Camera::CameraMetadata>(
+        fdp.ConsumeIntegralInRange(0, ITEM_COUNT), fdp.ConsumeIntegralInRange(0, DATA_SIZE));
+    StreamCaptureProxyFuzzer::fuzz_->Capture(ability);
+}
+
+static void TriggerCaptureLifecycleBranches(FuzzedDataProvider& fdp)
+{
+    StreamCaptureProxyFuzzer::fuzz_->CancelCapture();
+
+    sptr<IStreamCaptureCallback> callback;
+    StreamCaptureProxyFuzzer::fuzz_->SetCallback(callback);
+    StreamCaptureProxyFuzzer::fuzz_->Release();
+
+    bool isEnabled = fdp.ConsumeBool();
+    StreamCaptureProxyFuzzer::fuzz_->SetThumbnail(isEnabled);
+    StreamCaptureProxyFuzzer::fuzz_->ConfirmCapture();
+
+    int32_t type = fdp.ConsumeIntegral<int32_t>();
+    StreamCaptureProxyFuzzer::fuzz_->DeferImageDeliveryFor(type);
+    StreamCaptureProxyFuzzer::fuzz_->IsDeferredPhotoEnabled();
+    StreamCaptureProxyFuzzer::fuzz_->IsDeferredVideoEnabled();
+    StreamCaptureProxyFuzzer::fuzz_->SetMovingPhotoVideoCodecType(type);
+}
+
+static void TriggerBufferAndCallbackBranches(FuzzedDataProvider& fdp)
+{
+    std::vector<std::string> bufferNames = { "rawImage", "gainmapImage" };
+    size_t ind = fdp.ConsumeIntegral<size_t>() % bufferNames.size();
+    std::string name = bufferNames[ind];
+    sptr<IBufferProducer> producer = nullptr;
+    StreamCaptureProxyFuzzer::fuzz_->SetBufferProducerInfo(name, producer);
+
+    bool enabled = fdp.ConsumeBool();
+    StreamCaptureProxyFuzzer::fuzz_->EnableRawDelivery(enabled);
+    StreamCaptureProxyFuzzer::fuzz_->SetCameraPhotoRotation(enabled);
+    StreamCaptureProxyFuzzer::fuzz_->EnableMovingPhoto(enabled);
+    StreamCaptureProxyFuzzer::fuzz_->EnableOfflinePhoto(enabled);
+
+    StreamCaptureProxyFuzzer::fuzz_->UnSetCallback();
+
+    sptr<IStreamCapturePhotoCallback> photoCallback;
+    StreamCaptureProxyFuzzer::fuzz_->SetPhotoAvailableCallback(photoCallback);
+
+    sptr<IStreamCaptureThumbnailCallback> thumbnailCallback;
+    StreamCaptureProxyFuzzer::fuzz_->SetThumbnailCallback(thumbnailCallback);
+
+    sptr<IStreamCapturePhotoAssetCallback> assetCallback;
+    StreamCaptureProxyFuzzer::fuzz_->SetPhotoAssetAvailableCallback(assetCallback);
+
+    StreamCaptureProxyFuzzer::fuzz_->UnSetPhotoAvailableCallback();
+    StreamCaptureProxyFuzzer::fuzz_->UnSetPhotoAssetAvailableCallback();
+    StreamCaptureProxyFuzzer::fuzz_->UnSetThumbnailCallback();
+}
+
+static void TriggerMediaLibraryAndParamBranches(FuzzedDataProvider& fdp)
+{
+    sptr<CameraPhotoProxy> photoProxy = new CameraPhotoProxy();
+    std::string uri = "test_uri";
+    int32_t cameraShotType = fdp.ConsumeIntegral<int32_t>();
+    std::string burstKey = "test_key";
+    int64_t timestamp = fdp.ConsumeIntegral<int64_t>();
+    StreamCaptureProxyFuzzer::fuzz_->CreateMediaLibrary(photoProxy, uri, cameraShotType, burstKey, timestamp);
+
+    bool isUltraHighResPhoto = fdp.ConsumeBool();
+    StreamCaptureProxyFuzzer::fuzz_->SetUltraHighResPhoto(isUltraHighResPhoto);
+
+    std::string editData = "test_edit_data";
+    StreamCaptureProxyFuzzer::fuzz_->SetEditData(editData);
+
+    bool enabled = fdp.ConsumeBool();
+    StreamCaptureProxyFuzzer::fuzz_->EnableOriginalImage(enabled);
+
+    int32_t captureID = fdp.ConsumeIntegral<int32_t>();
+    std::string shotData = "test_shot_data";
+    StreamCaptureProxyFuzzer::fuzz_->SetShotParam(captureID, shotData);
+}
+
+void StreamCaptureProxyFuzzer::StreamCaptureProxyTestErrorBranches(FuzzedDataProvider& fdp)
+{
+    PrepareFailingStreamCaptureProxy(fdp);
+    TriggerCaptureLifecycleBranches(fdp);
+    TriggerBufferAndCallbackBranches(fdp);
+    TriggerMediaLibraryAndParamBranches(fdp);
 }
 
 void Test(uint8_t* data, size_t size)
@@ -404,12 +543,15 @@ void Test(uint8_t* data, size_t size)
     streamCaptureProxy->StreamCaptureProxyFuzzTest19(fdp);
     streamCaptureProxy->StreamCaptureProxyFuzzTest20();
     streamCaptureProxy->StreamCaptureProxyFuzzTest21(fdp);
+    streamCaptureProxy->StreamCaptureProxyTestWithMock(fdp);
+    streamCaptureProxy->StreamCaptureProxyTestUncoveredMethods(fdp);
+    streamCaptureProxy->StreamCaptureProxyTestErrorBranches(fdp);
 }
 } // namespace CameraStandard
 } // namespace OHOS
 
 /* Fuzzer entry point */
-extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(uint8_t* data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::Test(data, size);

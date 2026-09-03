@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,20 @@
  * limitations under the License.
  */
 
-#ifndef VIDEOPOSTPROCESSOR_FUZZER_H
-#define VIDEOPOSTPROCESSOR_FUZZER_H
+#ifndef MOVING_PHOTO_MANAGER_FUZZER_H
+#define MOVING_PHOTO_MANAGER_FUZZER_H
 
-#include "video_post_processor.h"
+#include "moving_photo_manager.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
 namespace OHOS {
 namespace CameraStandard {
-using namespace OHOS::CameraStandard::DeferredProcessing;
-class VideoPostProcessorFuzzer {
+class MovingPhotoManagerFuzzer {
 public:
-static std::shared_ptr<VideoPostProcessor> processor_;
-static void VideoPostProcessorFuzzTest1();
-static void VideoPostProcessorFuzzTest2();
-static void VideoPostProcessorFuzzTest3();
+    static void FuzzTest1(FuzzedDataProvider& fdp);
+    static void FuzzTest2(FuzzedDataProvider& fdp);
+    static void FuzzTest3(FuzzedDataProvider& fdp);
 };
-} //CameraStandard
-} //OHOS
-#endif //VIDEOPOSTPROCESSOR_FUZZER_H
-
+} // namespace CameraStandard
+} // namespace OHOS
+#endif // MOVING_PHOTO_MANAGER_FUZZER_H

@@ -98,6 +98,14 @@ private:
     std::u16string metaDescriptor_ = u"mock_i_stream_operator";
 };
 
+class IntelliStreamCallbackMock : public ICameraAgentStreamCallback {
+public:
+    IntelliStreamCallbackMock() = default;
+    ~IntelliStreamCallbackMock() = default;
+
+    void OnPreviewStarted() override {};
+};
+
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // HSTREAM_OPERATOR_FUZZER_H

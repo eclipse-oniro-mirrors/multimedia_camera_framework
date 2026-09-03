@@ -64,6 +64,8 @@ void TestVideoStabilization(sptr<CaptureSessionForSys> session, FuzzedDataProvid
 void TestOISMode(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestOnResultReceived(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestSetPreviewRotation(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestSmartCapture(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestPose(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestISO(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestExposureExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestFocusTracking(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
@@ -72,6 +74,7 @@ void TestColorStyleExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider&
 void TestComposition(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestControlRing(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestLcdFlashTripod(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
+void TestCameraMovement(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestWhiteBalanceGains(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestStarburst(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
 void TestParameters(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp);
@@ -100,6 +103,11 @@ public:
 class MockIsoInfoSyncCallback : public IsoInfoSyncCallback {
 public:
     void OnIsoInfoChangedSync(IsoInfo info) override {}
+};
+
+class NotificationStatusCallbackMock : public NotificationStatusCallback {
+public:
+    void OnNotificationStatusCallback(DefocusFromProximityNotificationInfo info) override {}
 };
 
 class IsoInfoSyncCallbackMock : public IsoInfoSyncCallback {
@@ -174,6 +182,11 @@ public:
     void OnAppCameraSwitch(const std::string &cameraId) override {}
 };
 
+class AbnormalStatusChangeCallbackMock : public AbnormalStatusChangeCallback {
+public:
+    void OnAbnormalStatusChange(AbnormalStatusInfo abnormalStatusInfo) override {}
+};
+
 class CompositionPositionCalibrationCallbackMock : public CompositionPositionCalibrationCallback {
 public:
     void OnCompositionPositionCalibrationAvailable(const CompositionPositionCalibrationInfo info) const override {}
@@ -220,9 +233,29 @@ public:
     void OnFlashStateChangedSync(FlashState info) override {}
 };
 
+class SmartCaptureChangeCallbackMock : public SmartCaptureChangeCallback {
+public:
+    void OnSmartCaptureChange(SmartCaptureInfo smartCaptureInfo) override {}
+};
+
+class PoseSuggestionChangeCallbackMock : public PoseSuggestionChangeCallback {
+public:
+    void OnPoseSuggestionChange(RecommendCaptureInfo recommendCaptureInfo) override {}
+};
+
 class AutoDeviceSwitchCallbackMock : public AutoDeviceSwitchCallback {
 public:
     void OnAutoDeviceSwitchStatusChange(bool isDeviceSwitched, bool isDeviceCapabilityChanged) const override {}
+};
+
+class CameraMovementCallbackMock : public CameraMovementCallback {
+public:
+    void OnCameraMovementInfoAvailable(CameraMovementInfo cameraMovementInfo) override {}
+};
+
+class RecommendedZoomRatioCallbackMock : public RecommendedZoomRatioCallback {
+public:
+    void OnRecommendedZoomRatioAvailable(double recommendedZoomRatio) override {}
 };
 
 class CompositionEffectInfoCallbackMock : public NativeInfoCallback<CompositionEffectInfo> {

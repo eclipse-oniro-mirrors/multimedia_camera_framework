@@ -24,6 +24,8 @@ namespace StreamRepeatStubFuzzer {
 
 void Test(uint8_t *rawData, size_t size);
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size);
+void Test_UncoveredCommands(uint8_t *rawData, size_t size);
+void Test_ErrorBranches(uint8_t *rawData, size_t size);
 
 void CheckPermission();
 

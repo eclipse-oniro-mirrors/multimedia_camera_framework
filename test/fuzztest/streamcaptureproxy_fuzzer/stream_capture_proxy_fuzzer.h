@@ -19,9 +19,35 @@
 
 #include "stream_capture_proxy.h"
 #include <fuzzer/FuzzedDataProvider.h>
+#include "iremote_object.h"
+#include "ipc_object_stub.h"
 
 namespace OHOS {
 namespace CameraStandard {
+class MockIRemoteObject : public IPCObjectStub {
+public:
+    MockIRemoteObject()
+        : IPCObjectStub(u"mock_i_remote_object")
+    {
+        member_descriptor = u"mock_i_remote_object";
+        shouldFail = false;
+        errorCode = 0;
+    }
+
+    bool shouldFail;
+    int32_t errorCode;
+    std::u16string member_descriptor;
+
+    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
+    {
+        if (shouldFail) {
+            return errorCode;
+        }
+        reply.WriteInt32(0);
+        return 0;
+    }
+};
+
 class StreamCaptureProxyFuzzer {
 public:
     static std::shared_ptr<StreamCaptureProxy> fuzz_;
@@ -46,6 +72,9 @@ public:
     static void StreamCaptureProxyFuzzTest19(FuzzedDataProvider& fdp);
     static void StreamCaptureProxyFuzzTest20();
     static void StreamCaptureProxyFuzzTest21(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyTestWithMock(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyTestUncoveredMethods(FuzzedDataProvider& fdp);
+    static void StreamCaptureProxyTestErrorBranches(FuzzedDataProvider& fdp);
 };
 
 

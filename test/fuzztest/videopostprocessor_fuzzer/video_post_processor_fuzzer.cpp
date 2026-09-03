@@ -29,7 +29,7 @@ namespace CameraStandard {
 using namespace DeferredProcessing;
 using DeferredVideoJobPtr = std::shared_ptr<DeferredVideoJob>;
 std::shared_ptr<VideoPostProcessor> VideoPostProcessorFuzzer::processor_{nullptr};
-static constexpr int32_t MAX_CODE_LEN  = 512;
+static constexpr int32_t MAX_CODE_LEN  = 1000;
 static constexpr int32_t MIN_SIZE_NUM = 4;
 static const uint8_t* RAW_DATA = nullptr;
 const size_t THRESHOLD = 10;
@@ -135,6 +135,55 @@ void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest2()
     processor_->SetStreamInfo(stream, producer);
 }
 
+void VideoPostProcessorFuzzer::VideoPostProcessorFuzzTest3()
+{
+    uint8_t randomNum = GetData<uint8_t>();
+    std::vector<std::string> testStrings = {"test1", "test2"};
+    std::string videoId(testStrings[randomNum % testStrings.size()]);
+
+    // 1. ProcessRequest with null mediaManagerIntf -> cover mediaManagerIntf==nullptr branch
+    processor_->ProcessRequest(videoId, {}, nullptr);
+
+    // 2. GetIntent with fuzzed MediaStreamType -> cover MAKER/VIDEO/default switch branches
+    const HDI::Camera::V1_3::MediaStreamType streamTypes[] = {
+        HDI::Camera::V1_3::MediaStreamType::MEDIA_STREAM_TYPE_VIDEO,
+        HDI::Camera::V1_3::MediaStreamType::MEDIA_STREAM_TYPE_MAKER,
+        HDI::Camera::V1_3::MediaStreamType::MEDIA_STREAM_TYPE_METADATA,
+    };
+    constexpr size_t typeCount = sizeof(streamTypes) / sizeof(streamTypes[0]);
+    uint8_t typeIdx1 = GetData<uint8_t>();
+    auto streamIntent = processor_->GetIntent(streamTypes[typeIdx1 % typeCount]);
+    (void)streamIntent;
+
+    // 3. ProcessStream directly -> cover type switch + surface acquisition + null surface branch
+    //    (a) null mediaManagerIntf -> cover mediaManagerIntf==nullptr return path
+    StreamDescription stream{};
+    stream.streamId = GetData<int32_t>();
+    uint8_t typeIdx2 = GetData<uint8_t>();
+    stream.type = streamTypes[typeIdx2 % typeCount];
+    stream.width = GetData<uint32_t>();
+    stream.height = GetData<uint32_t>();
+    processor_->ProcessStream(stream, nullptr);
+    //    (b) real mediaManagerIntf -> cover stream.type switch + MpegGetSurface/MpegGetMakerSurface
+    auto mediaManagerProxy = MediaManagerProxy::CreateMediaManagerProxy();
+    processor_->ProcessStream(stream, mediaManagerProxy);
+
+    // 4. SetStreamInfo with streamInfo_ set -> cover body + GetIntent branches
+    //    (streamInfo_ stays null after early-return paths, set it directly to reach the body)
+    processor_->streamInfo_ = std::make_unique<VideoStreamInfo>(videoId);
+    StreamDescription stream2{};
+    stream2.streamId = GetData<int32_t>();
+    uint8_t typeIdx3 = GetData<uint8_t>();
+    stream2.type = streamTypes[typeIdx3 % typeCount];
+    sptr<BufferProducerSequenceable> producer;
+    processor_->SetStreamInfo(stream2, producer);
+
+    // 5. ReleaseStreams with fuzzed videoId -> cover videoId match/mismatch + session null branch
+    uint8_t releaseIdx = GetData<uint8_t>();
+    std::string releaseId(testStrings[releaseIdx % testStrings.size()]);
+    processor_->ReleaseStreams(releaseId);
+}
+
 void Test()
 {
     auto videoPostProcessor = std::make_unique<VideoPostProcessorFuzzer>();
@@ -152,6 +201,7 @@ void Test()
     }
     videoPostProcessor->VideoPostProcessorFuzzTest1();
     videoPostProcessor->VideoPostProcessorFuzzTest2();
+    videoPostProcessor->VideoPostProcessorFuzzTest3();
 }
 
 typedef void (*TestFuncs[1])();

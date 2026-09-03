@@ -27,6 +27,7 @@
 #include <fuzzer/FuzzedDataProvider.h>
 #include "test_token.h"
 
+using namespace OHOS::CameraStandard;
 namespace OHOS {
 namespace CameraStandard {
 namespace StreamCaptureStubFuzzer {
@@ -41,7 +42,13 @@ const std::u16string FORMMGR_INTERFACE_TOKEN = u"IStreamCapture";
 const int32_t ITEM_CAP = 10;
 const int32_t DATA_CAP = 100;
 
-sptr<StreamCaptureStub> fuzz_ { nullptr };
+sptr<IBufferProducer> g_producer;
+
+HStreamCapture& GetHStreamCapture()
+{
+    static HStreamCapture hstreamCapture(g_producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
+    return hstreamCapture;
+}
 
 std::shared_ptr<OHOS::Camera::CameraMetadata> MakeMetadata(uint8_t *rawData, size_t size)
 {
@@ -76,13 +83,9 @@ void Test(uint8_t *rawData, size_t size)
     if (rawData == nullptr || size < LIMITSIZE) {
         return;
     }
-    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetAllCameraPermission fail");
-
     sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
     CHECK_RETURN_ELOG(!photoSurface, "StreamCaptureStubFuzzer: Create photoSurface Error");
-    sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    fuzz_ = new (std::nothrow) HStreamCapture(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT);
-    CHECK_RETURN_ELOG(!fuzz_, "Create fuzz_ Error");
+    g_producer = photoSurface->GetProducer();
 
     Test_OnRemoteRequest(rawData, size);
     Test_HandleCapture(rawData, size);
@@ -90,14 +93,16 @@ void Test(uint8_t *rawData, size_t size)
     Test_HandleSetBufferProducerInfo(rawData, size);
     Test_HandleEnableDeferredType(rawData, size);
     Test_HandleSetCallback(rawData, size);
-    fuzz_->Release();
+    Test_UncoveredCommands(rawData, size);
+    Test_ErrorBranches(rawData, size);
+    GetHStreamCapture().Release();
 }
 
 void Request(MessageParcel &data, MessageParcel &reply, MessageOption &option, IStreamCaptureIpcCode scic)
 {
     uint32_t code = static_cast<uint32_t>(scic);
     data.RewindRead(0);
-    fuzz_->OnRemoteRequest(code, data, reply, option);
+    GetHStreamCapture().OnRemoteRequest(code, data, reply, option);
 }
 
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
@@ -121,7 +126,7 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_BUFFER_PRODUCER_INFO);
     uint32_t code = INVALID_CODE;
     data.RewindRead(0);
-    fuzz_->OnRemoteRequest(code, data, reply, option);
+    GetHStreamCapture().OnRemoteRequest(code, data, reply, option);
 }
 
 void Test_HandleCapture(uint8_t *rawData, size_t size)
@@ -187,14 +192,116 @@ void Test_HandleSetCallback(uint8_t *rawData, size_t size)
 
 }
 
+void Test_UncoveredCommands(uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
+    
+    FuzzedDataProvider fdp(rawData, size);
+    
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_PHOTO_AVAILABLE_CALLBACK);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_THUMBNAIL_CALLBACK);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInt32(fdp.ConsumeBool() ? 1 : 0);
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_ULTRA_HIGH_RES_PHOTO);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    std::string editData = fdp.ConsumeRandomLengthString(size);
+    data.WriteString16(Str8ToStr16(editData));
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_EDIT_DATA);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInt32(fdp.ConsumeBool() ? 1 : 0);
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_ENABLE_ORIGINAL_IMAGE);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInt32(fdp.ConsumeIntegral<int32_t>());
+    std::string shotData = fdp.ConsumeRandomLengthString(size);
+    data.WriteString16(Str8ToStr16(shotData));
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_SHOT_PARAM);
+}
+
+void Test_ErrorBranches(uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
+    
+    FuzzedDataProvider fdp(rawData, size);
+    
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_PHOTO_AVAILABLE_CALLBACK);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_THUMBNAIL_CALLBACK);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInt32(1);
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_ULTRA_HIGH_RES_PHOTO);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteString16(u"");
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_EDIT_DATA);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInt32(0);
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_ENABLE_ORIGINAL_IMAGE);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    data.WriteInt32(0);
+    data.WriteString16(u"");
+    Request(data, reply, option, IStreamCaptureIpcCode::COMMAND_SET_SHOT_PARAM);
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(FORMMGR_INTERFACE_TOKEN);
+    uint32_t invalidCode = INVALID_CODE;
+    GetHStreamCapture().OnRemoteRequest(invalidCode, data, reply, option);
+}
+
 } // namespace StreamCaptureStubFuzzer
 } // namespace CameraStandard
 } // namespace OHOS
+
+void Init()
+{
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetAllCameraPermission fail");
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::StreamCaptureStubFuzzer::Test(data, size);
+    return 0;
+}
+
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
+{
+    Init();
     return 0;
 }
