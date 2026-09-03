@@ -955,13 +955,6 @@ public:
     bool IsTorchModeSupported(TorchMode mode);
 
     /**
-     * @brief check device if torch level control
-     *
-     * @return Returns true is supported, false is not supported.
-     */
-    
-    bool IsTorchLevelControlSupported();
-    /**
      * @brief get current torchmode
      *
      * @return Returns current torchmode
@@ -974,13 +967,6 @@ public:
      * @return.
      */
     int32_t SetTorchMode(TorchMode mode);
-
-    /**
-     * @brief set torch mode with level
-     *
-     * @return.
-     */
-    int32_t SetTorchModeOnWithLevel(TorchMode mode, float level);
 
     /**
      * @brief update torch mode
@@ -1280,8 +1266,6 @@ private:
         std::vector<SceneMode> &modeofThis, std::vector<sptr<CameraOutputCapability>> &outputCapabilitiesofThis,
         shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);
 
-    void GetNotSystemAppMetaTypes(std::vector<MetadataObjectType>& objectTypes);
-    bool isPublicMetaTypes(const std::vector<MetadataObjectType>& objectTypes);
     void SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability> &cameraOutputCapability,
         ProfilesWrapper &profilesWrapper, int32_t modeName,
         shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility);

@@ -323,12 +323,6 @@ Camera_ErrorCode OH_CameraManager_CreateMetadataOutput(Camera_Manager* cameraMan
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
 
-    const int32_t minTypeValue = 0;
-    const int32_t maxTypeValue = 8;
-    CHECK_RETURN_RET_ELOG(static_cast<int32_t>(*type) < minTypeValue
-                          || static_cast<int32_t>(*type) > maxTypeValue,
-                          CAMERA_INVALID_ARGUMENT,
-                          "Invalid argument, metadataObjectTypes need to be 0 - 8");
     uint32_t size = 1;
     return cameraManager->CreateMetadataOutput(type, metadataOutput, size);
 }
@@ -343,15 +337,6 @@ Camera_ErrorCode OH_CameraManager_CreateMetadataOutputWithObjectTypes(Camera_Man
     CHECK_RETURN_RET_ELOG(size == 0, CAMERA_INVALID_ARGUMENT, "Invalid argument, size is 0!");
     CHECK_RETURN_RET_ELOG(
         metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
-    
-    const int32_t minTypeValue = 0;
-    const int32_t maxTypeValue = 8;
-    for (uint32_t i = 0; i < size; i++) {
-        CHECK_RETURN_RET_ELOG(static_cast<int32_t>(metadataObjectTypes[i]) < minTypeValue
-                              || static_cast<int32_t>(metadataObjectTypes[i]) > maxTypeValue,
-                              CAMERA_INVALID_ARGUMENT,
-                              "Invalid argument, metadataObjectTypes need to be 0 - 8");
-    }
     return cameraManager->CreateMetadataOutput(metadataObjectTypes, metadataOutput, size);
 }
 
@@ -531,33 +516,6 @@ Camera_ErrorCode OH_CameraManager_IsTorchSupported(Camera_Manager* cameraManager
         isTorchSupported == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, isTorchSupported is null!");
 
     return cameraManager->IsTorchSupported(isTorchSupported);
-}
-
-/**
- * @since 26
- * @version 1.0
- */
-Camera_ErrorCode OH_CameraManager_IsTorchLevelControlSupported(const Camera_Manager* cameraManager,
-    bool* isTorchLevelControlSupported)
-{
-    CHECK_RETURN_RET_ELOG(
-        cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
-    CHECK_RETURN_RET_ELOG(
-        isTorchLevelControlSupported == nullptr, CAMERA_INVALID_ARGUMENT, 
-            "Invalid argument, isTorchLevelControlSupported is null!");
-    return cameraManager->IsTorchLevelControlSupported(isTorchLevelControlSupported);
- 
-}
-
-/**
- * @since 26
- * @version 1.0
- */
-Camera_ErrorCode OH_CameraManager_SetTorchModeOnWithLevel(const Camera_Manager* cameraManager, double torchLevel) {
-
-    CHECK_RETURN_RET_ELOG(
-        cameraManager == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, cameraManager is null!");
-    return cameraManager->SetTorchModeOnWithLevel(torchLevel);
 }
 
 /**
