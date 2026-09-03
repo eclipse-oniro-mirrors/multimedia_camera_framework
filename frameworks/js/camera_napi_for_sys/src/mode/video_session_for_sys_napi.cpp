@@ -65,7 +65,7 @@ void VideoSessionForSysNapi::Init(napi_env env)
         aperture_sys_props, color_reservation_sys_props, effect_suggestion_sys_props, stage_boost_props,
         VideoSessionForSysNapi::video_session_sys_props, manual_focus_sys_props, focus_tracking_normal_props,
         saturation_props, white_balance_props, aperture_info_cb_props,
-        CameraSessionForSysNapi::imaging_mode_sys_props};
+        CameraSessionForSysNapi::imaging_mode_sys_props, color_cube_props };
     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
     status = napi_define_class(env, VIDEO_SESSION_FOR_SYS_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
                                VideoSessionForSysNapiConstructor, nullptr,

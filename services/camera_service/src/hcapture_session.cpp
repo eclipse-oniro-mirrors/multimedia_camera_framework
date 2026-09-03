@@ -1170,6 +1170,22 @@ int32_t HCaptureSession::SetColorEffect(int32_t colourEffect)
     return CAMERA_OK;
 }
 
+int32_t HCaptureSession::EnableColorCube(const sptr<IPCFileDescriptor>& ipcFd, int64_t dataSize)
+{
+    CHECK_RETURN_RET_ELOG(
+        ipcFd == nullptr || dataSize <= 0, CAMERA_INVALID_ARG, "EnableColorCube invalid args");
+    auto device = GetCameraDevice();
+    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
+    return CAMERA_OK;
+}
+
+int32_t HCaptureSession::DisableColorCube()
+{
+    auto device = GetCameraDevice();
+    CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
+    return CAMERA_OK;
+}
+
 int32_t HCaptureSession::GetBeautyRange(std::vector<int32_t>& range, int32_t type)
 {
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,

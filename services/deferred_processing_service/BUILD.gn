@@ -21,7 +21,6 @@ config("deferred_processing_public_config") {
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/base/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/client/include",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/binder/server/include",
-    "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/buffer_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/command_server",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager",
     "${multimedia_camera_framework_path}/services/deferred_processing_service/include/base/task_manager/task_group",
@@ -61,7 +60,6 @@ ohos_shared_library("deferred_processing_service") {
   sources = [
     "${multimedia_camera_framework_path}/frameworks/native/camera/base/src/utils/dps_metadata_info.cpp",
     "src/base/basic_definitions.cpp",
-    "src/base/buffer_manager/shared_buffer.cpp",
     "src/base/command_server/command.cpp",
     "src/base/command_server/command_server.cpp",
     "src/base/command_server/command_server_impl.cpp",

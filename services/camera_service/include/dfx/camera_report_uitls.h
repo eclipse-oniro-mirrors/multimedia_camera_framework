@@ -124,6 +124,23 @@ struct DfxCaptureInfo {
     int32_t rotation = 0;
 };
 
+struct DirectorModeRecord {
+    uint64_t openTime;        // 打开时间戳(毫秒)
+    uint64_t closeTime;       // 关闭时间戳(毫秒)
+    uint64_t duration;        // 使用时长(毫秒)
+    bool isCompleted;         // 是否已完成(已关闭)
+    std::string bundleName;   // 应用包名
+    int32_t pid;              // 应用PID
+    int32_t uid;              // 应用UID
+};
+
+struct DirectorModeStats {
+    uint64_t minDuration;     // 最短使用时长
+    uint64_t maxDuration;     // 最长使用时长
+    uint64_t totalDuration;   // 总使用时长
+    uint32_t count;           // 使用次数
+};
+
 class CameraReportUtils {
 public:
     static CameraReportUtils &GetInstance()
@@ -164,6 +181,9 @@ public:
     void SetVideoStartInfo(DfxCaptureInfo captureInfo);
     void SetVideoEndInfo(int32_t captureId);
 
+    void RecordDirectorModeOpen(const std::string& bundleName, int32_t pid, int32_t uid);
+    void RecordDirectorModeClose();
+
 private:
     std::mutex mutex_;
     CallerInfo caller_;
@@ -200,6 +220,15 @@ private:
     void ReportSwitchCameraPerf(uint64_t costTime);
     void ReportImagingInfo(DfxCaptureInfo captureInfo);
     void ResetImagingValue();
+
+    std::mutex directorModeRecordsMutex_;
+    DirectorModeRecord activeDirectorModeRecord_;
+    bool hasActiveDirectorMode_ = false;
+    std::mutex directorModeCompletedRecordsMutex_;
+    std::list<DirectorModeRecord> directorModeCompletedRecords_;
+
+    void CleanupExpiredDirectorModeRecords();
+    void CalculateAndReportDirectorModeStats();
 };
 } // namespace CameraStandard
 } // namespace OHOS
