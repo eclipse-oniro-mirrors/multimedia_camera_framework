@@ -246,6 +246,16 @@
               }
             },
             {
+              "type": "none",
+              "name": "//foundation/multimedia/camera_framework/common:camera_utils",
+              "header": {
+                "header_base": "//foundation/multimedia/camera_framework/common",
+                "header_files": [
+                  "//foundation/multimedia/camera_framework/common/utils/moving_photo_stage_eis/include/moving_photo_stage_eis_interface.h"
+                ]
+              }
+            },
+            {
               "name": "//foundation/multimedia/camera_framework/frameworks/taihe:copy_camera_taihe"
             }
           ],

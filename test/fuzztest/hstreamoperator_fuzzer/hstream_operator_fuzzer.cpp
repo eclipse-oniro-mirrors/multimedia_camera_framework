@@ -300,7 +300,7 @@ void MovingPhotoFuzz(FuzzedDataProvider& fdp)
     g_fuzz->ClearMovingPhotoRepeatStream(videoType);
     g_fuzz->ReleaseTargetMovingphotoStream(videoType);
     g_fuzz->ReleaseMovingphotoStreams();
-    g_fuzz->ExpandMovingPhotoRepeatStream(videoType);
+    g_fuzz->ExpandMovingPhotoRepeatStream(videoType, false);
     g_fuzz->ExpandXtStyleMovingPhotoRepeatStream();
     g_fuzz->StartMovingPhotoStream(settings);
     g_fuzz->IsLivephotoStreamExist();

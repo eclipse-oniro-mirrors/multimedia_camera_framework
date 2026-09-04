@@ -94,7 +94,6 @@ void MovingPhotoSurfaceWrapper::OnBufferArrival()
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
     GSError err = videoSurface->AcquireBuffer(buffer, syncFence, timestamp, damage);
     CHECK_RETURN_ELOG(err != GSERROR_OK || buffer == nullptr, "Failed to acquire surface buffer or buffer is null");
-
     auto surfaceBufferListener = GetSurfaceBufferListener();
     if (surfaceBufferListener == nullptr) {
         MEDIA_DEBUG_LOG("MovingPhotoSurfaceWrapper::OnBufferArrival surfaceBufferListener_ is nullptr.");

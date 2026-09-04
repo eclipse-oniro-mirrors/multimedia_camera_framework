@@ -112,6 +112,17 @@ int32_t AudioVideoMuxer::SetVideoId(std::string videoId)
     // LCOV_EXCL_STOP
 }
 
+int32_t AudioVideoMuxer::SetFirstStageScaleFactor(std::string stageEisScaleFactor)
+{
+    MEDIA_DEBUG_LOG("SetFirstStageScaleFactor : %{public}s", stageEisScaleFactor.c_str());
+    CHECK_RETURN_RET_ELOG(muxer_ == nullptr, 1, "muxer_ is null");
+    std::shared_ptr<Meta> userMeta = std::make_shared<Meta>();
+    userMeta->SetData("com.openharmony.livephoto.scaling_factor", stageEisScaleFactor);
+    int32_t ret = muxer_->SetUserMeta(userMeta);
+    CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, 1, "SetVideoId failed, ret: %{public}d", ret);
+    return 0;
+}
+
 int32_t AudioVideoMuxer::SetStartTime(float timems)
 {
     // LCOV_EXCL_START

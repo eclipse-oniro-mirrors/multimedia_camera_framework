@@ -39,6 +39,7 @@
 #include "sample_info.h"
 #include "native_mfmagic.h"
 #include "sync_fence.h"
+#include "video_key_info.h"
 
 namespace {
 using namespace std::string_literals;
@@ -115,14 +116,15 @@ shared_ptr<TaskManager>& AvcodecTaskManager::GetEncoderManager()
     return videoEncoderManager_;
 }
 // LCOV_EXCL_STOP
-void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback)
+void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord,
+    bool isOfflioneProcess, CacheCbFunc cacheCallback)
 {
     // LCOV_EXCL_START
     auto thisPtr = sptr<AvcodecTaskManager>(this);
     auto encodeManager = GetEncoderManager();
     CHECK_RETURN(!encodeManager);
     videoEncoder_->TsVecInsert(frameRecord->GetTimeStamp());
-    encodeManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
+    encodeManager->SubmitTask([thisPtr, frameRecord, cacheCallback, isOfflioneProcess]() {
         CAMERA_SYNC_TRACE;
         CHECK_RETURN(thisPtr == nullptr);
         CHECK_RETURN(!thisPtr->videoEncoder_ || !frameRecord);
@@ -132,7 +134,14 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
                 thisPtr->videoEncoder_->RestartVideoCodec(frameRecord->GetFrameSize(), frameRecord->GetRotation());
             }
         }
-        sptr<Surface> movingSurface = thisPtr->movingSurface_.promote();
+        sptr<Surface> movingSurface;
+        if (isOfflioneProcess) {
+            MEDIA_INFO_LOG("EncodeVideoBuffe offlineEisSurface_");
+            movingSurface = thisPtr->offlineEisSurface_.promote();
+        } else {
+            MEDIA_INFO_LOG("EncodeVideoBuffe movingSurface_");
+            movingSurface = thisPtr->movingSurface_.promote();
+        }
         if (movingSurface) {
             sptr<SurfaceBuffer> codecDetachBuf;
             thisPtr->videoEncoder_->DetachCodecBuffer(codecDetachBuf, frameRecord);
@@ -142,7 +151,7 @@ void AvcodecTaskManager::EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheC
                     (long long unsigned)frameRecord->GetTimeStamp()));
             surfaceRet = movingSurface->ReleaseBuffer(codecDetachBuf, SyncFence::INVALID_FENCE);
             CHECK_EXECUTE(surfaceRet != SURFACE_ERROR_OK,
-                MEDIA_ERR_LOG("movingSurface ReleaseBuffer, surfaceRet = %{public}d", surfaceRet));
+                          MEDIA_ERR_LOG("movingSurface ReleaseBuffer, surfaceRet = %{public}d", surfaceRet));
         }
         bool isEncodeSuccess = thisPtr->videoEncoder_->EncodeSurfaceBuffer(frameRecord);
         CHECK_PRINT_ELOG(!isEncodeSuccess, "EncodeVideoBuffer faild");
@@ -188,6 +197,24 @@ void AvcodecTaskManager::SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t
     // LCOV_EXCL_STOP
 }
 
+void AvcodecTaskManager::SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback)
+{
+    lock_guard<mutex> lock(callbackMutex_);
+    videoFdMapEmptyCallback_ = callback;
+    MEDIA_INFO_LOG("SetVideoFdMapEmptyCallback callback is set");
+}
+
+void AvcodecTaskManager::SetLivePhotoStageEisFlag(bool isStageEisFlag)
+{
+    isStageEisFlag_ = isStageEisFlag;
+    CHECK_EXECUTE(videoEncoder_ != nullptr, videoEncoder_->SetStageEisFlag(isStageEisFlag));
+}
+
+void AvcodecTaskManager::SetLivePhotoOfflineEisSurface(wptr<Surface> offlineEisSurface)
+{
+    offlineEisSurface_ = offlineEisSurface;
+}
+
 void AvcodecTaskManager::SetVideoId(int32_t captureId, std::string videoId)
 {
     // LCOV_EXCL_START
@@ -196,6 +223,27 @@ void AvcodecTaskManager::SetVideoId(int32_t captureId, std::string videoId)
     MEDIA_INFO_LOG("The Video ID is %{public}s", videoId.c_str());
     mVideoIdMap_.insert(make_pair(captureId, videoId));
     // LCOV_EXCL_STOP
+}
+string GetScaleFactor(sptr<SurfaceBuffer> buffer)
+{
+    sptr<BufferExtraData> bufferExtraData = buffer->GetExtraData();
+    double stageEisScaleFactor = 0.0;
+    if (bufferExtraData != nullptr) {
+        bufferExtraData->ExtraGet("firstStageEisScaleFactor", stageEisScaleFactor);
+        MEDIA_INFO_LOG("get firstStageEisScaleFactor %{public}f", stageEisScaleFactor);
+    }
+    return std::to_string(stageEisScaleFactor);
+}
+
+int32_t GetMetaActualSize(sptr<SurfaceBuffer> buffer)
+{
+    sptr<BufferExtraData> bufferExtraData = buffer->GetExtraData();
+    int32_t metaActualSize = 0;
+    if (bufferExtraData != nullptr) {
+        bufferExtraData->ExtraGet(OHOS::Camera::dataSize, metaActualSize);
+        MEDIA_INFO_LOG("get GetMetaActualSize %{public}d", metaActualSize);
+    }
+    return metaActualSize;
 }
 
 uint32_t AvcodecTaskManager::GetDeferredVideoEnhanceFlag(int32_t captureId)
@@ -241,6 +289,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
         bool waitResult = false;
         waitResult = cvEmpty_.wait_for(lock, std::chrono::milliseconds(GET_FD_EXPIREATION_TIME),
             [thisPtr, captureId] { return thisPtr->videoFdMap_.find(captureId) != thisPtr->videoFdMap_.end(); });
+        CHECK_EXECUTE(!waitResult || videoFdMap_.find(captureId) == videoFdMap_.end(), ExecuteVideoFdCallback());
         CHECK_RETURN_RET(!waitResult || videoFdMap_.find(captureId) == videoFdMap_.end(), nullptr);
     }
     sptr<AudioVideoMuxer> muxer = new AudioVideoMuxer();
@@ -260,6 +309,7 @@ sptr<AudioVideoMuxer> AvcodecTaskManager::CreateAVMuxer(vector<sptr<FrameRecord>
         muxer->SetVideoId(GetVideoId(captureId));
         CHECK_EXECUTE(videoEncoder_ != nullptr,
             muxer->SetSqr(videoEncoder_->GetEncoderBitrate(), videoEncoder_->GetBframeAbility()));
+        muxer->SetFirstStageScaleFactor(GetScaleFactor(choosedBuffer.front()->GetSurfaceBuffer()));
     }
     CHECK_RETURN_RET_ELOG(videoEncoder_ == nullptr, nullptr, "videoEncoder_ is null");
     bool isHevcAndHdrSupported =
@@ -373,7 +423,18 @@ void AvcodecTaskManager::FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captur
         audioTaskManager_->RemovePreviousCaptureForTimeMap(captureId);
     }
     MEDIA_INFO_LOG("finishMuxer end, videoFdMap_ size is %{public}zu", videoFdMap_.size());
+    ExecuteVideoFdCallback();
     // LCOV_EXCL_STOP
+}
+
+void AvcodecTaskManager::ExecuteVideoFdCallback()
+{
+    bool isVideoFdMapEmpty = isEmptyVideoFdMap();
+    std::lock_guard<mutex> lock(callbackMutex_);
+    if (videoFdMapEmptyCallback_) {
+        MEDIA_INFO_LOG("videoFdMap_ is empty, trigger callback to stop offline session");
+        videoFdMapEmptyCallback_->OnVideoFdMapEmpty(isVideoFdMapEmpty);
+    }
 }
 
 bool AvcodecTaskManager::isEmptyVideoFdMap()
@@ -452,7 +513,10 @@ void AvcodecTaskManager::WriteVideoAndMetaSamples(sptr<AudioVideoMuxer> muxer,
         sptr<SurfaceBuffer> metaSurfaceBuffer = choosedBuffer[index]->GetMetaBuffer();
         auto ptr = retMap.find(choosedBuffer[index]->GetTimeStamp());
         if (metaSurfaceBuffer && ptr != retMap.end() && ptr->second == AV_ERR_OK) {
-            shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(metaSurfaceBuffer);
+            int32_t actualMetaSize = GetMetaActualSize(metaSurfaceBuffer);
+                int32_t metaSize = actualMetaSize > 0 ? actualMetaSize : metaSurfaceBuffer->GetSize();
+                shared_ptr<AVBuffer> metaAvBuffer = AVBuffer::CreateAVBuffer(
+                    static_cast<uint8_t*>(metaSurfaceBuffer->GetVirAddr()), metaSize, metaSize);
             metaAvBuffer->pts_ = NanosecToMicrosec(choosedBuffer[index]->GetTimeStamp() - videoStartTime);
             MEDIA_DEBUG_LOG("metaAvBuffer pts_ %{public}llu, avBufferSize: %{public}d",
                 (long long unsigned)(metaAvBuffer->pts_), metaAvBuffer->memory_->GetSize());
@@ -1261,7 +1325,7 @@ shared_ptr<TaskManager>& AvcodecExtendImageTaskManager::GetExtendTaskManager()
 }
 // LCOV_EXCL_STOP
 bool AvcodecExtendImageTaskManager::EncodeVideoExtendBuffer(sptr<FrameRecord> frameRecord,
-    CacheCbFunc cacheCallback)
+    bool isOfflioneProcess, CacheCbFunc cacheCallback)
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
@@ -1270,6 +1334,7 @@ bool AvcodecExtendImageTaskManager::EncodeVideoExtendBuffer(sptr<FrameRecord> fr
     CHECK_RETURN_RET(!frameRecord || thisPtr == nullptr, false);
     CHECK_PRINT_ILOG(extendImageTaskManager == nullptr, "extendImageTaskManager is nullptr");
     return extendImageTaskManager->SubmitTask([thisPtr, frameRecord, cacheCallback]() {
+        CAMERA_SYNC_TRACE;
         auto sharedThis = thisPtr.promote();
         CHECK_RETURN(sharedThis == nullptr);
         CHECK_RETURN(!sharedThis->extendVideoEncoder_ || !frameRecord);
@@ -1305,6 +1370,16 @@ std::shared_ptr<AVBuffer> AvcodecExtendImageTaskManager::GetXpsBuffer()
     }
     return extendVideoEncoder_->GetXpsBuffer();
     // LCOV_EXCL_STOP
+}
+
+void AvcodecExtendImageTaskManager::SetLivePhotoOfflineEisSurface(wptr<Surface> offlineEisSurface)
+{
+    offlineEisSurface_ = offlineEisSurface;
+}
+
+void AvcodecExtendImageTaskManager::SetLivePhotoStageEisEnableFlag(bool isStageEisFlag)
+{
+    isStageEisEnableFlag_ = isStageEisFlag;
 }
 } // namespace CameraStandard
 } // namespace OHOS

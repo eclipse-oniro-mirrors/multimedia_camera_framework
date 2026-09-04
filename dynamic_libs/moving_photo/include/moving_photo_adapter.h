@@ -41,6 +41,9 @@ public:
     bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) override;
     void RecordVideoType(int32_t captureId, VideoType type) override;
     sptr<AvcodecTaskManager> GetTaskManager() const;
+    void SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback) override;
+    void SetLivePhotoStageEisFlag(bool isStageEisFlag) override;
+    void SetLivePhotoOfflineEisSurface(sptr<Surface> offlineEisSurface) override;
 private:
     sptr<AvcodecTaskManager> avcodecTaskManager_ = nullptr;
 };
@@ -66,10 +69,12 @@ public:
     void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) override;
     void ExpandMovingPhoto(VideoType videoType, int32_t width, int32_t height, ColorSpace colorspace,
         sptr<Surface> videoSurface, sptr<Surface> metaSurface, sptr<AvcodecTaskManagerIntf>& taskManager) override;
+    void SetMovingPhotoStageEisSupport(bool isSupport) override;
     void SetBrotherListener() override;
     void SetBufferDuration(uint32_t preBufferDuration, uint32_t postBufferDuration) override;
     void ReleaseStreamStruct(VideoType videoType) override;
     void StopMovingPhoto(VideoType type) override;
+    void RecordStreamStopStatus(bool isStreamStop) override;
     void ChangeListenerSetXtStyleType(bool isXtStyleEnabled) override;
     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId,
         ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled) override;
@@ -79,6 +84,17 @@ public:
     void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredFlag, std::string videoId,
         ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled) override;
     void Release() override;
+    void ConfigMovingPhotoStageEisStream(std::vector<int32_t> movingPhotoStageProfile,
+                                         sptr<Surface> fisrtStageEisSurface) override;
+    void SetLivePhotoOfflineSession(sptr<MovingPhotoOfflineSessionProxy> offlineSession) override;
+    void SetOfflineSessionCallback() override;
+    void SetMovingPhotoMirror(bool isMirror) override;
+    void SetStageEisFlag(bool stageEisFlag) override;
+    void SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback) override;
+    void SetLivePhotoOfflineEisSurface(std::vector<int32_t> movingPhotoStageProfile, sptr<Surface> offlineEisSurface,
+                                       sptr<Surface> offlineEisMetaSurface) override;
+    void SetStageEisEnabledFlag(bool isEnable) override;
+    void StartReleaseAndWaitForComplete(bool isOfflineSessionProcess) override;
 private:
     sptr<MovingPhotoManager> movingPhotoManager_ = nullptr;
 };
@@ -103,6 +119,8 @@ public:
     void CreateAvcodecManualTaskManager(wptr<Surface> manualSurface, VideoCodecType type,
         int32_t colorSpace) override;
     sptr<AvcodecExtendImageTaskManager> GetManualImageTaskManager() const;
+    void SetLivePhotoOfflineEisSurface(sptr<Surface> offlineEisSurface) override;
+    void SetLivePhotoStageEisEnableFlag(bool isStageEisFlag) override;
 
 private:
     sptr<AvcodecExtendImageTaskManager> avcodecManualImageTaskManager_ = nullptr;

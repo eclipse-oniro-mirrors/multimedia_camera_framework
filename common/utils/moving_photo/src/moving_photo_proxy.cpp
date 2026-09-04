@@ -119,6 +119,24 @@ void AvcodecTaskManagerProxy::SetDeferredVideoEnhanceFlag(int32_t captureId, uin
     avcodecTaskManagerIntf_->SetDeferredVideoEnhanceFlag(captureId, deferredVideoEnhanceFlag);
 }
 
+void AvcodecTaskManagerProxy::SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback)
+{
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->SetVideoFdMapEmptyCallback(callback);
+}
+
+void AvcodecTaskManagerProxy::SetLivePhotoStageEisFlag(bool isStageEisFlag)
+{
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->SetLivePhotoStageEisFlag(isStageEisFlag);
+}
+
+void AvcodecTaskManagerProxy::SetLivePhotoOfflineEisSurface(sptr<Surface> offlineEisSurface)
+{
+    CHECK_RETURN_ELOG(avcodecTaskManagerIntf_ == nullptr, "avcodecTaskManagerIntf_ is nullptr");
+    avcodecTaskManagerIntf_->SetLivePhotoOfflineEisSurface(offlineEisSurface);
+}
+
 void AvcodecTaskManagerProxy::SetVideoId(int32_t captureId, std::string videoId)
 {
     MEDIA_DEBUG_LOG("SetDeferredVideoEnhanceFlag start, captureId: %{public}d", captureId);
@@ -248,6 +266,7 @@ MovingPhotoManagerProxy::~MovingPhotoManagerProxy()
     UnregisterConsumerListener(metaSurface_);
     UnregisterConsumerListener(xtStyleVideoSurface_);
     UnregisterConsumerListener(xtStyleMetaSurface_);
+    UnregisterConsumerListener(fisrtStageEisSurface_);
 }
 
 sptr<MovingPhotoManagerProxy> MovingPhotoManagerProxy::CreateMovingPhotoManagerProxy()
@@ -282,6 +301,12 @@ void MovingPhotoManagerProxy::SetVideoFd(
     movingPhotoManagerIntf_->SetVideoFd(timestamp, photoAssetProxy, captureId); 
 }
 
+void MovingPhotoManagerProxy::SetMovingPhotoStageEisSupport(bool isSupport)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is nullptr");
+    movingPhotoManagerIntf_->SetMovingPhotoStageEisSupport(isSupport);
+}
+
 void MovingPhotoManagerProxy::ExpandMovingPhoto(
     VideoType videoType, int32_t width, int32_t height, ColorSpace colorspace,
     sptr<Surface> videoSurface, sptr<Surface> metaSurface, sptr<AvcodecTaskManagerIntf>& avcodecTaskManager)
@@ -296,6 +321,53 @@ void MovingPhotoManagerProxy::ExpandMovingPhoto(
         videoSurface_.Set(videoSurface);
         metaSurface_.Set(metaSurface);
     }
+}
+
+void MovingPhotoManagerProxy::ConfigMovingPhotoStageEisStream(vector<int32_t> movingPhotoStageProfile,
+                                                              sptr<Surface> fisrtStageEisSurface)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->ConfigMovingPhotoStageEisStream(movingPhotoStageProfile, fisrtStageEisSurface);
+    fisrtStageEisSurface_.Set(fisrtStageEisSurface);
+}
+
+void MovingPhotoManagerProxy::SetStageEisFlag(bool stageEisFlag)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->SetStageEisFlag(stageEisFlag);
+}
+
+void MovingPhotoManagerProxy::SetStageEisEnabledFlag(bool isEnable)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->SetStageEisEnabledFlag(isEnable);
+}
+
+void MovingPhotoManagerProxy::SetLivePhotoOfflineSession(sptr<MovingPhotoOfflineSessionProxy> offlineSession)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->SetLivePhotoOfflineSession(offlineSession);
+}
+
+void MovingPhotoManagerProxy::SetOfflineSessionCallback()
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->SetOfflineSessionCallback();
+}
+
+void MovingPhotoManagerProxy::SetMovingPhotoMirror(bool isMirror)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->SetMovingPhotoMirror(isMirror);
+}
+
+void MovingPhotoManagerProxy::SetLivePhotoOfflineEisSurface(std::vector<int32_t> movingPhotoStageProfile,
+                                                            sptr<Surface> offlineEisSurface,
+                                                            sptr<Surface> offlineEisMetaSurface)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->SetLivePhotoOfflineEisSurface(movingPhotoStageProfile, offlineEisSurface,
+                                                           offlineEisMetaSurface);
 }
 
 void MovingPhotoManagerProxy::SetBrotherListener()
@@ -320,6 +392,12 @@ void MovingPhotoManagerProxy::StopMovingPhoto(VideoType type)
 {
     CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
     movingPhotoManagerIntf_->StopMovingPhoto(type);
+}
+
+void MovingPhotoManagerProxy::RecordStreamStopStatus(bool isStreamStop)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->RecordStreamStopStatus(isStreamStop);
 }
 
 void MovingPhotoManagerProxy::ChangeListenerSetXtStyleType(bool isXtStyleEnabled)
@@ -361,10 +439,22 @@ void MovingPhotoManagerProxy::SetDeferredVideoEnhanceFlag(int32_t captureId, uin
         captureId, deferredFlag, videoId, colorStylePhotoType, isXtStyleEnabled);
 }
 
+void MovingPhotoManagerProxy::SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->SetVideoFdMapEmptyCallback(callback);
+}
+
 void MovingPhotoManagerProxy::Release()
 {
     CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
     movingPhotoManagerIntf_->Release();
+}
+
+void MovingPhotoManagerProxy::StartReleaseAndWaitForComplete(bool isOfflineSessionProcess)
+{
+    CHECK_RETURN_ELOG(movingPhotoManagerIntf_ == nullptr, "movingPhotoManagerIntf_ is null");
+    movingPhotoManagerIntf_->StartReleaseAndWaitForComplete(isOfflineSessionProcess);
 }
 
 AudioTaskManagerProxy::AudioTaskManagerProxy(
@@ -465,6 +555,18 @@ sptr<AvcodecManualTaskManagerProxy> AvcodecManualTaskManagerProxy::CreateAvcodec
     sptr<AvcodecManualTaskManagerProxy> avcodecManualTaskManagerProxy =
         new AvcodecManualTaskManagerProxy(dynamiclib, sptr<AvcodecManualTaskManagerIntf>(avcodecManualTaskManagerIntf));
     return avcodecManualTaskManagerProxy;
+}
+
+void AvcodecManualTaskManagerProxy::SetLivePhotoStageEisEnableFlag(bool isStageEisFlag)
+{
+    CHECK_RETURN_ELOG(avcodecManualTaskManagerIntf_ == nullptr, "avcodecManualTaskManagerIntf_ is nullptr");
+    avcodecManualTaskManagerIntf_->SetLivePhotoStageEisEnableFlag(isStageEisFlag);
+}
+
+void AvcodecManualTaskManagerProxy::SetLivePhotoOfflineEisSurface(sptr<Surface> offlineEisSurface)
+{
+    CHECK_RETURN_ELOG(avcodecManualTaskManagerIntf_ == nullptr, "avcodecManualTaskManagerIntf_ is nullptr");
+    avcodecManualTaskManagerIntf_->SetLivePhotoOfflineEisSurface(offlineEisSurface);
 }
 } // namespace CameraStandard
 } // namespace OHOS

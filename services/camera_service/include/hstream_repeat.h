@@ -104,6 +104,8 @@ public:
     void SetMovieDebugProducer(sptr<OHOS::IBufferProducer> movieDebugProducer);
     void SetRawDebugProducer(sptr<OHOS::IBufferProducer> rawDebugProducer);
     void SetMetaProducer(sptr<OHOS::IBufferProducer> metaProducer);
+    void SetStageEisSurface(sptr<OHOS::IBufferProducer> stageEisProducer);
+    void SetStageEisStreamProfile(std::vector<int32_t> stageEisStreamProfile);
 #ifdef CAMERA_MOVING_PHOTO
     void SetMovingPhotoStartCallback(std::function<void()> callback);
 #endif
@@ -148,6 +150,7 @@ public:
 
 private:
     void DataSpaceLimit2Full(StreamInfo_V1_5& streamInfo);
+    void SetLivePhotoStreamInfo(StreamInfo_V1_5& streamInfo, bool isXtStyleRaw);
     void SetVideoStreamInfo(StreamInfo_V1_5& streamInfo);
     void SetPreviewStreamInfo(StreamInfo_V1_5& streamInfo);
     void SetPreviewExtendedStreamInfoForSecure(StreamInfo_V1_5& streamInfo);
@@ -210,6 +213,7 @@ private:
     uint32_t apiCompatibleVersion_ = 0;
     std::string deviceClass_ = "phone";
     sptr<OHOS::IBufferProducer> metaProducer_;
+    sptr<OHOS::IBufferProducer> stageEisProducer_;
 #ifdef CAMERA_MOVING_PHOTO
     std::mutex movingPhotoCallbackLock_;
     std::function<void()> startMovingPhotoCallback_;
@@ -226,6 +230,7 @@ private:
     SpHolder<sptr<StreamRepeatDeathRecipient>> streamRepeatDeathRecipient_;
     bool enableBandwidthCompression_ = false;
     int32_t currentMode_ = 0;
+    std::vector<int32_t> stageEisStreamProfile_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

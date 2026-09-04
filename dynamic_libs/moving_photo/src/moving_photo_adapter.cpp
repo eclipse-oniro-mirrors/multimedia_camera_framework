@@ -107,6 +107,27 @@ void AvcodecTaskManagerAdapter::SetVideoId(int32_t captureId, std::string videoI
     CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
     avcodecTaskManager_->SetVideoId(captureId, videoId);
 }
+
+void AvcodecTaskManagerAdapter::SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback)
+{
+    MEDIA_DEBUG_LOG("SetVideoFdMapEmptyCallback start");
+    CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
+    avcodecTaskManager_->SetVideoFdMapEmptyCallback(callback);
+}
+
+void AvcodecTaskManagerAdapter::SetLivePhotoOfflineEisSurface(sptr<Surface> offlineEisSurface)
+{
+    MEDIA_DEBUG_LOG("SetLivePhotoOfflineEisSurface start");
+    CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
+    avcodecTaskManager_->SetLivePhotoOfflineEisSurface(offlineEisSurface);
+}
+
+void AvcodecTaskManagerAdapter::SetLivePhotoStageEisFlag(bool isStageEisFlag)
+{
+    CHECK_RETURN_ELOG(avcodecTaskManager_ == nullptr, "AvcodecTaskManager not created");
+    avcodecTaskManager_->SetLivePhotoStageEisFlag(isStageEisFlag);
+}
+
 // LCOV_EXCL_STOP
 void AvcodecTaskManagerAdapter::SubmitTask(std::function<void()> task)
 {
@@ -224,6 +245,12 @@ void MovingPhotoManagerAdapter::SetVideoFd(
     movingPhotoManager_->SetVideoFd(timestamp, photoAssetProxy, captureId);
 }
 
+void MovingPhotoManagerAdapter::SetMovingPhotoStageEisSupport(bool isSupport)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->SetMovingPhotoStageEisSupport(isSupport);
+}
+
 void MovingPhotoManagerAdapter::ExpandMovingPhoto(
     VideoType videoType, int32_t width, int32_t height, ColorSpace colorspace,
     sptr<Surface> videoSurface, sptr<Surface> metaSurface, sptr<AvcodecTaskManagerIntf>& avcodecTaskManager)
@@ -233,10 +260,64 @@ void MovingPhotoManagerAdapter::ExpandMovingPhoto(
         videoType, width, height, colorspace, videoSurface, metaSurface, avcodecTaskManager);
 }
 
+void MovingPhotoManagerAdapter::ConfigMovingPhotoStageEisStream(std::vector<int32_t> movingPhotoStageProfile,
+                                                                sptr<Surface> fisrtStageEisSurface)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is nullptr");
+    CHECK_RETURN_ELOG(fisrtStageEisSurface == nullptr, "fisrtStageEisSurface is nullptr");
+    CHECK_RETURN(movingPhotoStageProfile.empty());
+    movingPhotoManager_->ConfigMovingPhotoStageEisStream(movingPhotoStageProfile, fisrtStageEisSurface);
+}
+
+void MovingPhotoManagerAdapter::SetStageEisFlag(bool stageEisFlag)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->SetStageEisFlag(stageEisFlag);
+}
+
+void MovingPhotoManagerAdapter::SetStageEisEnabledFlag(bool isEnable)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->SetStageEisEnabledFlag(isEnable);
+}
+
+void MovingPhotoManagerAdapter::SetLivePhotoOfflineSession(sptr<MovingPhotoOfflineSessionProxy> offlineSession)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->SetLivePhotoOfflineSession(offlineSession);
+}
+
+void MovingPhotoManagerAdapter::SetOfflineSessionCallback()
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->SetOfflineSessionCallback();
+}
+
+void MovingPhotoManagerAdapter::SetMovingPhotoMirror(bool isMirror)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->SetMovingPhotoMirror(isMirror);
+}
+
 void MovingPhotoManagerAdapter::SetBrotherListener()
 {
     CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
     movingPhotoManager_->SetBrotherListener();
+}
+
+void MovingPhotoManagerAdapter::SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->SetVideoFdMapEmptyCallback(callback);
+}
+
+void MovingPhotoManagerAdapter::SetLivePhotoOfflineEisSurface(std::vector<int32_t> movingPhotoStageProfile,
+                                                              sptr<Surface> offlineEisSurface,
+                                                              sptr<Surface> offlineEisMetaSurface)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->SetLivePhotoOfflineEisSurface(movingPhotoStageProfile, offlineEisSurface,
+                                                       offlineEisMetaSurface);
 }
 
 void MovingPhotoManagerAdapter::SetBufferDuration(uint32_t preBufferDuration, uint32_t postBufferDuration)
@@ -255,6 +336,12 @@ void MovingPhotoManagerAdapter::StopMovingPhoto(VideoType type)
 {
     CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
     movingPhotoManager_->StopMovingPhoto(type);
+}
+
+void MovingPhotoManagerAdapter::RecordStreamStopStatus(bool isStreamStop)
+{
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->RecordStreamStopStatus(isStreamStop);
 }
 
 void MovingPhotoManagerAdapter::ChangeListenerSetXtStyleType(bool isXtStyleEnabled)
@@ -329,6 +416,13 @@ void AudioTaskManagerAdapter::ProcessAudioBuffer(int32_t captureId, int64_t midd
     audioTaskManager_->ProcessAudioBuffer(captureId, middleTimeStamp);
 }
 
+void MovingPhotoManagerAdapter::StartReleaseAndWaitForComplete(bool isOfflineSessionProcess)
+{
+    MEDIA_INFO_LOG("MovingPhotoManagerAdapter::StartReleaseAndWaitForComplete is called");
+    CHECK_RETURN_ELOG(movingPhotoManager_ == nullptr, "movingPhotoManager_ is null");
+    movingPhotoManager_->StartReleaseAndWaitForComplete(isOfflineSessionProcess);
+}
+
 void AudioTaskManagerAdapter::SubmitTask(std::function<void()> task)
 {
     MEDIA_DEBUG_LOG("SubmitTask start");
@@ -365,6 +459,20 @@ void AvcodecManualTaskManagerAdapter::CreateAvcodecManualTaskManager(wptr<Surfac
     avcodecManualImageTaskManager_ = new AvcodecExtendImageTaskManager(manualSurface, type,
         static_cast<ColorSpace>(colorSpace));
 }
+
+void AvcodecManualTaskManagerAdapter::SetLivePhotoOfflineEisSurface(sptr<Surface> offlineEisSurface)
+{
+    MEDIA_DEBUG_LOG("AvcodecManualTaskManagerAdapter::SetLivePhotoOfflineEisSurface start");
+    CHECK_RETURN_ELOG(avcodecManualImageTaskManager_ == nullptr, "AvcodecTaskManager not created");
+    avcodecManualImageTaskManager_->SetLivePhotoOfflineEisSurface(offlineEisSurface);
+}
+
+void AvcodecManualTaskManagerAdapter::SetLivePhotoStageEisEnableFlag(bool isStageEisFlag)
+{
+    CHECK_RETURN_ELOG(avcodecManualImageTaskManager_ == nullptr, "AvcodecTaskManager not created");
+    avcodecManualImageTaskManager_->SetLivePhotoStageEisEnableFlag(isStageEisFlag);
+}
+
 // LCOV_EXCL_STOP
 __attribute__((visibility("default"))) extern "C" AvcodecTaskManagerIntf *createAvcodecTaskManagerIntf()
 {

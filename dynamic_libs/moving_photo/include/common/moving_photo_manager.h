@@ -20,12 +20,20 @@
 #include "photo_asset_interface.h"
 #include "moving_photo_proxy.h"
 #include "moving_photo_listener.h"
+#include "moving_photo_warp_grid_surface_wrapper.h"
+#include "surface_type.h"
+#include "moving_photo_lifecycle_manager.h"
 
 namespace OHOS::CameraStandard {
+
+constexpr int32_t MOVING_PHOTO_OFFLINE_WAIT_TIME = 1000;
+constexpr uint32_t MOVING_PHOTO_STAGE_EIS_CACHE_SIZE = 55;
+
 class MovingPhotoResource {
 public:
     void SetXtStyleType(VideoType type);
     void StartOnceRecord(uint64_t timestamp, int32_t rotation, int32_t captureId);
+    void StartStageEisRecord(sptr<DrainImageManager> drainImageManager, int64_t timestamp);
     void StartProcessAudioTask(int32_t captureId, int64_t middleTimeStamp);
     void InsertStartTime(int32_t captureId, int64_t startTimeStamp);
     void InsertEndTime(int32_t captureId, int64_t endTimeStamp);
@@ -36,10 +44,13 @@ public:
 
     sptr<MovingPhotoListener> livephotoListener_ = nullptr;
     sptr<MovingPhotoMetaListener> livephotoMetaListener_ = nullptr;
+    sptr<MovingPhotoStageEisListener> livephotoStageEisListener_ = nullptr;
     sptr<MovingPhotoVideoCache> movingPhotoVideoCache_ = nullptr;
     sptr<AudioTaskManagerIntf> audioTaskManagerProxy_ = nullptr;
     sptr<AvcodecTaskManagerIntf> avcodecTaskManagerProxy_ = nullptr;
     sptr<AvcodecManualTaskManagerIntf> avcodecManualTaskManagerProxy_ = nullptr;
+    sptr<MovingPhotoOfflineSessionProxy> movingPhotoOfflineSession_ = nullptr;
+    sptr<MovingPhotoMediaOfflineSessionListener> offlineSessionCallback_ = nullptr;
  
     MovingPhotoResource() {}
 };
@@ -53,9 +64,11 @@ public:
     void SetBufferDuration(uint32_t preBufferDuration, uint32_t postBufferDuration);
     void ExpandMovingPhoto(VideoType videoType, int32_t width, int32_t height, ColorSpace colorspace,
         sptr<Surface> videoSurface, sptr<Surface> metaSurface, sptr<AvcodecTaskManagerIntf>& avcodecTaskManager);
+    void SetMovingPhotoStageEisSupport(bool isSupport);
     void SetBrotherListener();
     void ReleaseStreamStruct(VideoType videoType);
     void StopMovingPhoto(VideoType videoType);
+    void RecordStreamStopStatus(bool isStreamStop);
     void ChangeListenerSetXtStyleType(bool isXtStyleEnabled);
     void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId,
         ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled);
@@ -65,8 +78,20 @@ public:
     void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredFlag, std::string videoId,
         ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled);
     void Release();
+    void ConfigMovingPhotoStageEisStream(std::vector<int32_t> movingPhotoStageProfile,
+                                         sptr<Surface> fisrtStageEisSurface);
+    void SetLivePhotoOfflineSession(sptr<MovingPhotoOfflineSessionProxy> offlineSession);
+    void SetOfflineSessionCallback();
+    void SetMovingPhotoMirror(bool isMirror);
+    void SetStageEisFlag(bool stageEisFlag);
+    void SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback);
+    void SetLivePhotoOfflineEisSurface(std::vector<int32_t> movingPhotoStageProfile, sptr<Surface> offlineEisSurface,
+                                       sptr<Surface> offlineEisMetaSurface);
+    void SetStageEisEnabledFlag(bool isEnable);
+    void StartReleaseAndWaitForComplete(bool isOfflineSessionProcess);
 private:
     void StartOnceRecord(uint64_t timestamp, int32_t rotation, int32_t captureId, VideoType videoType);
+    void StartStageEisRecord(sptr<DrainImageManager> drainImageManager, int64_t timestamp);
     void StartProcessAudioTask(int32_t captureId, int64_t startTimeStamp);
     void CreateManualTaskManager(MovingPhotoResource& streamStruct, sptr<Surface> videoSurface,
         ColorSpace colorspace);
@@ -89,6 +114,10 @@ private:
     std::mutex xtStyleMovingPhotoStatusLock_; // Guard movingPhotoStatus
     uint32_t preCacheFrameCount_ = CACHE_FRAME_COUNT;
     uint32_t postCacheFrameCount_ = CACHE_FRAME_COUNT;
+    std::atomic<bool> movingPhotoStageEisSupport_ = false;
+    std::atomic<bool> movingPhotoStageEisEnabledFlag_ = false;
+    sptr<MovingPhotoLifecycleManager> lifecycleManager_ = nullptr;
+    std::atomic<bool> isAsyncReleaseStarted_ = {false};
 };
 } // namespace OHOS::CameraStandard
 #endif // OHOS_CAMERA_MOVING_PHOTO_MANAGER_H

@@ -68,6 +68,7 @@
 #ifdef CAMERA_MOVING_PHOTO
 #include "moving_photo_proxy.h"
 #include "moving_photo_interface.h"
+#include "camera_metadata.h"
 #endif
 #include "parameters.h"
 #include "refbase.h"
@@ -199,16 +200,23 @@ HStreamOperator::HStreamOperator()
     uid_ = 0;
     callerToken_ = 0;
     opMode_ = 0;
+    #ifdef CAMERA_MOVING_PHOTO
+        videoFdMapEmptyCallback_ = new VideoFdMapEmptyCallbackImpl(this);
+    #endif
 }
 
 HStreamOperator::HStreamOperator(const uint32_t callingTokenId, int32_t opMode)
 {
     Initialize(callingTokenId, opMode);
     ResetHdiStreamId();
+    #ifdef CAMERA_MOVING_PHOTO
+        videoFdMapEmptyCallback_ = new VideoFdMapEmptyCallbackImpl(this);
+    #endif
 }
 
 HStreamOperator::~HStreamOperator()
 {
+    MEDIA_INFO_LOG("HStreamOperator dctor is called");
     CAMERA_SYNC_TRACE;
     {
         std::lock_guard<std::mutex> lock(motionPhotoStatusLock_);
@@ -273,6 +281,7 @@ int32_t HStreamOperator::EnableMovingPhotoMirror(bool isMirror, bool isConfig)
     isMovingPhotoMirror_ = isMirror;
     // set clear cache flag
     movingPhotoManagerProxy->SetClearFlag();
+    movingPhotoManagerProxy->SetMovingPhotoMirror(isMovingPhotoMirror_);
     return CAMERA_OK;
     // LCOV_EXCL_STOP
 }
@@ -378,6 +387,13 @@ void HStreamOperator::StopMovingPhoto(VideoType type) __attribute__((no_sanitize
     // LCOV_EXCL_STOP
 }
 
+void HStreamOperator::RecordStreamStopStatus(bool isStreamStop)
+{
+    auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
+    CHECK_RETURN_ELOG(movingPhotoManagerProxy == nullptr, "not support moving photo");
+    movingPhotoManagerProxy->RecordStreamStopStatus(isStreamStop);
+}
+
 int32_t HStreamOperator::GetMovingPhotoBufferDuration()
 {
     auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
@@ -414,6 +430,102 @@ void HStreamOperator::GetMovingPhotoStartAndEndTime()
     });
 }
 
+void HStreamOperator::SetMovingPhotoStageEisFlag(bool stageEisFlag)
+{
+    livePhotoStageEisFlag_ = stageEisFlag;
+    auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
+    CHECK_RETURN_ELOG(movingPhotoManagerProxy == nullptr, "current movingPhotoManagerProxy is nullptr");
+    movingPhotoManagerProxy->SetStageEisFlag(stageEisFlag);
+}
+
+void HStreamOperator::ExpandMovingPhotoStageEisStream(vector<int32_t> movingPhotoStageProfile)
+{
+    MEDIA_INFO_LOG("HStreamOperator::ExpandMovingPhotoStageEisStream enter");
+    GenerateOfflineSessionId();
+    auto &streamStruct = GetMovingPhotoStreamStruct(ORIGIN_VIDEO);
+    streamStruct.firstStageEisSurface = Surface::CreateSurfaceAsConsumer("movingPhotoFirstStageEis");
+    auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
+    CHECK_RETURN_ELOG(movingPhotoManagerProxy == nullptr, "current movingPhotoManagerProxy is nullptr");
+    movingPhotoManagerProxy->ConfigMovingPhotoStageEisStream(movingPhotoStageProfile,
+                                                             streamStruct.firstStageEisSurface);
+
+    auto repeatStreams = streamContainer_.GetStreams(StreamType::REPEAT);
+    std::for_each(repeatStreams.begin(), repeatStreams.end(), [&](auto &stream) {
+        CHECK_RETURN(!stream);
+        auto streamRepeat = CastStream<HStreamRepeat>(stream);
+        CHECK_RETURN(streamRepeat->GetRepeatStreamType() != RepeatStreamType::LIVEPHOTO);
+        auto stageEisSurface = streamStruct.firstStageEisSurface;
+        CHECK_EXECUTE(stageEisSurface != nullptr, streamRepeat->SetStageEisSurface(stageEisSurface->GetProducer()));
+        streamRepeat->SetStageEisStreamProfile(movingPhotoStageProfile);
+    });
+    streamStruct.offlineEisSurface = OHOS::Surface::CreateSurfaceAsConsumer("offlineEis");
+    streamStruct.offlineEisMetaSurface = OHOS::Surface::CreateSurfaceAsConsumer("offlineEisMeta");
+
+    CreateLivePhotoOfflineSession(movingPhotoStageProfile);
+    CHECK_EXECUTE(movingPhotoManagerProxy != nullptr, {
+        movingPhotoManagerProxy->SetOfflineSessionCallback();
+        // Register callback
+        movingPhotoManagerProxy->SetVideoFdMapEmptyCallback(videoFdMapEmptyCallback_);
+        MEDIA_INFO_LOG("SetVideoFdMapEmptyCallback registered in StartLivePhotoOfflineSession");
+        movingPhotoManagerProxy->SetLivePhotoOfflineEisSurface(movingPhotoStageProfile, streamStruct.offlineEisSurface,
+            streamStruct.offlineEisMetaSurface);
+        movingPhotoManagerProxy->SetMovingPhotoMirror(isMovingPhotoMirror_);
+    });
+    CHECK_EXECUTE(isSetMotionPhoto_, EnableMovingPhotoStageEis(isSetMotionPhoto_));
+}
+
+void HStreamOperator::CreateLivePhotoOfflineSession(vector<int32_t> movingPhotoStageProfile)
+{
+    MEDIA_INFO_LOG("HStreamOperator::CreateLivePhotoOfflineSession is called");
+    movingPhotoOffileSessionProxy_ = MovingPhotoOfflineSessionProxy::CreateOfflineSessionProxy();
+    CHECK_RETURN_ELOG(movingPhotoOffileSessionProxy_ == nullptr, "movingPhotoOfflineSessionProxy is nullptr");
+
+    movingPhotoStageProfile_ = movingPhotoStageProfile;
+    auto managerProxy = movingPhotoManagerProxy_.Get();
+    CHECK_EXECUTE(managerProxy != nullptr, managerProxy->SetLivePhotoOfflineSession(movingPhotoOffileSessionProxy_));
+}
+
+void HStreamOperator::SetFirstStageEisStartTime(int64_t timeStamp)
+{
+    CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "current cameraDevice is nullptr.");
+    auto ability = cameraDevice_->GetDeviceAbility();
+    int32_t count = 1;
+    constexpr int32_t DEFAULT_TIMES = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_TIMES, DEFAULT_DATA_LENGTH);
+    AddOrUpdateMetadata(changedMetadata, OHOS_LIVEPHOTO_FIRST_STAGE_EIS_START_TIMESTAMP, &timeStamp, count);
+    int32_t ret = cameraDevice_->UpdateSetting(changedMetadata);
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "SetFirstStageEisStartTime failed");
+}
+
+void HStreamOperator::SetStageEisStatus(bool isStatus)
+{
+    CHECK_RETURN_ELOG(!livePhotoStageEisFlag_, "current mode is not support");
+    EnableMovingPhotoStageEis(!isStatus);
+    SetMovingPhotoStageEisFlag(!isStatus);
+}
+
+void HStreamOperator::EnableMovingPhotoStageEis(bool isEnable)
+{
+    MEDIA_DEBUG_LOG("HStreamOperator::EnableMovingPhotoStageEis isEnable: %{public}d", isEnable);
+    CHECK_RETURN_ELOG(!livePhotoStageEisFlag_, "current mode is not support");
+    CHECK_RETURN_ELOG(cameraDevice_ == nullptr, "current cameraDevice is nullptr.");
+    auto ability = cameraDevice_->GetDeviceAbility();
+    int32_t count = 1;
+    constexpr int32_t DEFAULT_TIMES = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_TIMES, DEFAULT_DATA_LENGTH);
+    AddOrUpdateMetadata(changedMetadata, OHOS_LIVEPHOTO_FIRST_STAGE_EIS_ENABLE, &isEnable, count);
+    int32_t ret = cameraDevice_->UpdateSetting(changedMetadata);
+    CHECK_RETURN_ELOG(ret != CAMERA_OK, "SetFirstStageEisStartTime failed");
+    livePhotoStageEisEnabled_ = isEnable;
+    auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
+    CHECK_RETURN_ELOG(movingPhotoManagerProxy == nullptr, "current movingPhotoManagerProxy is nullptr");
+    movingPhotoManagerProxy->SetStageEisEnabledFlag(isEnable);
+}
+
 void HStreamOperator::ExpandXtStyleMovingPhotoRepeatStream()
 {
     CAMERA_SYNC_TRACE;
@@ -422,12 +534,12 @@ void HStreamOperator::ExpandXtStyleMovingPhotoRepeatStream()
     MEDIA_DEBUG_LOG("ExpandXtStyleMovingPhotoRepeatStream enter");
     CHECK_RETURN_ELOG(GetSupportRedoXtStyle() != ORIGIN_AND_EFFECT || !isXtStyleEnabled_,
         "HStreamOperator::ExpandXtStyleMovingPhotoRepeatStream fail");
-    ExpandMovingPhotoRepeatStream(XT_ORIGIN_VIDEO);
+    ExpandMovingPhotoRepeatStream(XT_ORIGIN_VIDEO, false);
     movingPhotoManagerProxy->SetBrotherListener();
     MEDIA_INFO_LOG("ExpandXtStyleMovingPhotoRepeatStream Exit");
 }
 
-void HStreamOperator::ExpandMovingPhotoRepeatStream(VideoType videoType)
+void HStreamOperator::ExpandMovingPhotoRepeatStream(VideoType videoType, bool isSupportStageEis)
 {
     CAMERA_SYNC_TRACE;
     auto movingPhotoManagerProxy = movingPhotoManagerProxy_.Get();
@@ -442,6 +554,7 @@ void HStreamOperator::ExpandMovingPhotoRepeatStream(VideoType videoType)
     streamStruct.videoSurface = Surface::CreateSurfaceAsConsumer("movingPhoto");
     streamStruct.metaSurface = Surface::CreateSurfaceAsConsumer("movingPhotoMeta");
     sptr<AvcodecTaskManagerIntf> avcodecTaskManagerProxy = nullptr;
+    movingPhotoManagerProxy->SetMovingPhotoStageEisSupport(isSupportStageEis);
     movingPhotoManagerProxy->ExpandMovingPhoto(videoType, width, height, currColorSpace_,
         streamStruct.videoSurface, streamStruct.metaSurface, avcodecTaskManagerProxy);
     CreateMovingPhotoStreamRepeat(format, width, height, videoType);
@@ -499,6 +612,7 @@ void HStreamOperator::StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera:
 
 void HStreamOperator::UnloadMovingPhoto()
 {
+    movingPhotoOffileSessionProxy_ = nullptr;
     auto videoSurface = movingPhotoStreamStruct_.videoSurface;
     CHECK_EXECUTE(videoSurface, videoSurface->UnregisterConsumerListener());
     auto metaSurface = movingPhotoStreamStruct_.metaSurface;
@@ -1313,6 +1427,7 @@ int32_t HStreamOperator::Stop()
                 repeatStream->Stop();
 #ifdef CAMERA_MOVING_PHOTO
                 StopMovingPhoto();
+                RecordStreamStopStatus(true);
 #endif
             } else {
                 repeatStream->Stop();
@@ -1409,7 +1524,11 @@ int32_t HStreamOperator::Release()
     }
 #ifdef CAMERA_MOVING_PHOTO
     auto manager = movingPhotoManagerProxy_.Get();
-    CHECK_EXECUTE(manager, manager->Release());
+    auto itr = offlineCaptureCntMap_.find(offlineSessionIdGenerator_);
+    bool offlineSessionProcess =
+        itr != offlineCaptureCntMap_.end() ? offlineCaptureCntMap_[offlineSessionIdGenerator_] : false;
+    CHECK_EXECUTE(manager, manager->StartReleaseAndWaitForComplete(offlineSessionProcess));
+    CHECK_EXECUTE(manager && !livePhotoStageEisEnabled_, manager->Release());
     HStreamOperatorManager::GetInstance()->RemoveTaskManager(streamOperatorId_);
 #endif
 
@@ -2420,6 +2539,8 @@ int32_t HStreamOperator::OnFrameShutter(
             captureStream->rotationMap_.Find(captureId, rotation);
 #ifdef CAMERA_MOVING_PHOTO
             StartMovingPhotoEncode(rotation, timestamp, captureStream->format_, captureId);
+            SetFirstStageEisStartTime(static_cast<int64_t>(timestamp));
+            CHECK_EXECUTE(livePhotoStageEisEnabled_, StartLivePhotoOfflineSession());
 #endif
             captureStream->OnFrameShutter(captureId, timestamp);
             // LCOV_EXCL_STOP
@@ -2431,8 +2552,64 @@ int32_t HStreamOperator::OnFrameShutter(
     return CAMERA_OK;
 }
 
-int32_t HStreamOperator::OnFrameShutterEnd(
-    int32_t captureId, const std::vector<int32_t>& streamIds, uint64_t timestamp)
+#ifdef CAMERA_MOVING_PHOTO
+void HStreamOperator::StartLivePhotoOfflineSession()
+{
+    MEDIA_DEBUG_LOG("HStreamOperator::StartLivePhotoOfflineSession is called");
+    CHECK_RETURN_ELOG(movingPhotoOffileSessionProxy_ == nullptr, "movingPhotoOffileSessionProxy is nullptr");
+
+    int32_t isStart = 1;
+    auto it = offlineSessionMap_.find(offlineSessionIdGenerator_);
+    bool isOfflineSessionStarted = false;
+    if (it != offlineSessionMap_.end()) {
+        isOfflineSessionStarted = offlineSessionMap_[offlineSessionIdGenerator_];
+    }
+    if (isOfflineSessionStarted) {
+        offlineCaptureCntMap_[offlineSessionIdGenerator_]++;
+    }
+    if (movingPhotoOffileSessionProxy_ && !isOfflineSessionStarted) {
+        GenerateOfflineSessionId();
+        movingPhotoOffileSessionProxy_->PrepareSession(
+            movingPhotoStageProfile_, currColorSpace_ == ColorSpace::BT2020_HLG, isStart, offlineSessionIdGenerator_);
+        // fasle : stop Offline Session, true : start Offline Session
+        offlineSessionMap_.insert({offlineSessionIdGenerator_, true});
+        offlineCaptureCntMap_[offlineSessionIdGenerator_]++;
+        int32_t count = offlineCaptureCntMap_[offlineSessionIdGenerator_];
+        MEDIA_INFO_LOG("StartLivePhotoOfflineSession sessionId: %{public}d , count: %{public}d",
+            offlineSessionIdGenerator_.load(), count);
+    }
+}
+
+void HStreamOperator::VideoFdMapEmptyCallbackImpl::OnVideoFdMapEmpty(bool isEmptyVideoFdMap)
+{
+    MEDIA_INFO_LOG("HStreamOperator::VideoFdMapEmptyCallbackImpl::OnVideoFdMapEmpty called");
+    auto streamOperator = streamOperator_.promote();
+    CHECK_RETURN_ELOG(streamOperator == nullptr,
+        "HStreamOperator::VideoFdMapEmptyCallbackImpl streamOperator is nullptr");
+    auto captureCntMapItr = streamOperator_->offlineCaptureCntMap_.find(streamOperator->offlineSessionIdGenerator_);
+    if (captureCntMapItr != streamOperator->offlineCaptureCntMap_.end()) {
+        captureCntMapItr->second--;
+    }
+    CHECK_RETURN(!isEmptyVideoFdMap);
+    CHECK_RETURN_ELOG(captureCntMapItr != streamOperator->offlineCaptureCntMap_.end() && captureCntMapItr->second > 0,
+        "current has capture processing");
+    int32_t isStart = 0;
+    auto it = streamOperator->offlineSessionMap_.find(streamOperator->offlineSessionIdGenerator_);
+    bool isOfflineSessionStarted = false;
+    if (it != streamOperator->offlineSessionMap_.end()) {
+        isOfflineSessionStarted = streamOperator->offlineSessionMap_[streamOperator->offlineSessionIdGenerator_];
+    }
+    if (streamOperator->movingPhotoOffileSessionProxy_ && isOfflineSessionStarted) {
+        bool isHdr = streamOperator->currColorSpace_ == ColorSpace::BT2020_HLG;
+        streamOperator->movingPhotoOffileSessionProxy_->PrepareSession(
+            streamOperator->movingPhotoStageProfile_, isHdr, isStart, streamOperator->offlineSessionIdGenerator_);
+        MEDIA_INFO_LOG("Stop offline session with id: %{public}d", streamOperator->offlineSessionIdGenerator_.load());
+        streamOperator->offlineSessionMap_[streamOperator->offlineSessionIdGenerator_] = false;
+    }
+}
+#endif
+
+int32_t HStreamOperator::OnFrameShutterEnd(int32_t captureId, const std::vector<int32_t> &streamIds, uint64_t timestamp)
 {
     MEDIA_INFO_LOG("HStreamOperator::OnFrameShutterEnd ts is:%{public}" PRIu64, timestamp);
     std::lock_guard<std::mutex> lock(cbMutex_);

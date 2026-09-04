@@ -46,6 +46,8 @@
 #include "v1_5/istream_operator_callback.h"
 #ifdef CAMERA_MOVING_PHOTO
 #include "moving_photo_proxy.h"
+#include "moving_photo_stage_eis_proxy.h"
+#include "moving_photo_interface.h"
 #else
 #include "output/camera_output_capability.h"
 #endif
@@ -118,8 +120,10 @@ public:
     void ReleaseMovingphotoStreams();
     void ReleaseTargetMovingphotoStream(VideoType type);
     void StopMovingPhoto(VideoType type = VideoType::ORIGIN_VIDEO);
+    void RecordStreamStopStatus(bool isStreamStop);
     void ExpandXtStyleMovingPhotoRepeatStream();
-    void ExpandMovingPhotoRepeatStream(VideoType type);
+    void ExpandMovingPhotoRepeatStream(VideoType type, bool isSupportStageEis);
+    bool CheckMovingPhotoStageEis(vector<int32_t>& movingPhotoStageProfile);
     void ClearMovingPhotoRepeatStream(VideoType type = VideoType::ORIGIN_VIDEO);
     inline bool IsLivephotoStreamExist()
     {
@@ -128,6 +132,7 @@ public:
     
     void StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings);
     void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredVideoEnhanceFlag, std::string videoId);
+    void SetMovingPhotoStageEisFlag(bool stageEisFlag);
 #endif
     int32_t GetCurrentStreamInfos(std::vector<StreamInfo_V1_5>& streamInfos);
     std::list<sptr<HStreamCommon>> GetAllStreams();
@@ -185,7 +190,11 @@ public:
     void ClearCompositionRepeatStream();
     void ExpandSketchRepeatStream();
     void ExpandCompositionRepeatStream();
+#ifdef CAMERA_MOVING_PHOTO
+    void ExpandMovingPhotoStageEisStream(vector<int32_t> movingPhotoStageProfile);
+#endif
     std::vector<sptr<HStreamRepeat>> GetCompositionStreams();
+    void StartLivePhotoOfflineSession();
 
     void GetStreamOperator();
     bool IsOfflineCapture();
@@ -280,13 +289,41 @@ public:
         std::list<sptr<HStreamRepeat>> repeatStreamList_;
         std::mutex mStreamManagerLock_;
     };
+    void EnableMovingPhotoStageEis(bool isEnable);
+    void SetFirstStageEisStartTime(int64_t timeStamp);
+    void CreateLivePhotoOfflineSession(vector<int32_t> movingPhotoStageProfile);
+
+    inline int32_t GenerateOfflineSessionId()
+    {
+        offlineSessionIdGenerator_.fetch_add(1);
+        if (offlineSessionIdGenerator_ == INT32_MAX) {
+            offlineSessionIdGenerator_ = 0;
+        }
+        return offlineSessionIdGenerator_;
+    }
+    sptr<HStreamRepeat> FindPreviewStreamRepeat();
+#ifdef CAMERA_MOVING_PHOTO
+    void SetStageEisStatus(bool isStatus);
+#endif
 
 private:
     std::vector<Size> GetSupportedRecommendedPictureSize();
     bool IsSupportedCompositionStream();
     Size FindNearestRatioSize(Size toFitSize, const std::vector<Size>& supportedSizes);
 
-    sptr<HStreamRepeat> FindPreviewStreamRepeat();
+    #ifdef CAMERA_MOVING_PHOTO
+    class VideoFdMapEmptyCallbackImpl : public VideoFdMapEmptyCallbackIntf {
+    public:
+        explicit VideoFdMapEmptyCallbackImpl(HStreamOperator *streamOperator) : streamOperator_(streamOperator) {}
+        ~VideoFdMapEmptyCallbackImpl() = default;
+        void OnVideoFdMapEmpty(bool isEmptyVideoFdMap) override;
+
+    private:
+        wptr<HStreamOperator> streamOperator_;
+    };
+
+    sptr<VideoFdMapEmptyCallbackImpl> videoFdMapEmptyCallback_;
+#endif
     void AdjustStreamInfosByMode(std::vector<HDI::Camera::V1_5::StreamInfo_V1_5>& streamInfos, int32_t operationMode);
     int32_t Initialize(const uint32_t callerToken, int32_t opMode);
     void RegisterDisplayListener(sptr<HStreamRepeat> repeat);
@@ -303,11 +340,15 @@ private:
         sptr<HStreamRepeat>& curStreamRepeat);
     int32_t GetMovingPhotoBufferDuration();
     void GetMovingPhotoStartAndEndTime();
+    sptr<MovingPhotoOfflineSessionProxy> movingPhotoOffileSessionProxy_;
     SpHolder<sptr<MovingPhotoManagerProxy>> movingPhotoManagerProxy_;
     struct MovingPhotoStreamStruct {
         sptr<HStreamRepeat> streamRepeat = nullptr;
         sptr<Surface> videoSurface = nullptr;
         sptr<Surface> metaSurface = nullptr;
+        sptr<Surface> firstStageEisSurface = nullptr;
+        sptr<Surface> offlineEisSurface = nullptr;
+        sptr<Surface> offlineEisMetaSurface = nullptr;
     };
     inline MovingPhotoStreamStruct &GetMovingPhotoStreamStruct(VideoType videoType)
     {
@@ -392,6 +433,13 @@ private:
     std::mutex motionPhotoStatusLock_;
     std::map<int32_t, std::pair<int32_t, int32_t>> lifecycleMap_;
     std::vector<uint8_t> mechExtraSettings_;
+    std::atomic<bool> livePhotoStageEisFlag_ = false; // Livephoto Stage Eis is Supported
+    std::atomic<bool> livePhotoStageEisEnabled_ = false;  // LivePhoto Stage Eis is Enabled
+    vector<int32_t> movingPhotoStageProfile_;
+    std::atomic<int32_t> offlineSessionIdGenerator_ = 0;
+    std::map<int32_t, bool> offlineSessionMap_;
+    std::mutex CaptureAndCommitstreamsMtx;
+    std::map<int32_t, int32_t> offlineCaptureCntMap_;
 };
 } // namespace CameraStandard
 } // namespace OHOS

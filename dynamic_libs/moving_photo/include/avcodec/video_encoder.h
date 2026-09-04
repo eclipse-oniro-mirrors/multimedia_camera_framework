@@ -102,6 +102,11 @@ public:
             static_cast<unsigned long long>(minTs), static_cast<unsigned long long>(lastMinTimestamp_));
     }
 
+    void SetStageEisFlag(bool isStageEisFlag)
+    {
+        isStageEisFlag_ = isStageEisFlag;
+    }
+
 private:
     int32_t SetCallback();
     int32_t Configure();
@@ -147,6 +152,8 @@ private:
     int64_t lastMinTimestamp_ = INT64_MAX;
     int64_t lastIFrameTimestamp_ = 0;
     int32_t frameCountSinceLastIFrame_ = 0;
+    std::atomic<bool> isStageEisFlag_ = false;
+    std::atomic<bool> isVideoCodecConfiged_ = false;
 };
 } // CameraStandard
 } // OHOS

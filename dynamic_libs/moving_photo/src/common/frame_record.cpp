@@ -28,8 +28,8 @@ FrameRecord::FrameRecord(sptr<SurfaceBuffer> videoBuffer, int64_t timestamp, Gra
 {
     frameId_ = std::to_string(timestamp);
     size = make_shared<Size>();
-    size->width = static_cast<uint32_t>(videoBuffer->GetSurfaceBufferWidth());
-    size->height = static_cast<uint32_t>(videoBuffer->GetSurfaceBufferHeight());
+    size->width = static_cast<uint32_t>(videoBuffer->GetWidth());
+    size->height = static_cast<uint32_t>(videoBuffer->GetHeight());
     bufferSize = videoBuffer->GetSize();
     format = videoBuffer->GetFormat();
     usage = videoBuffer->GetUsage();
@@ -108,6 +108,20 @@ void FrameRecord::DeepCopyBuffer(sptr<SurfaceBuffer> newSurfaceBuffer, sptr<Surf
         MEDIA_ERR_LOG("SurfaceBuffer memcpy_s failed");
     }
     // LCOV_EXCL_STOP
+}
+
+bool FrameRecord::CheckVideoBufferStageEisStatus()
+{
+    sptr<SurfaceBuffer> buffer = GetSurfaceBuffer();
+    CHECK_RETURN_RET_ELOG(buffer == nullptr, false, "current video buffer is nullptr");
+    sptr<BufferExtraData> bufferExtraData = buffer->GetExtraData();
+    int32_t stageEisStatus = 0;
+    if (bufferExtraData != nullptr) {
+        bufferExtraData->ExtraGet("livephotoEisIsForwardShift", stageEisStatus);
+        MEDIA_INFO_LOG("frameRecord livephotoEisIsForwardShift: %{public}d", stageEisStatus);
+    }
+    isStageEisEnabled_ = stageEisStatus == 0 ? stageEisStatus : true;
+    return isStageEisEnabled_;
 }
 } // namespace CameraStandard
 } // namespace OHOS

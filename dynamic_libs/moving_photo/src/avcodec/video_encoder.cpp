@@ -204,6 +204,7 @@ int32_t VideoEncoder::Stop()
 void VideoEncoder::SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rotation)
 {
     // LCOV_EXCL_START
+    Release();
     MEDIA_INFO_LOG("VideoEncoder SetVideoCodec E videoCodecType_ = %{public}d", videoCodecType_);
     size_ = size;
     rotation_ = rotation;
@@ -211,6 +212,7 @@ void VideoEncoder::SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rota
     Create(MIME_VIDEO_HEVC.data());
     Config();
     GetSurface();
+    isVideoCodecConfiged_ = true;
     MEDIA_INFO_LOG("VideoEncoder SetVideoCodec X");
     // LCOV_EXCL_STOP
 }
@@ -218,6 +220,10 @@ void VideoEncoder::SetVideoCodec(const std::shared_ptr<Size>& size, int32_t rota
 void VideoEncoder::RestartVideoCodec(shared_ptr<Size> size, int32_t rotation)
 {
     // LCOV_EXCL_START
+    if (isVideoCodecConfiged_) {
+        Start();
+        return;
+    }
     Release();
     size_ = size;
     rotation_ = rotation;
@@ -275,6 +281,7 @@ bool VideoEncoder::EnqueueBuffer(sptr<FrameRecord> frameRecord)
         int32_t ret = encoder_->SetParameter(format);
         CHECK_RETURN_RET_ELOG(ret != AV_ERR_OK, false, "EnqueueBuffer for extendImage set parameter failed");
     }
+
     MEDIA_DEBUG_LOG("EnqueueBuffer timestamp : %{public}llu", (long long unsigned)frameRecord->GetTimeStamp());
     sptr<SurfaceBuffer> buffer = frameRecord->GetSurfaceBuffer();
     CHECK_RETURN_RET_ELOG(buffer == nullptr, false, "Enqueue video buffer is empty");
@@ -630,7 +637,9 @@ int32_t VideoEncoder::Configure()
             static_cast<int32_t>(Media::Plugins::VideoEncodeBFrameGopMode::VIDEO_ENCODE_GOP_H3B_MODE));
     }
     format.PutLongValue(MediaDescriptionKey::MD_KEY_BITRATE, bitrate_);
-    format.PutIntValue(MediaDescriptionKey::MD_KEY_PIXEL_FORMAT, VIDOE_PIXEL_FORMAT);
+    auto pixelFormat = isStageEisFlag_ ? AV_PIXEL_FORMAT_NV12 : VIDOE_PIXEL_FORMAT;
+    format.PutIntValue(MediaDescriptionKey::MD_KEY_PIXEL_FORMAT, pixelFormat);
+
     format.PutIntValue(MediaDescriptionKey::MD_KEY_I_FRAME_INTERVAL, KEY_I_FRAME_INTERVAL);
     bool isHevcAndHdrEnabled = videoCodecType_ == VideoCodecType::VIDEO_ENCODE_TYPE_HEVC && isHdr_;
     if (isHevcAndHdrEnabled) {

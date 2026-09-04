@@ -46,7 +46,7 @@ public:
     explicit MovingPhotoVideoCache(sptr<AvcodecTaskManager> taskManager,
         sptr<AvcodecExtendImageTaskManager> manualTaskManager);
     ~MovingPhotoVideoCache();
-    void CacheFrame(sptr<FrameRecord> frameRecord);
+    void CacheFrame(sptr<FrameRecord> frameRecord, bool isOfflioneProcess);
     void OnManualImageEncoded(sptr<FrameRecord> frameRecord, bool encodedResult);
     void OnImageEncoded(sptr<FrameRecord> frameRecord, bool encodeResult);
     void GetFrameCachedResult(vector<sptr<FrameRecord>> frameRecords,

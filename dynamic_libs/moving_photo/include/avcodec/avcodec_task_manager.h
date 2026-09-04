@@ -36,6 +36,7 @@
 #include "task_manager.h"
 #include "camera_util.h"
 #include "camera_timer.h"
+#include "moving_photo_interface.h"
 namespace OHOS {
 namespace CameraStandard {
 using namespace std;
@@ -95,7 +96,7 @@ public:
     AvcodecTaskManager(wptr<Surface> movingSurface, shared_ptr<Size> size,
         sptr<AudioTaskManager> audioTaskManager, VideoCodecType type, ColorSpace colorSpace);
     ~AvcodecTaskManager();
-    void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
+    void EncodeVideoBuffer(sptr<FrameRecord> frameRecord, bool isOfflioneProcess, CacheCbFunc cacheCallback);
     void CollectAudioBuffer(vector<sptr<FrameRecord>>& choosedBuffer, sptr<AudioVideoMuxer> muxer, bool isNeedEncode);
     void WriteManualBuffer(std::shared_ptr<AVBuffer> manualXpsBuffer, vector<sptr<FrameRecord>> manualFrameRecords,
         sptr<AudioVideoMuxer> muxer, int64_t videoStartTime);
@@ -116,6 +117,7 @@ public:
     void Stop();
     void ClearTaskResource();
     void SetVideoBufferDuration(uint32_t preBufferCount, uint32_t postBufferCount);
+    void ExecuteVideoFdCallback();
     bool isEmptyVideoFdMap();
     shared_ptr<TaskManager>& GetTaskManager();
     shared_ptr<TaskManager>& GetEncoderManager();
@@ -126,10 +128,13 @@ public:
     void RecordVideoType(int32_t captureId, VideoType type);
     void AsyncInitVideoCodec();
     bool ProcessOverTimeFrame(sptr<FrameRecord> frameRecord);
+    void SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback);
     mutex startTimeMutex_;
     mutex endTimeMutex_;
     std::map<int32_t, int64_t> mPStartTimeMap_ = {};
     std::map<int32_t, int64_t> mPEndTimeMap_ = {};
+    void SetLivePhotoStageEisFlag(bool isStageEisFlag);
+    void SetLivePhotoOfflineEisSurface(wptr<Surface> outputFbcSurface);
 private:
     void FinishMuxer(sptr<AudioVideoMuxer> muxer, int32_t captureId);
     void ClearManualCache(vector<sptr<FrameRecord>> manualFrameRecords, int64_t shutterTime);
@@ -169,10 +174,14 @@ private:
     std::map<int32_t, std::string> mVideoIdMap_ = {};
     std::map<int32_t, VideoType> videoTypeMap_ = {};
     wptr<Surface> movingSurface_;
+    wptr<Surface> offlineEisSurface_;
+    bool isStageEisFlag_ = false;
     shared_ptr<Size> size_ = std::make_shared<Size>();
     sptr<AudioTaskManager> audioTaskManager_ = nullptr;
     std::condition_variable audioProcessFinish_;
     std::mutex audioProcessMutex_;
+    sptr<VideoFdMapEmptyCallbackIntf> videoFdMapEmptyCallback_ = nullptr;
+    std::mutex callbackMutex_;
 };
 
 class AudioTaskManager : public RefBase {
@@ -255,11 +264,13 @@ public:
     explicit AvcodecExtendImageTaskManager(wptr<Surface> extendImageSurface, VideoCodecType type,
         ColorSpace colorSpace);
     ~AvcodecExtendImageTaskManager();
-    bool EncodeVideoExtendBuffer(sptr<FrameRecord> frameRecord, CacheCbFunc cacheCallback);
+    bool EncodeVideoExtendBuffer(sptr<FrameRecord> frameRecord, bool isOfflioneProcess, CacheCbFunc cacheCallback);
     shared_ptr<TaskManager>& GetExtendTaskManager();
     void ClearTaskResource();
     void Release();
     std::shared_ptr<AVBuffer> GetXpsBuffer();
+    void SetLivePhotoOfflineEisSurface(wptr<Surface> offlineEisSurface);
+    void SetLivePhotoStageEisEnableFlag(bool isStageEisFlag);
 private:
     std::mutex extendTaskManagerMutex_;
     wptr<Surface> extendImageSurface_;
@@ -269,6 +280,8 @@ private:
     ColorSpace colorSpace_ = ColorSpace::COLOR_SPACE_UNKNOWN;
     shared_ptr<VideoEncoder> extendVideoEncoder_ = nullptr;
     std::mutex startAvcodecMutex_;
+    wptr<Surface> offlineEisSurface_;
+    std::atomic<bool> isStageEisEnableFlag_ = false;
 };
 } // CameraStandard
 } // OHOS

@@ -20,6 +20,8 @@
 #include "photo_asset_interface.h"
 #include "output/camera_output_capability.h"
 #include "ability/camera_ability_const.h"
+#include "camera_types.h"
+#include "moving_photo_stage_eis_proxy.h"
 
 namespace OHOS {
 class MessageParcel;
@@ -36,7 +38,15 @@ class PhotoAssetIntf;
 class MovingPhotoVideoCache;
 class AudioCapturerSessionIntf;
 class AudioTaskManagerIntf;
+struct MovingPhotoStreamStruct;
 using MetaElementType = std::pair<int64_t, sptr<OHOS::SurfaceBuffer>>;
+
+class VideoFdMapEmptyCallbackIntf : public RefBase {
+public:
+    virtual ~VideoFdMapEmptyCallbackIntf() = default;
+    virtual void OnVideoFdMapEmpty(bool isEmptyVideoFdMap) = 0;
+};
+
 class AvcodecTaskManagerIntf : public RefBase {
 public:
     virtual ~AvcodecTaskManagerIntf() = default;
@@ -54,6 +64,9 @@ public:
     virtual bool TaskManagerInsertStartTime(int32_t captureId, int64_t startTimeStamp) = 0;
     virtual bool TaskManagerInsertEndTime(int32_t captureId, int64_t endTimeStamp) = 0;
     virtual void RecordVideoType(int32_t captureId, VideoType type) = 0;
+    virtual void SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback) = 0;
+    virtual void SetLivePhotoStageEisFlag(bool isStageEisFlag) = 0;
+    virtual void SetLivePhotoOfflineEisSurface(sptr<Surface> offlineEisSurface) = 0;
 };
 
 class AudioCapturerSessionIntf : public RefBase {
@@ -71,10 +84,12 @@ public:
     virtual void SetVideoFd(int64_t timestamp, std::shared_ptr<PhotoAssetIntf> photoAssetProxy, int32_t captureId) = 0;
     virtual void ExpandMovingPhoto(VideoType videoType, int32_t width, int32_t height, ColorSpace colorspace,
         sptr<Surface> videoSurface, sptr<Surface> metaSurface, sptr<AvcodecTaskManagerIntf>& avcodecTaskManager) = 0;
+    virtual void SetMovingPhotoStageEisSupport(bool isSupport) = 0;
     virtual void SetBrotherListener() = 0;
     virtual void SetBufferDuration(uint32_t preBufferDuration, uint32_t postBufferDuration) = 0;
     virtual void ReleaseStreamStruct(VideoType videoType);
     virtual void StopMovingPhoto(VideoType type) = 0;
+    virtual void RecordStreamStopStatus(bool isStreamStop) = 0;
     virtual void ChangeListenerSetXtStyleType(bool isXtStyleEnabled) = 0;
     virtual void StartRecord(uint64_t timestamp, int32_t rotation, int32_t captureId,
         ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled) = 0;
@@ -84,6 +99,18 @@ public:
     virtual void SetDeferredVideoEnhanceFlag(int32_t captureId, uint32_t deferredFlag, std::string videoId,
         ColorStylePhotoType colorStylePhotoType, bool isXtStyleEnabled) = 0;
     virtual void Release() = 0;
+    virtual void ConfigMovingPhotoStageEisStream(std::vector<int32_t> movingPhotoStageProfile,
+                                                 sptr<Surface> fisrtStageEisSurface) = 0;
+    virtual void SetLivePhotoOfflineSession(sptr<MovingPhotoOfflineSessionProxy> offlineSession) = 0;
+    virtual void SetOfflineSessionCallback() = 0;
+    virtual void SetMovingPhotoMirror(bool isMirror) = 0;
+    virtual void SetStageEisFlag(bool stageEisFlag) = 0;
+    virtual void SetStageEisEnabledFlag(bool isEnable) = 0;
+    virtual void SetVideoFdMapEmptyCallback(sptr<VideoFdMapEmptyCallbackIntf> callback) = 0;
+    virtual void SetLivePhotoOfflineEisSurface(std::vector<int32_t> movingPhotoStageProfile,
+                                               sptr<Surface> offlineEisSurface,
+                                               sptr<Surface> offlineEisMetaSurface) = 0;
+    virtual void StartReleaseAndWaitForComplete(bool isOfflineSessionProcess) = 0;
 };
 
 class AudioTaskManagerIntf : public RefBase {
@@ -99,6 +126,8 @@ public:
     virtual ~AvcodecManualTaskManagerIntf() = default;
     virtual void CreateAvcodecManualTaskManager(wptr<Surface> manualSurface, VideoCodecType type,
         int32_t colorSpace) = 0;
+    virtual void SetLivePhotoOfflineEisSurface(sptr<Surface> offlineEisSurface) = 0;
+    virtual void SetLivePhotoStageEisEnableFlag(bool isStageEisFlag) = 0;
 };
 } // namespace CameraStandard
 } // namespace OHOS

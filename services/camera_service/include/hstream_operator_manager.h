@@ -21,6 +21,7 @@
 #include <mutex>
 #ifdef CAMERA_MOVING_PHOTO
 #include "moving_photo_proxy.h"
+#include "moving_photo_stage_eis_proxy.h"
 #endif
 #include "safe_map.h"
 namespace OHOS {

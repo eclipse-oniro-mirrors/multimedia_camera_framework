@@ -27,7 +27,7 @@ namespace CameraStandard {
 class DrainImageCallback : public RefBase {
 public:
     ~DrainImageCallback() = default;
-    virtual void OnDrainImage(sptr<FrameRecord> frame) = 0;
+    virtual void OnDrainImage(sptr<FrameRecord> frame, bool isOfflioneProcess) = 0;
     virtual void OnDrainImageFinish(bool isFinished) = 0;
 };
 
@@ -40,14 +40,19 @@ public:
     int drainCount;
     std::mutex drainImageLock_;
     DrainImageManager(sptr<DrainImageCallback> callback, int count) : drainImageCallback(callback), drainCount(count) {}
-    void DrainImage(sptr<FrameRecord> frame)
+    void DrainImage(sptr<FrameRecord> frame, bool isEosFlag = false, bool isOfflioneProcess = false)
     {
         if (drainCount <= 0) {
             return;
         }
-        drainImageCallback->OnDrainImage(frame);
+        drainImageCallback->OnDrainImage(frame, isOfflioneProcess);
         drainCount--;
         if (drainCount == 0) {
+            DrainFinish(true);
+        }
+        if (isEosFlag) {
+            MEDIA_DEBUG_LOG("DrainImage is Eosflag timeStamp %{public}llu",
+                (long long unsigned)frame->GetTimeStamp());
             DrainFinish(true);
         }
     }

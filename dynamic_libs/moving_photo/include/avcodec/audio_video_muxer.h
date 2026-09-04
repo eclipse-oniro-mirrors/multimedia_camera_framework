@@ -60,6 +60,7 @@ public:
     int32_t SetTimedMetadata();
     int32_t SetDeferredVideoEnhanceFlag(uint32_t flag);
     int32_t SetVideoId(std::string videoId);
+    int32_t SetFirstStageScaleFactor(std::string stageEisScaleFactor);
     int32_t GetVideoFd();
     std::shared_ptr<PhotoAssetIntf> GetPhotoAssetProxy();
     VideoType GetVideoType();

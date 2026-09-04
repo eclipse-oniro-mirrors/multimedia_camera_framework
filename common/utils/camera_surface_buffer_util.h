@@ -336,6 +336,46 @@ public:
         GetBurstSequenceId(surfaceBuffer);
     }
 
+    static int32_t GetMetaActualSize(sptr<SurfaceBuffer> buffer)
+    {
+        sptr<BufferExtraData> bufferExtraData = buffer->GetExtraData();
+        int32_t metaActualSize = 0;
+        if (bufferExtraData != nullptr) {
+            bufferExtraData->ExtraGet(OHOS::Camera::dataSize, metaActualSize);
+            MEDIA_INFO_LOG("get GetMetaActualSize %{public}d", metaActualSize);
+        }
+        return metaActualSize;
+    }
+
+    static void DeepCopyMetaBuffer(sptr<SurfaceBuffer> surfaceBuffer, sptr<SurfaceBuffer>& newBuffer)
+    {
+        // LCOV_EXCL_START
+        BufferRequestConfig requestConfig = {
+            .width = surfaceBuffer->GetWidth(),
+            .height = surfaceBuffer->GetHeight(),
+            .strideAlignment = 0x8, // default stride is 8 Bytes.
+            .format = surfaceBuffer->GetFormat(),
+            .usage = surfaceBuffer->GetUsage(),
+            .timeout = 0,
+            .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
+            .transform = surfaceBuffer->GetSurfaceBufferTransform(),
+        };
+        auto allocErrorCode = newBuffer->Alloc(requestConfig);
+        CHECK_RETURN_ELOG(allocErrorCode != GSERROR_OK, "SurfaceBuffer alloc ret: %d", allocErrorCode);
+        if (memcpy_s(newBuffer->GetVirAddr(), newBuffer->GetSize(),
+            surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+            MEDIA_ERR_LOG("SurfaceBuffer memcpy_s failed");
+            return;
+        }
+        int32_t metaSize = GetMetaActualSize(surfaceBuffer);
+        sptr<BufferExtraData> metaExtraData = newBuffer->GetExtraData();
+        if (metaExtraData != nullptr) {
+            metaExtraData->ExtraSet("dataSize", static_cast<int32_t>(metaSize));
+        }
+        newBuffer->SetExtraData(metaExtraData);
+        // LCOV_EXCL_STOP
+    }
+
 private:
     static void CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer)
     {
