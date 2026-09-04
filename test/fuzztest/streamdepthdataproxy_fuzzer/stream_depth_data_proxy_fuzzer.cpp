@@ -20,6 +20,7 @@
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "output/depth_data_output.h"
+#include "message_parcel.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -54,6 +55,51 @@ void StreamDepthDataProxyFuzz::StreamDepthDataProxyTest2(FuzzedDataProvider &fdp
     fuzz_->Release();
 }
 
+void StreamDepthDataProxyFuzz::StreamDepthDataProxyTestWithMock(FuzzedDataProvider &fdp)
+{
+    auto mockRemote = sptr<IRemoteObject>(new MockIRemoteObject());
+    CHECK_RETURN_ELOG(!mockRemote, "mockRemote is nullptr");
+    fuzz_ = std::make_shared<StreamDepthDataProxy>(mockRemote);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ is nullptr");
+    
+    fuzz_->Start();
+    fuzz_->Stop();
+    
+    sptr<IStreamDepthDataCallback> callbackFunc = new (std::nothrow)DepthDataOutputCallbackImpl();
+    fuzz_->SetCallback(callbackFunc);
+    fuzz_->UnSetCallback();
+    
+    int32_t dataAccuracy = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->SetDataAccuracy(dataAccuracy);
+    
+    fuzz_->Release();
+}
+
+void StreamDepthDataProxyFuzz::StreamDepthDataProxyTestErrorBranches(FuzzedDataProvider &fdp)
+{
+    auto mockFailRemote = sptr<MockIRemoteObject>(new MockIRemoteObject());
+    mockFailRemote->shouldFail = true;
+    mockFailRemote->errorCode = -1;
+    
+    fuzz_ = std::make_shared<StreamDepthDataProxy>(mockFailRemote);
+    CHECK_RETURN_ELOG(!fuzz_, "fuzz_ is nullptr");
+    
+    fuzz_->Start();
+    fuzz_->Stop();
+    
+    sptr<IStreamDepthDataCallback> callbackFunc = nullptr;
+    fuzz_->SetCallback(callbackFunc);
+    
+    callbackFunc = new (std::nothrow)DepthDataOutputCallbackImpl();
+    fuzz_->SetCallback(callbackFunc);
+    fuzz_->UnSetCallback();
+    
+    int32_t dataAccuracy = fdp.ConsumeIntegral<int32_t>();
+    fuzz_->SetDataAccuracy(dataAccuracy);
+    
+    fuzz_->Release();
+}
+
 
 void FuzzTest(const uint8_t *rawData, size_t size)
 {
@@ -65,6 +111,8 @@ void FuzzTest(const uint8_t *rawData, size_t size)
     }
     streamDepthDataProxy->StreamDepthDataProxyTest1();
     streamDepthDataProxy->StreamDepthDataProxyTest2(fdp);
+    streamDepthDataProxy->StreamDepthDataProxyTestWithMock(fdp);
+    streamDepthDataProxy->StreamDepthDataProxyTestErrorBranches(fdp);
 }
 }  // namespace CameraStandard
 }  // namespace OHOS

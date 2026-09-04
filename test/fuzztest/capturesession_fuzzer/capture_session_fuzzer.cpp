@@ -40,6 +40,7 @@
 #include "camera_device_utils.h"
 #include "surface.h"
 #include "output/video_output.h"
+#include "output/photo_output.h"
 #include "iconsumer_surface.h"
 
 namespace OHOS {
@@ -143,6 +144,8 @@ void Test(uint8_t* data, size_t size)
     TestMovieFileOutputFunctions(session, fdp);
     TestStreamNumFunctions(session, fdp);
     TestExposureSceneAndSmartCapture(session, fdp);
+    TestSmartCapture(session, fdp);
+    TestPose(session, fdp);
     TestISO(session, fdp); // 22
     TestExposureExtra(session, fdp);
     TestFocusTracking(session, fdp);
@@ -151,6 +154,7 @@ void Test(uint8_t* data, size_t size)
     TestComposition(session, fdp);
     TestControlRing(session, fdp);
     TestLcdFlashTripod(session, fdp);
+    TestCameraMovement(session, fdp);
     TestWhiteBalanceGains(session, fdp);
     TestStarburst(session, fdp);
     TestParameters(session, fdp);
@@ -470,9 +474,9 @@ void TestOther(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 void TestOther2(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: ENTER");
-    camera_face_detect_mode_t t = static_cast<camera_face_detect_mode_t>(
-        fdp.ConsumeIntegral<int32_t>() % (camera_face_detect_mode_t::OHOS_CAMERA_FACE_DETECT_MODE_SIMPLE + NUM_TWO));
-    set<camera_face_detect_mode_t> metadataObjectTypes;
+    FaceDetectMode t = static_cast<FaceDetectMode>(
+        fdp.ConsumeIntegral<int32_t>() % (FACE_DETECT_MODE_SIMPLE + NUM_TWO));
+    set<FaceDetectMode> metadataObjectTypes;
     metadataObjectTypes.insert(t);
     session->SetCaptureMetadataObjectTypes(metadataObjectTypes);
     uint32_t ability = fdp.ConsumeIntegral<uint32_t>();
@@ -568,7 +572,7 @@ void TestAdd(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->CreateAndSetFoldServiceCallback();
     shared_ptr<AutoDeviceSwitchCallback> autoDeviceSwitchCallback = nullptr;
     session->SwitchDevice();
-    session->FindFrontCamera();
+    session->FindCamera(false);
     session->SetAutoDeviceSwitchCallback(autoDeviceSwitchCallback);
     session->GetAutoDeviceSwitchCallback();
     session->StartVideoOutput();
@@ -636,10 +640,15 @@ void TestUncoveredFunctions(sptr<CaptureSessionForSys> session, FuzzedDataProvid
     session->SetPressureCallback(make_shared<PressureCallbackMock>());
     session->SetControlCenterEffectStatusCallback(make_shared<ControlCenterEffectCallbackMock>());
     session->SetCameraSwitchRequestCallback(make_shared<CameraSwitchRequestCallbackMock>());
+    session->SetAbnormalStatusChangeCallback(make_shared<AbnormalStatusChangeCallbackMock>());
 
     static const size_t ITEM_CAP = 10;
     static const size_t DATA_CAP = 100;
     shared_ptr<OHOS::Camera::CameraMetadata> result = make_shared<OHOS::Camera::CameraMetadata>(ITEM_CAP, DATA_CAP);
+
+    uint32_t abnormalStatus = fdp.ConsumeIntegral<uint32_t>();
+    result->addEntry(OHOS_STATUS_ABNORMAL_STATUS, &abnormalStatus, 1);
+    session->ProcessAbnormalStatusChange(result);
 
     PressureStatus pressureStatus = static_cast<PressureStatus>(fdp.ConsumeIntegral<int32_t>());
     auto pressureCallback = session->GetPressureCallback();
@@ -660,6 +669,14 @@ void TestUncoveredFunctions(sptr<CaptureSessionForSys> session, FuzzedDataProvid
         std::string cameraId = "camera_" + std::to_string(fdp.ConsumeIntegral<uint32_t>());
         cameraSwitchCallback->OnAppCameraSwitch(cameraId);
     }
+
+    AbnormalStatusInfo abnormalStatusInfo;
+    abnormalStatusInfo.isHighTemperature = fdp.ConsumeBool();
+    abnormalStatusInfo.isLowMemory = fdp.ConsumeBool();
+    session->ProcessAbnormalStatusChange(result);
+
+    bool isEnabled = fdp.ConsumeBool();
+    session->SetLightPathEffectStatus(isEnabled);
 
     session->UnSetPressureCallback();
     session->UnSetControlCenterEffectStatusCallback();
@@ -702,8 +719,15 @@ void TestOISFunctions(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fd
 void TestOtherUncoveredFunctions(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: TestOtherUncoveredFunctions ENTER");
+
+    std::shared_ptr<NotificationStatusCallback> notificationCallback =
+        std::make_shared<NotificationStatusCallbackMock>();
+    session->SetNotificationCallback(notificationCallback);
+
     std::shared_ptr<IsoInfoSyncCallback> isoInfoCallback = std::make_shared<IsoInfoSyncCallbackMock>();
     session->SetIsoInfoCallback(isoInfoCallback);
+
+    session->SetLightPathEffectStatus(fdp.ConsumeBool());
 
     session->EnableAutoMotionBoostDelivery(fdp.ConsumeBool());
     session->EnableAutoBokehDataDelivery(fdp.ConsumeBool());
@@ -766,6 +790,21 @@ void TestExposureSceneAndSmartCapture(sptr<CaptureSessionForSys> session, Fuzzed
 
     bool isFocusDistanceSupported;
     session->IsFocusDistanceSupported(isFocusDistanceSupported);
+
+    bool isSmartCaptureSupported = session->IsSmartCaptureSupported();
+    if (isSmartCaptureSupported) {
+        session->LockForControl();
+        session->EnableSmartCapture(fdp.ConsumeBool());
+        session->UnlockForControl();
+    }
+
+    ExposureScene exposureScene = static_cast<ExposureScene>(
+        fdp.ConsumeIntegral<int32_t>() % (EXPOSURE_SCENE_SNOWSCAPE + 2));
+    if (session->IsExposureSceneSupported(exposureScene)) {
+        session->LockForControl();
+        session->SetExposureScene(exposureScene);
+        session->UnlockForControl();
+    }
 }
 
 void TestCalculationHelper(FuzzedDataProvider& fdp)
@@ -1076,6 +1115,7 @@ shared_ptr<OHOS::Camera::CameraMetadata> BuildProcessMetadata(FuzzedDataProvider
     uint8_t udata = fdp.ConsumeIntegral<uint8_t>();
     int32_t idata = fdp.ConsumeIntegral<int32_t>();
     float fdata = fdp.ConsumeFloatingPoint<float>();
+    double ddata = fdp.ConsumeFloatingPoint<double>();
     camera_rational_t cr = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
     result->addEntry(OHOS_STATUS_AE_EXPOSURE_COMPENSATION, &fdata, 1);
     result->addEntry(OHOS_CONTROL_FLASH_STATE, &udata, 1);
@@ -1084,6 +1124,8 @@ shared_ptr<OHOS::Camera::CameraMetadata> BuildProcessMetadata(FuzzedDataProvider
     result->addEntry(OHOS_SMOOTH_ZOOM_DURATION, &idata, 1);
     result->addEntry(OHOS_STATUS_LOW_LIGHT_DETECTION, &udata, 1);
     result->addEntry(OHOS_STATUS_CAMERA_CURRENT_ZOOM_RATIO, &idata, 1);
+    result->addEntry(OHOS_STATUS_CONTROL_RING_MODE, &udata, 1);
+    result->addEntry(OHOS_STATUS_CONTROL_RING_SPEED, &udata, 1);
     result->addEntry(OHOS_STATUS_TRIPOD_DETECTION_STATUS, &udata, 1);
     result->addEntry(OHOS_COMPOSITION_BEGIN, &udata, 1);
     result->addEntry(OHOS_COMPOSITION_MATCHED, &fdata, 1);
@@ -1091,12 +1133,66 @@ shared_ptr<OHOS::Camera::CameraMetadata> BuildProcessMetadata(FuzzedDataProvider
     result->addEntry(OHOS_STATUS_CAMERA_CURRENT_APERTURE_EFFECT, &udata, 1);
     result->addEntry(OHOS_CONTROL_LENS_FOCUS_DISTANCE, &fdata, 1);
     result->addEntry(OHOS_STATUS_LCD_FLASH_STATUS, &idata, 1);
+    result->addEntry(OHOS_STATUS_NOTIFICATION, &idata, 1);
+    result->addEntry(OHOS_STATUS_POSE_SUGGESTION_INFO, &idata, 1);
+    result->addEntry(OHOS_CAMERA_RECOMMENDED_ZOOM_RATIO, &fdata, 1);
+    result->addEntry(OHOS_STATUS_RECOMMENDED_CAPTURE_INFO, &idata, 1);
     result->addEntry(OHOS_COMPOSITION_POSITION_CALIBRATION, &fdata, 1);
     result->addEntry(OHOS_STATUS_CONSTELLATION_DRAWING_DETECT, &fdata, 1);
     result->addEntry(OHOS_CAMERA_CONSTELLATION_DRAWING_STATE, &udata, 1);
     result->addEntry(OHOS_STATUS_IMAGE_STABILIZATION_GUIDE, &fdata, 1);
+    result->addEntry(OHOS_STATUS_CAMERA_MOVEMENT_INFO, &ddata, 1);
     result->addEntry(OHOS_STATUS_SENSOR_EXPOSURE_TIME, &cr, 1);
     return result;
+}
+
+void TestSmartCapture(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: TestSmartCapture ENTER");
+    session->GetActiveExposureScene();
+    session->TriggerSmartCapture();
+    PreviewImageGeneratingType genType = static_cast<PreviewImageGeneratingType>(
+        fdp.ConsumeIntegral<uint8_t>() % (PreviewImageGeneratingType::LABEL_CLICKED + NUM_TWO));
+    std::vector<ColorStyleSetting> colorStyleSettings;
+    ColorStyleSetting setting;
+    setting.type = static_cast<ColorStyleType>(fdp.ConsumeIntegral<uint8_t>());
+    setting.hue = fdp.ConsumeIntegral<int32_t>();
+    setting.saturation = fdp.ConsumeIntegral<int32_t>();
+    setting.tone = fdp.ConsumeIntegral<int32_t>();
+    colorStyleSettings.push_back(setting);
+    int32_t colorStyleVersion = fdp.ConsumeIntegral<int32_t>();
+    session->GenerateColorStylePreviewImage(genType, colorStyleSettings, colorStyleVersion);
+    SmartCaptureInfo smartCaptureInfo;
+    smartCaptureInfo.isSmartCaptureValid = fdp.ConsumeBool();
+    smartCaptureInfo.isPoseRecommended = fdp.ConsumeBool();
+    smartCaptureInfo.isPreviewImageUpdateNeeded = fdp.ConsumeBool();
+    session->SetSmartCaptureInfo(smartCaptureInfo);
+    session->NotifySmartCaptureControlPanelStatus(fdp.ConsumeBool());
+    session->SetSmartCaptureChangeCallback(make_shared<SmartCaptureChangeCallbackMock>());
+    session->SetColorStylePreviewImageChangeCallback(nullptr);
+    session->SetColorStylePreviewImageChangeCallbackTaihe(nullptr);
+    auto result = BuildProcessMetadata(fdp);
+    session->ProcessSmartCaptureRecommendInfoUpdates(result);
+}
+
+void TestPose(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: TestPose ENTER");
+    session->IsPoseSuggestionSupported();
+    session->LockForControl();
+    session->EnablePoseSuggestion(fdp.ConsumeBool());
+    session->UnlockForControl();
+    PoseSuggestionSettings settings = {
+        fdp.ConsumeIntegral<int32_t>(),
+        fdp.ConsumeIntegral<int32_t>(),
+        fdp.ConsumeIntegral<int32_t>(),
+        {fdp.ConsumeRandomLengthString(NUM_20)}
+    };
+    session->TriggerPoseSuggestion(settings);
+    session->SetPose(fdp.ConsumeRandomLengthString(NUM_20));
+    session->SetPoseSuggestionChangeCallback(make_shared<PoseSuggestionChangeCallbackMock>());
+    auto result = BuildProcessMetadata(fdp);
+    session->ProcessPoseSuggestionChangeRecommendInfoUpdates(result);
 }
 
 void TestISO(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
@@ -1115,6 +1211,7 @@ void TestExposureExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& f
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: TestExposureExtra ENTER");
     std::vector<uint32_t> exposureTimeRange;
+    session->GetExposureTimeRangeBaseOnMode(exposureTimeRange);
     session->SetExposureInfoCallback(make_shared<ExposureInfoCallbackMock>());
     session->SetFlashStateCallback(make_shared<FlashStateCallbackMock>());
     MeteringMode meteringMode = static_cast<MeteringMode>(
@@ -1128,8 +1225,10 @@ void TestExposureExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& f
     session->SetHasFitedRotation(fdp.ConsumeBool());
     session->UnlockForControl();
     auto result = BuildProcessMetadata(fdp);
+    session->ProcessExposureBiasChange(result);
     session->ProcessSensorExposureTimeChange(result);
     session->ProcessFlashStateChange(result);
+    session->ProcessNotificationUpdates(result);
 }
 
 void TestFocusTracking(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
@@ -1151,6 +1250,7 @@ void TestFocusTracking(sptr<CaptureSessionForSys> session, FuzzedDataProvider& f
     session->LockFocusTracking(point);
     session->UnlockFocusTracking();
     session->UnlockForControl();
+    session->SetFocusDistanceChangeCallback(nullptr);
     auto result = BuildProcessMetadata(fdp);
     session->ProcessFocusDistanceUpdates(result);
 }
@@ -1184,6 +1284,18 @@ void TestLowLight(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 void TestColorStyleExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: TestColorStyleExtra ENTER");
+    ColorStyleSetting setting;
+    setting.type = static_cast<ColorStyleType>(fdp.ConsumeIntegral<uint8_t>());
+    setting.hue = fdp.ConsumeIntegral<int32_t>();
+    setting.saturation = fdp.ConsumeIntegral<int32_t>();
+    setting.tone = fdp.ConsumeIntegral<int32_t>();
+    uint32_t step = 0;
+    session->BuildColorStyleSetting(setting, step);
+    PreviewImageGeneratingType genType = static_cast<PreviewImageGeneratingType>(
+        fdp.ConsumeIntegral<uint8_t>() % (PreviewImageGeneratingType::LABEL_CLICKED + NUM_TWO));
+    std::vector<ColorStyleSetting> settings = {setting};
+    session->GenerateColorStylePreviewImage(genType, settings, fdp.ConsumeIntegral<int32_t>());
+    session->IsSaturationSupported(g_isSupported);
     float saturationVal = fdp.ConsumeFloatingPoint<float>();
     session->GetSaturation(saturationVal);
     session->LockForControl();
@@ -1199,6 +1311,7 @@ void TestComposition(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp
     session->LockForControl();
     session->EnableCompositionSuggestion(fdp.ConsumeBool());
     session->UnlockForControl();
+    session->TriggerCompositionSuggestion();
     session->IsCompositionEffectPreviewSupported(g_isSupported);
     std::vector<std::string> languages;
     session->GetSupportedRecommendedInfoLanguage(languages);
@@ -1223,9 +1336,25 @@ void TestComposition(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp
 void TestControlRing(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: TestControlRing ENTER");
+    std::vector<ControlRingMode> ringModes;
+    session->GetSupportedControlRingMode(ringModes);
+    ControlRingMode ringMode;
+    session->GetControlRingMode(ringMode);
+    session->SetControlRingMode(fdp.ConsumeIntegral<int32_t>());
+    std::vector<ControlRingSpeed> ringSpeeds;
+    session->GetSupportedControlRingSpeed(ringSpeeds);
+    ControlRingSpeed ringSpeed;
+    session->GetControlRingPhotoSpeed(ringSpeed);
+    session->GetControlRingVideoSpeed(ringSpeed);
+    std::vector<int32_t> speeds = {fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<int32_t>()};
+    session->SetControlRingSpeed(speeds);
+    session->SetControlRingDirection(fdp.ConsumeIntegral<int32_t>());
+    session->SetControlRingStatusChangeCallback(nullptr);
     session->IsControlCenterSupported();
     session->GetSupportedEffectTypes();
-    session->EnableControlCenter(fdp.ConsumeBool());
+    session->EnableControlCenter(fdp.ConsumeBool(), fdp.ConsumeBool());
+    auto result = BuildProcessMetadata(fdp);
+    session->ProcessControlRingInfo(result);
 }
 
 void TestLcdFlashTripod(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
@@ -1244,6 +1373,22 @@ void TestLcdFlashTripod(sptr<CaptureSessionForSys> session, FuzzedDataProvider& 
     auto result = BuildProcessMetadata(fdp);
     session->ProcessLcdFlashStatusUpdates(result);
     session->ProcessTripodStatusChange(result);
+}
+
+void TestCameraMovement(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: TestCameraMovement ENTER");
+    session->GetSupportedCameraMovementModes();
+    int32_t movementMode = fdp.ConsumeIntegral<int32_t>();
+    session->GetCameraMovementZoomRange(movementMode);
+    session->SetCameraMovementMode(movementMode);
+    session->SetCameraMovementCallback(make_shared<CameraMovementCallbackMock>());
+    session->GetCameraMovementMode();
+    session->SetCameraMovementModeStatus(movementMode);
+    session->SetRecommendedZoomRatioCallback(make_shared<RecommendedZoomRatioCallbackMock>());
+    auto result = BuildProcessMetadata(fdp);
+    session->ProcessCameraMovementInfoUpdates(result);
+    session->ProcessRecommendedZoomRatioUpdates(result);
 }
 
 void TestWhiteBalanceGains(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
@@ -1272,7 +1417,10 @@ void TestWhiteBalanceGains(sptr<CaptureSessionForSys> session, FuzzedDataProvide
 void TestStarburst(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
     MEDIA_INFO_LOG("CaptureSessionFuzzer: TestStarburst ENTER");
+    bool tag = fdp.ConsumeBool();
+    session->IsStarburstSupported(tag);
     session->LockForControl();
+    session->SetStarburstEnable(fdp.ConsumeBool());
     session->UnlockForControl();
 }
 
@@ -1281,6 +1429,10 @@ void TestParameters(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     MEDIA_INFO_LOG("CaptureSessionFuzzer: TestParameters ENTER");
     std::string key1 = fdp.ConsumeRandomLengthString(30);
     std::string val1 = fdp.ConsumeRandomLengthString(30);
+    std::vector<std::pair<std::string, std::string>> kvVec = {{key1, val1}};
+    session->SetParameters(kvVec);
+    std::unordered_map<std::string, std::string> kvMap = {{key1, val1}};
+    session->SetParameters(kvMap);
     std::vector<std::string> values;
     session->GetParameters(key1, values);
     std::vector<std::string> keys;
@@ -1291,18 +1443,18 @@ void TestParameters(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->ExecuteAllFunctionsInMap();
 }
 
-void TestExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+static void TestExtraSetup(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
 {
-    MEDIA_INFO_LOG("CaptureSessionFuzzer: TestExtra ENTER");
     session->EnableAutoCloudImageEnhancement(fdp.ConsumeBool());
     session->EnableAutoExtendedGainmapDelivery(fdp.ConsumeBool());
     session->EnableAutoFrameRate(fdp.ConsumeBool());
+    session->ExpandLhdrGainmapStream(fdp.ConsumeBool());
     session->EnableKeyFrameReport(fdp.ConsumeBool());
     session->EnableLogAssistance(fdp.ConsumeBool());
     session->SetLogViewAssistEnable(fdp.ConsumeBool());
     session->EnableFaceDetection(fdp.ConsumeBool());
     session->SetEnableOriginalImage(fdp.ConsumeBool());
-    camera_photo_quality_prioritization_t quality = static_cast<camera_photo_quality_prioritization_t>(
+    QualityPrioritization quality = static_cast<QualityPrioritization>(
         fdp.ConsumeIntegral<uint8_t>());
     session->SetPhotoQualityPrioritization(quality);
     session->GetSessionConflictFunctions();
@@ -1316,12 +1468,15 @@ void TestExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     session->IsSessionCommited();
     session->IsSessionConfiged();
     session->IsSessionStarted();
+    session->IsFireworksBoostSupported();
     session->LockForControl();
+    session->EnableFireworksBoost(fdp.ConsumeBool());
     session->UnlockForControl();
     session->IsStageBoostSupported();
     session->EnableStageBoost(fdp.ConsumeBool());
     session->SetApertureEffectChangeCallback(make_shared<ApertureEffectChangeCallbackMock>());
     session->SetApertureInfoCallback(make_shared<ApertureInfoCallbackMock>());
+    session->SetZoomRatioChangeCallback(nullptr);
     session->GetSupportedNightSubModeTypes();
     session->GetSupportedPortraitEffects();
     std::vector<int32_t> videoCodecTypes;
@@ -1331,6 +1486,10 @@ void TestExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     if (!previewProfile_.empty()) {
         session->GetSessionFunctions(previewProfile_, photoProfiles, videoProfiles, fdp.ConsumeBool());
     }
+}
+
+static void TestExtraMetadata(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
 #ifdef CAMERA_USE_SENSOR
     int32_t sensorRotation = 0;
     session->GetSensorRotationOnce(sensorRotation);
@@ -1338,12 +1497,20 @@ void TestExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
     auto result = BuildProcessMetadata(fdp);
     session->ProcessApertureChange(result);
     session->ProcessApertureEffectChange(result);
+    session->ProcessZoomRatioInfo(result);
     session->ProcessSmoothZoomDurationChange(result);
     session->ProcessOISModeChange(result);
     session->GetIsAutoSwitchDeviceStatus();
 }
 
-} // namespace StreamRepeatStubFuzzer
+void TestExtra(sptr<CaptureSessionForSys> session, FuzzedDataProvider& fdp)
+{
+    MEDIA_INFO_LOG("CaptureSessionFuzzer: TestExtra ENTER");
+    TestExtraSetup(session, fdp);
+    TestExtraMetadata(session, fdp);
+}
+
+} // namespace CaptureSessionFuzzer
 } // namespace CameraStandard
 } // namespace OHOS
 

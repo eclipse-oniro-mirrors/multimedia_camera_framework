@@ -53,7 +53,7 @@ const int32_t FWK_STREAM_ID_PREVIEW = 12;
 const int32_t FWK_STREAM_ID_VIDEO = 13;
 const int32_t FWK_STREAM_ID_META = 14;
 const int32_t FWK_STREAM_ID_DEPTH = 15;
-const int32_t COLOR_SPACE_COUNT = static_cast<int32_t>(OHOS::CameraStandard::ColorSpace::H_LOG) + 1;
+const int32_t COLOR_SPACE_COUNT = static_cast<int32_t>(ColorSpace::H_LOG) + 1;
 const int32_t ROTATION_360 = 360;
 
 sptr<HStreamOperator> g_fuzz;
@@ -81,9 +81,9 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> MakeSettings(FuzzedDataProvider& f
         fdp.ConsumeIntegralInRange<int32_t>(0, ITEMCOUNT), fdp.ConsumeIntegralInRange<int32_t>(0, DATASIZE));
 }
 
-OHOS::CameraStandard::ColorSpace PickColorSpace(FuzzedDataProvider& fdp)
+ColorSpace PickColorSpace(FuzzedDataProvider& fdp)
 {
-    return static_cast<OHOS::CameraStandard::ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % COLOR_SPACE_COUNT);
+    return static_cast<ColorSpace>(fdp.ConsumeIntegral<uint8_t>() % COLOR_SPACE_COUNT);
 }
 
 void InitStreamIds()
@@ -125,6 +125,7 @@ void SetupRichOperator()
     g_fuzz->AddOutput(StreamType::DEPTH, g_depth);
     int32_t operatorId = 1;
     g_fuzz->SetStreamOperatorId(operatorId);
+    g_fuzz->SetIsSessionStarted(true);
     sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
     g_cameraDevice = new HCameraDevice(cameraHostManager, "0", callerToken);
     g_fuzz->SetCameraDevice(g_cameraDevice);
@@ -162,13 +163,14 @@ void StreamManagementFuzz(FuzzedDataProvider& fdp)
 void ColorSpaceFuzz(FuzzedDataProvider& fdp)
 {
     CHECK_RETURN_ELOG(g_fuzz == nullptr, "g_fuzz is null");
-    OHOS::CameraStandard::ColorSpace colorSpace = PickColorSpace(fdp);
-    OHOS::CameraStandard::ColorSpace getColorSpace;
+    ColorSpace colorSpace = PickColorSpace(fdp);
+    ColorSpace getColorSpace;
     g_fuzz->GetActiveColorSpace(getColorSpace);
     g_fuzz->SetColorSpace(colorSpace, fdp.ConsumeBool());
     g_fuzz->SetColorSpaceForStreams();
     g_fuzz->VerifyCaptureModeColorSpace(PickColorSpace(fdp));
     g_fuzz->CheckIfColorSpaceMatchesFormat(PickColorSpace(fdp));
+    g_fuzz->SetIsNeedLhdrGainmap(fdp.ConsumeBool());
     IsHdr(PickColorSpace(fdp));
 }
 
@@ -206,14 +208,8 @@ void StreamLifecycleFuzz(FuzzedDataProvider& fdp)
     }
 }
 
-void CallbackFuzz(FuzzedDataProvider& fdp)
+void CaptureStartEndCallbackFuzz(FuzzedDataProvider& fdp, int32_t repHdiId, int32_t capHdiId, int32_t vidHdiId)
 {
-    CHECK_RETURN_ELOG(g_fuzz == nullptr, "g_fuzz is null");
-    int32_t captureId = fdp.ConsumeIntegral<int32_t>();
-    uint64_t timestamp = fdp.ConsumeIntegral<uint64_t>();
-    int32_t repHdiId = g_repeatPreview->GetHdiStreamId();
-    int32_t capHdiId = g_capture->GetHdiStreamId();
-    int32_t vidHdiId = g_repeatVideo->GetHdiStreamId();
     std::vector<int32_t> streamIds = {repHdiId, capHdiId, fdp.ConsumeIntegral<int32_t>()};
     g_fuzz->OnCaptureStarted(captureId, streamIds);
     std::vector<OHOS::HDI::Camera::V1_2::CaptureStartedInfo> startedInfos;
@@ -222,6 +218,10 @@ void CallbackFuzz(FuzzedDataProvider& fdp)
     startedInfo.exposureTime_ = fdp.ConsumeIntegral<int32_t>();
     startedInfos.emplace_back(startedInfo);
     g_fuzz->OnCaptureStarted_V1_2(fdp.ConsumeIntegral<int32_t>(), startedInfos);
+}
+
+void CaptureEndedCallbackFuzz(FuzzedDataProvider& fdp, int32_t repHdiId, int32_t capHdiId, int32_t vidHdiId)
+{
     std::vector<CaptureEndedInfo> endedInfos;
     CaptureEndedInfo endedRep;
     endedRep.streamId_ = repHdiId;
@@ -240,6 +240,14 @@ void CallbackFuzz(FuzzedDataProvider& fdp)
     endedExt.videoId_ = fdp.ConsumeRandomLengthString();
     endedExtInfos.emplace_back(endedExt);
     g_fuzz->OnCaptureEndedExt(fdp.ConsumeIntegral<int32_t>(), endedExtInfos);
+    std::vector<OHOS::HDI::Camera::V1_4::CaptureEndedInfoExt_v1_4> endedExtV14Infos;
+    OHOS::HDI::Camera::V1_4::CaptureEndedInfoExt_v1_4 endedExtV14;
+    endedExtV14.captureEndedInfoExt.streamId_ = repHdiId;
+    endedExtV14.captureEndedInfoExt.frameCount_ = fdp.ConsumeIntegral<int32_t>();
+    endedExtV14.captureEndedInfoExt.isDeferredVideoEnhancementAvailable_ = fdp.ConsumeBool();
+    endedExtV14.captureEndedInfoExt.videoId_ = fdp.ConsumeRandomLengthString();
+    endedExtV14Infos.emplace_back(endedExtV14);
+    g_fuzz->OnCaptureEndedExt_V1_4(fdp.ConsumeIntegral<int32_t>(), endedExtV14Infos);
     std::vector<CaptureErrorInfo> errInfos;
     CaptureErrorInfo errRep;
     errRep.streamId_ = repHdiId;
@@ -250,14 +258,36 @@ void CallbackFuzz(FuzzedDataProvider& fdp)
     errCap.error_ = static_cast<OHOS::HDI::Camera::V1_0::StreamError>(fdp.ConsumeIntegral<int32_t>());
     errInfos.emplace_back(errCap);
     g_fuzz->OnCaptureError(fdp.ConsumeIntegral<int32_t>(), errInfos);
+}
+
+void CaptureShutterCallbackFuzz(FuzzedDataProvider& fdp, int32_t captureId, uint64_t timestamp, int32_t capHdiId)
+{
     g_fuzz->OnFrameShutter(captureId, {capHdiId}, timestamp);
     g_fuzz->OnFrameShutterEnd(fdp.ConsumeIntegral<int32_t>(), {capHdiId}, fdp.ConsumeIntegral<uint64_t>());
     g_fuzz->OnCaptureReady(fdp.ConsumeIntegral<int32_t>(), {capHdiId}, fdp.ConsumeIntegral<uint64_t>());
+}
+
+void ResultCallbackFuzz(FuzzedDataProvider& fdp, int32_t repHdiId, int32_t vidHdiId)
+{
     std::vector<uint8_t> resultData = ConsumeRandomVector<uint8_t>(fdp);
     g_fuzz->OnResult(HDI_STREAM_ID_META, resultData);
     g_fuzz->OnResult(-1, resultData);
     g_fuzz->OnCapturePaused(fdp.ConsumeIntegral<int32_t>(), {repHdiId, vidHdiId});
     g_fuzz->OnCaptureResumed(fdp.ConsumeIntegral<int32_t>(), {repHdiId});
+}
+
+void CallbackFuzz(FuzzedDataProvider& fdp)
+{
+    CHECK_RETURN_ELOG(g_fuzz == nullptr, "g_fuzz is null");
+    int32_t captureId = fdp.ConsumeIntegral<int32_t>();
+    uint64_t timestamp = fdp.ConsumeIntegral<uint64_t>();
+    int32_t repHdiId = g_repeatPreview->GetHdiStreamId();
+    int32_t capHdiId = g_capture->GetHdiStreamId();
+    int32_t vidHdiId = g_repeatVideo->GetHdiStreamId();
+    CaptureStartEndCallbackFuzz(fdp, repHdiId, capHdiId, vidHdiId);
+    CaptureEndedCallbackFuzz(fdp, repHdiId, capHdiId, vidHdiId);
+    CaptureShutterCallbackFuzz(fdp, captureId, timestamp, capHdiId);
+    ResultCallbackFuzz(fdp, repHdiId, vidHdiId);
 }
 
 void PreviewFrameRateFuzz(FuzzedDataProvider& fdp)
@@ -268,7 +298,12 @@ void PreviewFrameRateFuzz(FuzzedDataProvider& fdp)
         static_cast<camera_position_enum_t>(fdp.ConsumeIntegral<uint8_t>() % (OHOS_CAMERA_POSITION_OTHER + 1));
     g_fuzz->SetPreviewRotation(fdp.ConsumeRandomLengthString());
     g_fuzz->StartPreviewStream(settings, cameraPosition);
+    g_fuzz->StartPreviewStreamForControlCenter(settings, cameraPosition);
+    int32_t minFps = 0;
+    int32_t maxFps = 0;
+    g_fuzz->GetCurrentFrameRate(minFps, maxFps);
     g_fuzz->GetFrameRateRange();
+    g_fuzz->EnableMirror(fdp.ConsumeBool());
     g_fuzz->UpdateSettingForFocusTrackingMech(fdp.ConsumeBool());
     g_fuzz->Stop();
 }
@@ -278,9 +313,15 @@ void CompositionSketchFuzz(FuzzedDataProvider& fdp)
     CHECK_RETURN_ELOG(g_fuzz == nullptr, "g_fuzz is null");
     g_fuzz->ExpandSketchRepeatStream();
     g_fuzz->ExpandCompositionRepeatStream();
+    g_fuzz->ExpandSmartCaptureRepeatStream();
     g_fuzz->ClearSketchRepeatStream();
     g_fuzz->ClearCompositionRepeatStream();
     g_fuzz->GetCompositionStreams();
+    g_fuzz->GetSmartCapturePreviewStreams();
+    sptr<OHOS::IBufferProducer> producer = CreateProducer();
+    g_fuzz->ForkPreviewStreamRepeat(producer,
+        static_cast<RepeatStreamType>(fdp.ConsumeIntegral<uint8_t>() %
+            (static_cast<int32_t>(RepeatStreamType::COMPOSITION) + 1)));
     g_fuzz->FindPreviewStreamRepeat();
 }
 
@@ -306,6 +347,7 @@ void MovingPhotoFuzz(FuzzedDataProvider& fdp)
     g_fuzz->IsLivephotoStreamExist();
     g_fuzz->SetDeferredVideoEnhanceFlag(
         fdp.ConsumeIntegral<int32_t>(), fdp.ConsumeIntegral<uint32_t>(), fdp.ConsumeRandomLengthString());
+    g_fuzz->SetLivePhotoFireworkFlag(fdp.ConsumeBool());
     g_fuzz->ChangeListenerXtstyleType();
 }
 #endif
@@ -317,11 +359,21 @@ void UtilityInlineFuzz(FuzzedDataProvider& fdp)
     g_fuzz->SetXtStyleStatus(fdp.ConsumeBool());
     g_fuzz->GetXtStyleStatus();
     std::vector<int32_t> highRes = {fdp.ConsumeIntegral<int32_t>()};
+    g_fuzz->SetHighResSupported(highRes);
+    g_fuzz->GetHighResSupported();
+    g_fuzz->SetIsSessionStarted(fdp.ConsumeBool());
     g_fuzz->GetDeferredImageDeliveryEnabled();
     camera_metadata_item_t item;
     g_fuzz->GetDeviceAbilityByMeta(fdp.ConsumeIntegral<uint32_t>(), &item);
     g_fuzz->GetSupportRedoXtStyle();
+    g_fuzz->SetFireWorkStatus(fdp.ConsumeBool());
+    g_fuzz->SetCameraMovementModeStatus(fdp.ConsumeIntegral<int32_t>());
+    g_fuzz->GetCameraMovementModeStatus();
     g_fuzz->SetMechCallback(nullptr);
+    auto callback = sptr<IntelliStreamCallbackMock>::MakeSptr();
+    g_fuzz->SetIntelliStreamCallback(callback);
+    g_fuzz->SetIntelliStreamCallback(nullptr);
+    g_fuzz->NotifyPreviewStreamStart();
     int32_t rotation = 0;
     g_fuzz->UpdateOrientationBaseGravity(fdp.ConsumeIntegral<int32_t>(),
         ((fdp.ConsumeIntegral<int32_t>() % ROTATION_360) + ROTATION_360) % ROTATION_360,
@@ -376,6 +428,9 @@ void NullDepFuzz(FuzzedDataProvider& fdp)
     g_fuzzBare->GetDeferredImageDeliveryEnabled();
     g_fuzzBare->UpdateSettingForFocusTrackingMech(fdp.ConsumeBool());
     g_fuzzBare->StartPreviewStream(settings, OHOS_CAMERA_POSITION_BACK);
+    int32_t minFps = 0;
+    int32_t maxFps = 0;
+    g_fuzzBare->GetCurrentFrameRate(minFps, maxFps);
     g_fuzzBare->IsOfflineCapture();
     g_fuzzBare->IsCaptureStreamExist();
     g_fuzzBare->GetOfflineOutptSize();

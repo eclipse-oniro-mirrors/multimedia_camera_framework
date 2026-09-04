@@ -24,15 +24,26 @@
 #include "iconsumer_surface.h"
 #include "metadata_utils.h"
 #include "test_token.h"
+#include <fuzzer/FuzzedDataProvider.h>
 
-namespace OHOS {
-namespace CameraStandard {
-namespace StreamRepeatStubFuzzer {
+using namespace OHOS;
+using namespace OHOS::CameraStandard;
 const int32_t LIMITSIZE = 2;
 const int32_t PHOTO_WIDTH = 1280;
 const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 const RepeatStreamType REPEAT_STREAM_TYPE = RepeatStreamType::PREVIEW;
+sptr<IBufferProducer> g_producer;
+
+HStreamRepeat& GetHStreamRepeat()
+{
+    static HStreamRepeat hstreamRepeat(g_producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
+    return hstreamRepeat;
+}
+
+namespace OHOS {
+namespace CameraStandard {
+namespace StreamRepeatStubFuzzer {
 
 sptr<StreamRepeatStub> fuzz_{nullptr};
 
@@ -43,16 +54,11 @@ void TestHandleAddDeferredSurface(uint8_t *rawData, size_t size)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_RETURN(photoSurface == nullptr);
-    sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamRepeat> hstreamRepeat =
-        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
-    CHECK_RETURN(hstreamRepeat == nullptr);
-    data.WriteRemoteObject(producer->AsObject());
+
+    data.WriteRemoteObject(g_producer->AsObject());
     data.WriteRawData(rawData, size);
     uint32_t code = static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_ADD_DEFERRED_SURFACE);
-    hstreamRepeat->OnRemoteRequest(code, data, reply, option);
+    GetHStreamRepeat().OnRemoteRequest(code, data, reply, option);
 }
 
 void TestHandleAttachMetaSurface(uint8_t *rawData, size_t size)
@@ -62,16 +68,11 @@ void TestHandleAttachMetaSurface(uint8_t *rawData, size_t size)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_RETURN(photoSurface == nullptr);
-    sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamRepeat> hstreamRepeat =
-        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
-    CHECK_RETURN(hstreamRepeat == nullptr);
-    data.WriteRemoteObject(producer->AsObject());
+
+    data.WriteRemoteObject(g_producer->AsObject());
     data.WriteRawData(rawData, size);
     uint32_t code = static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_ATTACH_META_SURFACE);
-    hstreamRepeat->OnRemoteRequest(code, data, reply, option);
+    GetHStreamRepeat().OnRemoteRequest(code, data, reply, option);
 }
 
 void TestHandleSetCallback(uint8_t *rawData, size_t size)
@@ -81,12 +82,7 @@ void TestHandleSetCallback(uint8_t *rawData, size_t size)
     data.RewindRead(0);
     MessageParcel reply;
     MessageOption option;
-    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    CHECK_RETURN(photoSurface == nullptr);
-    sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamRepeat> hstreamRepeat =
-        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
-    CHECK_RETURN(hstreamRepeat == nullptr);
+
     sptr<IRemoteObject> object = nullptr;
     auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_RETURN(!samgr);
@@ -96,8 +92,7 @@ void TestHandleSetCallback(uint8_t *rawData, size_t size)
     data.WriteRemoteObject(repeatCallback->AsObject());
     data.WriteRawData(rawData, size);
     uint32_t code = static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_SET_CALLBACK);
-    CHECK_RETURN(!hstreamRepeat);
-    hstreamRepeat->OnRemoteRequest(code, data, reply, option);
+    GetHStreamRepeat().OnRemoteRequest(code, data, reply, option);
 }
 
 void Test(uint8_t *rawData, size_t size)
@@ -110,21 +105,16 @@ void Test(uint8_t *rawData, size_t size)
     TestHandleSetCallback(rawData, size);
     TestHandleAddDeferredSurface(rawData, size);
     TestHandleAttachMetaSurface(rawData, size);
+    Test_UncoveredCommands(rawData, size);
+    Test_ErrorBranches(rawData, size);
 }
 
 void RunCase(MessageParcel &data, uint32_t code)
 {
     MessageParcel reply;
     MessageOption option;
-    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
-    if (photoSurface == nullptr) {
-        return;
-    }
-    sptr<IBufferProducer> producer = photoSurface->GetProducer();
-    sptr<HStreamRepeat> hstreamRepeat =
-        new (std::nothrow) HStreamRepeat(producer, PHOTO_FORMAT, PHOTO_WIDTH, PHOTO_HEIGHT, REPEAT_STREAM_TYPE);
-    CHECK_RETURN(hstreamRepeat == nullptr);
-    hstreamRepeat->OnRemoteRequest(code, data, reply, option);
+
+    GetHStreamRepeat().OnRemoteRequest(code, data, reply, option);
 }
 
 void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
@@ -139,14 +129,101 @@ void Test_OnRemoteRequest(uint8_t *rawData, size_t size)
     }
 }
 
+void Test_UncoveredCommands(uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
+    
+    FuzzedDataProvider fdp(rawData, size);
+    
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    data.WriteInt32(fdp.ConsumeBool() ? 1 : 0);
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_ENABLE_STITCHING));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_SET_OUTPUT_SETTINGS));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_GET_SUPPORTED_VIDEO_CODEC_TYPES));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    data.WriteInt32(fdp.ConsumeBool() ? 1 : 0);
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_SET_BANDWIDTH_COMPRESSION));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_REMOVE_DEFERRED_SURFACE));
+}
+
+void Test_ErrorBranches(uint8_t *rawData, size_t size)
+{
+    if (rawData == nullptr || size < LIMITSIZE) {
+        return;
+    }
+    
+    FuzzedDataProvider fdp(rawData, size);
+    
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    data.WriteInt32(1);
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_ENABLE_STITCHING));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_SET_OUTPUT_SETTINGS));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_GET_SUPPORTED_VIDEO_CODEC_TYPES));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    data.WriteInt32(0);
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_SET_BANDWIDTH_COMPRESSION));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    RunCase(data, static_cast<uint32_t>(IStreamRepeatIpcCode::COMMAND_REMOVE_DEFERRED_SURFACE));
+    
+    data.RewindWrite(0);
+    data.WriteInterfaceToken(u"IStreamRepeat");
+    uint32_t invalidCode = 9999;
+    RunCase(data, invalidCode);
+}
+
 } // namespace StreamRepeatStubFuzzer
 } // namespace CameraStandard
 } // namespace OHOS
+
+void Init()
+{
+    CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "GetAllCameraPermission fail");
+    sptr<IConsumerSurface> photoSurface = IConsumerSurface::Create();
+    CHECK_RETURN_ELOG(!photoSurface, "Create photoSurface Error");
+    g_producer = photoSurface->GetProducer();
+}
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size)
 {
     /* Run your code on data */
     OHOS::CameraStandard::StreamRepeatStubFuzzer::Test(data, size);
+    return 0;
+}
+
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
+{
+    Init();
     return 0;
 }

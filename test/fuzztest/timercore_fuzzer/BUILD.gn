@@ -42,6 +42,7 @@ ohos_fuzztest("TimerCoreFuzzTest") {
   deps = [
     "${multimedia_camera_framework_path}/common:camera_utils",
     "${multimedia_camera_framework_path}/frameworks/native/camera/base:camera_framework",
+    "${multimedia_camera_framework_path}/test/test_common:test_common",
   ]
   external_deps = [
     "ability_base:want",
