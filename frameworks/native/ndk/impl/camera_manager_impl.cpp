@@ -789,7 +789,15 @@ Camera_ErrorCode Camera_Manager::CreateMetadataOutput(const Camera_MetadataObjec
     vector<MetadataObjectType> metadataObjectTypes = {};
     for (uint32_t i = 0; i < size; ++i) {
         Camera_MetadataObjectType currentType = type[i];
-        metadataObjectTypes.push_back(static_cast<MetadataObjectType>(currentType));
+        if (currentType == Camera_MetadataObjectType::FACE_DETECTION || 
+            currentType == Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_FACE_DETECTION) {
+            MEDIA_DEBUG_LOG("FACE_DETECTION");
+            metadataObjectTypes.push_back(MetadataObjectType::FACE);
+        }
+        if (currentType == Camera_MetadataObjectType::CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY) {
+            MEDIA_DEBUG_LOG("CAMERA_METADATA_OBJECT_TYPE_HUMAN_BODY");
+            metadataObjectTypes.push_back(MetadataObjectType::HUMAN_BODY);
+        }
     }
     int32_t retCode = CameraManager::GetInstance()->CreateMetadataOutput(innerMetadataOutput, metadataObjectTypes);
     CHECK_RETURN_RET(retCode != CameraErrorCode::SUCCESS, CAMERA_SERVICE_FATAL_ERROR);
@@ -1323,23 +1331,6 @@ Camera_ErrorCode Camera_Manager::IsTorchSupported(bool* isTorchSupported)
     *isTorchSupported = CameraManager::GetInstance()->IsTorchSupported();
     MEDIA_DEBUG_LOG("IsTorchSupported[%{public}d]", *isTorchSupported);
     return CAMERA_OK;
-}
-
-Camera_ErrorCode Camera_Manager::IsTorchLevelControlSupported(bool* isTorchSupported) const {
-    MEDIA_DEBUG_LOG("Camera_Manager::IsTorchLevelControlSupported is called");
- 
-    *isTorchSupported = CameraManager::GetInstance()->IsTorchLevelControlSupported();
-    MEDIA_DEBUG_LOG("IsTorchLevelControlSupported[%{public}d]", *isTorchSupported);
-    return CAMERA_OK;
-}
- 
-Camera_ErrorCode Camera_Manager::SetTorchModeOnWithLevel(float level) const {
-    TorchMode mode;
-    if (level == 0.0) mode = TorchMode::TORCH_MODE_OFF;
-    else if (level > 0.0 && level <= 1.0) mode = TorchMode::TORCH_MODE_ON;
-    else return CAMERA_INVALID_ARGUMENT;
-    int32_t ret = CameraManager::GetInstance()->SetTorchModeOnWithLevel(mode, level);
-    return FrameworkToNdkCameraError(ret);
 }
 
 Camera_ErrorCode Camera_Manager::IsTorchSupportedByTorchMode(Camera_TorchMode torchMode, bool* isTorchSupported)

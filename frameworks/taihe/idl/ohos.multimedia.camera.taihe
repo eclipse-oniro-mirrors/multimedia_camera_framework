@@ -1805,8 +1805,6 @@ interface CameraManager {
   @overload("createMetadataOutput")
   CreateMetadataOutput(metadataObjectTypes: Array<MetadataObjectType>): MetadataOutput;
   IsTorchModeSupported(mode: TorchMode): bool;
-  IsTorchLevelControlSupported(): bool;
-  SetTorchModeOnWithLevel(torchLevel: f64): i32;
   GetCameraDevice(position: CameraPosition, type: CameraType): CameraDevice;
   GetCameraDevices(position: CameraPosition, types: Array<CameraType>, connectionType: ConnectionType): Array<CameraDevice>;
   CreateMovieFileOutput(profile: Optional<VideoProfile>): MovieFileOutput;
@@ -2711,9 +2709,6 @@ interface MetadataOutput : CameraOutput {
 
   RemoveMetadataObjectTypes(types: Array<MetadataObjectType>): void;
   AddMetadataObjectTypes(types: Array<MetadataObjectType>): void;
-  IsLockMetadataObjectTrackingSupported(): bool;
-  LockMetadataObjectTracking(pointOfInterest: Point): void;
-  UnlockMetadataObjectTracking(): void;
 }
 
 struct MovieInfo {
