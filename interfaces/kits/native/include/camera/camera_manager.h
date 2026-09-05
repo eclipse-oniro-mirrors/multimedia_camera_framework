@@ -503,6 +503,32 @@ Camera_ErrorCode OH_CameraManager_SetTorchMode(Camera_Manager* cameraManager,
     Camera_TorchMode torchMode);
 
 /**
+ * @brief Check whether the device supports the torch level control.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param isTorchLevelControlSupported whether device supports the torch level control.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_CameraManager_IsTorchLevelControlSupported(const Camera_Manager* cameraManager,
+    bool* isTorchLevelControlSupported);
+
+/**
+ * @brief Set camera torch mode to {@link Camera_TorchMode.CAMERA_TORCH_MODE_ON} with target level.
+ *
+ * @param cameraManager the {@link Camera_Manager} instance.
+ * @param torchLevel the target torch level. The valid values range from 0.0 to 1.0.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #CAMERA_INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 26.0.0
+ */
+Camera_ErrorCode OH_CameraManager_SetTorchModeOnWithLevel(const Camera_Manager* cameraManager,
+    double torchLevel);
+
+/**
  * @brief Queries a specified device based on position and type.
  *
  * @param cameraManager the {@link Camera_Manager} instance.

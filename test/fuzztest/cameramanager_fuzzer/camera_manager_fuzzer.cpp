@@ -317,7 +317,9 @@ void CameraManagerFuzzer::CameraManagerFuzzTest4(FuzzedDataProvider& fdp)
     int32_t torchIdx = fdp.ConsumeIntegralInRange<int32_t>(0, 2);
     TorchMode torchMode = static_cast<TorchMode>(torchIdx);
     float level = fdp.ConsumeFloatingPointInRange<float>(0.0f, 1.0f);
+    manager->SetTorchModeOnWithLevel(torchMode, level);
     manager->IsTorchModeSupported(torchMode);
+    manager->IsTorchLevelControlSupported();
     SpectrumCallerInfo info;
     info.cameraId = fdp.ConsumeRandomLengthString(30);
     info.userId = fdp.ConsumeIntegral<int32_t>();
