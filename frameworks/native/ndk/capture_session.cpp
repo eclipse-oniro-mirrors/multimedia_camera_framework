@@ -754,9 +754,8 @@ Camera_ErrorCode OH_CaptureSession_GetWhiteBalanceRange(Camera_CaptureSession* s
 Camera_ErrorCode OH_CaptureSession_GetWhiteBalance(Camera_CaptureSession* session, int32_t *colorTemperature)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetWhiteBalance is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
-    CHECK_RETURN_RET_ELOG(colorTemperature == nullptr, CAMERA_INVALID_ARGUMENT,
-        "Invalid argument, colorTemperature is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr || colorTemperature == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session or colorTemperature is null!");
     return session->GetWhiteBalance(colorTemperature);
 }
 
