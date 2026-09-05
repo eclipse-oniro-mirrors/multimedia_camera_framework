@@ -2105,6 +2105,29 @@ void CameraManager::GetMetadataInfos(camera_metadata_item_t item,
     // LCOV_EXCL_STOP
 }
 
+void CameraManager::GetNotSystemAppMetaTypes(std::vector<MetadataObjectType>& objectTypes)
+{
+    MEDIA_DEBUG_LOG("public calling for GetSupportedOutputCapability");
+    std::vector<MetadataObjectType> NoSysObjectTypes;
+    int32_t MaxType = 14;
+    for (auto object : objectTypes) {
+        CHECK_EXECUTE(object != static_cast<MetadataObjectType>(MaxType),
+                      NoSysObjectTypes.push_back(object));
+    }
+    objectTypes = NoSysObjectTypes;
+}
+
+bool CameraManager::isPublicMetaTypes(const std::vector<MetadataObjectType>& objectTypes)
+{
+    MEDIA_DEBUG_LOG("public calling for metadataOutput");
+    int32_t MaxType = 14;
+    for (auto object : objectTypes) {
+        CHECK_RETURN_RET(object < MetadataObjectType::FACE ||
+                         object >= static_cast<MetadataObjectType>(MaxType), false);
+    }
+    return true;
+}
+
 void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability> &cameraOutputCapability,
     ProfilesWrapper &profilesWrapper, int32_t modeName,
     shared_ptr<OHOS::Camera::CameraMetadata> &cameraAbility)
@@ -2140,18 +2163,8 @@ void CameraManager::SetCameraOutputCapabilityofthis(sptr<CameraOutputCapability>
             }
         }
     }
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for GetSupportedOutputCapability");
-        std::vector<MetadataObjectType> tempObjectTypes;
-        for (auto object : objectTypes) {
-            if (object == MetadataObjectType::FACE || object == MetadataObjectType::HUMAN_BODY) {
-                tempObjectTypes.push_back(object);
-            }
-         }
-        cameraOutputCapability->SetSupportedMetadataObjectType(tempObjectTypes);
-    } else {
-        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
-    }
+    CHECK_EXECUTE(!CameraSecurity::CheckSystemApp(), GetNotSystemAppMetaTypes(objectTypes));
+    cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
     MEDIA_INFO_LOG("SetMetadataTypes size = %{public}zu",
                    cameraOutputCapability->GetSupportedMetadataObjectType().size());
     // LCOV_EXCL_STOP
@@ -3076,18 +3089,8 @@ sptr<CameraOutputCapability> CameraManager::GetSupportedOutputCapability(sptr<Ca
 
     std::vector<MetadataObjectType> objectTypes = camera->GetObjectTypes();
 
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for GetsupportedOutputCapability");
-        std::vector<MetadataObjectType> tempObjectTypes;
-        for (auto object : objectTypes) {
-            if (object == MetadataObjectType::FACE || object == MetadataObjectType::HUMAN_BODY) {
-                tempObjectTypes.push_back(object);
-            }
-         }
-        cameraOutputCapability->SetSupportedMetadataObjectType(tempObjectTypes);
-    } else {
-        cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
-    }
+    CHECK_EXECUTE(!CameraSecurity::CheckSystemApp(), GetNotSystemAppMetaTypes(objectTypes));
+    cameraOutputCapability->SetSupportedMetadataObjectType(objectTypes);
     return cameraOutputCapability;
 }
 
@@ -3752,6 +3755,22 @@ bool CameraManager::IsTorchSupported()
     return isCameraTorchSupported;
 }
 
+bool CameraManager::IsTorchLevelControlSupported()
+{
+    MEDIA_INFO_LOG("CameraManager::IsTorchLevelControlSupported");
+    bool isCameraTorchLevelControlSupported = false;
+    bool cacheResult = GetCameraDeviceAbilitySupportValue(
+        CAMERA_ABILITY_CONTROL_SUPPORT_TORCH, isCameraTorchLevelControlSupported);
+    CHECK_RETURN_RET(cacheResult, isCameraTorchLevelControlSupported);
+    auto serviceProxy = GetServiceProxy();
+    CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, false, "IsTorchLevelControlSupported serviceProxy is null");
+    int32_t retCode = serviceProxy->IsTorchLevelControlSupported(isCameraTorchLevelControlSupported);
+    CHECK_RETURN_RET_ELOG(retCode != CAMERA_OK, false,
+        "IsTorchLevelControlSupported call failed, retCode: %{public}d", retCode);
+    CacheCameraDeviceAbilitySupportValue(CAMERA_ABILITY_CONTROL_SUPPORT_TORCH, isCameraTorchLevelControlSupported);
+    return isCameraTorchLevelControlSupported;
+}
+
 bool CameraManager::IsTorchModeSupported(TorchMode mode)
 {
     return mode == TorchMode::TORCH_MODE_OFF || mode == TorchMode::TORCH_MODE_ON;
@@ -3808,6 +3827,29 @@ int32_t CameraManager::SetTorchLevel(float level)
     int32_t retCode = serviceProxy->SetTorchLevel(level);
     CHECK_PRINT_ELOG(retCode != CAMERA_OK, "SetTorchLevel call failed, retCode: %{public}d", retCode);
     return retCode;
+}
+
+int32_t CameraManager::SetTorchModeOnWithLevel(TorchMode mode, float level)
+{
+    MEDIA_INFO_LOG("CameraManager::SetTorchModeOnWithLevel is %{public}f", level);
+    int32_t retCode = CAMERA_OPERATION_NOT_ALLOWED;
+    int32_t pid = IPCSkeleton::GetCallingPid();
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    POWERMGR_SYSEVENT_TORCH_STATE(pid, uid, mode);
+    switch (mode) {
+        case TorchMode::TORCH_MODE_OFF:
+            retCode = SetTorchLevel(0);
+            break;
+        case TorchMode::TORCH_MODE_ON:
+            retCode = SetTorchLevel(level);
+            break;
+        default:
+            MEDIA_ERR_LOG("Invalid or unsupported torchMode value received from application");
+    }
+    if (retCode == CAMERA_OK) {
+        UpdateTorchMode(mode);
+    }
+    return ServiceToCameraErrorV2(retCode);
 }
 
 int32_t CameraManager::SetPrelaunchConfig(
@@ -3932,19 +3974,10 @@ int32_t CameraManager::CreateMetadataOutputInternal(sptr<MetadataOutput>& pMetad
     const std::vector<MetadataObjectType>& metadataObjectTypes)
 {
     CAMERA_SYNC_TRACE;
-    const size_t maxSize4NonSystemApp = 2;
-    if (!CameraSecurity::CheckSystemApp()) {
-        MEDIA_DEBUG_LOG("public calling for metadataOutput");
-        // LCOV_EXCL_START
-        if (metadataObjectTypes.size() > maxSize4NonSystemApp ||
-            std::any_of(metadataObjectTypes.begin(), metadataObjectTypes.end(),
-                [](MetadataObjectType type) { return type != MetadataObjectType::FACE &&
-                                                     type != MetadataObjectType::HUMAN_BODY; })) {
-            MEDIA_INFO_LOG("MetadataObjectType not face or human_body,invalid");
-            return CameraErrorCode::INVALID_ARGUMENT;
-        }
-        // LCOV_EXCL_STOP
-    }
+    CHECK_EXECUTE(!CameraSecurity::CheckSystemApp(),
+                  CHECK_RETURN_RET_ELOG(!isPublicMetaTypes(metadataObjectTypes),
+                                        CameraErrorCode::INVALID_ARGUMENT,
+                                        "Inpunt is Not Public MetaTypes"));
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(serviceProxy == nullptr, CameraErrorCode::SERVICE_FATL_ERROR,
         "CameraManager::CreateMetadataOutput serviceProxy is null");
