@@ -124,7 +124,7 @@ ExposureMeteringMode ProfessionalSessionImpl::GetExposureMeteringMode()
         "GetExposureMeteringMode timeLapsePhotoSession_ is null");
     OHOS::CameraStandard::MeteringMode mode;
     int32_t ret = professionSession_->GetMeteringMode(mode);
-    CHECK_RETURN_RET_ELOG(ret != OHOS::CameraStandard::CameraErrorCode::SUCCESS, errType,
+    CHECK_RETURN_RET_ELOG(CameraUtilsTaihe::CheckError(ret), errType,
         "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
     return ExposureMeteringMode(static_cast<ExposureMeteringMode::key_t>(mode));
 }

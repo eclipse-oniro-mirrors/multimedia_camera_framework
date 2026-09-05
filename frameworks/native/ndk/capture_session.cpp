@@ -755,6 +755,8 @@ Camera_ErrorCode OH_CaptureSession_GetWhiteBalance(Camera_CaptureSession* sessio
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetWhiteBalance is called");
     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(colorTemperature == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, colorTemperature is null!");
     return session->GetWhiteBalance(colorTemperature);
 }
 
@@ -868,7 +870,8 @@ Camera_ErrorCode OH_CaptureSession_SetFocusDistance(const Camera_CaptureSession*
 Camera_ErrorCode OH_CaptureSession_GetFocusDistance(const Camera_CaptureSession* session, float* focusDistance)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetFocusDistance is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr ||focusDistance == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session or focusDistance is null!");
     return session->GetFocusDistance(focusDistance);
 }
 
@@ -882,7 +885,8 @@ Camera_ErrorCode OH_CaptureSession_SetIso(const Camera_CaptureSession* session, 
 Camera_ErrorCode OH_CaptureSession_GetIso(const Camera_CaptureSession* session, int32_t* isoValue)
 {
     MEDIA_DEBUG_LOG("OH_CaptureSession_GetIso is called");
-    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(session == nullptr || isoValue == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, session or isoValue is null!");
     return session->GetIso(isoValue);
 }
 
