@@ -113,6 +113,8 @@ void ProfessionalSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMet
     professionSession_->SetMeteringMode(
         static_cast<OHOS::CameraStandard::MeteringMode>(aeMeteringMode.get_value()));
     professionSession_->UnlockForControl();
+    CHECK_RETURN_RET_ELOG(CameraUtilsTaihe::CheckError(ret), errType,
+        "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
 }
 
 ExposureMeteringMode ProfessionalSessionImpl::GetExposureMeteringMode()

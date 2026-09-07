@@ -321,6 +321,8 @@ void VideoSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMeteringMo
     videoSession_->SetExposureMeteringMode(
         static_cast<OHOS::CameraStandard::MeteringMode>(aeMeteringMode.get_value()));
     videoSession_->UnlockForControl();
+    CHECK_RETURN_RET_ELOG(CameraUtilsTaihe::CheckError(ret), errType,
+        "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
 }
  
 ExposureMeteringMode VideoSessionImpl::GetExposureMeteringMode()

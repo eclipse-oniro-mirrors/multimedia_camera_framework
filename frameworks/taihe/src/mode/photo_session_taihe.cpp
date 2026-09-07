@@ -163,6 +163,8 @@ void PhotoSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMeteringMo
     photoSession_->SetExposureMeteringMode(
         static_cast<OHOS::CameraStandard::MeteringMode>(aeMeteringMode.get_value()));
     photoSession_->UnlockForControl();
+    CHECK_RETURN_RET_ELOG(CameraUtilsTaihe::CheckError(ret), errType,
+        "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
 }
 
 ExposureMeteringMode PhotoSessionImpl::GetExposureMeteringMode()
