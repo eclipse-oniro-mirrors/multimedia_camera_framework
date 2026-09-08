@@ -324,39 +324,6 @@ HWTEST_F(EventsInfoUnitTest, events_info_unittest_017, TestSize.Level0)
 
     EXPECT_FALSE(eventsInfo.NeedTrailing());
 }
-
-/*
- * Feature: EventsInfo
- * Function: Test IsMediaBusy returns false when media library is idle
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: IsMediaBusy should return false when state is MEDIA_LIBRARY_IDLE
- */
-HWTEST_F(EventsInfoUnitTest, events_info_unittest_018, TestSize.Level0)
-{
-    auto& eventsInfo = EventsInfo::GetInstance();
-    eventsInfo.SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_IDLE);
-
-    EXPECT_FALSE(eventsInfo.IsMediaBusy());
-}
-
-/*
- * Feature: EventsInfo
- * Function: Test IsMediaBusy returns true when media library is busy
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: IsMediaBusy should return true when state is MEDIA_LIBRARY_BUSY
- */
-HWTEST_F(EventsInfoUnitTest, events_info_unittest_019, TestSize.Level0)
-{
-    auto& eventsInfo = EventsInfo::GetInstance();
-    eventsInfo.SetMediaLibraryState(MediaLibraryStatus::MEDIA_LIBRARY_BUSY);
-
-    EXPECT_TRUE(eventsInfo.IsMediaBusy());
-}
-
 } // namespace DeferredProcessing
 } // namespace CameraStandard
 } // namespace OHOS

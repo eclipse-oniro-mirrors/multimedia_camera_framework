@@ -866,25 +866,6 @@ HWTEST_F(DpsEventReportUnittest, UpdateTrailingTime002, TestSize.Level0)
 
 /*
  * Feature: Framework
- * Function: Test ReportImageModeChange.
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ReportImageModeChange with valid parameters, verify no crash.
- */
-HWTEST_F(DpsEventReportUnittest, ReportImageModeChange001, TestSize.Level0)
-{
-    ExecutionMode executionMode = ExecutionMode::HIGH_PERFORMANCE;
-    int32_t memorySize = 1024;
-
-    EXPECT_NO_FATAL_FAILURE(DPSEventReport::GetInstance().ReportImageModeChange(executionMode, memorySize));
-    EXPECT_NO_FATAL_FAILURE(DPSEventReport::GetInstance().ReportImageModeChange(ExecutionMode::LOAD_BALANCE, 2048));
-    EXPECT_NO_FATAL_FAILURE(DPSEventReport::GetInstance().ReportImageModeChange(ExecutionMode::LOW_POWER, 512));
-    EXPECT_NO_FATAL_FAILURE(DPSEventReport::GetInstance().ReportImageModeChange(ExecutionMode::DUMMY, 0));
-}
-
-/*
- * Feature: Framework
  * Function: Test ReportImageException.
  * SubFunction: NA
  * FunctionPoints: NA

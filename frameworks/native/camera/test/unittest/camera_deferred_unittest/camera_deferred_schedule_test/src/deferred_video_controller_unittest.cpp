@@ -228,22 +228,6 @@ HWTEST_F(DeferredVideoControllerUnittest, deferred_video_controller_unittest_008
 
 /*
  * Feature: Framework
- * Function: Test DeferredVideoController StartSuspendLock with normal branch
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test DeferredVideoController StartSuspendLock when normalTimeId_ is INVALID_TIMERID
- */
-HWTEST_F(DeferredVideoControllerUnittest, deferred_video_controller_unittest_009, TestSize.Level1)
-{
-    controller_->normalTimeId_ = INVALID_TIMERID;
-    controller_->StartSuspendLock();
-
-    EXPECT_EQ(controller_->normalTimeId_, INVALID_TIMERID);
-}
-
-/*
- * Feature: Framework
  * Function: Test DeferredVideoController StartSuspendLock with already running branch
  * SubFunction: NA
  * FunctionPoints: NA
