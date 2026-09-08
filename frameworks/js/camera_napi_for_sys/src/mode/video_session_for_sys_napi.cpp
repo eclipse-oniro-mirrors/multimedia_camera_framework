@@ -452,7 +452,7 @@ void VideoSessionForSysNapi::RegisterApertureInfoCallbackListener(const std::str
     napi_value callback, const std::vector<napi_value>& args, bool isOnce, bool isAsync)
 {
     if (apertureInfoCallback_ == nullptr) {
-        apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
+        apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env, isAsync);
         videoSessionForSys_->SetApertureInfoCallback(apertureInfoCallback_);
     }
     apertureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);

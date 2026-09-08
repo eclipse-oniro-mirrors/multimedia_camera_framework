@@ -547,8 +547,13 @@ void ApertureInfoCallbackListener::OnApertureInfoChangedCallback(OHOS::CameraSta
     auto sharePtr = shared_from_this();
     auto task = [info, sharePtr]() {
         ApertureInfo apertureInfo{  .aperture = optional<double>::make(static_cast<double>(info.apertureValue)) };
-        CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback<ApertureInfo const&>(
-            "apertureInfoChange", 0, "Callback is OK", apertureInfo));
+        CHECK_RETURN(sharePtr == nullptr);
+        if (sharePtr->isAsync_) {
+            sharePtr->ExecuteAsyncCallback<ApertureInfo const&>(
+                "apertureInfoChange", 0, "Callback is OK", apertureInfo);
+        } else {
+            sharePtr->ExecuteCallback<ApertureInfo const&>("apertureInfoChange", apertureInfo);
+        }
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnApertureInfoChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
