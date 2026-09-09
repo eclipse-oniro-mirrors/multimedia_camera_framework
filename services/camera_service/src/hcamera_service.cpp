@@ -87,6 +87,7 @@
 #include "suspend_manager_base_client.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
+#include "xcollie/ipc_full.h"
 #endif
 
 namespace OHOS {
@@ -243,6 +244,9 @@ void HCameraService::OnStart()
         CHECK_PRINT_ILOG(!initFunc, "CameraDisplay_Init function not found or failed to load");
         initFunc();
     }
+    uint64_t interval = 20; // 20s
+    int32_t ret = HiviewDFX::IpcFull::GetInstance().AddIpcFull(interval);
+    MEDIA_INFO_LOG("addIpcFull result: %{public}d.", ret);
     MEDIA_INFO_LOG("HCameraService OnStart end");
 }
 
