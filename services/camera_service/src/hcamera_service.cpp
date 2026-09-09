@@ -87,8 +87,8 @@
 #include "suspend_manager_base_client.h"
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
-#include "xcollie/ipc_full.h"
 #endif
+#include "xcollie/ipc_full.h"
 
 namespace OHOS {
 namespace CameraStandard {
