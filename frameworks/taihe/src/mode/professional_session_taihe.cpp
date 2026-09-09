@@ -110,9 +110,11 @@ void ProfessionalSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMet
         "SystemApi SetExposureMeteringMode is called!");
     CHECK_RETURN_ELOG(professionSession_ == nullptr, "professionSession_ is nullptr");
     professionSession_->LockForControl();
-    professionSession_->SetMeteringMode(
+    int32_t ret = professionSession_->SetMeteringMode(
         static_cast<OHOS::CameraStandard::MeteringMode>(aeMeteringMode.get_value()));
     professionSession_->UnlockForControl();
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(ret),
+        "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
 }
 
 ExposureMeteringMode ProfessionalSessionImpl::GetExposureMeteringMode()
@@ -124,7 +126,7 @@ ExposureMeteringMode ProfessionalSessionImpl::GetExposureMeteringMode()
         "GetExposureMeteringMode timeLapsePhotoSession_ is null");
     OHOS::CameraStandard::MeteringMode mode;
     int32_t ret = professionSession_->GetMeteringMode(mode);
-    CHECK_RETURN_RET_ELOG(ret != OHOS::CameraStandard::CameraErrorCode::SUCCESS, errType,
+    CHECK_RETURN_RET_ELOG(!CameraUtilsTaihe::CheckError(ret), errType,
         "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
     return ExposureMeteringMode(static_cast<ExposureMeteringMode::key_t>(mode));
 }

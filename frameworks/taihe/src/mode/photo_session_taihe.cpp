@@ -160,9 +160,11 @@ void PhotoSessionImpl::SetExposureMeteringMode(ExposureMeteringMode aeMeteringMo
 {
     CHECK_RETURN_ELOG(photoSession_ == nullptr, "photoSession_ is nullptr");
     photoSession_->LockForControl();
-    photoSession_->SetExposureMeteringMode(
+    int32_t ret = photoSession_->SetExposureMeteringMode(
         static_cast<OHOS::CameraStandard::MeteringMode>(aeMeteringMode.get_value()));
     photoSession_->UnlockForControl();
+    CHECK_RETURN_ELOG(!CameraUtilsTaihe::CheckError(ret),
+        "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
 }
 
 ExposureMeteringMode PhotoSessionImpl::GetExposureMeteringMode()
@@ -172,7 +174,7 @@ ExposureMeteringMode PhotoSessionImpl::GetExposureMeteringMode()
         "GetExposureMeteringMode photoSession_ is null");
     OHOS::CameraStandard::MeteringMode mode;
     int32_t ret = photoSession_->GetMeteringMode(mode);
-    CHECK_RETURN_RET_ELOG(ret != OHOS::CameraStandard::CameraErrorCode::SUCCESS, errType,
+    CHECK_RETURN_RET_ELOG(!CameraUtilsTaihe::CheckError(ret), errType,
         "%{public}s: GetExposureMeteringMode() Failed", __FUNCTION__);
     return ExposureMeteringMode(static_cast<ExposureMeteringMode::key_t>(mode));
 }
