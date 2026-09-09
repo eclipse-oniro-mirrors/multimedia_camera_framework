@@ -503,7 +503,7 @@ void VideoSessionImpl::RegisterApertureInfoCallbackListener(const std::string& e
     CHECK_RETURN_ELOG(videoSession_ == nullptr, "videoSession_ is null!");
     if (apertureInfoCallback_ == nullptr) {
         ani_env *env = get_env();
-        apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env);
+        apertureInfoCallback_ = std::make_shared<ApertureInfoCallbackListener>(env, false);
         videoSession_->SetApertureInfoCallback(apertureInfoCallback_);
     }
     apertureInfoCallback_->SaveCallbackReference(eventName, callback, isOnce);

@@ -161,13 +161,15 @@ private:
 class ApertureInfoCallbackListener : public OHOS::CameraStandard::ApertureInfoCallback, public ListenerBase,
 	     public std::enable_shared_from_this<ApertureInfoCallbackListener> {
 public:
-    ApertureInfoCallbackListener(ani_env* env) : ListenerBase(env) {}
+    ApertureInfoCallbackListener(ani_env* env, bool isAsync = true) : ListenerBase(env), isAsync_(isAsync) {}
     ~ApertureInfoCallbackListener() = default;
     void OnApertureInfoChanged(OHOS::CameraStandard::ApertureInfo info) override;
 
 private:
     void OnApertureInfoChangedCallback(OHOS::CameraStandard::ApertureInfo info) const;
     void OnApertureInfoChangedCallbackAsync(OHOS::CameraStandard::ApertureInfo info) const;
+
+    bool isAsync_;
 };
 
 class FlashStateCallbackListener : public OHOS::CameraStandard::FlashStateCallback, public ListenerBase,

@@ -511,13 +511,16 @@ private:
 class ApertureInfoCallbackListener : public ApertureInfoCallback, public ListenerBase,
     public std::enable_shared_from_this<ApertureInfoCallbackListener> {
 public:
-    ApertureInfoCallbackListener(napi_env env) : ListenerBase(env) {}
+    ApertureInfoCallbackListener(napi_env env, bool isAsync = true) : ListenerBase(env), isAsync_(isAsync) {}
     ~ApertureInfoCallbackListener() = default;
     void OnApertureInfoChanged(ApertureInfo info) override;
 
+    inline void SetIsAsync(bool isAsync) { isAsync_ = isAsync; }
 private:
     void OnApertureInfoChangedCallback(ApertureInfo info) const;
     void OnApertureInfoChangedCallbackAsync(ApertureInfo info) const;
+
+    bool isAsync_;
 };
 
 struct ApertureInfoChangedCallback {
