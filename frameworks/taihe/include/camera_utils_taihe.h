@@ -64,7 +64,6 @@ public:
         std::vector<OHOS::CameraStandard::ZoomPointInfo> vecZoomPointInfoList);
     static int32_t IncrementAndGet(uint32_t& num);
     static int32_t ToTaiheImageRotation(int32_t retCode);
-    static int32_t GetErrorCode(int32_t retCode);
     static bool CheckError(int32_t retCode);
     static ani_object ToBusinessError(ani_env *env, int32_t code, const std::string &message);
     static int32_t EnumGetValueInt32(ani_env *env, ani_enum_item enumItem);

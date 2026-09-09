@@ -396,8 +396,6 @@ public:
 
     static std::string GetErrorMessage(int32_t errorCode);
     static std::string GetErrorMessageV2(int32_t errorCode);
-    static std::string GetJSErrorCode(int32_t errorCode);
-    static int32_t GetJSErrorCodeToNumber(int32_t errorCode);
 
     static bool ParseCameraTypesArray(napi_env env, napi_value typesValue, std::vector<CameraType>& outTypes);
 private:

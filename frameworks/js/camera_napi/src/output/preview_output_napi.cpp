@@ -1003,8 +1003,7 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
     }
     retCode = previewOutputNapi->previewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
     if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
-        MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation! %{public}s",
-                      CameraNapiUtils::GetJSErrorCode(retCode).c_str());
+        MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation! %{public}d", retCode);
         return nullptr;
     }
     MEDIA_DEBUG_LOG("PreviewOutputNapi::SetPreviewRotation success");

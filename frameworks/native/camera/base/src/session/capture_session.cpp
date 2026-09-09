@@ -905,7 +905,8 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddInput");
-    CHECK_RETURN_RET_ELOG(!IsSessionConfiged(), CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY,
+    CHECK_RETURN_RET_ELOG(!IsSessionConfiged(),
+        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
         "CaptureSession::AddInput operation Not allowed!");
     CHECK_RETURN_RET_ELOG(
         input == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::AddInput input is null");
@@ -1259,7 +1260,7 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output, bool isVerifyOutp
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
     if (!IsSessionConfiged()) {
         HILOG_COMM_ERROR("CaptureSession::AddOutput operation Not allowed!");
-        return CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY;
+        return InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY;
     }
     if (output == nullptr) {
         HILOG_COMM_ERROR("CaptureSession::AddOutput output is null");
@@ -1267,9 +1268,11 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output, bool isVerifyOutp
     }
 
     CHECK_RETURN_RET_ELOG(ConfigureOutput(output) != CameraErrorCode::SUCCESS,
-        CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG, "CaptureSession::AddOutput ConfigureOutput fail!");
+        CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG),
+        "CaptureSession::AddOutput ConfigureOutput fail!");
     CHECK_EXECUTE(output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA, metaOutput_ = output);
-    CHECK_RETURN_RET_ELOG(isVerifyOutput && !CanAddOutput(output), CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG,
+    CHECK_RETURN_RET_ELOG(isVerifyOutput && !CanAddOutput(output),
+        CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG),
         "CanAddOutput check failed!");
     auto captureSession = GetCaptureSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, ServiceToCameraError(CAMERA_UNKNOWN_ERROR),
@@ -1560,7 +1563,8 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveInput");
-    CHECK_RETURN_RET_ELOG(!IsSessionConfiged(), CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY,
+    CHECK_RETURN_RET_ELOG(!IsSessionConfiged(),
+        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
         "CaptureSession::RemoveInput operation Not allowed!");
 
     CHECK_RETURN_RET_ELOG(
@@ -1609,7 +1613,8 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveOutput");
-    CHECK_RETURN_RET_ELOG(!IsSessionConfiged(), CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY,
+    CHECK_RETURN_RET_ELOG(!IsSessionConfiged(),
+        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
         "CaptureSession::RemoveOutput operation Not allowed!");
     CHECK_RETURN_RET_ELOG(
         output == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::RemoveOutput output is null");
@@ -2137,7 +2142,7 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
         stabilizationMode = VideoStabilizationMode::AUTO;
     }
     CHECK_RETURN_RET(!IsVideoStabilizationModeSupported(stabilizationMode),
-                     CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE);
+                     CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
     if ((itr == g_fwkVideoStabModesMap_.end())) {
         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
@@ -2640,7 +2645,8 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetExposureMode Need to call LockForControl() before setting camera properties");
     CHECK_RETURN_RET_ELOG(!IsExposureModeSupported(exposureMode),
-        CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE, "SetExposureMode mode not supported");
+        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE),
+        "SetExposureMode mode not supported");
     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
     auto itr = g_fwkExposureModeMap_.find(exposureMode);
     if (itr == g_fwkExposureModeMap_.end()) {
@@ -2850,10 +2856,10 @@ int32_t CaptureSession::SetExposureBias(float exposureValue)
     int32_t maxIndex = 1;
     MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue exposure compensation: %{public}f", exposureValue);
     auto inputDevice = GetInputDevice();
-    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE,
+    CHECK_RETURN_RET_ELOG(!inputDevice, CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE),
                           "CaptureSession::SetExposureBias camera device is null");
     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE,
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE),
         "CaptureSession::SetExposureBias camera device info is null");
     std::vector<float> biasRange = inputDeviceInfo->GetExposureBiasRange();
     CHECK_RETURN_RET_ELOG(biasRange.empty(), CameraErrorCode::OPERATION_NOT_ALLOWED,
@@ -3061,7 +3067,8 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
         "CaptureSession::SetFocusMode Session is not Commited");
     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
         "CaptureSession::SetFocusMode Need to call LockForControl() before setting camera properties");
-    CHECK_RETURN_RET(!IsFocusModeSupported(focusMode), CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE);
+    CHECK_RETURN_RET(!IsFocusModeSupported(focusMode),
+        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
     uint8_t focus = FOCUS_MODE_LOCKED;
     auto itr = g_fwkFocusModeMap_.find(focusMode);
     if (itr == g_fwkFocusModeMap_.end()) {
@@ -3607,7 +3614,8 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
             !status, CameraErrorCode::SERVICE_FATL_ERROR, "CaptureSession::TriggerLighting Failed to trigger lighting");
         return CameraErrorCode::SUCCESS;
     }
-    CHECK_RETURN_RET(!IsFlashModeSupported(flashMode), CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE);
+    CHECK_RETURN_RET(!IsFlashModeSupported(flashMode),
+        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
     uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
     auto itr = g_fwkFlashModeMap_.find(flashMode);
     if (itr == g_fwkFlashModeMap_.end()) {
@@ -5175,7 +5183,8 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
 {
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter EnableMacro, isEnable:%{public}d", isEnable);
-    CHECK_RETURN_RET_ELOG(!IsMacroSupported(), CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE,
+    CHECK_RETURN_RET_ELOG(!IsMacroSupported(),
+                          CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE),
                           "EnableMacro IsMacroSupported is false");
     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
                           "CaptureSession Failed EnableMacro!, session not commited");

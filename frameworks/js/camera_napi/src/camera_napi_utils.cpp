@@ -51,61 +51,8 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
     {74002014, "Camera service fatal error: Invalid Input Device"},
     {74002015, "Camera service fatal error: Camera Service is Null"},
     {74002016, "Camera service fatal error: Stop Without Start"},
-    {7400801, "Capability not supported."},
+    {801, "Capability not supported. The hardware does not support the capability."},
 };
-
-static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
-    {7400102, "7400102"},
-    {74001021, "7400102"},
-    {74001022, "7400102"},
-    {74001023, "7400102"},
-    {74001024, "7400102"},
-    {74001025, "7400102"},
-    {7400103, "7400103"},
-    {7400201, "7400201"},
-    {74002011, "7400201"},
-    {74002012, "7400201"},
-    {74002013, "7400201"},
-    {74002014, "7400201"},
-    {74002015, "7400201"},
-    {74002016, "7400201"},
-    {7400801, "801"}
-};
-
-static const std::map<int32_t, int32_t> errorCodeToNumberCode = {
-    {74001021, 7400102},
-    {74001022, 7400102},
-    {74001023, 7400102},
-    {74001024, 7400102},
-    {74001025, 7400102},
-    {74002011, 7400201},
-    {74002012, 7400201},
-    {74002013, 7400201},
-    {74002014, 7400201},
-    {74002015, 7400201},
-    {74002016, 7400201},
-    {7400801, 801}
-};
-
-std::string CameraNapiUtils::GetJSErrorCode(int32_t errorCode)
-{
-    auto it = errorCodeToJSErrorCode.find(errorCode);
-    if (it != errorCodeToJSErrorCode.end()) {
-        return it->second;
-    } else {
-        return std::to_string(errorCode);
-    }
-}
-
-int32_t CameraNapiUtils::GetJSErrorCodeToNumber(int32_t errorCode)
-{
-    auto it = errorCodeToNumberCode.find(errorCode);
-    if (it != errorCodeToNumberCode.end()) {
-        return it->second;
-    } else {
-        return errorCode;
-    }
-}
 
 std::string CameraNapiUtils::GetErrorMessage(int32_t errorCode)
 {
@@ -138,7 +85,7 @@ void CameraNapiUtils::CreateNapiErrorObject(napi_env env, int32_t errorCode, con
     } else {
         napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
     }
-    std::string errorCodeStr = std::to_string(GetJSErrorCodeToNumber(errorCode));
+    std::string errorCodeStr = std::to_string(GetCameraErrorCode(errorCode));
     napi_create_string_utf8(env, errorCodeStr.c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
 
     napi_create_object(env, &jsContext->error);
@@ -355,7 +302,7 @@ bool CameraNapiUtils::CheckError(napi_env env, int32_t retCode)
 bool CameraNapiUtils::CheckErrorV2(napi_env env, int32_t retCode)
 {
     if ((retCode != 0)) {
-        napi_throw_error(env, GetJSErrorCode(retCode).c_str(), GetErrorMessageV2(retCode).c_str());
+        napi_throw_error(env, std::to_string(GetCameraErrorCode(retCode)).c_str(), GetErrorMessageV2(retCode).c_str());
         return false;
     }
     return true;
@@ -364,7 +311,7 @@ bool CameraNapiUtils::CheckErrorV2(napi_env env, int32_t retCode)
 bool CameraNapiUtils::CheckBusinessError(napi_env env, int32_t retCode)
 {
     if ((retCode != 0)) {
-        napi_throw_business_error(env, GetJSErrorCodeToNumber(retCode), GetErrorMessageV2(retCode).c_str());
+        napi_throw_business_error(env, GetCameraErrorCode(retCode), GetErrorMessageV2(retCode).c_str());
         return false;
     }
     return true;
