@@ -1,0 +1,639 @@
+From d6f76e0cad336508df2b7e0b40425ab2b9eaf9fa Mon Sep 17 00:00:00 2001
+From: m00939602 <mengzhe5@huawei.com>
+Date: Thu, 3 Sep 2026 09:13:39 +0800
+Subject: [PATCH] =?UTF-8?q?TicketNo:DTS2026090238241=20Description:?=
+ =?UTF-8?q?=E5=8C=BA=E5=88=86inner=E9=94=99=E8=AF=AF=E7=A0=81=E4=B8=8Ecame?=
+ =?UTF-8?q?raErrorCode=20Team:EMUI=20Feature=20or=20Bugfix:Bugfix=20Binary?=
+ =?UTF-8?q?=20Source:No=20PrivateCode(Yes/No):No?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+AI[74%] Human Fixed[0%] Human[26%] AI Adopted[100%]
+Co-authored-by: codeagentcli (Qwen3.6-27B-CodeAgent-VL) <ai@local>
+cherry picked from commit e86188ca1003562fb414cab2cb8d699ff4e68a5a
+
+Change-Id: I9ca195ddf14e3cea7f15437d2c40140d1dad9988
+---
+ .../js/camera_napi/src/camera_napi_utils.cpp  | 63 ++-----------------
+ .../src/output/preview_output_napi.cpp        |  3 +-
+ .../camera/base/src/input/camera_manager.cpp  | 10 +--
+ .../camera/base/src/output/preview_output.cpp |  2 +-
+ .../base/src/session/capture_session.cpp      | 32 +++++-----
+ .../output/src/photo_output_unittest.cpp      | 16 ++---
+ .../output/src/preview_output_unittest.cpp    |  2 +-
+ .../session/src/capture_session_unittest.cpp  |  2 +-
+ .../session/src/video_session_unittest.cpp    |  2 +-
+ frameworks/native/ndk/impl/camera_util.cpp    | 26 ++++----
+ frameworks/taihe/include/camera_utils_taihe.h |  1 -
+ frameworks/taihe/src/camera_utils_taihe.cpp   | 28 +--------
+ .../native/camera/include/camera_error_code.h | 25 ++++----
+ .../camera_napi/include/camera_napi_utils.h   |  2 -
+ .../binder/base/src/icamera_util.cpp          | 16 ++---
+ 15 files changed, 74 insertions(+), 156 deletions(-)
+
+diff --git a/frameworks/js/camera_napi/src/camera_napi_utils.cpp b/frameworks/js/camera_napi/src/camera_napi_utils.cpp
+index 1a3e65693c..39608c60a2 100644
+--- a/frameworks/js/camera_napi/src/camera_napi_utils.cpp
++++ b/frameworks/js/camera_napi/src/camera_napi_utils.cpp
+@@ -54,64 +54,9 @@ static const std::map<int32_t, std::string> errorCodeToMessageV2 = {
+     {74002015, "Camera service fatal error: Camera Service is Null"},
+     {74002016, "Camera service fatal error: Stop Without Start"},
+     {74002017, "Camera service fatal error: Mismatch resolution configuration."},
+-    {7400801, "Capability not supported."},
++    {801, "Capability not supported."},
+ };
+ 
+-static const std::map<int32_t, std::string> errorCodeToJSErrorCode = {
+-    {7400102, "7400102"},
+-    {74001021, "7400102"},
+-    {74001022, "7400102"},
+-    {74001023, "7400102"},
+-    {74001024, "7400102"},
+-    {74001025, "7400102"},
+-    {7400103, "7400103"},
+-    {7400201, "7400201"},
+-    {74002011, "7400201"},
+-    {74002012, "7400201"},
+-    {74002013, "7400201"},
+-    {74002014, "7400201"},
+-    {74002015, "7400201"},
+-    {74002016, "7400201"},
+-    {74002017, "7400201"},
+-    {7400801, "801"}
+-};
+-
+-static const std::map<int32_t, int32_t> errorCodeToNumberCode = {
+-    {74001021, 7400102},
+-    {74001022, 7400102},
+-    {74001023, 7400102},
+-    {74001024, 7400102},
+-    {74001025, 7400102},
+-    {74002011, 7400201},
+-    {74002012, 7400201},
+-    {74002013, 7400201},
+-    {74002014, 7400201},
+-    {74002015, 7400201},
+-    {74002016, 7400201},
+-    {74002017, 7400201},
+-    {7400801, 801}
+-};
+-
+-std::string CameraNapiUtils::GetJSErrorCode(int32_t errorCode)
+-{
+-    auto it = errorCodeToJSErrorCode.find(errorCode);
+-    if (it != errorCodeToJSErrorCode.end()) {
+-        return it->second;
+-    } else {
+-        return std::to_string(errorCode);
+-    }
+-}
+-
+-int32_t CameraNapiUtils::GetJSErrorCodeToNumber(int32_t errorCode)
+-{
+-    auto it = errorCodeToNumberCode.find(errorCode);
+-    if (it != errorCodeToNumberCode.end()) {
+-        return it->second;
+-    } else {
+-        return errorCode;
+-    }
+-}
+-
+ std::string CameraNapiUtils::GetErrorMessage(int32_t errorCode)
+ {
+     auto it = errorCodeToMessage.find(errorCode);
+@@ -145,7 +90,7 @@ void CameraNapiUtils::CreateNapiErrorObject(napi_env env, int32_t errorCode, con
+     } else {
+         napi_create_string_utf8(env, errString, NAPI_AUTO_LENGTH, &napiErrorMsg);
+     }
+-    std::string errorCodeStr = std::to_string(GetJSErrorCodeToNumber(errorCode));
++    std::string errorCodeStr = std::to_string(GetCameraErrorCode(errorCode));
+     napi_create_string_utf8(env, errorCodeStr.c_str(), NAPI_AUTO_LENGTH, &napiErrorCode);
+ 
+     napi_create_object(env, &jsContext->error);
+@@ -363,7 +308,7 @@ bool CameraNapiUtils::CheckError(napi_env env, int32_t retCode)
+ bool CameraNapiUtils::CheckErrorV2(napi_env env, int32_t retCode)
+ {
+     if ((retCode != 0)) {
+-        napi_throw_error(env, GetJSErrorCode(retCode).c_str(), GetErrorMessageV2(retCode).c_str());
++        napi_throw_error(env, std::to_string(GetCameraErrorCode(retCode)).c_str(), GetErrorMessageV2(retCode).c_str());
+         return false;
+     }
+     return true;
+@@ -372,7 +317,7 @@ bool CameraNapiUtils::CheckErrorV2(napi_env env, int32_t retCode)
+ bool CameraNapiUtils::CheckBusinessError(napi_env env, int32_t retCode)
+ {
+     if ((retCode != 0)) {
+-        napi_throw_business_error(env, GetJSErrorCodeToNumber(retCode), GetErrorMessageV2(retCode).c_str());
++        napi_throw_business_error(env, GetCameraErrorCode(retCode), GetErrorMessageV2(retCode).c_str());
+         return false;
+     }
+     return true;
+diff --git a/frameworks/js/camera_napi/src/output/preview_output_napi.cpp b/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
+index 3a988f2e15..8f72bf95a8 100644
+--- a/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
++++ b/frameworks/js/camera_napi/src/output/preview_output_napi.cpp
+@@ -998,8 +998,7 @@ napi_value PreviewOutputNapi::SetPreviewRotation(napi_env env, napi_callback_inf
+     }
+     retCode = previewOutputNapi->previewOutput_->SetPreviewRotation(imageRotation, isDisplayLocked);
+     if (!CameraNapiUtils::CheckErrorV2(env, retCode)) {
+-        MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation! %{public}s",
+-                      CameraNapiUtils::GetJSErrorCode(retCode).c_str());
++        MEDIA_ERR_LOG("PreviewOutputNapi::SetPreviewRotation! %{public}d", retCode);
+         return nullptr;
+     }
+     MEDIA_DEBUG_LOG("PreviewOutputNapi::SetPreviewRotation success");
+diff --git a/frameworks/native/camera/base/src/input/camera_manager.cpp b/frameworks/native/camera/base/src/input/camera_manager.cpp
+index 74fa607f85..9753937a0c 100644
+--- a/frameworks/native/camera/base/src/input/camera_manager.cpp
++++ b/frameworks/native/camera/base/src/input/camera_manager.cpp
+@@ -676,7 +676,7 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
+     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+         "CreatePhotoOutputWithoutProfile serviceProxy is null or PhotoOutputSurface is null");
+     sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surfaceProducer);
+-    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
++    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
+     photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+     *pPhotoOutput = photoOutput;
+     return CameraErrorCode::SUCCESS;
+@@ -692,7 +692,7 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
+     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+         "CreatePhotoOutputWithoutProfile serviceProxy is null or PhotoOutputSurface is null");
+     sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surfaceProducer, photoSurface);
+-    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
++    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
+     photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+     *pPhotoOutput = photoOutput;
+     return CameraErrorCode::SUCCESS;
+@@ -707,7 +707,7 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<PhotoOutput>* pPhotoOutp
+     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+         "CreatePhotoOutputWithoutProfile serviceProxy is null");
+     sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput();
+-    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
++    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
+     photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+     *pPhotoOutput = photoOutput;
+     return CameraErrorCode::SUCCESS;
+@@ -821,7 +821,7 @@ int CameraManager::CreatePreviewOutputWithoutProfile(sptr<Surface> surface, sptr
+     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
+         "CreatePreviewOutputWithoutProfile serviceProxy is null or surface is null");
+     previewOutput = new (std::nothrow) PreviewOutput(surface->GetProducer());
+-    CHECK_RETURN_RET(previewOutput == nullptr, CheckSAErrorCode(CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
++    CHECK_RETURN_RET(previewOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
+     previewOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+     *pPreviewOutput = previewOutput;
+     return CAMERA_OK;
+@@ -1103,7 +1103,7 @@ int CameraManager::CreateVideoOutputWithoutProfile(sptr<Surface> surface, sptr<V
+         "CameraManager::CreateVideoOutput serviceProxy is null or VideoOutputSurface is null");
+ 
+     sptr<VideoOutput> videoOutput = new (std::nothrow) VideoOutput(surface->GetProducer());
+-    CHECK_RETURN_RET(videoOutput == nullptr, CheckSAErrorCode(CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
++    CHECK_RETURN_RET(videoOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
+     videoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
+     *pVideoOutput = videoOutput;
+     return CameraErrorCode::SUCCESS;
+diff --git a/frameworks/native/camera/base/src/output/preview_output.cpp b/frameworks/native/camera/base/src/output/preview_output.cpp
+index 4d1ff9a3f8..5c1dba035c 100644
+--- a/frameworks/native/camera/base/src/output/preview_output.cpp
++++ b/frameworks/native/camera/base/src/output/preview_output.cpp
+@@ -891,7 +891,7 @@ int32_t PreviewOutput::SetLogViewAssistEnable(bool isEnable)
+ {
+     // LCOV_EXCL_START
+     MEDIA_INFO_LOG("PreviewOutput::SetLogViewAssistEnable is called, enable: %{public}d", isEnable);
+-    CHECK_RETURN_RET_ELOG(!IsLogAssistanceSupported(), CameraErrorCode::CAPABILITY_NOT_SUPPORTED,
++    CHECK_RETURN_RET_ELOG(!IsLogAssistanceSupported(), InnerErrorCode::CAPABILITY_NOT_SUPPORTED,
+                           "PreviewOutput::SetLogViewAssistEnable is not supported ViewAssist");
+     auto captureSession = GetSession();
+     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SESSION_NOT_CONFIG,
+diff --git a/frameworks/native/camera/base/src/session/capture_session.cpp b/frameworks/native/camera/base/src/session/capture_session.cpp
+index 9def0973a7..5c55249c58 100644
+--- a/frameworks/native/camera/base/src/session/capture_session.cpp
++++ b/frameworks/native/camera/base/src/session/capture_session.cpp
+@@ -1027,8 +1027,8 @@ int32_t CaptureSession::AddInput(sptr<CaptureInput>& input)
+ {
+     CAMERA_SYNC_TRACE;
+     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddInput");
+-    CHECK_RETURN_RET_ELOG(!IsSessionConfiged(), 
+-        CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY), 
++    CHECK_RETURN_RET_ELOG(!IsSessionConfiged(),
++        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
+         "CaptureSession::AddInput operation Not allowed!");
+     CHECK_RETURN_RET_ELOG(
+         input == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::AddInput input is null");
+@@ -1393,7 +1393,7 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output, bool isVerifyOutp
+     MEDIA_DEBUG_LOG("Enter Into CaptureSession::AddOutput");
+     if (!IsSessionConfiged()) {
+         HILOG_COMM_ERROR("CaptureSession::AddOutput operation Not allowed!");
+-        return CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY;
++        return InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY;
+     }
+     if (output == nullptr) {
+         HILOG_COMM_ERROR("CaptureSession::AddOutput output is null");
+@@ -1401,11 +1401,11 @@ int32_t CaptureSession::AddOutput(sptr<CaptureOutput>& output, bool isVerifyOutp
+     }
+ 
+     CHECK_RETURN_RET_ELOG(ConfigureOutput(output) != CameraErrorCode::SUCCESS,
+-        CheckSAErrorCode(CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG),
++        CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG),
+         "CaptureSession::AddOutput ConfigureOutput fail!");
+     CHECK_EXECUTE(output->GetOutputType() == CAPTURE_OUTPUT_TYPE_METADATA, metaOutput_ = output);
+-    CHECK_RETURN_RET_ELOG(isVerifyOutput && !CanAddOutput(output), 
+-        CheckSAErrorCode(CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG),
++    CHECK_RETURN_RET_ELOG(isVerifyOutput && !CanAddOutput(output),
++        CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG),
+         "CanAddOutput check failed!");
+     auto captureSession = GetCaptureSession();
+     CHECK_RETURN_RET_ELOG(captureSession == nullptr, ServiceToCameraError(CAMERA_UNKNOWN_ERROR),
+@@ -1705,7 +1705,7 @@ int32_t CaptureSession::RemoveInput(sptr<CaptureInput>& input)
+     CAMERA_SYNC_TRACE;
+     MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveInput");
+     CHECK_RETURN_RET_ELOG(!IsSessionConfiged(),
+-        CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
++        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
+         "CaptureSession::RemoveInput operation Not allowed!");
+ 
+     CHECK_RETURN_RET_ELOG(
+@@ -1755,7 +1755,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
+     CAMERA_SYNC_TRACE;
+     MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveOutput");
+     CHECK_RETURN_RET_ELOG(!IsSessionConfiged(),
+-        CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
++        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
+         "CaptureSession::RemoveOutput operation Not allowed!");
+     CHECK_RETURN_RET_ELOG(
+         output == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::RemoveOutput output is null");
+@@ -2334,7 +2334,7 @@ int32_t CaptureSession::SetVideoStabilizationMode(VideoStabilizationMode stabili
+         stabilizationMode = VideoStabilizationMode::AUTO;
+     }
+     CHECK_RETURN_RET(!IsVideoStabilizationModeSupported(stabilizationMode),
+-                     CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
++                     CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
+     auto itr = g_fwkVideoStabModesMap_.find(stabilizationMode);
+     if ((itr == g_fwkVideoStabModesMap_.end())) {
+         MEDIA_ERR_LOG("CaptureSession::SetVideoStabilizationMode Mode: %{public}d not supported", stabilizationMode);
+@@ -2847,7 +2847,7 @@ int32_t CaptureSession::SetExposureMode(ExposureMode exposureMode)
+     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+         "CaptureSession::SetExposureMode Need to call LockForControl() before setting camera properties");
+     CHECK_RETURN_RET_ELOG(!IsExposureModeSupported(exposureMode),
+-        CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE),
++        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE),
+         "SetExposureMode mode not supported");
+     uint8_t exposure = g_fwkExposureModeMap_.at(EXPOSURE_MODE_LOCKED);
+     auto itr = g_fwkExposureModeMap_.find(exposureMode);
+@@ -3058,10 +3058,10 @@ int32_t CaptureSession::SetExposureBias(float exposureValue)
+     int32_t maxIndex = 1;
+     MEDIA_DEBUG_LOG("CaptureSession::SetExposureValue exposure compensation: %{public}f", exposureValue);
+     auto inputDevice = GetInputDevice();
+-    CHECK_RETURN_RET_ELOG(!inputDevice, CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE),
++    CHECK_RETURN_RET_ELOG(!inputDevice, CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE),
+                           "CaptureSession::SetExposureBias camera device is null");
+     auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+-    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE),
++    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE),
+         "CaptureSession::SetExposureBias camera device info is null");
+     std::vector<float> biasRange = inputDeviceInfo->GetExposureBiasRange();
+     CHECK_RETURN_RET_ELOG(biasRange.empty(), CameraErrorCode::OPERATION_NOT_ALLOWED,
+@@ -3301,7 +3301,7 @@ int32_t CaptureSession::SetFocusMode(FocusMode focusMode)
+     CHECK_RETURN_RET_ELOG(changedMetadata_ == nullptr, CameraErrorCode::SUCCESS,
+         "CaptureSession::SetFocusMode Need to call LockForControl() before setting camera properties");
+     CHECK_RETURN_RET(!IsFocusModeSupported(focusMode),
+-        CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
++        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
+     uint8_t focus = FOCUS_MODE_LOCKED;
+     auto itr = g_fwkFocusModeMap_.find(focusMode);
+     if (itr == g_fwkFocusModeMap_.end()) {
+@@ -4486,7 +4486,7 @@ int32_t CaptureSession::SetFlashMode(FlashMode flashMode)
+         return CameraErrorCode::SUCCESS;
+     }
+     CHECK_RETURN_RET(!IsFlashModeSupported(flashMode),
+-        CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
++        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE));
+     uint8_t flash = g_fwkFlashModeMap_.at(FLASH_MODE_CLOSE);
+     auto itr = g_fwkFlashModeMap_.find(flashMode);
+     if (itr == g_fwkFlashModeMap_.end()) {
+@@ -6212,7 +6212,7 @@ int32_t CaptureSession::EnableMacro(bool isEnable)
+     CAMERA_SYNC_TRACE;
+     MEDIA_DEBUG_LOG("Enter EnableMacro, isEnable:%{public}d", isEnable);
+     CHECK_RETURN_RET_ELOG(!IsMacroSupported(),
+-                          CheckSAErrorCode(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE),
++                          CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE),
+                           "EnableMacro IsMacroSupported is false");
+     CHECK_RETURN_RET_ELOG(!IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG,
+                           "CaptureSession Failed EnableMacro!, session not commited");
+@@ -8620,7 +8620,7 @@ int32_t CaptureSession::GetSupportedSaturationRange(std::vector<int32_t> &satura
+         saturationRangeTemp.push_back(item.data.i32[i]);
+     }
+     CHECK_RETURN_RET_ELOG(saturationRangeTemp.size() < SATURATION_RANGE_SIZE_MIN,
+-                          CameraErrorCode::CAPABILITY_NOT_SUPPORTED, "saturationRange size < minRangeSize");
++                          InnerErrorCode::CAPABILITY_NOT_SUPPORTED, "saturationRange size < minRangeSize");
+     std::sort(saturationRangeTemp.begin(), saturationRangeTemp.end());
+     int32_t minVal = std::min(saturationRangeTemp.front(), saturationRangeTemp.back());
+     saturationRange.push_back(minVal);
+diff --git a/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp b/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
+index 08b61bc030..abac4b612c 100755
+--- a/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/framework_native/output/src/photo_output_unittest.cpp
+@@ -1440,8 +1440,8 @@ HWTEST_F(CameraPhotoOutputUnit, IsOfflineSupported_002, TestSize.Level0)
+     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+     ASSERT_NE(session, nullptr);
+     EXPECT_EQ(session->BeginConfig(), 0);
+-    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
+-    EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG);
++    EXPECT_EQ(session->AddOutput(photoOutput), InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
++    EXPECT_EQ(session->CommitConfig(), InnerErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG);
+     EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+     EXPECT_EQ(phtOutput->IsOfflineSupported(), false);
+ }
+@@ -1525,8 +1525,8 @@ HWTEST_F(CameraPhotoOutputUnit, EnableOfflinePhoto_002, TestSize.Level0)
+     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+     ASSERT_NE(session, nullptr);
+     EXPECT_EQ(session->BeginConfig(), 0);
+-    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
+-    EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG);
++    EXPECT_EQ(session->AddOutput(photoOutput), InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
++    EXPECT_EQ(session->CommitConfig(), InnerErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG);
+     EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+     EXPECT_EQ(phtOutput->EnableOfflinePhoto(), CameraErrorCode::SESSION_NOT_RUNNING);
+ }
+@@ -1711,8 +1711,8 @@ HWTEST_F(CameraPhotoOutputUnit, IsAutoAigcPhotoSupported_002, TestSize.Level0)
+     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+     ASSERT_NE(session, nullptr);
+     EXPECT_EQ(session->BeginConfig(), 0);
+-    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
+-    EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG);
++    EXPECT_EQ(session->AddOutput(photoOutput), InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
++    EXPECT_EQ(session->CommitConfig(), InnerErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG);
+     EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+     bool isAutoAigcPhotoSupported = false;
+     EXPECT_EQ(phtOutput->IsAutoAigcPhotoSupported(isAutoAigcPhotoSupported), SERVICE_FATL_ERROR);
+@@ -1794,8 +1794,8 @@ HWTEST_F(CameraPhotoOutputUnit, EnableAutoAigcPhoto_002, TestSize.Level0)
+     sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+     ASSERT_NE(session, nullptr);
+     EXPECT_EQ(session->BeginConfig(), 0);
+-    EXPECT_EQ(session->AddOutput(photoOutput), CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
+-    EXPECT_EQ(session->CommitConfig(), CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG);
++    EXPECT_EQ(session->AddOutput(photoOutput), InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
++    EXPECT_EQ(session->CommitConfig(), InnerErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG);
+     EXPECT_EQ(session->Start(), CameraErrorCode::SESSION_NOT_CONFIG);
+     bool enabled = true;
+     EXPECT_EQ(phtOutput->EnableAutoAigcPhoto(enabled), CameraErrorCode::SESSION_NOT_RUNNING);
+diff --git a/frameworks/native/camera/test/unittest/framework_native/output/src/preview_output_unittest.cpp b/frameworks/native/camera/test/unittest/framework_native/output/src/preview_output_unittest.cpp
+index d95eb678b4..837223dda7 100644
+--- a/frameworks/native/camera/test/unittest/framework_native/output/src/preview_output_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/framework_native/output/src/preview_output_unittest.cpp
+@@ -1192,7 +1192,7 @@ HWTEST_F(CameraPreviewOutputUnit, preview_output_unittest_035, TestSize.Level0)
+     previewOutput->session_ = nullptr;
+ 
+     EXPECT_EQ(previewOutput->IsLogViewAssistSupported(), false);
+-    EXPECT_EQ(previewOutput->SetLogViewAssistEnable(true), CameraErrorCode::CAPABILITY_NOT_SUPPORTED);
++    EXPECT_EQ(previewOutput->SetLogViewAssistEnable(true), InnerErrorCode::CAPABILITY_NOT_SUPPORTED);
+ }
+ 
+ /*
+diff --git a/frameworks/native/camera/test/unittest/framework_native/session/src/capture_session_unittest.cpp b/frameworks/native/camera/test/unittest/framework_native/session/src/capture_session_unittest.cpp
+index 3bebf3406b..976e089552 100644
+--- a/frameworks/native/camera/test/unittest/framework_native/session/src/capture_session_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/framework_native/session/src/capture_session_unittest.cpp
+@@ -1178,7 +1178,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_004, TestSize.Level0)
+     ASSERT_NE(preview, nullptr);
+ 
+     ret = session->AddOutput(preview);
+-    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
++    EXPECT_EQ(ret, InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
+ 
+     ret = session->CommitConfig();
+     EXPECT_NE(ret, 0);
+diff --git a/frameworks/native/camera/test/unittest/framework_native/session/src/video_session_unittest.cpp b/frameworks/native/camera/test/unittest/framework_native/session/src/video_session_unittest.cpp
+index 382eaae6cf..dd6cd42395 100644
+--- a/frameworks/native/camera/test/unittest/framework_native/session/src/video_session_unittest.cpp
++++ b/frameworks/native/camera/test/unittest/framework_native/session/src/video_session_unittest.cpp
+@@ -694,7 +694,7 @@ HWTEST_F(CameraVideoSessionUnitTest, video_session_unittest_010, TestSize.Level0
+     EXPECT_EQ(GetCameraErrorCode(result), CameraErrorCode::SERVICE_FATL_ERROR);
+ 
+     result = videoSessionForSys->AddOutput(videoOutputCaptureUpper);
+-    EXPECT_EQ(result, CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
++    EXPECT_EQ(result, InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
+ 
+     // 关闭相机输入
+     input->Close();
+diff --git a/frameworks/native/ndk/impl/camera_util.cpp b/frameworks/native/ndk/impl/camera_util.cpp
+index 5df02c1d62..8c80941bf2 100644
+--- a/frameworks/native/ndk/impl/camera_util.cpp
++++ b/frameworks/native/ndk/impl/camera_util.cpp
+@@ -26,11 +26,11 @@ static const std::unordered_map<int32_t, Camera_ErrorCode> frameworkToNdkErrorMa
+     {static_cast<int32_t>(CameraErrorCode::PARAMETER_ERROR), CAMERA_INVALID_ARGUMENT},
+     {static_cast<int32_t>(CameraErrorCode::INVALID_ARGUMENT), CAMERA_INVALID_ARGUMENT},
+     {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED), CAMERA_OPERATION_NOT_ALLOWED},
+-    {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY), CAMERA_OPERATION_NOT_ALLOWED},
+-    {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE), CAMERA_OPERATION_NOT_ALLOWED},
+-    {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE), CAMERA_OPERATION_NOT_ALLOWED},
+-    {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT), CAMERA_OPERATION_NOT_ALLOWED},
+-    {static_cast<int32_t>(CameraErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY), CAMERA_OPERATION_NOT_ALLOWED},
++    {static_cast<int32_t>(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY), CAMERA_OPERATION_NOT_ALLOWED},
++    {static_cast<int32_t>(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE), CAMERA_OPERATION_NOT_ALLOWED},
++    {static_cast<int32_t>(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE), CAMERA_OPERATION_NOT_ALLOWED},
++    {static_cast<int32_t>(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT), CAMERA_OPERATION_NOT_ALLOWED},
++    {static_cast<int32_t>(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY), CAMERA_OPERATION_NOT_ALLOWED},
+     {static_cast<int32_t>(CameraErrorCode::SESSION_NOT_CONFIG), CAMERA_SESSION_NOT_CONFIG},
+     {static_cast<int32_t>(CameraErrorCode::SESSION_NOT_RUNNING), CAMERA_SESSION_NOT_RUNNING},
+     {static_cast<int32_t>(CameraErrorCode::SESSION_CONFIG_LOCKED), CAMERA_SESSION_CONFIG_LOCKED},
+@@ -39,16 +39,16 @@ static const std::unordered_map<int32_t, Camera_ErrorCode> frameworkToNdkErrorMa
+     {static_cast<int32_t>(CameraErrorCode::DEVICE_DISABLED), CAMERA_DEVICE_DISABLED},
+     {static_cast<int32_t>(CameraErrorCode::DEVICE_PREEMPTED), CAMERA_DEVICE_PREEMPTED},
+     {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR), CAMERA_SERVICE_FATAL_ERROR},
+-    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG), CAMERA_SERVICE_FATAL_ERROR},
+-    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC), CAMERA_SERVICE_FATAL_ERROR},
+-    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG), CAMERA_SERVICE_FATAL_ERROR},
+-    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE), CAMERA_SERVICE_FATAL_ERROR},
+-    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_SERVICE_NULL), CAMERA_SERVICE_FATAL_ERROR},
+-    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START), CAMERA_SERVICE_FATAL_ERROR},
+-    {static_cast<int32_t>(CameraErrorCode::SERVICE_FATL_ERROR_OF_MISMATCH_RESOLUTION), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_SERVICE_NULL), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START), CAMERA_SERVICE_FATAL_ERROR},
++    {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_MISMATCH_RESOLUTION), CAMERA_SERVICE_FATAL_ERROR},
+     {static_cast<int32_t>(CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS),
+      CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS},
+-    {static_cast<int32_t>(CameraErrorCode::CAPABILITY_NOT_SUPPORTED),
++    {static_cast<int32_t>(InnerErrorCode::CAPABILITY_NOT_SUPPORTED),
+      CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED},
+ };
+ 
+diff --git a/frameworks/taihe/include/camera_utils_taihe.h b/frameworks/taihe/include/camera_utils_taihe.h
+index a0b3f89c3f..8a4765b055 100644
+--- a/frameworks/taihe/include/camera_utils_taihe.h
++++ b/frameworks/taihe/include/camera_utils_taihe.h
+@@ -64,7 +64,6 @@ public:
+         std::vector<OHOS::CameraStandard::ZoomPointInfo> vecZoomPointInfoList);
+     static int32_t IncrementAndGet(uint32_t& num);
+     static int32_t ToTaiheImageRotation(int32_t retCode);
+-    static int32_t GetErrorCode(int32_t retCode);
+     static bool CheckError(int32_t retCode);
+     static ani_object ToBusinessError(ani_env *env, int32_t code, const std::string &message);
+     static int32_t EnumGetValueInt32(ani_env *env, ani_enum_item enumItem);
+diff --git a/frameworks/taihe/src/camera_utils_taihe.cpp b/frameworks/taihe/src/camera_utils_taihe.cpp
+index ef6841610d..874a04b23b 100644
+--- a/frameworks/taihe/src/camera_utils_taihe.cpp
++++ b/frameworks/taihe/src/camera_utils_taihe.cpp
+@@ -500,36 +500,10 @@ int32_t CameraUtilsTaihe::IncrementAndGet(uint32_t& num)
+     return num;
+ }
+ 
+-static const std::map<int32_t, int32_t> errorJSCodeMap = {
+-    {74001021, 7400102},
+-    {74001022, 7400102},
+-    {74001023, 7400102},
+-    {74001024, 7400102},
+-    {74001025, 7400102},
+-    {74002011, 7400201},
+-    {74002012, 7400201},
+-    {74002013, 7400201},
+-    {74002014, 7400201},
+-    {74002015, 7400201},
+-    {74002016, 7400201},
+-    {74002017, 7400201},
+-    {7400801, 801}
+-};
+- 
+-int32_t CameraUtilsTaihe::GetErrorCode(int32_t retCode)
+-{
+-    auto it = errorJSCodeMap.find(retCode);
+-    if (it != errorJSCodeMap.end()) {
+-        return it->second;
+-    } else {
+-        return retCode;
+-    }
+-}
+-
+ bool CameraUtilsTaihe::CheckError(int32_t retCode)
+ {
+     if ((retCode != 0)) {
+-        set_business_error(GetErrorCode(retCode), "Throw Error");
++        set_business_error(OHOS::CameraStandard::GetCameraErrorCode(retCode), "Throw Error");
+         return false;
+     }
+     return true;
+diff --git a/interfaces/inner_api/native/camera/include/camera_error_code.h b/interfaces/inner_api/native/camera/include/camera_error_code.h
+index 8f418a0239..dc5d66c176 100644
+--- a/interfaces/inner_api/native/camera/include/camera_error_code.h
++++ b/interfaces/inner_api/native/camera/include/camera_error_code.h
+@@ -35,11 +35,6 @@ enum CameraErrorCode : int32_t {
+     INVALID_ARGUMENT = 7400101,
+     
+     OPERATION_NOT_ALLOWED = 7400102,
+-    OPERATION_NOT_ALLOWED_OF_SESSION_READY = 74001021,
+-    OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE = 74001022,
+-    OPERATION_NOT_ALLOWED_OF_DEVICE = 74001023,
+-    OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT = 74001024,
+-    OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY = 74001025,
+ 
+     SESSION_NOT_CONFIG = 7400103,
+     SESSION_NOT_RUNNING = 7400104,
+@@ -53,6 +48,18 @@ enum CameraErrorCode : int32_t {
+     CAMERA_LENS_RETRACTED = 7400112,
+     // 服务致命错误
+     SERVICE_FATL_ERROR = 7400201,
++
++    UNSUPPORTED_MULTI_CAMERA_COMBINATION =  7400113,
++    DEVICE_REPLACED = 7400114,
++};
++
++enum InnerErrorCode : int32_t {
++    OPERATION_NOT_ALLOWED_OF_SESSION_READY = 74001021,
++    OPERATION_NOT_ALLOWED_OF_UNSUPPORTED_FEATURE = 74001022,
++    OPERATION_NOT_ALLOWED_OF_DEVICE = 74001023,
++    OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT = 74001024,
++    OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY = 74001025,
++
+     SERVICE_FATL_ERROR_OF_CONFIG = 74002011,
+     SERVICE_FATL_ERROR_OF_ALLOC = 74002012,
+     SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG = 74002013,
+@@ -61,9 +68,7 @@ enum CameraErrorCode : int32_t {
+     SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START = 74002016,
+     SERVICE_FATL_ERROR_OF_MISMATCH_RESOLUTION = 74002017,
+ 
+-    UNSUPPORTED_MULTI_CAMERA_COMBINATION =  7400113,
+-    DEVICE_REPLACED = 7400114,
+-    CAPABILITY_NOT_SUPPORTED = 7400801
++    CAPABILITY_NOT_SUPPORTED = 801,
+ };
+ 
+ static const std::map<int32_t, int32_t> errorCodeMap  = {
+@@ -79,7 +84,6 @@ static const std::map<int32_t, int32_t> errorCodeMap  = {
+     {74002015, 7400201},
+     {74002016, 7400201},
+     {74002017, 7400201},
+-    {7400801, 801}
+ };
+ 
+ inline int32_t GetCameraErrorCode(int32_t errorCode)
+@@ -87,9 +91,8 @@ inline int32_t GetCameraErrorCode(int32_t errorCode)
+     auto it = errorCodeMap.find(errorCode);
+     if (it != errorCodeMap.end()) {
+         return it->second;
+-    } else {
+-        return errorCode;
+     }
++    return errorCode;
+ }
+ } // namespace CameraStandard
+ } // namespace OHOS
+diff --git a/interfaces/kits/js/camera_napi/include/camera_napi_utils.h b/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
+index 9fcef1ab3d..74ebd03e3a 100644
+--- a/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
++++ b/interfaces/kits/js/camera_napi/include/camera_napi_utils.h
+@@ -412,8 +412,6 @@ public:
+ 
+     static std::string GetErrorMessage(int32_t errorCode);
+     static std::string GetErrorMessageV2(int32_t errorCode);
+-    static std::string GetJSErrorCode(int32_t errorCode);
+-    static int32_t GetJSErrorCodeToNumber(int32_t errorCode);
+ 
+     static bool ParseCameraTypesArray(napi_env env, napi_value typesValue, std::vector<CameraType>& outTypes);
+     static napi_value CreateObjectWithMap(napi_env env,
+diff --git a/services/camera_service/binder/base/src/icamera_util.cpp b/services/camera_service/binder/base/src/icamera_util.cpp
+index 41e8277940..3c8187b284 100644
+--- a/services/camera_service/binder/base/src/icamera_util.cpp
++++ b/services/camera_service/binder/base/src/icamera_util.cpp
+@@ -112,27 +112,27 @@ int32_t ServiceToCameraError(int32_t ret)
+ 
+ static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorMap = {
+     {CAMERA_OK, 0},
+-    {CAMERA_ALLOC_ERROR, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC},
++    {CAMERA_ALLOC_ERROR, InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC},
+     {CAMERA_INVALID_ARG, CameraErrorCode::SERVICE_FATL_ERROR},
+-    {CAMERA_INPUT_DEVICE, CameraErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE},
+-    {CAMERA_STOP_WITHOUT_START, CameraErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START},
++    {CAMERA_INPUT_DEVICE, InnerErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE},
++    {CAMERA_STOP_WITHOUT_START, InnerErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START},
+     {CAMERA_UNSUPPORTED, CameraErrorCode::DEVICE_DISABLED},
+     {CAMERA_DEVICE_BUSY, CameraErrorCode::CONFLICT_CAMERA},
+     {CAMERA_DEVICE_CLOSED, CameraErrorCode::DEVICE_DISABLED},
+     {CAMERA_DEVICE_REQUEST_TIMEOUT, CameraErrorCode::SERVICE_FATL_ERROR},
+     {CAMERA_STREAM_BUFFER_LOST, CameraErrorCode::SERVICE_FATL_ERROR},
+-    {CAMERA_INVALID_SESSION_CFG, CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG},
++    {CAMERA_INVALID_SESSION_CFG, InnerErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG},
+     {CAMERA_CAPTURE_LIMIT_EXCEED, CameraErrorCode::SERVICE_FATL_ERROR},
+     {CAMERA_INVALID_STATE, CameraErrorCode::SERVICE_FATL_ERROR},
+     {CAMERA_UNKNOWN_ERROR, CameraErrorCode::SERVICE_FATL_ERROR},
+-    {CAMERA_SERVICE_NULL, CameraErrorCode::SERVICE_FATL_ERROR_OF_SERVICE_NULL},
+-    {CAMERA_INVALID_RESOLUTION, CameraErrorCode::SERVICE_FATL_ERROR_OF_MISMATCH_RESOLUTION},
++    {CAMERA_SERVICE_NULL, InnerErrorCode::SERVICE_FATL_ERROR_OF_SERVICE_NULL},
++    {CAMERA_INVALID_RESOLUTION, InnerErrorCode::SERVICE_FATL_ERROR_OF_MISMATCH_RESOLUTION},
+     {CAMERA_DEVICE_PREEMPTED, CameraErrorCode::DEVICE_PREEMPTED},
+     {CAMERA_OPERATION_NOT_ALLOWED, CameraErrorCode::OPERATION_NOT_ALLOWED},
+     {CAMERA_DEVICE_ERROR, CameraErrorCode::OPERATION_NOT_ALLOWED},
+     {CAMERA_NO_PERMISSION, CameraErrorCode::OPERATION_NOT_ALLOWED},
+-    {CAMERA_CAPTURE_NOT_READY, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY},
+-    {CAMERA_DEVICE_CONFLICT, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT},
++    {CAMERA_CAPTURE_NOT_READY, InnerErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY},
++    {CAMERA_DEVICE_CONFLICT, InnerErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT},
+     {CAMERA_DEVICE_SWITCH_FREQUENT, CameraErrorCode::DEVICE_SWITCH_FREQUENT},
+     {CAMERA_DEVICE_LENS_RETRACTED, CameraErrorCode::CAMERA_LENS_RETRACTED},
+     {CAMERA_UNSUPPORTED_COMBINATION, CameraErrorCode::UNSUPPORTED_MULTI_CAMERA_COMBINATION},
+-- 
+2.51.2.huawei.11
+
