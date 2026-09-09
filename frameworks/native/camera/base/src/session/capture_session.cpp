@@ -1614,8 +1614,7 @@ int32_t CaptureSession::RemoveOutput(sptr<CaptureOutput>& output)
     CAMERA_SYNC_TRACE;
     MEDIA_DEBUG_LOG("Enter Into CaptureSession::RemoveOutput");
     CHECK_RETURN_RET_ELOG(!IsSessionConfiged(),
-        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY),
-        "CaptureSession::RemoveOutput operation Not allowed!");
+        CheckSAErrorCode(InnerErrorCode::OPERATION_NOT_ALLOWED_OF_SESSION_READY), "Operation Not allowed!");
     CHECK_RETURN_RET_ELOG(
         output == nullptr, ServiceToCameraError(CAMERA_INVALID_ARG), "CaptureSession::RemoveOutput output is null");
     output->SetSession(nullptr);
