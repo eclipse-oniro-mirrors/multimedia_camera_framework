@@ -45,7 +45,7 @@ static const std::unordered_map<int32_t, Camera_ErrorCode> frameworkToNdkErrorMa
     {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE), CAMERA_SERVICE_FATAL_ERROR},
     {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_SERVICE_NULL), CAMERA_SERVICE_FATAL_ERROR},
     {static_cast<int32_t>(InnerErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START), CAMERA_SERVICE_FATAL_ERROR},
-    {static_cast<int32_t>(InnerErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS),
+    {static_cast<int32_t>(CameraErrorCode::UNRESOLVED_CONFLICTS_BETWEEN_STREAMS),
      CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS},
     {static_cast<int32_t>(InnerErrorCode::CAPABILITY_NOT_SUPPORTED),
      CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED},
