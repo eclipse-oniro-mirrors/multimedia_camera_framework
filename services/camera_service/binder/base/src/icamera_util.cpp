@@ -17,6 +17,7 @@
 #include "camera_error_code.h"
 #include "camera_util.h"
 #include "camera_log.h"
+#include "camera_security_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
