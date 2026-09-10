@@ -148,14 +148,32 @@ static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorMap = {
     {IPC_STUB_CREATE_BUS_SERVER_ERR, CameraErrorCode::SERVICE_FATL_ERROR}
 };
 
-int32_t ServiceToCameraErrorV2(int32_t ret)
+int32_t FindNativeErrorCode(int32_t ret)
 {
     auto it = ServiceToCameraErrorMap.find(ret);
     if (it != ServiceToCameraErrorMap.end()) {
         return it->second;
     }
-    MEDIA_ERR_LOG("ServiceToCameraError() error code from service: %{public}d", ret);
+    MEDIA_ERR_LOG("FindNativeErrorCode() error code from service: %{public}d", ret);
     return CameraErrorCode::SERVICE_FATL_ERROR;
+}
+
+int32_t ServiceToCameraErrorV2(int32_t ret)
+{
+    // 如果是系统SA调用，走原有的错误码映射逻辑
+    if (CameraSecurity::CheckSystemSA()) {
+        return ServiceToCameraError(ret);
+    }
+    return FindNativeErrorCode(ret);
+}
+ 
+int32_t CheckSAErrorCode(int32_t ret)
+{
+    if (!CameraSecurity::CheckSystemSA()) {
+        return ret;
+    }
+    // 如果是系统SA调用，映射回原有的错误
+    return GetCameraErrorCode(ret);
 }
 } // namespace CameraStandard
 } // namespace OHOS
