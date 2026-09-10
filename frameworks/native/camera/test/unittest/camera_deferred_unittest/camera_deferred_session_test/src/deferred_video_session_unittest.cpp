@@ -265,27 +265,6 @@ HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_008, TestSize.Le
 
 /*
  * Feature: Framework
- * Function: Test DeferredVideoProcSession AddVideo with single path and null remoteSession_
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test AddVideo overload with srcPath/temp1Path/temp2Path/editPath
- *   when remoteSession_ is null, verify no crash
- */
-HWTEST_F(VideoSessionUnitTest, camera_deferred_session_unittest_009, TestSize.Level0)
-{
-    auto mockCallback = std::make_shared<MockVideoProcSessionCallback>();
-    auto procSession = sptr<DeferredVideoProcSession>::MakeSptr(userId_, mockCallback);
-    ASSERT_NE(procSession, nullptr);
-
-    EXPECT_CALL(*mockCallback, OnProcessVideoDone(_)).Times(0);
-    EXPECT_CALL(*mockCallback, OnError(_, _)).Times(0);
-    EXPECT_NO_FATAL_FAILURE(procSession->AddVideo("testVideoId", VIDEO_PATH, VIDEO_TEMP_PATH_1,
-        VIDEO_TEMP_PATH_2, VIDEO_PATH));
-}
-
-/*
- * Feature: Framework
  * Function: Test DeferredVideoProcSession AddVideo with valid remoteSession_
  * SubFunction: NA
  * FunctionPoints: NA

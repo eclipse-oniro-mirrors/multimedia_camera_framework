@@ -79,7 +79,7 @@ HWTEST_F(MediaManagerAdapterUnittest, media_manager_adapter_unittest_001, TestSi
     ASSERT_NE(adapter, nullptr);
 
     int32_t ret = adapter->MpegUnInit(0);
-    EXPECT_NE(ret, DP_OK);
+    EXPECT_EQ(ret, DP_ERR);
 }
 
 /*
