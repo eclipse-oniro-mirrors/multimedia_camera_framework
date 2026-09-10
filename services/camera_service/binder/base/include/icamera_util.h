@@ -23,6 +23,7 @@ namespace OHOS {
 namespace CameraStandard {
 int32_t ServiceToCameraError(int32_t ret);
 int32_t ServiceToCameraErrorV2(int32_t ret);
+int32_t CheckSAErrorCode(int32_t ret);
 } // namespace CameraStandard
 } // namespace OHOS
 #endif // OHOS_CAMERA_ICAMERA_UTIL_H
