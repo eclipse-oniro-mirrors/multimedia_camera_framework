@@ -139,6 +139,7 @@ ohos_fuzztest("HCaptureSessionFuzzTest") {
     "window_manager:libdm",
     "window_manager:libdm_lite",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+    "graphic_surface:buffer_handle",
   ]
 
   defines = []

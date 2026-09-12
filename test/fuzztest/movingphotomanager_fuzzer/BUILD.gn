@@ -81,6 +81,7 @@ ohos_fuzztest("MovingPhotoManagerFuzzTest") {
     "media_library:media_library_camera_helper",
     "samgr:samgr_proxy",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+    "graphic_surface:buffer_handle",
   ]
 }
 
