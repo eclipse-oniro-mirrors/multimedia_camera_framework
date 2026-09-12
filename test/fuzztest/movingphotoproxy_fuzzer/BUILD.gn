@@ -76,6 +76,7 @@ ohos_fuzztest("MovingPhotoProxyFuzzTest") {
     "samgr:samgr_proxy",
     "media_foundation:media_foundation",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+    "graphic_surface:buffer_handle",
   ]
 }
 

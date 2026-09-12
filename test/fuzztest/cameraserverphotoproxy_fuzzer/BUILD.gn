@@ -115,6 +115,7 @@ ohos_fuzztest("CameraServerPhotoProxyFuzzTest") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+    "graphic_surface:buffer_handle",
   ]
 }
 
