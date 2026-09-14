@@ -225,7 +225,7 @@ void VideoSessionForSysNapi::UnregisterLightStatusCallbackListener(
 {
     MEDIA_INFO_LOG("VideoSessionForSysNapi::UnregisterLightStatusCallbackListener is called");
     if (lightStatusCallback_ == nullptr) {
-        MEDIA_DEBUG_LOG("abilityCallback is null");
+        MEDIA_DEBUG_LOG("lightStatusCallback is null");
     } else {
         lightStatusCallback_->RemoveCallbackRef(eventName, callback);
     }
@@ -345,7 +345,7 @@ void VideoSessionForSysNapi::UnregisterZoomInfoCbListener(
 {
     MEDIA_INFO_LOG("VideoSessionForSysNapi::UnregisterZoomInfoCbListener is called");
     if (zoomInfoListener_ == nullptr) {
-        MEDIA_ERR_LOG("UnregisterZoomInfoCbListener is null");
+        MEDIA_ERR_LOG("zoomInfoListener is null");
     } else {
         zoomInfoListener_->RemoveCallbackRef(eventName, callback);
     }
