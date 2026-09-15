@@ -711,6 +711,12 @@ void HCameraService::OnAddSystemAbility(int32_t systemAbilityId, const std::stri
             CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(
                 EventFwk::CommonEventSupport::COMMON_EVENT_THERMAL_LEVEL_CHANGED,
                 std::bind(&HCameraService::OnReceiveEvent, this, std::placeholders::_1));
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
+            CameraCommonEventManager::GetInstance()->SubscribeCommonEvent(
+                "custom.event.CompConfigChange", [](const EventFwk::CommonEventData& data) {
+                    CameraApplistManager::GetInstance()->HandleCompConfigChangeEvent(data);
+                });
+#endif
             break;
         case RES_SCHED_SYS_ABILITY_ID:
             MEDIA_INFO_LOG("OnAddSystemAbility RES_SCHED_SYS_ABILITY_ID");

@@ -18,6 +18,7 @@
 
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <common_event_data.h>
 #include "safe_map.h"
 #include "camera_log.h"
 #include "datashare_helper.h"
@@ -45,6 +46,8 @@ public:
     void GetCustomLogicDirection(const std::string& bundleName, int32_t& customLogicDirection);
     void GetAppNaturalDirectionByBundleName(const std::string& bundleName, int32_t& naturalDirection);
 
+    void HandleCompConfigChangeEvent(const EventFwk::CommonEventData& data);
+
 private:
     CameraApplistManager();
 
@@ -52,7 +55,7 @@ private:
 
 #ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
     std::shared_ptr<ApplistConfigure> GetApplistConfigure(const std::string& bundleName);
-    std::shared_ptr<ApplistConfigure> GetConfigureFromCompConfigRead(const std::string& bundleName);
+    int32_t GetConfigureFromCompConfigRead(const std::string& bundleName, std::shared_ptr<ApplistConfigure>& config);
     std::shared_ptr<ApplistConfigure> GetApplistConfigureFromJson(const nlohmann::json& json);
 
     template<typename Fn>
@@ -75,6 +78,7 @@ private:
 private:
     static sptr<CameraApplistManager> cameraApplistManager_;
     std::map<int32_t, int32_t> displayModeToNaturalDirectionMap_;
+    std::mutex applistConfigureMapMutex_;
     std::map<std::string, std::shared_ptr<ApplistConfigure>> applistConfigureMap_;
 
     std::atomic<bool> initResult_ = false;
