@@ -944,6 +944,11 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChoosePhysicalCameras(
 
 vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<shared_ptr<CameraMetaInfo>> cameraInfos)
 {
+    OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+    pid_t callerPid = IPCSkeleton::GetCallingPid();
+    MEDIA_INFO_LOG("CreateCameraDevice E, pid:%{public}d", callerPid);
+    string permissionName = OHOS_PERMISSION_CAMERA_DRIVER_MONITOR;
+    int32_t ret = CheckPermission(permissionName, callerToken);
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
     for (auto& camera : cameraInfos) {
         MEDIA_DEBUG_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d, "
@@ -955,6 +960,12 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
             MEDIA_DEBUG_LOG("ChooseDefaultCameras system app skip filter, add camera ID:%{public}s",
                 camera->cameraId.c_str());
         } else {
+            bool dmsCamera = camera->automotivePosition == OHOS_CAMERA_POSITION_INTERIOR_ROW_1_LEFT && !ret;
+            if (dmsCamera) {
+                MEDIA_DEBUG_LOG("ChooseDeFaultCameras permissionName ret:%{public}d, "
+                    "Camera automotive position:%{public}d", ret, camera->automotivePosition);
+                continue;
+            }
             if (any_of(choosedCameras.begin(), choosedCameras.end(),
                 [camera](const auto& defaultCamera) {
                     return (camera->connectionType == OHOS_CAMERA_CONNECTION_TYPE_BUILTIN &&
