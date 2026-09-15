@@ -28,7 +28,9 @@ std::mutex CameraApplistManager::instanceMutex_;
 
 #ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
 constexpr int32_t COMP_CONFIG_OK = 0;
+constexpr int32_t MAX_RETRY_TIEMS = 3;
 constexpr char LOGIC_DEVICE[] = "logic_device";
+constexpr char HAS_CHANGE_KEY[] = "__has_change";
 const std::string COMPCONFIG_CLIENT_SO_PATH = "/system/lib64/platformsdk/libcompconfigclient.z.so";
 constexpr char COMP_CONFIG_READ_UTIL_GET_CONFIG_BY_APP[] = "CompConfigReadUtil_GetConfigByApp";
 constexpr char COMP_CONFIG_FREE_PROPERTY_VALUE_MAP_RESULT[] = "CompConfigFreePropertyValueMapResult";
@@ -113,54 +115,72 @@ bool CameraApplistManager::Init()
 #ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
 std::shared_ptr<ApplistConfigure> CameraApplistManager::GetApplistConfigure(const std::string& bundleName)
 {
+    std::lock_guard<std::mutex> lock(applistConfigureMapMutex_);
     auto itr = applistConfigureMap_.find(bundleName);
     CHECK_RETURN_RET(itr != applistConfigureMap_.end(), itr->second);
 
-    std::shared_ptr<ApplistConfigure> config = GetConfigureFromCompConfigRead(bundleName);
+    std::shared_ptr<ApplistConfigure> config;
+    for (int32_t i = 0; i < MAX_RETRY_TIEMS; i++) {
+        int32_t retCode = GetConfigureFromCompConfigRead(bundleName, config);
+        CHECK_BREAK(retCode == CAMERA_OK);
+    }
     applistConfigureMap_[bundleName] = config;
+
     return config;
 }
 
-std::shared_ptr<ApplistConfigure> CameraApplistManager::GetConfigureFromCompConfigRead(
-    const std::string& bundleName) __attribute__((no_sanitize("cfi")))
+int32_t CameraApplistManager::GetConfigureFromCompConfigRead(
+    const std::string& bundleName, std::shared_ptr<ApplistConfigure>& config) __attribute__((no_sanitize("cfi")))
 {
     MEDIA_INFO_LOG("CameraApplistManager::GetConfigureFromCompConfigRead is Called");
+    config = nullptr;
     auto fnGetConfigByApp = GetFunction<CompConfigReadUtilGetConfigByAppFunc>(COMP_CONFIG_READ_UTIL_GET_CONFIG_BY_APP);
-    CHECK_RETURN_RET_ELOG(fnGetConfigByApp == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(fnGetConfigByApp == nullptr, CAMERA_INVALID_STATE,
         "CameraApplistManager::GetConfigureFromCompConfigRead GetFunction fnGetConfigByApp failed");
     auto fnFreePvm = GetFunction<CompConfigFreePropertyValueMapResultFunc>(COMP_CONFIG_FREE_PROPERTY_VALUE_MAP_RESULT);
-    CHECK_RETURN_RET_ELOG(fnFreePvm == nullptr, nullptr,
+    CHECK_RETURN_RET_ELOG(fnFreePvm == nullptr, CAMERA_INVALID_STATE,
         "CameraApplistManager::GetConfigureFromCompConfigRead GetFunction fnFreePvm failed");
 
     auto appResult = fnGetConfigByApp(bundleName.c_str());
-    if (appResult.ret != COMP_CONFIG_OK || !appResult.entryCount || appResult.entries == nullptr) {
-        MEDIA_ERR_LOG("CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp failed");
+    // GetConfigByApp error, need retry
+    if (appResult.ret != COMP_CONFIG_OK) {
+        MEDIA_ERR_LOG("CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp failed, retCode: %{public}d",
+            appResult.ret);
         fnFreePvm(&appResult);
-        return nullptr;
+        return CAMERA_INVALID_STATE;
+    }
+    // don't have config
+    if (!appResult.entryCount || appResult.entries == nullptr) {
+        MEDIA_INFO_LOG("CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp have no config");
+        fnFreePvm(&appResult);
+        return CAMERA_OK;
     }
 
     for (int i = 0; i < appResult.entryCount; ++i) {
         auto entry = appResult.entries[i];
+        // data error, need retry
         if (entry.key == nullptr || entry.value == nullptr) {
             MEDIA_ERR_LOG(
                 "CameraApplistManager::GetConfigureFromCompConfigRead GetConfigByApp entry key or value is nullptr");
             fnFreePvm(&appResult);
-            return nullptr;
+            return CAMERA_INVALID_STATE;
         }
         CHECK_CONTINUE(strcmp(entry.key, LOGIC_DEVICE) != 0);
         MEDIA_INFO_LOG("CameraApplistManager::GetConfigureFromCompConfigRead bundleName: %{public}s, key: %{public}s, "
             "value: %{public}s", bundleName.c_str(), entry.key, entry.value);
         nlohmann::json whiteListJson = nlohmann::json::parse(entry.value, nullptr, false);
+        // parse error, need retry
         if (whiteListJson.is_discarded()) {
             MEDIA_ERR_LOG("CameraApplistManager::GetConfigureFromCompConfigRead json Parse Failed");
             fnFreePvm(&appResult);
-            return nullptr;
+            return CAMERA_INVALID_STATE;
         }
         fnFreePvm(&appResult);
-        return GetApplistConfigureFromJson(whiteListJson);
+        config = GetApplistConfigureFromJson(whiteListJson);
+        return CAMERA_OK;
     }
     fnFreePvm(&appResult);
-    return nullptr;
+    return CAMERA_OK;
 }
 
 std::shared_ptr<ApplistConfigure> CameraApplistManager::GetApplistConfigureFromJson(const nlohmann::json& json)
@@ -277,6 +297,41 @@ void CameraApplistManager::GetAppNaturalDirectionByBundleName(const std::string&
         "displayMode: %{public}d, naturalDirection: %{public}d", bundleName.c_str(), displayMode, naturalDirection);
 #endif
 }
+
+#ifdef COMPATIBILITY_CONFIG_CENTER_ENABLE
+void CameraApplistManager::HandleCompConfigChangeEvent(const EventFwk::CommonEventData& data)
+{
+    MEDIA_INFO_LOG("CameraApplistManager::HandleCompConfigChangeEvent is called");
+    std::lock_guard<std::mutex> lock(applistConfigureMapMutex_);
+    const auto &want = data.GetWant();
+    std::string action = want.GetAction();
+    CHECK_RETURN(action != "custom.event.CompConfigChange");
+    
+    std::string bundleName = want.GetElement().GetBundleName();
+    CHECK_RETURN_ELOG(bundleName.empty(), "CameraApplistManager failed to get bundleName.");
+    
+    AAFwk::WantParams wantParams = want.GetParams();
+    std::string hasChangeStr;
+    std::string logicDeviceValue;
+    for (auto it : wantParams.GetParams()) {
+        int32_t typeId = AAFwk::WantParams::GetDataType(it.second);
+        std::string valStr = wantParams.GetStringByType(it.second, typeId);
+        CHECK_EXECUTE(it.first == HAS_CHANGE_KEY, hasChangeStr = valStr);
+        CHECK_EXECUTE(it.first == LOGIC_DEVICE, logicDeviceValue = valStr);
+    }
+    CHECK_RETURN_ILOG(hasChangeStr != "true",
+        "CameraApplistManager no change, bundleName: %{public}s", bundleName.c_str());
+    CHECK_RETURN_ILOG(logicDeviceValue.empty(), "CameraApplistManager logicDeviceValue is empty.");
+    MEDIA_INFO_LOG("CameraApplistManager CompConfigChangeEvent bundleName: %{public}s, logic_device value: %{public}s",
+        bundleName.c_str(), logicDeviceValue.c_str());
+    
+    nlohmann::json whiteListJson = nlohmann::json::parse(logicDeviceValue, nullptr, false);
+    CHECK_RETURN_ELOG(whiteListJson.is_discarded(), "CameraApplistManager CompConfigChangeEvent json Parse Failed");
+
+    std::shared_ptr<ApplistConfigure> config = GetApplistConfigureFromJson(whiteListJson);
+    applistConfigureMap_[bundleName] = config;
+}
+#endif
 } // namespace CameraStandard
 } // namespace OHOS
 // LCOV_EXCL_STOP
