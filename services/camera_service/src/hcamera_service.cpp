@@ -946,7 +946,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
 {
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     pid_t callerPid = IPCSkeleton::GetCallingPid();
-    MEDIA_INFO_LOG("CreateCameraDevice E, Id:%{public}s, pid:%{public}d", cameraId.c_str(), callerPid);
+    MEDIA_INFO_LOG("CreateCameraDevice E, pid:%{public}d", callerPid);
     string permissionName = OHOS_PERMISSION_CAMERA_DRIVER_MONITOR;
     int32_t ret = CheckPermission(permissionName, callerToken);
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
