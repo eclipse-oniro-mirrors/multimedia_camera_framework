@@ -88,6 +88,7 @@ public:
  
     void SavePhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
     {
+        std::lock_guard<std::mutex> lock(photoAssetCallbackMutex_);
         photoAssetAvailableCallback_ = callback;
     }
 
@@ -151,6 +152,7 @@ public:
  
     void RemovePhotoAssetAvailableCallback(OH_PhotoOutput_PhotoAssetAvailable callback)
     {
+        std::lock_guard<std::mutex> lock(photoAssetCallbackMutex_);
         if (callback != nullptr) {
             photoAssetAvailableCallback_ = nullptr;
         }
@@ -277,17 +279,23 @@ public:
     {
         MEDIA_DEBUG_LOG("OnPhotoAssetAvailable E");
         CHECK_RETURN_ELOG(photoOutput_ == nullptr, "photoOutput is null");
-        CHECK_RETURN_ELOG(photoAssetAvailableCallback_ == nullptr, "callback is null");
+        OH_PhotoOutput_PhotoAssetAvailable cb = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(photoAssetCallbackMutex_);
+            cb = photoAssetAvailableCallback_;
+        }
+        CHECK_RETURN_ELOG(cb == nullptr, "callback is null");
         auto mediaAssetHelper = OHOS::Media::MediaAssetHelperFactory::CreateMediaAssetHelper();
         CHECK_RETURN_ELOG(mediaAssetHelper == nullptr, "create media asset helper failed");
         auto mediaAsset = mediaAssetHelper->GetMediaAsset(uri, cameraShotType, burstKey);
         CHECK_RETURN_ELOG(mediaAsset == nullptr, "Create photo asset failed");
-        photoAssetAvailableCallback_(photoOutput_, mediaAsset);
+        cb(photoOutput_, mediaAsset);
         MEDIA_DEBUG_LOG("OnPhotoAssetAvailable X");
     }
 
 private:
     Camera_PhotoOutput* photoOutput_;
+    mutable std::mutex photoAssetCallbackMutex_;
     PhotoOutput_Callbacks callback_;
     OH_PhotoOutput_CaptureStartWithInfo captureStartWithInfoCallback_ = nullptr;
     OH_PhotoOutput_CaptureEnd captureEndCallback_ = nullptr;
