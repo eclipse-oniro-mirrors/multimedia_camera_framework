@@ -62,6 +62,7 @@ static const std::string OHOS_PERMISSION_CAMERA_SHARED = "ohos.permission.CAMERA
 static const std::string OHOS_PERMISSION_MICROPHONE = "ohos.permission.MICROPHONE";
 static const std::string OHOS_PERMISSION_MANAGE_CAMERA_CONFIG = "ohos.permission.MANAGE_CAMERA_CONFIG";
 static const std::string OHOS_PERMISSION_CAMERA_CONTROL = "ohos.permission.CAMERA_CONTROL";
+static const std::string OHOS_PERMISSION_CAMERA_DRIVER_MONITOR = "ohos.permission.CAMERA_DRIVER_MONITOR";
 static const std::string SYSTEM_CAMERA = "com.huawei.hmos.camera";
 static const std::string CLIENT_USER_ID = "clientUserId";
 static const std::string CAMERA_ID = "cameraId";
