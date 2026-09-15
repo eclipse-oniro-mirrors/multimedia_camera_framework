@@ -67,7 +67,7 @@ PhotoAssetAdapter::PhotoAssetAdapter(int32_t cameraShotType, int32_t uid, uint32
 void PhotoAssetAdapter::AddPhotoProxy(sptr<Media::PhotoProxy> photoProxy)
 {
     if (photoAssetProxy_) {
-        photoAssetProxy_->AddPhotoProxy(photoProxy);
+        photoAssetProxy_->AddPhotoProxy(photoProxy, nullptr, "");
     }
 }
 
