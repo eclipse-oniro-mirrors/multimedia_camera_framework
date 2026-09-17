@@ -254,6 +254,39 @@ private:
     OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest_ = nullptr;
 };
 
+class InnerCameraDeviceSwitchRequestCallback : public CameraSwitchRequestCallback {
+public:
+    InnerCameraDeviceSwitchRequestCallback(
+        Camera_CaptureSession *captureSession, void* context,
+        OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
+        : captureSession_(captureSession), context_(context), cameraSwitchRequest_(*cameraSwitchRequest){};
+    ~InnerCameraDeviceSwitchRequestCallback() = default;
+
+    void OnAppCameraSwitch(const std::string &cameraId) override
+    {
+        MEDIA_INFO_LOG("InnerCameraDeviceSwitchRequestCallback::OnAppCameraSwitch is called!");
+        CHECK_RETURN(captureSession_ == nullptr || cameraSwitchRequest_ == nullptr);
+        Camera_Device switchInfo;
+        sptr<CameraDevice> cameraInfo = CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
+        CHECK_RETURN_ELOG(cameraInfo == nullptr, "cameraInfo is null");
+        std::vector<char> buffer(cameraId.begin(), cameraId.end());
+        buffer.push_back('\0');
+        switchInfo.cameraId = buffer.data();
+        switchInfo.cameraPosition = static_cast<Camera_Position>(cameraInfo->GetPosition());
+        switchInfo.cameraType = static_cast<Camera_Type>(cameraInfo->GetCameraType());
+        switchInfo.connectionType = static_cast<Camera_Connection>(cameraInfo->GetConnectionType());
+        cameraSwitchRequest_(context_, captureSession_, &switchInfo);
+       MEDIA_INFO_LOG(
+            "InnerCameraDeviceSwitchRequestCallback::cameraSwitchRequest_ cameraId is: oriCameraId=%{public}s",
+            switchInfo.cameraId);
+    }
+
+private:
+    Camera_CaptureSession *captureSession_;
+    void* context_ = nullptr;
+    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest_ = nullptr;
+};
+
 class InnerCaptureSessionMacroStatusCallback : public MacroStatusCallback {
 public:
     InnerCaptureSessionMacroStatusCallback(Camera_CaptureSession* captureSession,
@@ -1186,6 +1219,28 @@ Camera_ErrorCode Camera_CaptureSession::UnregisterRemoteDeviceSwitchCallback(
 {
         MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterRemoteDeviceSwitchCallback");
                 innerCaptureSession_->UnSetCameraSwitchRequestCallback();
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::RegisterCameraDeviceSwitchRequestCallback(
+    void* context, OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::RegisterCameraDeviceSwitchRequestCallback");
+    CHECK_PRINT_ELOG(cameraSwitchRequest == nullptr,
+        "Camera_CaptureSession::RegisterCameraDeviceSwitchRequestCallback cameraSwitchRequest is null.");
+    shared_ptr<InnerCameraDeviceSwitchRequestCallback> innerCameraDeviceSwitchRequestCallback =
+        make_shared<InnerCameraDeviceSwitchRequestCallback>(this, context, cameraSwitchRequest);
+    CHECK_RETURN_RET_ELOG(
+        innerCameraDeviceSwitchRequestCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback failed!");
+    innerCaptureSession_->SetCameraSwitchRequestCallback(innerCameraDeviceSwitchRequestCallback);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode Camera_CaptureSession::UnregisterCameraDeviceSwitchRequestCallback(
+    void* context, OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
+{
+    MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterCameraDeviceSwitchRequestCallback");
+            innerCaptureSession_->UnSetCameraSwitchRequestCallback();
     return CAMERA_OK;
 }
 

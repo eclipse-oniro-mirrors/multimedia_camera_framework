@@ -19,6 +19,7 @@
 #include "camera_input_taihe.h"
 #include "camera_output_taihe.h"
 #include "event_handler.h"
+#include "input/camera_manager.h"
 
 namespace Ani {
 namespace Camera {
@@ -208,7 +209,7 @@ array<CameraOutputCapability> SessionImpl::GetCameraOutputCapabilities(CameraDev
     std::vector<sptr<OHOS::CameraStandard::CameraOutputCapability>> caplist =
         captureSession_->GetCameraOutputCapabilities(cameraInfo);
     std::vector<CameraOutputCapability> vec;
-    for (size_t i = 0; i < caplist.size(); i++) {
+    for (size_t i = 0; i < caplist.size(); i) {
         if (caplist[i] == nullptr) {
             continue;
         }
@@ -237,7 +238,7 @@ array<ControlCenterEffectType> SessionImpl::GetSupportedEffectTypes()
     std::vector<ControlCenterEffectType> vec;
     if (captureSession_ != nullptr) {
         effectTypes = captureSession_->GetSupportedEffectTypes();
-        for (size_t i = 0; i < effectTypes.size(); i++) {
+        for (size_t i = 0; i < effectTypes.size(); i) {
             vec.push_back(ControlCenterEffectType::from_value(static_cast<int32_t>(effectTypes[i])));
         }
     } else {
@@ -355,6 +356,31 @@ void PressureCallbackListener::OnPressureStatusChanged(
 {
     MEDIA_DEBUG_LOG("OnPressureStatusChanged is called, systemPressureLevel: %{public}d", systemPressureLevel);
     OnSystemPressureLevelCallback(systemPressureLevel);
+}
+
+void SessionImpl::OnCameraSwitchRequest(callback_view<void(CameraDevice const&)> callback)
+{
+    ListenerTemplate<SessionImpl>::On(this, callback, "cameraSwitchRequest");
+}
+
+void SessionImpl::OffCameraSwitchRequest(
+    optional_view<callback<void(CameraDevice const&)>> callback)
+{
+    ListenerTemplate<SessionImpl>::Off(this, callback, "cameraSwitchRequest");
+}
+
+void SessionImpl::RegisterCameraSwitchRequestCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void SessionImpl::UnregisterCameraSwitchRequestCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
 }
 
 void PressureCallbackListener::OnSystemPressureLevelCallback(
@@ -798,7 +824,7 @@ void SessionImpl::RegisterFeatureDetectionStatusListener(const std::string& even
         captureSessionForSys_->EnableTripodDetection(true);
         captureSessionForSys_->UnlockForControl();
     }
-    featureDetectionCallback_->SaveCallbackReference(eventName + std::to_string(featureType_), callback, isOnce);
+    featureDetectionCallback_->SaveCallbackReference(eventName  std::to_string(featureType_), callback, isOnce);
 }
 
 void SessionImpl::UnregisterFeatureDetectionStatusListener(
@@ -814,7 +840,7 @@ void SessionImpl::UnregisterFeatureDetectionStatusListener(
         return;
     }
 
-    featureDetectionCallback_->RemoveCallbackRef(eventName + std::to_string(featureType_), callback);
+    featureDetectionCallback_->RemoveCallbackRef(eventName  std::to_string(featureType_), callback);
 
     if (featureType_ == OHOS::CameraStandard::SceneFeature::FEATURE_LOW_LIGHT_BOOST &&
         !featureDetectionCallback_->IsFeatureSubscribed(OHOS::CameraStandard::SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
@@ -845,8 +871,8 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
     MEDIA_DEBUG_LOG("OnFeatureDetectionStatusChangedCallback is called");
     auto sharePtr = shared_from_this();
     auto task = [feature, status, sharePtr]() {
-        std::string eventName = "featureDetection" + std::to_string(static_cast<int32_t>(feature));
-        std::string eventNameOld = "featureDetectionStatus" + std::to_string(static_cast<int32_t>(feature));
+        std::string eventName = "featureDetection"  std::to_string(static_cast<int32_t>(feature));
+        std::string eventNameOld = "featureDetectionStatus"  std::to_string(static_cast<int32_t>(feature));
         auto featureType = SceneFeatureType::from_value(static_cast<int32_t>(feature));
         SceneFeatureDetectionResult sceneFeatureDetectionResult = {
             featureType,
@@ -863,8 +889,8 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
 
 bool FeatureDetectionStatusCallbackListener::IsFeatureSubscribed(OHOS::CameraStandard::SceneFeature feature)
 {
-    std::string eventName = "featureDetection" + std::to_string(static_cast<int32_t>(feature));
-    std::string eventNameOld = "featureDetectionStatus" + std::to_string(static_cast<int32_t>(feature));
+    std::string eventName = "featureDetection"  std::to_string(static_cast<int32_t>(feature));
+    std::string eventNameOld = "featureDetectionStatus"  std::to_string(static_cast<int32_t>(feature));
 
     return !IsEmpty(eventName) || !IsEmpty(eventNameOld);
 }

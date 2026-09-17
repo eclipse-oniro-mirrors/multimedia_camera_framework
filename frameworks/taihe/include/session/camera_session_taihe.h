@@ -202,6 +202,18 @@ private:
     void OnExposureStateChangedCallback(OHOS::CameraStandard::ExposureCallback::ExposureState info) const;
 };
 
+class CameraSwitchRequestCallbackListener : public OHOS::CameraStandard::CameraSwitchRequestCallback,
+    public ListenerBase,
+    public std::enable_shared_from_this<CameraSwitchRequestCallbackListener> {
+public:
+    CameraSwitchRequestCallbackListener(ani_env* env) : ListenerBase(env) {}
+    ~CameraSwitchRequestCallbackListener() = default;
+    void OnAppCameraSwitch(const std::string& cameraId) override;
+
+private:
+    void OnAppCameraSwitchCallback(const std::string& cameraId) const;
+};
+
 class SessionImpl : public CameraAniEventEmitter<SessionImpl>,
                     virtual public SessionBase {
 public:
@@ -289,6 +301,8 @@ public:
     void OffExposureStateChange(optional_view<callback<void(ExposureState)>> callback);
     void OnApertureInfoChangeWithoutErr(callback_view<void(ApertureInfo const&)> callback);
     void OffApertureInfoChangeWithoutErr(optional_view<callback<void(ApertureInfo const&)>> callback);
+    void OnCameraSwitchRequest(callback_view<void(CameraDevice const&)> callback);
+    void OffCameraSwitchRequest(optional_view<callback<void(CameraDevice const&)>> callback);
 
     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;
@@ -299,6 +313,7 @@ public:
     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_ = nullptr;
     std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_ = nullptr;
     std::shared_ptr<ControlCenterEffectStatusCallbackListener> controlCenterEffectStatusCallback_ = nullptr;
+    std::shared_ptr<CameraSwitchRequestCallbackListener> cameraSwitchRequestCallback_ = nullptr;
     
     static uint32_t cameraSessionTaskId_;
     int32_t featureType_;
@@ -330,6 +345,10 @@ private:
     virtual void RegisterControlCenterEffectStatusCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback, bool isOnce);
     virtual void UnregisterControlCenterEffectStatusCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback);
+    virtual void RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
+        std::shared_ptr<uintptr_t> callback, bool isOnce);
+    virtual void UnregisterCameraSwitchRequestCallbackListener(const std::string& eventName,
         std::shared_ptr<uintptr_t> callback);
 
     static const EmitterFunctions fun_map_;

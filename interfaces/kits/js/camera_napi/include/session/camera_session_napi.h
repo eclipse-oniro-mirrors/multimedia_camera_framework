@@ -940,6 +940,7 @@ public:
     static const std::vector<napi_property_descriptor> saturation_props;
     static const std::vector<napi_property_descriptor> aperture_info_cb_props;
     static const std::vector<napi_property_descriptor> color_cube_props;
+    static const std::vector<napi_property_descriptor> camera_switch_cb_props;
     void RegisterExposureCallbackListener(const std::string& eventName, napi_env env, napi_value callback,
         const std::vector<napi_value>& args, bool isOnce, bool isAsync = true);
     void UnregisterExposureCallbackListener(

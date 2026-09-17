@@ -1341,6 +1341,20 @@ Camera_ErrorCode OH_CaptureSession_EnableControlCenter(Camera_CaptureSession* se
  Camera_ErrorCode OH_CaptureSession_UnregisterRemoteDeviceSwitchCallback(
     Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
 
+Camera_ErrorCode OH_CaptureSession_UnregisterCameraSwitchRequestCallback(
+     Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+ 
+typedef void (*OH_CaptureSession_OnCameraDeviceSwitchRequest)(void* context, Camera_CaptureSession *session,
+    Camera_Device *device);
+
+Camera_ErrorCode OH_CaptureSession_RegisterCameraDeviceSwitchRequestCallback(
+    const Camera_CaptureSession* session, void* context,
+    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest);
+
+Camera_ErrorCode OH_CaptureSession_UnregisterCameraDeviceSwitchRequestCallback(
+    const Camera_CaptureSession* session, void* context,
+    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest);
+
 typedef void (*OH_CaptureSession_OnMacroStatusChange)(Camera_CaptureSession *session, bool isMacroActive);
 
 Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusChangeCallback(

@@ -390,6 +390,11 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::color_cube_props 
     DECLARE_NAPI_FUNCTION("setRGBBias", CameraSessionNapi::SetWhiteBalanceGains)
 };
 
+const std::vector<napi_property_descriptor> CameraSessionNapi::camera_switch_cb_props = {
+    DECLARE_NAPI_FUNCTION("onCameraSwitchRequest", CameraSessionNapi::OnCameraSwitchRequest),
+    DECLARE_NAPI_FUNCTION("offCameraSwitchRequest", CameraSessionNapi::OffCameraSwitchRequest),
+};
+
 void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info, bool isSync) const
 {
     MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackAsync is called");
@@ -6104,29 +6109,13 @@ void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallback(std::string 
 
 void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallbackSync(std::string &destCameraId) const
 {
-    MEDIA_DEBUG_LOG("OnAppCameraSwitchCallback is called");
+    MEDIA_INFO_LOG("OnAppCameraSwitchCallbackSync is called");
     sptr<CameraDevice> cameraInfo = CameraManager::GetInstance()->GetCameraDeviceFromId(destCameraId);
     CHECK_RETURN_ELOG(cameraInfo == nullptr, "CameraSwitchRequestCallbackListener:: cameraInfo is null");
-    
+
     napi_value result[ARGS_TWO] = {nullptr};
     napi_value retVal;
-    napi_value propValue;
-    napi_create_object(env_, &result[PARAM0]);
-
-    napi_create_string_utf8(env_, destCameraId.data(), NAPI_AUTO_LENGTH, &propValue);
-    napi_set_named_property(env_, result[PARAM0], "cameraId", propValue);
-
-    napi_create_int32(env_, static_cast<Camera_Position>(cameraInfo->GetPosition()), &propValue);
-    napi_set_named_property(env_, result[PARAM0], "cameraPosition", propValue);
-
-    napi_create_int32(env_, static_cast<Camera_Type>(cameraInfo->GetCameraType()), &propValue);
-    napi_set_named_property(env_, result[PARAM0], "cameraType", propValue);
-
-    napi_create_int32(env_, static_cast<Camera_Connection>(cameraInfo->GetConnectionType()), &propValue);
-    napi_set_named_property(env_, result[PARAM0], "connectionType", propValue);
-
-    napi_create_string_utf8(env_, static_cast<string>(cameraInfo->GetHostName()).c_str(), NAPI_AUTO_LENGTH, &propValue);
-    napi_set_named_property(env_, result[PARAM0], "hostDeviceName", propValue);
+    result[PARAM0] = CameraNapiObjCameraDevice(*cameraInfo).GenerateNapiValue(env_);
 
     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
     ExecuteCallback("cameraSwitchRequest", callbackNapiPara);
