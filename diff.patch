@@ -1,0 +1,625 @@
+From efef28e5411238314e5d7d2ab4023aff1d2eefd7 Mon Sep 17 00:00:00 2001
+From: m00939602 <mengzhe5@huawei.com>
+Date: Thu, 17 Sep 2026 11:56:20 +0800
+Subject: [PATCH] =?UTF-8?q?TicketNo:AR20260601456904=20Description:AI?=
+ =?UTF-8?q?=E7=9C=BC=E9=95=9C=E8=AE=BE=E5=A4=87=E7=B1=BB=E5=9E=8B=E5=92=8C?=
+ =?UTF-8?q?=E9=95=9C=E5=A4=B4=E5=88=87=E6=8D=A2=E7=9B=91=E5=90=AC=E6=8E=A5?=
+ =?UTF-8?q?=E5=8F=A3=E5=BC=80=E6=94=BE=20Team:EMUI=20Feature=20or=20Bugfix?=
+ =?UTF-8?q?:Bugfix=20Binary=20Source:No=20PrivateCode(Yes/No):No?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+AI[87%] Human Fixed[0%] Human[13%] AI Adopted[91%]
+Co-authored-by: codeagentcli (GLM-5.2-CodeAgent) <ai@local>
+Co-authored-by: codeagentcli (Qwen3.6-27B-CodeAgent-VL) <ai@local>
+Co-authored-by: codeagentcli (GLM-5.2-CodeAgent) <ai@local>
+Co-authored-by: codeagentcli (Qwen3.6-27B-CodeAgent-VL) <ai@local>
+Co-authored-by: codeagentcli (GLM-5.2-CodeAgent) <ai@local>
+Co-authored-by: codeagentcli (Qwen3.6-27B-CodeAgent-VL) <ai@local>
+Co-authored-by: codeagentcli (GLM-5.2-CodeAgent) <ai@local>
+Co-authored-by: codeagentcli (GLM-5.2-V2.0-Spark) <ai@local>
+Co-authored-by: codeagentcli (Qwen3.6-27B-CodeAgent-VL) <ai@local>
+
+Change-Id: I719a7b5fb97ebabb3253bd289b7abf86b179eae8
+---
+ .../src/mode/photo_session_napi.cpp           |  3 +-
+ .../src/mode/video_session_napi.cpp           |  4 +-
+ .../src/session/camera_session_napi.cpp       | 27 +++-----
+ frameworks/native/ndk/capture_session.cpp     | 30 ++++++++-
+ .../native/ndk/impl/capture_session_impl.cpp  | 62 ++++++++++++++++++-
+ .../native/ndk/impl/capture_session_impl.h    |  8 ++-
+ .../taihe/include/mode/photo_session_taihe.h  |  7 ++-
+ .../taihe/include/mode/video_session_taihe.h  |  5 ++
+ .../include/session/camera_session_taihe.h    | 21 ++++++-
+ .../taihe/src/mode/photo_session_taihe.cpp    | 22 +++++++
+ .../taihe/src/mode/video_session_taihe.cpp    | 24 +++++++
+ .../src/session/camera_session_taihe.cpp      | 51 +++++++++++++++
+ .../camera/include/session/capture_session.h  |  2 +-
+ .../include/session/camera_session_napi.h     |  1 +
+ .../native/include/camera/capture_session.h   | 19 ++++--
+ 15 files changed, 254 insertions(+), 32 deletions(-)
+
+diff --git a/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp b/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp
+index 7c78a373b4..7f051d3d56 100644
+--- a/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp
++++ b/frameworks/js/camera_napi/src/mode/photo_session_napi.cpp
+@@ -49,7 +49,7 @@ napi_value PhotoSessionNapi::Init(napi_env env, napi_value exports)
+         filter_props, preconfig_props, color_management_props, auto_switch_props, macro_props, white_balance_props,
+         iso_props, manual_iso_props, manual_exposure_props, manual_focus_props, exposure_cb_props, flash_cb_props,
+         raw_props, physical_aperture_props, optical_image_stabilization_props, exposure_state_cb_props,
+-        notification_status_cb_props, focus_tracking_normal_props };
++        notification_status_cb_props, focus_tracking_normal_props, camera_switch_cb_props};
+     std::vector<napi_property_descriptor> photo_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
+     status = napi_define_class(env, PHOTO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
+                                PhotoSessionNapiConstructor, nullptr,
+@@ -224,6 +224,7 @@ void PhotoSessionNapi::RegisterCameraSwitchRequestCallbackListener(const std::st
+         cameraSwitchSessionNapiCallback_ = std::make_shared<CameraSwitchRequestCallbackListener>(env);
+         cameraSession_->SetCameraSwitchRequestCallback(cameraSwitchSessionNapiCallback_);
+     }
++    cameraSwitchSessionNapiCallback_->SetIsAsync(isAsync);
+     cameraSwitchSessionNapiCallback_->SaveCallbackReference(eventName, callback, isOnce);
+ }
+ 
+diff --git a/frameworks/js/camera_napi/src/mode/video_session_napi.cpp b/frameworks/js/camera_napi/src/mode/video_session_napi.cpp
+index 4581b5a2b1..818b687304 100644
+--- a/frameworks/js/camera_napi/src/mode/video_session_napi.cpp
++++ b/frameworks/js/camera_napi/src/mode/video_session_napi.cpp
+@@ -53,7 +53,8 @@ napi_value VideoSessionNapi::Init(napi_env env, napi_value exports)
+         quality_prioritization_props, macro_props, white_balance_props, control_center_props, iso_props,
+         manual_iso_props, manual_exposure_props, manual_focus_props, exposure_cb_props, flash_cb_props, raw_props,
+         physical_aperture_props, optical_image_stabilization_props, notification_status_cb_props,
+-        focus_tracking_normal_props, saturation_props, aperture_info_cb_props, color_cube_props };
++        focus_tracking_normal_props, saturation_props, aperture_info_cb_props, color_cube_props,
++        camera_switch_cb_props};
+     std::vector<napi_property_descriptor> video_session_props = CameraNapiUtils::GetPropertyDescriptor(descriptors);
+     status = napi_define_class(env, VIDEO_SESSION_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH,
+                                VideoSessionNapiConstructor, nullptr,
+@@ -223,6 +224,7 @@ void VideoSessionNapi::RegisterCameraSwitchRequestCallbackListener(const std::st
+         cameraSwitchSessionNapiCallback_ = std::make_shared<CameraSwitchRequestCallbackListener>(env);
+         cameraSession_->SetCameraSwitchRequestCallback(cameraSwitchSessionNapiCallback_);
+     }
++    cameraSwitchSessionNapiCallback_->SetIsAsync(isAsync);
+     cameraSwitchSessionNapiCallback_->SaveCallbackReference(eventName, callback, isOnce);
+ }
+ 
+diff --git a/frameworks/js/camera_napi/src/session/camera_session_napi.cpp b/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
+index ba10ab3d30..21ada9118f 100644
+--- a/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
++++ b/frameworks/js/camera_napi/src/session/camera_session_napi.cpp
+@@ -433,6 +433,11 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::notification_stat
+     DECLARE_NAPI_FUNCTION("offNotificationReceive", CameraSessionNapi::OffNotificationReceive),
+ };
+ 
++const std::vector<napi_property_descriptor> CameraSessionNapi::camera_switch_cb_props = {
++    DECLARE_NAPI_FUNCTION("onCameraSwitchRequest", CameraSessionNapi::OnCameraSwitchRequest),
++    DECLARE_NAPI_FUNCTION("offCameraSwitchRequest", CameraSessionNapi::OffCameraSwitchRequest),
++};
++
+ void IsoInfoCallbackListener::OnIsoInfoChangedCallbackAsync(IsoInfo info, bool isSync) const
+ {
+     MEDIA_DEBUG_LOG("OnIsoInfoChangedCallbackAsync is called");
+@@ -6931,29 +6936,13 @@ void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallback(std::string
+ 
+ void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallbackSync(std::string &destCameraId) const
+ {
+-    MEDIA_DEBUG_LOG("OnAppCameraSwitchCallback is called");
++    MEDIA_INFO_LOG("OnAppCameraSwitchCallbackSync is called");
+     sptr<CameraDevice> cameraInfo = CameraManager::GetInstance()->GetCameraDeviceFromId(destCameraId);
+     CHECK_RETURN_ELOG(cameraInfo == nullptr, "CameraSwitchRequestCallbackListener:: cameraInfo is null");
+-    
++
+     napi_value result[ARGS_TWO] = {nullptr};
+     napi_value retVal;
+-    napi_value propValue;
+-    napi_create_object(env_, &result[PARAM0]);
+-
+-    napi_create_string_utf8(env_, destCameraId.data(), NAPI_AUTO_LENGTH, &propValue);
+-    napi_set_named_property(env_, result[PARAM0], "cameraId", propValue);
+-
+-    napi_create_int32(env_, static_cast<Camera_Position>(cameraInfo->GetPosition()), &propValue);
+-    napi_set_named_property(env_, result[PARAM0], "cameraPosition", propValue);
+-
+-    napi_create_int32(env_, static_cast<Camera_Type>(cameraInfo->GetCameraType()), &propValue);
+-    napi_set_named_property(env_, result[PARAM0], "cameraType", propValue);
+-
+-    napi_create_int32(env_, static_cast<Camera_Connection>(cameraInfo->GetConnectionType()), &propValue);
+-    napi_set_named_property(env_, result[PARAM0], "connectionType", propValue);
+-
+-    napi_create_string_utf8(env_, static_cast<string>(cameraInfo->GetHostName()).c_str(), NAPI_AUTO_LENGTH, &propValue);
+-    napi_set_named_property(env_, result[PARAM0], "hostDeviceName", propValue);
++    result[PARAM0] = CameraNapiObjCameraDevice(*cameraInfo).GenerateNapiValue(env_);
+ 
+     ExecuteCallbackNapiPara callbackNapiPara { .recv = nullptr, .argc = ARGS_ONE, .argv = result, .result = &retVal };
+     ExecuteCallback("cameraSwitchRequest", callbackNapiPara);
+diff --git a/frameworks/native/ndk/capture_session.cpp b/frameworks/native/ndk/capture_session.cpp
+index 53033ab0d8..df0db25ea7 100644
+--- a/frameworks/native/ndk/capture_session.cpp
++++ b/frameworks/native/ndk/capture_session.cpp
+@@ -1058,6 +1058,7 @@ Camera_ErrorCode OH_CaptureSession_UnregisterFlashStateChangeCallback(
+ 
+ Camera_ErrorCode OH_CaptureSession_RegisterCameraSwitchRequestCallback(
+     Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
++ 
+ {
+     MEDIA_INFO_LOG("Camera_ErrorCode::OH_CaptureSession_RegisterCameraSwitchRequestCallback enter");
+     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+@@ -1066,9 +1067,10 @@ Camera_ErrorCode OH_CaptureSession_RegisterCameraSwitchRequestCallback(
+     session->RegisterCameraSwitchRequestCallback(cameraSwitchRequest);
+     return CAMERA_OK;
+ }
+-
++ 
+ Camera_ErrorCode OH_CaptureSession_UnregisterCameraSwitchRequestCallback(
+     Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
++ 
+ {
+     MEDIA_INFO_LOG("Camera_ErrorCode::OH_CaptureSession_UnrgisterCameraSwitchRequestCallback enter");
+     CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+@@ -1078,6 +1080,32 @@ Camera_ErrorCode OH_CaptureSession_UnregisterCameraSwitchRequestCallback(
+     return CAMERA_OK;
+ }
+ 
++Camera_ErrorCode OH_CaptureSession_RegisterCameraDeviceSwitchRequestCallback(
++    const Camera_CaptureSession* session, void* context,
++    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
++{
++    MEDIA_INFO_LOG("OH_CaptureSession_RegisterCameraDeviceSwitchRequestCallback enter");
++    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
++    CHECK_RETURN_RET_ELOG(
++        cameraSwitchRequest == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
++    const_cast<Camera_CaptureSession *>(session)->RegisterCameraDeviceSwitchRequestCallback(context,
++                                                                                            cameraSwitchRequest);
++    return CAMERA_OK;
++}
++
++Camera_ErrorCode OH_CaptureSession_UnregisterCameraDeviceSwitchRequestCallback(
++    const Camera_CaptureSession* session, void* context,
++    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
++{
++    MEDIA_INFO_LOG("OH_CaptureSession_UnregisterCameraDeviceSwitchRequestCallback enter");
++    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
++    CHECK_RETURN_RET_ELOG(
++        cameraSwitchRequest == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
++    const_cast<Camera_CaptureSession*>(session)->UnregisterCameraDeviceSwitchRequestCallback(context,
++                                                                                             cameraSwitchRequest);
++    return CAMERA_OK;
++}
++
+ Camera_ErrorCode OH_CaptureSession_RegisterNotificationReceivedCallback(
+     const Camera_CaptureSession* session, void* context, OH_CaptureSession_OnNotificationReceive callback)
+ {
+diff --git a/frameworks/native/ndk/impl/capture_session_impl.cpp b/frameworks/native/ndk/impl/capture_session_impl.cpp
+index 5125824704..5da259576c 100644
+--- a/frameworks/native/ndk/impl/capture_session_impl.cpp
++++ b/frameworks/native/ndk/impl/capture_session_impl.cpp
+@@ -226,13 +226,15 @@ private:
+     Camera_CaptureSession* captureSession_;
+     OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange_ = nullptr;
+ };
++
+ class InnerCameraSwitchRequestCallback : public CameraSwitchRequestCallback {
+ public:
+     InnerCameraSwitchRequestCallback(
+         Camera_CaptureSession *captureSession, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
+         : captureSession_(captureSession), cameraSwitchRequest_(*cameraSwitchRequest){};
++ 
+     ~InnerCameraSwitchRequestCallback() = default;
+-
++ 
+     void OnAppCameraSwitch(const std::string &cameraId) override
+     {
+         MEDIA_INFO_LOG("InnerCameraSwitchRequestCallback::OnAppCameraSwitch is called!");
+@@ -253,9 +255,43 @@ public:
+     
+ private:
+     Camera_CaptureSession *captureSession_;
++ 
+     OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest_ = nullptr;
+ };
+ 
++class InnerCameraDeviceSwitchRequestCallback : public CameraSwitchRequestCallback {
++public:
++    InnerCameraDeviceSwitchRequestCallback(
++        Camera_CaptureSession *captureSession, void* context,
++        OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
++        : captureSession_(captureSession), context_(context), cameraSwitchRequest_(*cameraSwitchRequest){};
++    ~InnerCameraDeviceSwitchRequestCallback() = default;
++
++    void OnAppCameraSwitch(const std::string &cameraId) override
++    {
++        MEDIA_INFO_LOG("InnerCameraDeviceSwitchRequestCallback::OnAppCameraSwitch is called!");
++        CHECK_RETURN(captureSession_ == nullptr || cameraSwitchRequest_ == nullptr);
++        Camera_Device switchInfo;
++        sptr<CameraDevice> cameraInfo = CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
++        CHECK_RETURN_ELOG(cameraInfo == nullptr, "cameraInfo is null");
++        std::vector<char> buffer(cameraId.begin(), cameraId.end());
++        buffer.push_back('\0');
++        switchInfo.cameraId = buffer.data();
++        switchInfo.cameraPosition = static_cast<Camera_Position>(cameraInfo->GetPosition());
++        switchInfo.cameraType = static_cast<Camera_Type>(cameraInfo->GetCameraType());
++        switchInfo.connectionType = static_cast<Camera_Connection>(cameraInfo->GetConnectionType());
++        cameraSwitchRequest_(context_, captureSession_, &switchInfo);
++        MEDIA_INFO_LOG(
++            "InnerCameraDeviceSwitchRequestCallback::cameraSwitchRequest_ cameraId is: oriCameraId=%{public}s",
++            switchInfo.cameraId);
++    }
++
++private:
++    Camera_CaptureSession *captureSession_;
++    void* context_ = nullptr;
++    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest_ = nullptr;
++};
++
+ class InnerCaptureSessionMacroStatusCallback : public MacroStatusCallback {
+ public:
+     InnerCaptureSessionMacroStatusCallback(Camera_CaptureSession* captureSession,
+@@ -1236,11 +1272,33 @@ Camera_ErrorCode Camera_CaptureSession::RegisterCameraSwitchRequestCallback(
+ Camera_ErrorCode Camera_CaptureSession::UnregisterCameraSwitchRequestCallback(
+     OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
+ {
+-        MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterCameraSwitchRequestCallback");
++    MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterCameraSwitchRequestCallback");
+                 innerCaptureSession_->UnSetCameraSwitchRequestCallback();
+     return CAMERA_OK;
+ }
+ 
++Camera_ErrorCode Camera_CaptureSession::RegisterCameraDeviceSwitchRequestCallback(
++    void* context, OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
++{
++    MEDIA_INFO_LOG("Camera_CaptureSession::RegisterCameraDeviceSwitchRequestCallback");
++    CHECK_PRINT_ELOG(cameraSwitchRequest == nullptr,
++        "Camera_CaptureSession::RegisterCameraDeviceSwitchRequestCallback cameraSwitchRequest is null.");
++    shared_ptr<InnerCameraDeviceSwitchRequestCallback> innerCameraDeviceSwitchRequestCallback =
++        make_shared<InnerCameraDeviceSwitchRequestCallback>(this, context, cameraSwitchRequest);
++    CHECK_RETURN_RET_ELOG(
++        innerCameraDeviceSwitchRequestCallback == nullptr, CAMERA_SERVICE_FATAL_ERROR, "create innerCallback failed!");
++    innerCaptureSession_->SetCameraSwitchRequestCallback(innerCameraDeviceSwitchRequestCallback);
++    return CAMERA_OK;
++}
++
++Camera_ErrorCode Camera_CaptureSession::UnregisterCameraDeviceSwitchRequestCallback(
++    void* context, OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
++{
++    MEDIA_INFO_LOG("Camera_CaptureSession::UnregisterCameraDeviceSwitchRequestCallback");
++            innerCaptureSession_->UnSetCameraSwitchRequestCallback();
++    return CAMERA_OK;
++}
++
+ Camera_ErrorCode Camera_CaptureSession::IsAutoDeviceSwitchSupported(bool* isSupported)
+ {
+     MEDIA_DEBUG_LOG("Camera_CaptureSession::IsAutoDeviceSwitchSupported is called");
+diff --git a/frameworks/native/ndk/impl/capture_session_impl.h b/frameworks/native/ndk/impl/capture_session_impl.h
+index 2a7df3bf3d..aadd360dc5 100644
+--- a/frameworks/native/ndk/impl/capture_session_impl.h
++++ b/frameworks/native/ndk/impl/capture_session_impl.h
+@@ -238,9 +238,15 @@ public:
+     Camera_ErrorCode SetWhiteBalanceMode(Camera_WhiteBalanceMode whiteBalanceMode);
+ 
+     Camera_ErrorCode RegisterCameraSwitchRequestCallback(OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+-
++ 
+     Camera_ErrorCode UnregisterCameraSwitchRequestCallback(OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+ 
++    Camera_ErrorCode RegisterCameraDeviceSwitchRequestCallback(
++        void* context, OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest);
++
++    Camera_ErrorCode UnregisterCameraDeviceSwitchRequestCallback(
++        void* context, OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest);
++
+     Camera_ErrorCode RegisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
+ 
+     Camera_ErrorCode RegisterExposureDurationCallback(
+diff --git a/frameworks/taihe/include/mode/photo_session_taihe.h b/frameworks/taihe/include/mode/photo_session_taihe.h
+index e8c6ce5d57..ebf421da83 100644
+--- a/frameworks/taihe/include/mode/photo_session_taihe.h
++++ b/frameworks/taihe/include/mode/photo_session_taihe.h
+@@ -92,13 +92,18 @@ protected:
+         std::shared_ptr<uintptr_t> callback, bool isOnce) override;
+     void UnregisterNotificationCallbackListener(const std::string& eventName,
+         std::shared_ptr<uintptr_t> callback) override;
+-        
++    void RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++        std::shared_ptr<uintptr_t> callback, bool isOnce) override;
++    void UnregisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++        std::shared_ptr<uintptr_t> callback) override;
++
+ private:
+     std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;
+     std::shared_ptr<FlashStateCallbackListener> flashStateCallback_ = nullptr;
+     std::shared_ptr<IsoInfoSyncCallbackListener> isoInfoCallback_ = nullptr;
+     std::shared_ptr<ExposureStateCallbackListener> exposureStateCallback_ = nullptr;
+     std::shared_ptr<NotificationEventCallbackListener> notificationEventCallback_ = nullptr;
++    std::shared_ptr<CameraSwitchRequestCallbackListener> cameraSwitchRequestCallback_ = nullptr;
+ };
+ } // namespace Camera
+ } // namespace Ani
+diff --git a/frameworks/taihe/include/mode/video_session_taihe.h b/frameworks/taihe/include/mode/video_session_taihe.h
+index 6832bb1648..04f8c3efa2 100644
+--- a/frameworks/taihe/include/mode/video_session_taihe.h
++++ b/frameworks/taihe/include/mode/video_session_taihe.h
+@@ -106,6 +106,10 @@ protected:
+  	         bool isOnce) override;
+  	void UnregisterApertureInfoCallbackListener(const std::string& eventName,
+  	        std::shared_ptr<uintptr_t> callback) override;
++    void RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++        std::shared_ptr<uintptr_t> callback, bool isOnce) override;
++    void UnregisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++        std::shared_ptr<uintptr_t> callback) override;
+ 
+ private:
+     std::shared_ptr<ExposureInfoCallbackListener> exposureInfoCallback_ = nullptr;
+@@ -113,6 +117,7 @@ private:
+     std::shared_ptr<IsoInfoSyncCallbackListener> isoInfoCallback_ = nullptr;
+     std::shared_ptr<NotificationEventCallbackListener> notificationEventCallback_ = nullptr;
+     std::shared_ptr<ApertureInfoCallbackListener> apertureInfoCallback_ = nullptr;
++    std::shared_ptr<CameraSwitchRequestCallbackListener> cameraSwitchRequestCallback_ = nullptr;
+ };
+ } // namespace Camera
+ } // namespace Ani
+diff --git a/frameworks/taihe/include/session/camera_session_taihe.h b/frameworks/taihe/include/session/camera_session_taihe.h
+index 6ee55d6416..79a7c089c6 100644
+--- a/frameworks/taihe/include/session/camera_session_taihe.h
++++ b/frameworks/taihe/include/session/camera_session_taihe.h
+@@ -213,6 +213,18 @@ private:
+     void OnNotificationReceiveCallback(OHOS::CameraStandard::DefocusFromProximityNotificationInfo info) const;
+ };
+ 
++class CameraSwitchRequestCallbackListener : public OHOS::CameraStandard::CameraSwitchRequestCallback,
++    public ListenerBase,
++    public std::enable_shared_from_this<CameraSwitchRequestCallbackListener> {
++public:
++    CameraSwitchRequestCallbackListener(ani_env* env) : ListenerBase(env) {}
++    ~CameraSwitchRequestCallbackListener() = default;
++    void OnAppCameraSwitch(const std::string& cameraId) override;
++
++private:
++    void OnAppCameraSwitchCallback(const std::string& cameraId) const;
++};
++
+ class SessionImpl : public CameraAniEventEmitter<SessionImpl>,
+                     virtual public SessionBase {
+ public:
+@@ -301,6 +313,8 @@ public:
+     void OffNotificationReceive(optional_view<callback<void(DefocusFromProximityNotificationInfo const&)>> callback);
+     void OnApertureInfoChangeWithoutErr(callback_view<void(ApertureInfo const&)> callback);
+     void OffApertureInfoChangeWithoutErr(optional_view<callback<void(ApertureInfo const&)>> callback);
++    void OnCameraSwitchRequest(callback_view<void(CameraDevice const&)> callback);
++    void OffCameraSwitchRequest(optional_view<callback<void(CameraDevice const&)>> callback);
+ 
+     std::shared_ptr<SessionCallbackListener> sessionCallback_ = nullptr;
+     std::shared_ptr<FocusCallbackListener> focusCallback_ = nullptr;
+@@ -311,7 +325,8 @@ public:
+     std::shared_ptr<MacroStatusCallbackListener> macroStatusCallback_ = nullptr;
+     std::shared_ptr<EffectSuggestionCallbackListener> effectSuggestionCallback_ = nullptr;
+     std::shared_ptr<ControlCenterEffectStatusCallbackListener> controlCenterEffectStatusCallback_ = nullptr;
+-    
++    std::shared_ptr<CameraSwitchRequestCallbackListener> cameraSwitchRequestCallback_ = nullptr;
++
+     static uint32_t cameraSessionTaskId_;
+     int32_t featureType_ = 0;
+ 
+@@ -398,6 +413,10 @@ protected:
+         std::shared_ptr<uintptr_t> callback, bool isOnce);
+     virtual void UnregisterControlCenterEffectStatusCallbackListener(const std::string& eventName,
+         std::shared_ptr<uintptr_t> callback);
++    virtual void RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++        std::shared_ptr<uintptr_t> callback, bool isOnce);
++    virtual void UnregisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++        std::shared_ptr<uintptr_t> callback);
+ };
+ 
+ struct SessionTaiheAsyncContext : public TaiheAsyncContext {
+diff --git a/frameworks/taihe/src/mode/photo_session_taihe.cpp b/frameworks/taihe/src/mode/photo_session_taihe.cpp
+index b220fcd7fc..cffc23ef98 100644
+--- a/frameworks/taihe/src/mode/photo_session_taihe.cpp
++++ b/frameworks/taihe/src/mode/photo_session_taihe.cpp
+@@ -411,5 +411,27 @@ void PhotoSessionImpl::UnregisterNotificationCallbackListener(const std::string&
+     notificationEventCallback_->RemoveCallbackRef(eventName, callback);
+ }
+ 
++void PhotoSessionImpl::RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++    std::shared_ptr<uintptr_t> callback, bool isOnce)
++{
++    CHECK_RETURN_ELOG(photoSession_ == nullptr, "photoSession_ is null!");
++    if (cameraSwitchRequestCallback_ == nullptr) {
++        ani_env *env = get_env();
++        cameraSwitchRequestCallback_ = std::make_shared<CameraSwitchRequestCallbackListener>(env);
++        photoSession_->SetCameraSwitchRequestCallback(cameraSwitchRequestCallback_);
++    }
++    cameraSwitchRequestCallback_->SaveCallbackReference(eventName, callback, isOnce);
++}
++
++void PhotoSessionImpl::UnregisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++    std::shared_ptr<uintptr_t> callback)
++{
++    if (cameraSwitchRequestCallback_ == nullptr) {
++        MEDIA_INFO_LOG("cameraSwitchRequestCallback is null");
++        return;
++    }
++    cameraSwitchRequestCallback_->RemoveCallbackRef(eventName, callback);
++}
++
+ } // namespace Camera
+ } // namespace Ani
+\ No newline at end of file
+diff --git a/frameworks/taihe/src/mode/video_session_taihe.cpp b/frameworks/taihe/src/mode/video_session_taihe.cpp
+index 5c69f716ba..861aff8b83 100644
+--- a/frameworks/taihe/src/mode/video_session_taihe.cpp
++++ b/frameworks/taihe/src/mode/video_session_taihe.cpp
+@@ -537,5 +537,29 @@ void VideoSessionImpl::UnregisterApertureInfoCallbackListener(const std::string&
+     CHECK_RETURN_ELOG(apertureInfoCallback_ == nullptr, "apertureInfoCallback is null");
+     apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
+ }
++
++void VideoSessionImpl::RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++    std::shared_ptr<uintptr_t> callback, bool isOnce)
++{
++    MEDIA_INFO_LOG("VideoSessionImpl::RegisterCameraSwitchRequestCallbackListener");
++    CHECK_RETURN_ELOG(!videoSession_, "videoSession_ is null");
++    if (cameraSwitchRequestCallback_ == nullptr) {
++        ani_env *env = get_env();
++        cameraSwitchRequestCallback_ = std::make_shared<CameraSwitchRequestCallbackListener>(env);
++        videoSession_->SetCameraSwitchRequestCallback(cameraSwitchRequestCallback_);
++    }
++    cameraSwitchRequestCallback_->SaveCallbackReference(eventName, callback, isOnce);
++}
++
++void VideoSessionImpl::UnregisterCameraSwitchRequestCallbackListener(const std::string& eventName,
++    std::shared_ptr<uintptr_t> callback)
++{
++    MEDIA_INFO_LOG("VideoSessionImpl::UnregisterCameraSwitchRequestCallbackListener");
++    if (cameraSwitchRequestCallback_ == nullptr) {
++        MEDIA_INFO_LOG("cameraSwitchRequestCallback is null");
++        return;
++    }
++    cameraSwitchRequestCallback_->RemoveCallbackRef(eventName, callback);
++}
+ } // namespace Camera
+ } // namespace Ani
+\ No newline at end of file
+diff --git a/frameworks/taihe/src/session/camera_session_taihe.cpp b/frameworks/taihe/src/session/camera_session_taihe.cpp
+index bee50e6309..875cebb1a7 100644
+--- a/frameworks/taihe/src/session/camera_session_taihe.cpp
++++ b/frameworks/taihe/src/session/camera_session_taihe.cpp
+@@ -19,6 +19,7 @@
+ #include "camera_input_taihe.h"
+ #include "camera_output_taihe.h"
+ #include "event_handler.h"
++#include "input/camera_manager.h"
+ 
+ namespace Ani {
+ namespace Camera {
+@@ -376,6 +377,31 @@ void SessionImpl::OffControlCenterEffectStatusChange(
+     ListenerTemplate<SessionImpl>::Off(this, callback, "controlCenterEffectStatusChange");
+ }
+ 
++void SessionImpl::OnCameraSwitchRequest(callback_view<void(CameraDevice const&)> callback)
++{
++    ListenerTemplate<SessionImpl>::On(this, callback, "cameraSwitchRequest");
++}
++
++void SessionImpl::OffCameraSwitchRequest(
++    optional_view<callback<void(CameraDevice const&)>> callback)
++{
++    ListenerTemplate<SessionImpl>::Off(this, callback, "cameraSwitchRequest");
++}
++
++void SessionImpl::RegisterCameraSwitchRequestCallbackListener(
++    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
++{
++    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
++        "this type callback can not be registered in current session!");
++}
++
++void SessionImpl::UnregisterCameraSwitchRequestCallbackListener(
++    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
++{
++    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
++        "this type callback can not be unregistered in current session!");
++}
++
+ void PressureCallbackListener::OnPressureStatusChanged(
+     OHOS::CameraStandard::PressureStatus systemPressureLevel)
+ {
+@@ -1279,6 +1305,28 @@ void NotificationEventCallbackListener::OnNotificationReceiveCallback(
+     mainHandler_->PostTask(task, "OnNotificationReceive", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+ }
+ 
++void CameraSwitchRequestCallbackListener::OnAppCameraSwitch(const std::string& cameraId)
++{
++    MEDIA_INFO_LOG("OnAppCameraSwitch is called");
++    OnAppCameraSwitchCallback(cameraId);
++}
++
++void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallback(const std::string& cameraId) const
++{
++    MEDIA_INFO_LOG("OnAppCameraSwitchCallback is called");
++    auto sharePtr = shared_from_this();
++    auto task = [cameraId, sharePtr]() {
++        sptr<OHOS::CameraStandard::CameraDevice> cameraInfo =
++            OHOS::CameraStandard::CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
++        CHECK_RETURN_ELOG(cameraInfo == nullptr, "OnAppCameraSwitchCallback cameraInfo is null");
++        CameraDevice aniCameraDevice = CameraUtilsTaihe::ToTaiheCameraDevice(cameraInfo);
++        CHECK_RETURN_ELOG(sharePtr == nullptr, "Listener not exist");
++        sharePtr->ExecuteCallback<CameraDevice>("cameraSwitchRequest", aniCameraDevice);
++    };
++    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
++    mainHandler_->PostTask(task, "OnAppCameraSwitch", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
++}
++
+ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
+     { "focusStateChange", {
+         &SessionImpl::RegisterFocusCallbackListener,
+@@ -1346,6 +1394,9 @@ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
+     {"notificationReceive", {
+         &SessionImpl::RegisterNotificationCallbackListener,
+         &SessionImpl::UnregisterNotificationCallbackListener}},
++    {"cameraSwitchRequest", {
++        &SessionImpl::RegisterCameraSwitchRequestCallbackListener,
++        &SessionImpl::UnregisterCameraSwitchRequestCallbackListener}},
+ };
+ const SessionImpl::EmitterFunctions& SessionImpl::GetEmitterFunctions()
+ {
+diff --git a/interfaces/inner_api/native/camera/include/session/capture_session.h b/interfaces/inner_api/native/camera/include/session/capture_session.h
+index 698c4e7913..9e9509b8e0 100644
+--- a/interfaces/inner_api/native/camera/include/session/capture_session.h
++++ b/interfaces/inner_api/native/camera/include/session/capture_session.h
+@@ -2969,7 +2969,7 @@ private:
+     std::atomic<int32_t> prevDuration_ = 0;
+     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
+     bool isColorSpaceSetted_ = false;
+-    bool pendingDisableMacroOnCommit_ = false;
++    atomic<bool> pendingDisableMacroOnCommit_ = false;
+     atomic<bool> isDeferTypeSetted_ = false;
+     atomic<bool> isAutoSwitchDevice_ = false;
+     atomic<bool> isDeviceCapabilityChanged_ = false;
+diff --git a/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h b/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
+index 6405f49a86..217cc6f9e2 100644
+--- a/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
++++ b/interfaces/kits/js/camera_napi/include/session/camera_session_napi.h
+@@ -1025,6 +1025,7 @@ public:
+     static const std::vector<napi_property_descriptor> color_cube_props;
+ 
+     static const std::vector<napi_property_descriptor> starburst_props;
++    static const std::vector<napi_property_descriptor> camera_switch_cb_props;
+     static napi_value IsStarburstSupported(napi_env env, napi_callback_info info);
+     static napi_value SetStarburstEnable(napi_env env, napi_callback_info info);
+ 
+diff --git a/interfaces/kits/native/include/camera/capture_session.h b/interfaces/kits/native/include/camera/capture_session.h
+index 54842cf160..0aba4850bd 100644
+--- a/interfaces/kits/native/include/camera/capture_session.h
++++ b/interfaces/kits/native/include/camera/capture_session.h
+@@ -1334,14 +1334,25 @@ Camera_ErrorCode OH_CaptureSession_EnableControlCenter(Camera_CaptureSession* se
+  Camera_ErrorCode OH_CaptureSession_UnregisterControlCenterEffectStatusChangeCallback(Camera_CaptureSession* session,
+     OH_CaptureSession_OnControlCenterEffectStatusChange controlCenterEffectStatusChange);
+ 
+- typedef void (*OH_CaptureSession_OnCameraSwitchRequest)(Camera_CaptureSession *session, Camera_Device *device);
+-
+- Camera_ErrorCode OH_CaptureSession_RegisterCameraSwitchRequestCallback(
++typedef void (*OH_CaptureSession_OnCameraSwitchRequest)(Camera_CaptureSession *session, Camera_Device *device);
++ 
++Camera_ErrorCode OH_CaptureSession_RegisterCameraSwitchRequestCallback(
+     Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+ 
+- Camera_ErrorCode OH_CaptureSession_UnregisterCameraSwitchRequestCallback(
++Camera_ErrorCode OH_CaptureSession_UnregisterCameraSwitchRequestCallback(
+     Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+ 
++typedef void (*OH_CaptureSession_OnCameraDeviceSwitchRequest)(void* context, Camera_CaptureSession *session,
++    Camera_Device *device);
++
++Camera_ErrorCode OH_CaptureSession_RegisterCameraDeviceSwitchRequestCallback(
++    const Camera_CaptureSession* session, void* context,
++    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest);
++
++Camera_ErrorCode OH_CaptureSession_UnregisterCameraDeviceSwitchRequestCallback(
++    const Camera_CaptureSession* session, void* context,
++    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest);
++
+ typedef void (*OH_CaptureSession_OnMacroStatusChange)(Camera_CaptureSession *session, bool isMacroActive);
+ 
+ Camera_ErrorCode OH_CaptureSession_RegisterMacroStatusChangeCallback(
+-- 
+2.51.2.huawei.11
+
