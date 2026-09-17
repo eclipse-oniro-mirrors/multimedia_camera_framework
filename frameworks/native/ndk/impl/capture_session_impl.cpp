@@ -276,7 +276,7 @@ public:
         switchInfo.cameraType = static_cast<Camera_Type>(cameraInfo->GetCameraType());
         switchInfo.connectionType = static_cast<Camera_Connection>(cameraInfo->GetConnectionType());
         cameraSwitchRequest_(context_, captureSession_, &switchInfo);
-       MEDIA_INFO_LOG(
+        MEDIA_INFO_LOG(
             "InnerCameraDeviceSwitchRequestCallback::cameraSwitchRequest_ cameraId is: oriCameraId=%{public}s",
             switchInfo.cameraId);
     }
