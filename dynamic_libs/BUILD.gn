@@ -273,6 +273,7 @@ ohos_shared_library("camera_dynamic_moving_photo") {
     "media_library:media_library_camera_helper",
     "samgr:samgr_proxy",
     "init:libbegetutil",
+    "graphic_surface:buffer_handle",
   ]
   defines = []
 
