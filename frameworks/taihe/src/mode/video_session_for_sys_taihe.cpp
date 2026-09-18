@@ -98,6 +98,95 @@ void VideoSessionForSysImpl::UnregisterLightStatusCallbackListener(
         lightStatusCallback_->RemoveCallbackRef(eventName, callback);
     }
 }
+bool VideoSessionForSysImpl::IsSaturationSupported()
+{
+    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi %{public}s is called!", __FUNCTION__);
+    CHECK_RETURN_RET_ELOG(
+        videoSessionForSys_ == nullptr, false, "%{public}s videoSessionForSys_ is nullptr", __FUNCTION__);
+    bool isSupported = false;
+    int32_t retCode = videoSessionForSys_->IsSaturationSupported(isSupported);
+    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS, false,
+        "%{public}s call Failed", __FUNCTION__);
+    return isSupported;
+}
+
+double VideoSessionForSysImpl::GetSaturation()
+{
+    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    float saturationVal = 0.0;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        static_cast<double>(saturationVal), "SystemApi %{public}s is called!", __FUNCTION__);
+    CHECK_RETURN_RET_ELOG(videoSessionForSys_ == nullptr, static_cast<double>(saturationVal),
+        "%{public}s: videoSessionForSys_ is nullptr", __FUNCTION__);
+    int32_t retCode = videoSessionForSys_->GetSaturation(saturationVal);
+    CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
+        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
+    return static_cast<double>(saturationVal);
+}
+
+void VideoSessionForSysImpl::SetSaturation(double saturationVal)
+{
+    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi %{public}s is called!", __FUNCTION__);
+    CHECK_RETURN_ELOG(videoSessionForSys_ == nullptr, "%{public}s videoSessionForSys_ is nullptr", __FUNCTION__);
+    videoSessionForSys_->LockForControl();
+    int32_t retCode = videoSessionForSys_->SetSaturation(static_cast<float>(saturationVal));
+    videoSessionForSys_->UnlockForControl();
+    CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
+        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
+}
+
+bool VideoSessionForSysImpl::IsRGBBiasSupported()
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsRGBBiasSupported is called!");
+    bool isSupported = false;
+    CHECK_RETURN_RET_ELOG(videoSessionForSys_ == nullptr, isSupported,
+        "IsRGBBiasSupported videoSessionForSys_ is null");
+    int32_t retCode = videoSessionForSys_->IsWhiteBalanceGainsSupported(isSupported);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), isSupported);
+    return isSupported;
+}
+
+void VideoSessionForSysImpl::SetRGBBias(RGBBias bias)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetRGBBias is called!");
+    CHECK_RETURN_ELOG(videoSessionForSys_ == nullptr, "SetRGBBias videoSessionForSys_ is null");
+    std::vector<double> normalizedGains = {
+        bias.redBias,
+        bias.greenBias,
+        bias.blueBias
+    };
+    videoSessionForSys_->LockForControl();
+    int32_t retCode = videoSessionForSys_->SetWhiteBalanceGains(normalizedGains);
+    videoSessionForSys_->UnlockForControl();
+    CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
+}
+
+RGBBias VideoSessionForSysImpl::GetRGBBias()
+{
+    RGBBias bias = {};
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), bias,
+        "SystemApi GetRGBBias is called!");
+    CHECK_RETURN_RET_ELOG(videoSessionForSys_ == nullptr, bias, "GetRGBBias videoSessionForSys_ is null");
+    std::vector<double> vecWhiteBalanceGains;
+    int32_t retCode = videoSessionForSys_->GetWhiteBalanceGains(vecWhiteBalanceGains);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), bias);
+    MEDIA_INFO_LOG("GetRGBBias len = %{public}zu", vecWhiteBalanceGains.size());
+    constexpr int32_t rangeSize = 3;
+    CHECK_RETURN_RET(vecWhiteBalanceGains.size() != rangeSize, bias);
+    int32_t redBiasIdx = 0;
+    int32_t greenBiasIdx = 1;
+    int32_t blueBiasIdx = 2;
+    bias.redBias = vecWhiteBalanceGains[redBiasIdx];
+    bias.greenBias = vecWhiteBalanceGains[greenBiasIdx];
+    bias.blueBias = vecWhiteBalanceGains[blueBiasIdx];
+    return bias;
+}
 
 void LightStatusCallbackListener::OnLightStatusChangedCallback(OHOS::CameraStandard::LightStatus &status) const
 {
