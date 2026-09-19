@@ -30,46 +30,6 @@ void VideoSessionImpl::SetQualityPrioritization(QualityPrioritization quality)
     CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
 }
 
-bool VideoSessionImpl::IsSaturationSupported()
-{
-    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
-        "SystemApi %{public}s is called!", __FUNCTION__);
-    CHECK_RETURN_RET_ELOG(videoSession_ == nullptr, false, "%{public}s videoSession_ is nullptr", __FUNCTION__);
-    bool isSupported = false;
-    int32_t retCode = videoSession_->IsSaturationSupported(isSupported);
-    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS, false,
-        "%{public}s call Failed", __FUNCTION__);
-    return isSupported;
-}
-
-double VideoSessionImpl::GetSaturation()
-{
-    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
-    float saturationVal = 0.0;
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        static_cast<double>(saturationVal), "SystemApi %{public}s is called!", __FUNCTION__);
-    CHECK_RETURN_RET_ELOG(videoSession_ == nullptr, static_cast<double>(saturationVal),
-        "%{public}s: videoSession_ is nullptr", __FUNCTION__);
-    int32_t retCode = videoSession_->GetSaturation(saturationVal);
-    CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
-        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
-    return static_cast<double>(saturationVal);
-}
-
-void VideoSessionImpl::SetSaturation(double saturationVal)
-{
-    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
-    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
-        "SystemApi %{public}s is called!", __FUNCTION__);
-    CHECK_RETURN_ELOG(videoSession_ == nullptr, "%{public}s videoSession_ is nullptr", __FUNCTION__);
-    videoSession_->LockForControl();
-    int32_t retCode = videoSession_->SetSaturation(static_cast<float>(saturationVal));
-    videoSession_->UnlockForControl();
-    CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
-        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
-}
-
 int32_t VideoSessionImpl::GetSupportedCubeDimension()
 {
     MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);

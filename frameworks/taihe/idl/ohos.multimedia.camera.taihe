@@ -993,7 +993,7 @@ struct ControlCenterStatusInfo {
   @readonly isActive: bool;
 }
 
-interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter, ManualIso, ManualFocus, ManualExposure, Aperture, OIS, ColorControls {
+interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, AutoExposure, AutoDeviceSwitch, Focus, WhiteBalance, Macro, ControlCenter, ManualIso, ManualFocus, ManualExposure, Aperture, OIS {
   Preconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): void;
   CanPreconfig(preconfigType: PreconfigType, preconfigRatio: Optional<PreconfigRatio>): bool;
 
@@ -1118,7 +1118,7 @@ interface VideoConflictFunctions : ZoomQuery, MacroQuery {
 interface VideoFunctions : FlashQuery, AutoExposureQuery, ManualExposureQuery, FocusQuery, ZoomQuery, StabilizationQuery, BeautyQuery, ColorEffectQuery, ColorManagementQuery, MacroQuery, SceneDetectionQuery {
 }
 
-interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagement, Macro, ColorReservation, EffectSuggestion {
+interface VideoSessionForSys : VideoSession, Beauty, ColorEffect, ColorManagement, Macro, ColorReservation, EffectSuggestion, ColorControls {
   @!sts_inject_into_class("""on(type: string, callback: object): void {
             if (type === "error") {
               this.onError(callback as (err: BusinessError<void>)=> void);

@@ -1019,13 +1019,11 @@ bool WhiteBalanceQueryImpl::IsWhiteBalanceModeSupported(WhiteBalanceMode mode)
 
 bool ColorControlsQueryImpl::IsRGBBiasSupported()
 {
-    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
-        "SystemApi IsRGBBiasSupported is called!");
     bool isSupported = false;
-    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, isSupported,
-        "IsRGBBiasSupported captureSession_ is null");
-    int32_t retCode = captureSession_->IsWhiteBalanceGainsSupported(isSupported);
-    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), isSupported);
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        isSupported, "SystemApi IsRGBBiasSupported is called!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not IsRGBBiasSupported in current session!");
     return isSupported;
 }
 
@@ -1033,16 +1031,8 @@ void ColorControlsImpl::SetRGBBias(RGBBias bias)
 {
     CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
         "SystemApi SetRGBBias is called!");
-    CHECK_RETURN_ELOG(captureSession_ == nullptr, "SetRGBBias captureSession_ is null");
-    std::vector<double> normalizedGains = {
-        bias.redBias,
-        bias.greenBias,
-        bias.blueBias
-    };
-    captureSession_->LockForControl();
-    int32_t retCode = captureSession_->SetWhiteBalanceGains(normalizedGains);
-    captureSession_->UnlockForControl();
-    CHECK_RETURN(!CameraUtilsTaihe::CheckError(retCode));
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not SetRGBBias in current session!");
 }
 
 RGBBias ColorControlsImpl::GetRGBBias()
@@ -1050,19 +1040,8 @@ RGBBias ColorControlsImpl::GetRGBBias()
     RGBBias bias = {};
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), bias,
         "SystemApi GetRGBBias is called!");
-    CHECK_RETURN_RET_ELOG(captureSession_ == nullptr, bias, "GetRGBBias captureSession_ is null");
-    std::vector<double> vecWhiteBalanceGains;
-    int32_t retCode = captureSession_->GetWhiteBalanceGains(vecWhiteBalanceGains);
-    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), bias);
-    MEDIA_INFO_LOG("GetRGBBias len = %{public}zu", vecWhiteBalanceGains.size());
-    constexpr int32_t rangeSize = 3;
-    CHECK_RETURN_RET(vecWhiteBalanceGains.size() != rangeSize, bias);
-    int32_t redBiasIdx = 0;
-    int32_t greenBiasIdx = 1;
-    int32_t blueBiasIdx = 2;
-    bias.redBias = vecWhiteBalanceGains[redBiasIdx];
-    bias.greenBias = vecWhiteBalanceGains[greenBiasIdx];
-    bias.blueBias = vecWhiteBalanceGains[blueBiasIdx];
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not GetRGBBias in current session!");
     return bias;
 }
 

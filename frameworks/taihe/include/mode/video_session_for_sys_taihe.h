@@ -50,7 +50,7 @@ private:
 };
 
 class VideoSessionForSysImpl : public VideoSessionImpl, public ColorReservationImpl, public BeautyImpl,
-                               public ColorEffectImpl, public EffectSuggestionImpl {
+                               public ColorEffectImpl, public EffectSuggestionImpl, public ColorControlsImpl {
 public:
     explicit VideoSessionForSysImpl(sptr<OHOS::CameraStandard::CaptureSession> &obj) : VideoSessionImpl(obj)
     {
@@ -61,7 +61,12 @@ public:
     ~VideoSessionForSysImpl() = default;
     std::shared_ptr<FocusTrackingCallbackListener> focusTrackingInfoCallback_ = nullptr;
     std::shared_ptr<LightStatusCallbackListener> lightStatusCallback_ = nullptr;
-
+    double GetSaturation() override;
+    void SetSaturation(double val) override;
+    bool IsSaturationSupported() override;
+    bool IsRGBBiasSupported() override;
+    void SetRGBBias(RGBBias bias) override;
+    RGBBias GetRGBBias() override;
 protected:
     sptr<OHOS::CameraStandard::VideoSessionForSys> videoSessionForSys_ = nullptr;
 
