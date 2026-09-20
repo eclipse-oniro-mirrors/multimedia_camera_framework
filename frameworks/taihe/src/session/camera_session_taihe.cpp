@@ -1254,6 +1254,28 @@ void ExposureStateCallbackListener::OnExposureStateChangedCallback(
     mainHandler_->PostTask(task, "OnExposureStateChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
+void CameraSwitchRequestCallbackListener::OnAppCameraSwitch(const std::string& cameraId)
+{
+    MEDIA_INFO_LOG("OnAppCameraSwitch is called");
+    OnAppCameraSwitchCallback(cameraId);
+}
+ 
+void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallback(const std::string& cameraId) const
+{
+    MEDIA_INFO_LOG("OnAppCameraSwitchCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [cameraId, sharePtr]() {
+        sptr<OHOS::CameraStandard::CameraDevice> cameraInfo =
+            OHOS::CameraStandard::CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
+        CHECK_RETURN_ELOG(cameraInfo == nullptr, "OnAppCameraSwitchCallback cameraInfo is null");
+        CameraDevice aniCameraDevice = CameraUtilsTaihe::ToTaiheCameraDevice(cameraInfo);
+        CHECK_RETURN_ELOG(sharePtr == nullptr, "Listener not exist");
+        sharePtr->ExecuteCallback<CameraDevice>("cameraSwitchRequest", aniCameraDevice);
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnAppCameraSwitch", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
 const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     { "focusStateChange", {
         &SessionImpl::RegisterFocusCallbackListener,
@@ -1318,6 +1340,9 @@ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     {"exposureStateChange", {
         &SessionImpl::RegisterExposureStateCallbackListener,
         &SessionImpl::UnregisterExposureStateCallbackListener}},
+    {"cameraSwitchRequest", {
+        &SessionImpl::RegisterCameraSwitchRequestCallbackListener,
+        &SessionImpl::UnregisterCameraSwitchRequestCallbackListener}},
 };
 const SessionImpl::EmitterFunctions& SessionImpl::GetEmitterFunctions()
 {
