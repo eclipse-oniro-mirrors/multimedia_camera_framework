@@ -209,7 +209,7 @@ array<CameraOutputCapability> SessionImpl::GetCameraOutputCapabilities(CameraDev
     std::vector<sptr<OHOS::CameraStandard::CameraOutputCapability>> caplist =
         captureSession_->GetCameraOutputCapabilities(cameraInfo);
     std::vector<CameraOutputCapability> vec;
-    for (size_t i = 0; i < caplist.size(); i) {
+    for (size_t i = 0; i < caplist.size(); i++) {
         if (caplist[i] == nullptr) {
             continue;
         }
@@ -238,7 +238,7 @@ array<ControlCenterEffectType> SessionImpl::GetSupportedEffectTypes()
     std::vector<ControlCenterEffectType> vec;
     if (captureSession_ != nullptr) {
         effectTypes = captureSession_->GetSupportedEffectTypes();
-        for (size_t i = 0; i < effectTypes.size(); i) {
+        for (size_t i = 0; i < effectTypes.size(); i++) {
             vec.push_back(ControlCenterEffectType::from_value(static_cast<int32_t>(effectTypes[i])));
         }
     } else {
