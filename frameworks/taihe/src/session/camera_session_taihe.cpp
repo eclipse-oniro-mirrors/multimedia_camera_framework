@@ -824,7 +824,7 @@ void SessionImpl::RegisterFeatureDetectionStatusListener(const std::string& even
         captureSessionForSys_->EnableTripodDetection(true);
         captureSessionForSys_->UnlockForControl();
     }
-    featureDetectionCallback_->SaveCallbackReference(eventName  std::to_string(featureType_), callback, isOnce);
+    featureDetectionCallback_->SaveCallbackReference(eventName + std::to_string(featureType_), callback, isOnce);
 }
 
 void SessionImpl::UnregisterFeatureDetectionStatusListener(
@@ -840,7 +840,7 @@ void SessionImpl::UnregisterFeatureDetectionStatusListener(
         return;
     }
 
-    featureDetectionCallback_->RemoveCallbackRef(eventName  std::to_string(featureType_), callback);
+    featureDetectionCallback_->RemoveCallbackRef(eventName + std::to_string(featureType_), callback);
 
     if (featureType_ == OHOS::CameraStandard::SceneFeature::FEATURE_LOW_LIGHT_BOOST &&
         !featureDetectionCallback_->IsFeatureSubscribed(OHOS::CameraStandard::SceneFeature::FEATURE_LOW_LIGHT_BOOST)) {
@@ -871,8 +871,8 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
     MEDIA_DEBUG_LOG("OnFeatureDetectionStatusChangedCallback is called");
     auto sharePtr = shared_from_this();
     auto task = [feature, status, sharePtr]() {
-        std::string eventName = "featureDetection"  std::to_string(static_cast<int32_t>(feature));
-        std::string eventNameOld = "featureDetectionStatus"  std::to_string(static_cast<int32_t>(feature));
+        std::string eventName = "featureDetection" + std::to_string(static_cast<int32_t>(feature));
+        std::string eventNameOld = "featureDetectionStatus" + std::to_string(static_cast<int32_t>(feature));
         auto featureType = SceneFeatureType::from_value(static_cast<int32_t>(feature));
         SceneFeatureDetectionResult sceneFeatureDetectionResult = {
             featureType,
@@ -889,8 +889,8 @@ void FeatureDetectionStatusCallbackListener::OnFeatureDetectionStatusChangedCall
 
 bool FeatureDetectionStatusCallbackListener::IsFeatureSubscribed(OHOS::CameraStandard::SceneFeature feature)
 {
-    std::string eventName = "featureDetection"  std::to_string(static_cast<int32_t>(feature));
-    std::string eventNameOld = "featureDetectionStatus"  std::to_string(static_cast<int32_t>(feature));
+    std::string eventName = "featureDetection" + std::to_string(static_cast<int32_t>(feature));
+    std::string eventNameOld = "featureDetectionStatus" + std::to_string(static_cast<int32_t>(feature));
 
     return !IsEmpty(eventName) || !IsEmpty(eventNameOld);
 }
