@@ -144,6 +144,7 @@ enum CamServiceError {
     CAMERA_INPUT_DEVICE,
     CAMERA_STOP_WITHOUT_START, // start/stop 时序错误
     CAMERA_CAPTURE_NOT_READY,
+    CAMERA_INVALID_RESOLUTION,
 };
 
 enum ClientPriorityLevels {

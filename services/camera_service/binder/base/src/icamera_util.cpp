@@ -17,6 +17,7 @@
 #include "camera_error_code.h"
 #include "camera_util.h"
 #include "camera_log.h"
+#include "camera_security_utils.h"
 
 namespace OHOS {
 namespace CameraStandard {
@@ -108,26 +109,27 @@ int32_t ServiceToCameraError(int32_t ret)
 
 static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorMap = {
     {CAMERA_OK, 0},
-    {CAMERA_ALLOC_ERROR, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC},
+    {CAMERA_ALLOC_ERROR, InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC},
     {CAMERA_INVALID_ARG, CameraErrorCode::SERVICE_FATL_ERROR},
-    {CAMERA_INPUT_DEVICE, CameraErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE},
-    {CAMERA_STOP_WITHOUT_START, CameraErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START},
+    {CAMERA_INPUT_DEVICE, InnerErrorCode::SERVICE_FATL_ERROR_OF_INPUT_DEVICE},
+    {CAMERA_STOP_WITHOUT_START, InnerErrorCode::SERVICE_FATL_ERROR_OF_STOP_WITHOUT_START},
     {CAMERA_UNSUPPORTED, CameraErrorCode::DEVICE_DISABLED},
     {CAMERA_DEVICE_BUSY, CameraErrorCode::CONFLICT_CAMERA},
     {CAMERA_DEVICE_CLOSED, CameraErrorCode::DEVICE_DISABLED},
     {CAMERA_DEVICE_REQUEST_TIMEOUT, CameraErrorCode::SERVICE_FATL_ERROR},
     {CAMERA_STREAM_BUFFER_LOST, CameraErrorCode::SERVICE_FATL_ERROR},
-    {CAMERA_INVALID_SESSION_CFG, CameraErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG},
+    {CAMERA_INVALID_SESSION_CFG, InnerErrorCode::SERVICE_FATL_ERROR_OF_INVALID_SESSION_CFG},
     {CAMERA_CAPTURE_LIMIT_EXCEED, CameraErrorCode::SERVICE_FATL_ERROR},
     {CAMERA_INVALID_STATE, CameraErrorCode::SERVICE_FATL_ERROR},
     {CAMERA_UNKNOWN_ERROR, CameraErrorCode::SERVICE_FATL_ERROR},
-    {CAMERA_SERVICE_NULL, CameraErrorCode::SERVICE_FATL_ERROR_OF_SERVICE_NULL},
+    {CAMERA_SERVICE_NULL, InnerErrorCode::SERVICE_FATL_ERROR_OF_SERVICE_NULL},
+    {CAMERA_INVALID_RESOLUTION, InnerErrorCode::SERVICE_FATL_ERROR_OF_MISMATCH_RESOLUTION},
     {CAMERA_DEVICE_PREEMPTED, CameraErrorCode::DEVICE_PREEMPTED},
     {CAMERA_OPERATION_NOT_ALLOWED, CameraErrorCode::OPERATION_NOT_ALLOWED},
     {CAMERA_DEVICE_ERROR, CameraErrorCode::OPERATION_NOT_ALLOWED},
     {CAMERA_NO_PERMISSION, CameraErrorCode::OPERATION_NOT_ALLOWED},
-    {CAMERA_CAPTURE_NOT_READY, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY},
-    {CAMERA_DEVICE_CONFLICT, CameraErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT},
+    {CAMERA_CAPTURE_NOT_READY, InnerErrorCode::OPERATION_NOT_ALLOWED_OF_CAPTURE_NOT_READY},
+    {CAMERA_DEVICE_CONFLICT, InnerErrorCode::OPERATION_NOT_ALLOWED_OF_DEVICE_CONFLICT},
     {CAMERA_DEVICE_SWITCH_FREQUENT, CameraErrorCode::DEVICE_SWITCH_FREQUENT},
     {CAMERA_DEVICE_LENS_RETRACTED, CameraErrorCode::CAMERA_LENS_RETRACTED},
     {CAMERA_UNSUPPORTED_COMBINATION, CameraErrorCode::UNSUPPORTED_MULTI_CAMERA_COMBINATION},
@@ -147,14 +149,32 @@ static const std::unordered_map<int32_t, int32_t> ServiceToCameraErrorMap = {
     {IPC_STUB_CREATE_BUS_SERVER_ERR, CameraErrorCode::SERVICE_FATL_ERROR}
 };
 
-int32_t ServiceToCameraErrorV2(int32_t ret)
+int32_t FindNativeErrorCode(int32_t ret)
 {
     auto it = ServiceToCameraErrorMap.find(ret);
     if (it != ServiceToCameraErrorMap.end()) {
         return it->second;
     }
-    MEDIA_ERR_LOG("ServiceToCameraError() error code from service: %{public}d", ret);
+    MEDIA_ERR_LOG("FindNativeErrorCode() error code from service: %{public}d", ret);
     return CameraErrorCode::SERVICE_FATL_ERROR;
+}
+
+int32_t ServiceToCameraErrorV2(int32_t ret)
+{
+    // 如果是系统SA调用，走原有的错误码映射逻辑
+    if (CameraSecurity::CheckSystemSA()) {
+        return ServiceToCameraError(ret);
+    }
+    return FindNativeErrorCode(ret);
+}
+ 
+int32_t CheckSAErrorCode(int32_t ret)
+{
+    if (!CameraSecurity::CheckSystemSA()) {
+        return ret;
+    }
+    // 如果是系统SA调用，映射回原有的错误
+    return GetCameraErrorCode(ret);
 }
 } // namespace CameraStandard
 } // namespace OHOS

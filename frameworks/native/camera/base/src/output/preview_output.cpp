@@ -858,7 +858,7 @@ int32_t PreviewOutput::EnableLogAssistance(bool isEnable)
 int32_t PreviewOutput::SetLogViewAssistEnable(bool isEnable)
 {
     MEDIA_INFO_LOG("PreviewOutput::SetLogViewAssistEnable is called, enable: %{public}d", isEnable);
-    CHECK_RETURN_RET_ELOG(!IsLogAssistanceSupported(), CameraErrorCode::CAPABILITY_NOT_SUPPORTED,
+    CHECK_RETURN_RET_ELOG(!IsLogAssistanceSupported(), InnerErrorCode::CAPABILITY_NOT_SUPPORTED,
                           "PreviewOutput::SetLogViewAssistEnable is not supported ViewAssist");
     auto captureSession = GetSession();
     CHECK_RETURN_RET_ELOG(captureSession == nullptr, SESSION_NOT_CONFIG,

@@ -1190,7 +1190,7 @@ HWTEST_F(CaptureSessionUnitTest, camera_framework_unittest_004, TestSize.Level0)
     ASSERT_NE(preview, nullptr);
 
     ret = session->AddOutput(preview);
-    EXPECT_EQ(ret, CameraErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
+    EXPECT_EQ(ret, InnerErrorCode::SERVICE_FATL_ERROR_OF_CONFIG);
 
     ret = session->CommitConfig();
     EXPECT_NE(ret, 0);

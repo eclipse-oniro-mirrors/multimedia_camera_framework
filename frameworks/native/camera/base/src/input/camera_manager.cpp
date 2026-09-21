@@ -591,7 +591,7 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutputWithoutProfile serviceProxy is null or PhotoOutputSurface is null");
     sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surfaceProducer);
-    CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC);
+    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
     photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
     *pPhotoOutput = photoOutput;
     return CameraErrorCode::SUCCESS;
@@ -607,7 +607,7 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<IBufferProducer> surface
     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surfaceProducer == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutputWithoutProfile serviceProxy is null or PhotoOutputSurface is null");
     sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput(surfaceProducer, photoSurface);
-    CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC);
+    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
     photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
     *pPhotoOutput = photoOutput;
     return CameraErrorCode::SUCCESS;
@@ -622,7 +622,7 @@ int CameraManager::CreatePhotoOutputWithoutProfile(sptr<PhotoOutput>* pPhotoOutp
     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePhotoOutputWithoutProfile serviceProxy is null");
     sptr<PhotoOutput> photoOutput = new (std::nothrow) PhotoOutput();
-    CHECK_RETURN_RET(photoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC);
+    CHECK_RETURN_RET(photoOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
     photoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
     *pPhotoOutput = photoOutput;
     return CameraErrorCode::SUCCESS;
@@ -736,7 +736,7 @@ int CameraManager::CreatePreviewOutputWithoutProfile(sptr<Surface> surface, sptr
     CHECK_RETURN_RET_ELOG((serviceProxy == nullptr) || (surface == nullptr), CameraErrorCode::INVALID_ARGUMENT,
         "CreatePreviewOutputWithoutProfile serviceProxy is null or surface is null");
     previewOutput = new (std::nothrow) PreviewOutput(surface->GetProducer());
-    CHECK_RETURN_RET(previewOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC);
+    CHECK_RETURN_RET(previewOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
     previewOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
     *pPreviewOutput = previewOutput;
     return CAMERA_OK;
@@ -1016,7 +1016,7 @@ int CameraManager::CreateVideoOutputWithoutProfile(sptr<Surface> surface, sptr<V
         "CameraManager::CreateVideoOutput serviceProxy is null or VideoOutputSurface is null");
 
     sptr<VideoOutput> videoOutput = new (std::nothrow) VideoOutput(surface->GetProducer());
-    CHECK_RETURN_RET(videoOutput == nullptr, CameraErrorCode::SERVICE_FATL_ERROR_OF_ALLOC);
+    CHECK_RETURN_RET(videoOutput == nullptr, CheckSAErrorCode(InnerErrorCode::SERVICE_FATL_ERROR_OF_ALLOC));
     videoOutput->AddTag(CaptureOutput::DYNAMIC_PROFILE);
     *pVideoOutput = videoOutput;
     return CameraErrorCode::SUCCESS;
