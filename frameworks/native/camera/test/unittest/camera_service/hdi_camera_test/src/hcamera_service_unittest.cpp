@@ -374,8 +374,8 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_008, TestSize.Level0)
     int32_t state = 0;
     bool canOpenCamera = false;
     int32_t ret = cameraService_->AllowOpenByOHSide(cameraId, state, canOpenCamera);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_TRUE(canOpenCamera);
+    EXPECT_EQ(ret, CAMERA_NO_PERMISSION);
+    EXPECT_FALSE(canOpenCamera);
 }
 
 /*
@@ -1126,8 +1126,8 @@ HWTEST_F(HCameraServiceUnit, HCamera_service_unittest_028, TestSize.Level0)
 
     sptr<HCameraDeviceManager> deviceManager = HCameraDeviceManager::GetInstance();
     int32_t ret = cameraService_->AllowOpenByOHSide(cameraIds[0], state, canOpenCamera);
-    EXPECT_EQ(ret, CAMERA_OK);
-    EXPECT_TRUE(canOpenCamera);
+    EXPECT_EQ(ret, CAMERA_NO_PERMISSION);
+    EXPECT_FALSE(canOpenCamera);
 
     device->Close();
     deviceManager->pidToCameras_.clear();
@@ -2193,8 +2193,8 @@ HWTEST_F(HCameraServiceUnit, AllowOpenByOHSide_001, TestSize.Level0)
 
     bool canOpenCamera = false;
     auto rc = cameraService_->AllowOpenByOHSide(cameraIds[0], 0, canOpenCamera);
-    EXPECT_EQ(rc, CAMERA_OK);
-    EXPECT_EQ(canOpenCamera, true);
+    EXPECT_EQ(rc, CAMERA_NO_PERMISSION);
+    EXPECT_EQ(canOpenCamera, false);
 
     HCameraDeviceManager::GetInstance() = nullptr;
     device->Release();

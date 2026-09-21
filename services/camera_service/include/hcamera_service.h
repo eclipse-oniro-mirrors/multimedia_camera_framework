@@ -72,6 +72,9 @@ namespace CameraStandard {
 using namespace std;
 using namespace OHOS::HDI::Camera::V1_0;
 using namespace DeferredProcessing;
+
+constexpr int32_t CAMERA_BROKER_UID = 5557;
+
 struct CameraMetaInfo {
     string cameraId;
     uint8_t cameraType;
@@ -328,6 +331,7 @@ private:
     int32_t GetSupportedAbilities(const uint32_t& tagId, const uint8_t& tagType, std::vector<std::string>& abilities);
     void SetControlCenterInVideo(sptr<HCaptureSession>& captureSession);
     void SetControlCenterDefaultActiveCase(void);
+    int32_t CheckPermissionForBroker(int32_t uid);
     sptr<HCaptureSession> videoSessionForControlCenter_;
     bool deviceControlCenterAbility_ = false;
 
