@@ -19,6 +19,7 @@
 #include "camera_input_taihe.h"
 #include "camera_output_taihe.h"
 #include "event_handler.h"
+#include "input/camera_manager.h"
 
 namespace Ani {
 namespace Camera {
@@ -355,6 +356,31 @@ void PressureCallbackListener::OnPressureStatusChanged(
 {
     MEDIA_DEBUG_LOG("OnPressureStatusChanged is called, systemPressureLevel: %{public}d", systemPressureLevel);
     OnSystemPressureLevelCallback(systemPressureLevel);
+}
+
+void SessionImpl::OnCameraSwitchRequest(callback_view<void(CameraDevice const&)> callback)
+{
+    ListenerTemplate<SessionImpl>::On(this, callback, "cameraSwitchRequest");
+}
+
+void SessionImpl::OffCameraSwitchRequest(
+    optional_view<callback<void(CameraDevice const&)>> callback)
+{
+    ListenerTemplate<SessionImpl>::Off(this, callback, "cameraSwitchRequest");
+}
+
+void SessionImpl::RegisterCameraSwitchRequestCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be registered in current session!");
+}
+
+void SessionImpl::UnregisterCameraSwitchRequestCallbackListener(
+    const std::string& eventName, std::shared_ptr<uintptr_t> callback)
+{
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::CameraErrorCode::OPERATION_NOT_ALLOWED,
+        "this type callback can not be unregistered in current session!");
 }
 
 void PressureCallbackListener::OnSystemPressureLevelCallback(
@@ -1228,6 +1254,28 @@ void ExposureStateCallbackListener::OnExposureStateChangedCallback(
     mainHandler_->PostTask(task, "OnExposureStateChange", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
+void CameraSwitchRequestCallbackListener::OnAppCameraSwitch(const std::string& cameraId)
+{
+    MEDIA_INFO_LOG("OnAppCameraSwitch is called");
+    OnAppCameraSwitchCallback(cameraId);
+}
+ 
+void CameraSwitchRequestCallbackListener::OnAppCameraSwitchCallback(const std::string& cameraId) const
+{
+    MEDIA_INFO_LOG("OnAppCameraSwitchCallback is called");
+    auto sharePtr = shared_from_this();
+    auto task = [cameraId, sharePtr]() {
+        sptr<OHOS::CameraStandard::CameraDevice> cameraInfo =
+            OHOS::CameraStandard::CameraManager::GetInstance()->GetCameraDeviceFromId(cameraId);
+        CHECK_RETURN_ELOG(cameraInfo == nullptr, "OnAppCameraSwitchCallback cameraInfo is null");
+        CameraDevice aniCameraDevice = CameraUtilsTaihe::ToTaiheCameraDevice(cameraInfo);
+        CHECK_RETURN_ELOG(sharePtr == nullptr, "Listener not exist");
+        sharePtr->ExecuteCallback<CameraDevice>("cameraSwitchRequest", aniCameraDevice);
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnAppCameraSwitch", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
 const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     { "focusStateChange", {
         &SessionImpl::RegisterFocusCallbackListener,
@@ -1292,6 +1340,9 @@ const SessionImpl::EmitterFunctions SessionImpl::fun_map_ = {
     {"exposureStateChange", {
         &SessionImpl::RegisterExposureStateCallbackListener,
         &SessionImpl::UnregisterExposureStateCallbackListener}},
+    {"cameraSwitchRequest", {
+        &SessionImpl::RegisterCameraSwitchRequestCallbackListener,
+        &SessionImpl::UnregisterCameraSwitchRequestCallbackListener}},
 };
 const SessionImpl::EmitterFunctions& SessionImpl::GetEmitterFunctions()
 {

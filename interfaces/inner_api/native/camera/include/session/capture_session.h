@@ -2710,7 +2710,7 @@ protected:
     std::atomic<int32_t> prevDuration_ = 0;
     sptr<CameraDeathRecipient> deathRecipient_ = nullptr;
     bool isColorSpaceSetted_ = false;
-    bool pendingDisableMacroOnCommit_ = false;
+    atomic<bool> pendingDisableMacroOnCommit_ = false;
     atomic<bool> isDeferTypeSetted_ = false;
     atomic<bool> isAutoSwitchDevice_ = false;
     atomic<bool> isDeviceCapabilityChanged_ = false;

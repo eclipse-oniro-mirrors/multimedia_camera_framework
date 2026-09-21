@@ -1074,6 +1074,32 @@ Camera_ErrorCode OH_CaptureSession_RegisterCameraSwitchRequestCallback(
     return CAMERA_OK;
 }
 
+Camera_ErrorCode OH_CaptureSession_RegisterCameraDeviceSwitchRequestCallback(
+    const Camera_CaptureSession* session, void* context,
+    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
+{
+    MEDIA_INFO_LOG("OH_CaptureSession_RegisterCameraDeviceSwitchRequestCallback enter");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        cameraSwitchRequest == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    const_cast<Camera_CaptureSession *>(session)->RegisterCameraDeviceSwitchRequestCallback(context,
+                                                                                            cameraSwitchRequest);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_CaptureSession_UnregisterCameraDeviceSwitchRequestCallback(
+    const Camera_CaptureSession* session, void* context,
+    OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest)
+{
+    MEDIA_INFO_LOG("OH_CaptureSession_UnregisterCameraDeviceSwitchRequestCallback enter");
+    CHECK_RETURN_RET_ELOG(session == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, session is null!");
+    CHECK_RETURN_RET_ELOG(
+        cameraSwitchRequest == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, callback is null!");
+    const_cast<Camera_CaptureSession*>(session)->UnregisterCameraDeviceSwitchRequestCallback(context,
+                                                                                             cameraSwitchRequest);
+    return CAMERA_OK;
+}
+
 Camera_ErrorCode OH_CaptureSession_UnregisterRemoteDeviceSwitchCallback(
     Camera_CaptureSession *session, OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest)
 {

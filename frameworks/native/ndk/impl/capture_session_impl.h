@@ -235,7 +235,13 @@ public:
     Camera_ErrorCode RegisterCameraSwitchRequestCallback(OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
 
     Camera_ErrorCode UnregisterRemoteDeviceSwitchCallback(OH_CaptureSession_OnCameraSwitchRequest cameraSwitchRequest);
+    
+    Camera_ErrorCode RegisterCameraDeviceSwitchRequestCallback(
+        void* context, OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest);
 
+    Camera_ErrorCode UnregisterCameraDeviceSwitchRequestCallback(
+        void* context, OH_CaptureSession_OnCameraDeviceSwitchRequest cameraSwitchRequest);
+    
     Camera_ErrorCode RegisterMacroStatusCallback(OH_CaptureSession_OnMacroStatusChange controlMacroStatusChange);
 
     Camera_ErrorCode RegisterExposureDurationCallback(

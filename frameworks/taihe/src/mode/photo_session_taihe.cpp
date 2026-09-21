@@ -391,5 +391,27 @@ void PhotoSessionImpl::UnregisterExposureStateCallbackListener(const std::string
     exposureStateCallback_->RemoveCallbackRef(eventName, callback);
 }
 
+
+void PhotoSessionImpl::RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    CHECK_RETURN_ELOG(photoSession_ == nullptr, "photoSession_ is null!");
+    if (cameraSwitchRequestCallback_ == nullptr) {
+        ani_env *env = get_env();
+        cameraSwitchRequestCallback_ = std::make_shared<CameraSwitchRequestCallbackListener>(env);
+        photoSession_->SetCameraSwitchRequestCallback(cameraSwitchRequestCallback_);
+    }
+    cameraSwitchRequestCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void PhotoSessionImpl::UnregisterCameraSwitchRequestCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback)
+{
+    if (cameraSwitchRequestCallback_ == nullptr) {
+        MEDIA_INFO_LOG("cameraSwitchRequestCallback is null");
+        return;
+    }
+    cameraSwitchRequestCallback_->RemoveCallbackRef(eventName, callback);
+}
 } // namespace Camera
 } // namespace Ani

@@ -478,5 +478,29 @@ void VideoSessionImpl::UnregisterApertureInfoCallbackListener(const std::string&
     CHECK_RETURN_ELOG(apertureInfoCallback_ == nullptr, "apertureInfoCallback is null");
     apertureInfoCallback_->RemoveCallbackRef(eventName, callback);
 }
+
+void VideoSessionImpl::RegisterCameraSwitchRequestCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback, bool isOnce)
+{
+    MEDIA_INFO_LOG("VideoSessionImpl::RegisterCameraSwitchRequestCallbackListener");
+    CHECK_RETURN_ELOG(!videoSession_, "videoSession_ is null");
+    if (cameraSwitchRequestCallback_ == nullptr) {
+        ani_env *env = get_env();
+        cameraSwitchRequestCallback_ = std::make_shared<CameraSwitchRequestCallbackListener>(env);
+        videoSession_->SetCameraSwitchRequestCallback(cameraSwitchRequestCallback_);
+    }
+    cameraSwitchRequestCallback_->SaveCallbackReference(eventName, callback, isOnce);
+}
+
+void VideoSessionImpl::UnregisterCameraSwitchRequestCallbackListener(const std::string& eventName,
+    std::shared_ptr<uintptr_t> callback)
+{
+    MEDIA_INFO_LOG("VideoSessionImpl::UnregisterCameraSwitchRequestCallbackListener");
+    if (cameraSwitchRequestCallback_ == nullptr) {
+        MEDIA_INFO_LOG("cameraSwitchRequestCallback is null");
+        return;
+    }
+    cameraSwitchRequestCallback_->RemoveCallbackRef(eventName, callback);
+}
 } // namespace Camera
 } // namespace Ani
