@@ -65,6 +65,9 @@
 #ifdef CAMERA_XCOMPONENT_TOAST
 #include "camera_dialog_manager.h"
 #endif
+#ifdef CAMERA_FRAMEWORK_FEATURE_AUDIO_RESONANCE_PROTECT
+#include "audio_resonance_protect_manager.h"
+#endif
 #include "tokenid_kit.h"
 #include "camera_metadata.h"
 
@@ -898,6 +901,9 @@ void HCameraDevice::HandleFoldableDevice()
     CHECK_RETURN(!isFoldable);
     RegisterFoldStatusListener();
     RegisterDisplayModeListener();
+#ifdef CAMERA_FRAMEWORK_FEATURE_AUDIO_RESONANCE_PROTECT
+    AudioResonanceProtectManager::GetInstance().RegisterCallbacks(cameraID_, GetCameraPosition());
+#endif
 }
 
 void HCameraDevice::HandleScanScene(std::string clientName)
@@ -944,6 +950,10 @@ int32_t HCameraDevice::CloseDevice()
     bool isFoldable = OHOS::Rosen::DisplayManagerLite::GetInstance().IsFoldable();
     CHECK_EXECUTE(isFoldable, UnregisterFoldStatusListener());
     CHECK_EXECUTE(isFoldable, UnregisterDisplayModeListener());
+#ifdef CAMERA_FRAMEWORK_FEATURE_AUDIO_RESONANCE_PROTECT
+    CHECK_EXECUTE(isFoldable,
+                  AudioResonanceProtectManager::GetInstance().UnregisterCallbacks(cameraID_, GetCameraPosition()));
+#endif
     std::string cameraId = GetCameraId();
     if ((!cameraId.empty()) && (cameraId.size() < DISTRIBUTED_CAMERA_ID_LENGTH)) {
         SetConcurrentCaptureTag(false);
@@ -2133,6 +2143,9 @@ void HCameraDevice::RemoveResourceWhenHostDied()
     if (isFoldable) {
         UnregisterFoldStatusListener();
         UnregisterDisplayModeListener();
+#ifdef CAMERA_FRAMEWORK_FEATURE_AUDIO_RESONANCE_PROTECT
+        AudioResonanceProtectManager::GetInstance().UnregisterCallbacks(cameraID_, GetCameraPosition());
+#endif
     }
     HCameraDeviceManager::GetInstance()->RemoveDevice(cameraID_);
     if (cameraHostManager_) {
