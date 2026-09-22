@@ -664,6 +664,39 @@ bool OH_PhotoOutput_IsAutoExtendedGainmapDeliverySupported(const Camera_PhotoOut
  * @since 26.0.0
  */
 Camera_ErrorCode OH_PhotoOutput_EnableAutoExtendedGainmapDelivery(Camera_PhotoOutput* photoOutput, bool enabled);
+
+/**
+ * @brief Check if the automatic auxiliary photo delivery is supported.
+ *
+ * @param photoOutput [in] Pointer to the target PhotoOutput instance.
+ * @param auxPhotoType [in] Target auxiliary photo type.
+ * @param isSupported [out] Pointer to the check result for the support of capturing auxiliary photo. **true** if
+ *     supported, **false** otherwise.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_ERROR_PARAM_OUT_OF_RANGE} if a parameter is out of the range.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 26.1.0
+ */
+Camera_ErrorCode OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(const Camera_PhotoOutput* photoOutput,
+    OH_Camera_AuxiliaryPhotoType auxPhotoType, bool* isSupported);
+
+/**
+ * @brief Enable or disable auto auxiliary photo delivery.
+ *
+ * @param photoOutput [in] Pointer to the target PhotoOutput instance.
+ * @param auxPhotoTypes [in] Pointer to the target auxiliary photo types array.
+ * @param size [in] The size of the auxiliary photo types array(number of elements).
+ * @param enable [in] Whether to enable or disable auxiliary photo delivery. **true** to enable, **false** otherwise.
+ * @return {@link #CAMERA_OK} if the method call succeeds.
+ *         {@link #INVALID_ARGUMENT} if parameter missing or parameter type incorrect.
+ *         {@link #CAMERA_ERROR_PARAM_OUT_OF_RANGE} if a parameter is out of the range.
+ *         {@link #CAMERA_SERVICE_FATAL_ERROR} if camera service fatal error.
+ * @since 26.1.0
+ */
+Camera_ErrorCode OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(Camera_PhotoOutput* photoOutput,
+    const OH_Camera_AuxiliaryPhotoType* auxPhotoTypes, uint32_t size, bool enable);
+
 #ifdef __cplusplus
 }
 #endif

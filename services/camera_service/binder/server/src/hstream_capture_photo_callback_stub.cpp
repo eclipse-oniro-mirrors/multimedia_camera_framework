@@ -36,6 +36,10 @@ int HStreamCapturePhotoCallbackStub::OnRemoteRequest(
             errCode = HandleOnPictureAvailable(data);
             break;
 #endif
+        case static_cast<uint32_t>(
+            StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE_WITH_AUXILIARY):
+            errCode = HandleOnPhotoAvailableWithAuxiliary(data);
+            break;
         default:
             MEDIA_ERR_LOG("HStreamCaptureCallbackStub request code %{public}u not handled", code);
             errCode = IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -59,6 +63,44 @@ int HStreamCapturePhotoCallbackStub::HandleOnPhotoAvailable(MessageParcel& data)
     int64_t timestamp = data.ReadInt64();
     bool isRaw = data.ReadBool();
     return OnPhotoAvailable(surfaceBuffer, timestamp, isRaw);
+}
+
+namespace {
+int32_t ReadAuxiliarySurfaceBuffer(MessageParcel& data, sptr<SurfaceBuffer>& surfaceBuffer)
+{
+    surfaceBuffer = nullptr;
+    if (!data.ReadBool()) {
+        return ERR_NONE;
+    }
+    sptr<SurfaceBuffer> buffer = SurfaceBuffer::Create();
+    CHECK_RETURN_RET(buffer == nullptr, -1);
+    GSError ret = buffer->ReadFromMessageParcel(data);
+    CHECK_RETURN_RET_ELOG(ret != GSERROR_OK, -1, "ReadFromMessageParcel failed, ret:%{public}d", ret);
+    sptr<BufferExtraData> bufferExtraData = buffer->GetExtraData();
+    CHECK_RETURN_RET_ELOG(bufferExtraData == nullptr, -1, "GetExtraData is null");
+    ret = bufferExtraData->ReadFromParcel(data);
+    CHECK_RETURN_RET_ELOG(ret != GSERROR_OK, -1, "ReadFromParcel failed, ret:%{public}d", ret);
+    (void)buffer->SetExtraData(bufferExtraData);
+    surfaceBuffer = buffer;
+    return ERR_NONE;
+}
+}
+
+int HStreamCapturePhotoCallbackStub::HandleOnPhotoAvailableWithAuxiliary(MessageParcel& data)
+{
+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackStub::OnPhotoAvailableWithAuxiliary is called!");
+    sptr<SurfaceBuffer> mainBuffer = nullptr;
+    sptr<SurfaceBuffer> oxygenBuffer = nullptr;
+    sptr<SurfaceBuffer> pigmentationBuffer = nullptr;
+    int32_t errCode = ReadAuxiliarySurfaceBuffer(data, mainBuffer);
+    CHECK_RETURN_RET(errCode != ERR_NONE, errCode);
+    errCode = ReadAuxiliarySurfaceBuffer(data, oxygenBuffer);
+    CHECK_RETURN_RET(errCode != ERR_NONE, errCode);
+    errCode = ReadAuxiliarySurfaceBuffer(data, pigmentationBuffer);
+    CHECK_RETURN_RET(errCode != ERR_NONE, errCode);
+    int64_t timestamp = data.ReadInt64();
+    bool isRaw = data.ReadBool();
+    return OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer, timestamp, isRaw);
 }
 
 #ifdef CAMERA_CAPTURE_YUV

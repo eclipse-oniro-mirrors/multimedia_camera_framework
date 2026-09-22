@@ -76,6 +76,11 @@ public:
     {
         return 0;
     }
+    int32_t OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
+        sptr<SurfaceBuffer> pigmentationBuffer, int64_t timestamp, bool isRaw) override
+    {
+        return 0;
+    }
 };
 
 class MockStreamCapturePhotoAssetCallback : public StreamCapturePhotoAssetCallbackStub {

@@ -455,6 +455,26 @@ bool OH_PhotoOutput_IsAutoExtendedGainmapDeliverySupported(const Camera_PhotoOut
 
     return isSupported;
 }
+
+Camera_ErrorCode OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(const Camera_PhotoOutput* photoOutput,
+    OH_Camera_AuxiliaryPhotoType auxPhotoType, bool* isSupported)
+{
+    MEDIA_INFO_LOG("OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported is called");
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, isSupported is null!");
+    return photoOutput->IsAutoAuxiliaryPhotoDeliverySupported(auxPhotoType, isSupported);
+}
+
+Camera_ErrorCode OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(Camera_PhotoOutput* photoOutput,
+    const OH_Camera_AuxiliaryPhotoType* auxPhotoTypes, uint32_t size, bool enable)
+{
+    MEDIA_INFO_LOG("OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled is called, enable:%{public}d", enable);
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Invalid argument, photoOutput is null!");
+    return photoOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, size, enable);
+}
 #ifdef __cplusplus
 }
 #endif

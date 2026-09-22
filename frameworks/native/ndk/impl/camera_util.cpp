@@ -49,6 +49,9 @@ static const std::unordered_map<int32_t, Camera_ErrorCode> frameworkToNdkErrorMa
      CAMERA_UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS},
     {static_cast<int32_t>(InnerErrorCode::CAPABILITY_NOT_SUPPORTED),
      CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED},
+    {static_cast<int32_t>(CameraErrorCode::UNSUPPORTED_MULTI_CAMERA_COMBINATION),
+     CAMERA_ERROR_UNSUPPORTED_MULTI_CAMERA_COMBINATION},
+    {static_cast<int32_t>(CameraErrorCode::PARAM_OUT_OF_RANGE), CAMERA_ERROR_PARAM_OUT_OF_RANGE},
 };
 
 Camera_ErrorCode FrameworkToNdkCameraError(int32_t ret)

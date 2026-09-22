@@ -29,6 +29,7 @@ enum StreamCapturePhotoCallbackInterfaceCode {
 #ifdef CAMERA_CAPTURE_YUV
     CAMERA_STREAM_CAPTURE_ON_PICTURE_AVAILABLE,
 #endif
+    CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE_WITH_AUXILIARY,
 };
 
 class IStreamCapturePhotoCallback : public IRemoteBroker {
@@ -37,6 +38,8 @@ public:
 #ifdef CAMERA_CAPTURE_YUV
     virtual int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> picture) = 0;
 #endif
+    virtual int32_t OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
+        sptr<SurfaceBuffer> pigmentationBuffer, int64_t timestamp, bool isRaw) = 0;
     DECLARE_INTERFACE_DESCRIPTOR(u"IStreamCapturePhotoCallback");
 };
 } // namespace CameraStandard

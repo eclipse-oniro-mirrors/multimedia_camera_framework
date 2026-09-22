@@ -274,6 +274,27 @@ public:
         MEDIA_DEBUG_LOG("OnPhotoAvailable X");
     }
 
+    void OnPhotoAvailable(const std::shared_ptr<OHOS::Media::NativeImage> mainImage,
+        const std::shared_ptr<OHOS::Media::NativeImage> oxygenImage,
+        const std::shared_ptr<OHOS::Media::NativeImage> pigmentationImage, bool isRaw) const override
+    {
+        MEDIA_DEBUG_LOG("OnPhotoAvailable with auxiliary E");
+        CHECK_RETURN_ELOG(photoOutput_ == nullptr, "photoOutput is null");
+        CHECK_RETURN_ELOG(photoAvailableCallback_ == nullptr, "callback is null");
+        CHECK_RETURN_ELOG(mainImage == nullptr, "mainImage is null");
+        OH_PhotoNative *photoNative = new (std::nothrow) OH_PhotoNative;
+        CHECK_RETURN_ELOG(photoNative == nullptr, "Create photo native failed");
+        if (!isRaw) {
+            photoNative->SetMainImage(mainImage);
+        } else {
+            photoNative->SetRawImage(mainImage);
+        }
+        photoNative->SetOxygenImage(oxygenImage);
+        photoNative->SetPigmentationImage(pigmentationImage);
+        photoAvailableCallback_(photoOutput_, photoNative);
+        MEDIA_DEBUG_LOG("OnPhotoAvailable with auxiliary X");
+    }
+
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, int32_t cameraShotType,
         const std::string &burstKey) const override
     {
@@ -380,6 +401,12 @@ public:
     Camera_ErrorCode IsAutoExtendedGainmapDeliverySupported(bool* isSupported) const;
 
     Camera_ErrorCode EnableAutoExtendedGainmapDelivery(bool enabled);
+
+    Camera_ErrorCode IsAutoAuxiliaryPhotoDeliverySupported(OH_Camera_AuxiliaryPhotoType type,
+        bool* isSupported) const;
+
+    Camera_ErrorCode SetAutoAuxiliaryPhotosDeliveryEnabled(const OH_Camera_AuxiliaryPhotoType* auxPhotoTypes,
+        uint32_t size, bool enable);
 private:
 
     OHOS::sptr<OHOS::CameraStandard::PhotoOutput> innerPhotoOutput_ = nullptr;

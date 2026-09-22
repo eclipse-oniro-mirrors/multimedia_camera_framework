@@ -38,6 +38,12 @@ public:
 
     virtual void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const = 0;
     virtual void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const = 0;
+    virtual void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> mainImage,
+        const std::shared_ptr<Media::NativeImage> oxygenImage,
+        const std::shared_ptr<Media::NativeImage> pigmentationImage, bool isRaw) const
+    {
+        OnPhotoAvailable(mainImage, isRaw);
+    }
 };
 
 class PhotoAssetAvailableCallback {
@@ -86,6 +92,8 @@ public:
 #ifdef CAMERA_CAPTURE_YUV
     int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> pictureProxy) override;
 #endif
+    int32_t OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
+        sptr<SurfaceBuffer> pigmentationBuffer, int64_t timestamp, bool isRaw) override;
 
     inline sptr<PhotoOutput> GetPhotoOutput()
     {

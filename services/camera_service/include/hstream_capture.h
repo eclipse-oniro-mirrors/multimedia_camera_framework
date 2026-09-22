@@ -133,6 +133,8 @@ public:
     int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> picture);
 #endif
     int32_t OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, const int64_t timestamp, bool isRaw);
+    int32_t OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
+        sptr<SurfaceBuffer> pigmentationBuffer, const int64_t timestamp, bool isRaw);
     int32_t OnPhotoAssetAvailable(
         const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey);
     int32_t OnThumbnailAvailable(sptr<SurfaceBuffer> surfaceBuffer, const int64_t timestamp);
@@ -184,8 +186,19 @@ public:
     int32_t SetEditData(const std::string& editData) override;
     int32_t SetShotParam(int32_t captureId, const std::string& shotParam) override;
     int32_t EnableOriginalImage(bool enabled) override;
+    int32_t SetAutoAuxiliaryPhotosDeliveryEnabled(const std::vector<int32_t>& auxPhotoTypes, bool enabled) override;
     bool IsOriginalImageEnable();
     void FillingPictureExtendLhdrGainmapStreamInfos(StreamInfo_V1_5 &streamInfo);
+    void FillingAuxiliaryPhotoStreamInfos(StreamInfo_V1_5 &streamInfo, int32_t format);
+    bool IsAuxPhotoEnabled();
+    bool IsAuxPhotoDegraded(int32_t captureId);
+    uint32_t GetArrivedAuxPhotoCount(int32_t captureId);
+    void StartWaitAuxPhotoTask(int32_t captureId, int64_t timestamp, sptr<SurfaceBuffer>& mainBuffer);
+    uint32_t StartAuxPhotoWatchdog(int32_t captureId, int64_t timestamp);
+    bool ArmAuxPhotoConsumerTrigger(int32_t captureId, uint32_t pictureHandle, uint32_t expectedCount);
+    void AssembleCompressedPhotoWithAux(int64_t timestamp, int32_t captureId);
+    void SendAuxiliaryPhotoControlTagIfDirty();
+    void CleanAuxPhotoState(int32_t captureId);
     inline void SetIsNeedLhdrGainmap(bool isNeedLhdrGainmap)
     {
         isNeedLhdrGainmap_ = isNeedLhdrGainmap;
@@ -199,11 +212,15 @@ public:
     SpHolder<sptr<Surface>> rawSurface_;
     SpHolder<sptr<Surface>> thumbnailSurface_;
     SpHolder<sptr<Surface>> lhdrGainmapSurface_;
+    SpHolder<sptr<Surface>> oxygenSurface_;
+    SpHolder<sptr<Surface>> pigmentationSurface_;
     sptr<IBufferConsumerListener> gainmapListener_ = nullptr;
     sptr<IBufferConsumerListener> deepListener_ = nullptr;
     sptr<IBufferConsumerListener> exifListener_ = nullptr;
     sptr<IBufferConsumerListener> debugListener_ = nullptr;
     sptr<IBufferConsumerListener> lhdrGainmapListener_ = nullptr;
+    sptr<IBufferConsumerListener> oxygenListener_ = nullptr;
+    sptr<IBufferConsumerListener> pigmentationListener_ = nullptr;
     sptr<PictureAssembler> pictureAssembler_;
     std::map<int32_t, std::shared_ptr<PictureIntf>> captureIdPictureMap_;
     SpHolder<std::shared_ptr<DeferredProcessing::TaskManager>> photoTask_;
@@ -211,6 +228,7 @@ public:
     std::shared_ptr<DeferredProcessing::TaskManager> photoSubGainMapTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> photoSubDebugTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> photoSubDeepTask_ = nullptr;
+    std::shared_ptr<DeferredProcessing::TaskManager> photoSubAuxPhotoTask_ = nullptr;
     std::shared_ptr<DeferredProcessing::TaskManager> thumbnailTask_ = nullptr;
 
     std::recursive_mutex g_photoImageMutex;
@@ -225,6 +243,10 @@ public:
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdExifMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdDebugMap_;
     std::map<int32_t, sptr<SurfaceBuffer>> captureIdLhdrGainmapMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdOxygenMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdPigmentationMap_;
+    std::map<int32_t, int32_t> captureIdAuxDegradeMap_;
+    std::map<int32_t, sptr<SurfaceBuffer>> captureIdMainPhotoMap_;
 
 private:
     int32_t CheckBurstCapture(const std::shared_ptr<OHOS::Camera::CameraMetadata>& captureSettings,
@@ -243,6 +265,8 @@ private:
     sptr<IStreamCaptureThumbnailCallback> thumbnailAvaiableCallback_;
     void FillingPictureExtendStreamInfos(StreamInfo_V1_5 &streamInfo, int32_t format);
     void FillingRawAndThumbnailStreamInfo(StreamInfo_V1_5 &streamInfo);
+    void CreateAuxiliaryPhotoSurfaces();
+    int32_t CheckAuxiliaryPhotoMutex();
     void UpdateJpegBasicInfo(const std::shared_ptr<OHOS::Camera::CameraMetadata> &captureMetadataSetting,
         int32_t& rotation);
     void RegisterAuxiliaryConsumers();
@@ -269,6 +293,8 @@ private:
     SpHolder<sptr<BufferProducerSequenceable>> exifBufferQueue_;
     SpHolder<sptr<BufferProducerSequenceable>> debugBufferQueue_;
     SpHolder<sptr<BufferProducerSequenceable>> lhdrGainmapBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> oxygenBufferQueue_;
+    SpHolder<sptr<BufferProducerSequenceable>> pigmentationBufferQueue_;
     int32_t modeName_;
     int32_t deferredPhotoSwitch_;
     int32_t deferredVideoSwitch_;
@@ -304,6 +330,8 @@ private:
     std::mutex editDataLock_;
     std::unordered_map<int32_t, std::string> captureId2EditData_;
     bool enableOriginImage_ = false;
+    std::vector<int32_t> enabledAuxPhotoTypes_ = {};
+    std::atomic<bool> isAuxControlTagDirty_{false};
 };
 } // namespace CameraStandard
 } // namespace OHOS

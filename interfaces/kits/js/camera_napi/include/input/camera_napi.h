@@ -291,7 +291,14 @@ static const std::unordered_map<std::string, int32_t> mapCameraErrorCode = {
     {"UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS", 7400110},
     {"DEVICE_FREQUENTLY_SWITCHED", 7400111},
     {"CAMERA_LENS_RETRACTED", 7400112},
+    {"UNSUPPORTED_MULTI_CAMERA_COMBINATION", 7400113},
+    {"PARAM_OUT_OF_RANGE", 7400115},
     {"SERVICE_FATAL_ERROR", 7400201}
+};
+
+static const std::unordered_map<std::string, int32_t> mapCameraAuxiliaryPhotoType = {
+    {"OXYGEN", 0},
+    {"PIGMENTATION", 1}
 };
 
 static const std::unordered_map<std::string, int32_t> mapCameraInputErrorCode = {

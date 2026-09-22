@@ -24,6 +24,55 @@
 
 namespace OHOS {
 namespace CameraStandard {
+namespace {
+sptr<Surface> GetAuxConsumerSurface(const sptr<HStreamCapture>& streamCapture, const std::string& surfaceName)
+{
+    if (surfaceName == S_GAINMAP) {
+        return streamCapture->gainmapSurface_.Get();
+    } else if (surfaceName == S_DEEP) {
+        return streamCapture->deepSurface_.Get();
+    } else if (surfaceName == S_EXIF) {
+        return streamCapture->exifSurface_.Get();
+    } else if (surfaceName == S_DEBUG) {
+        return streamCapture->debugSurface_.Get();
+    } else if (surfaceName == S_LHDR_GAINMAP) {
+        return streamCapture->lhdrGainmapSurface_.Get();
+    } else if (surfaceName == S_OXYGEN_PHOTO) {
+        return streamCapture->oxygenSurface_.Get();
+    } else if (surfaceName == S_PIGMENTATION_PHOTO) {
+        return streamCapture->pigmentationSurface_.Get();
+    }
+    return nullptr;
+}
+
+// Caller must hold HStreamCapture::g_photoImageMutex.
+void CacheAuxConsumerBuffer(const sptr<HStreamCapture>& streamCapture, const std::string& surfaceName,
+    int32_t captureId, const sptr<SurfaceBuffer>& surfaceBuffer)
+{
+    if (surfaceName == S_GAINMAP) {
+        streamCapture->captureIdGainmapMap_[captureId] = surfaceBuffer;
+        MEDIA_INFO_LOG("AuxiliaryBufferConsumer gainmapSurfaceBuffer_, captureId=%{public}d", captureId);
+    } else if (surfaceName == S_DEEP) {
+        streamCapture->captureIdDepthMap_.EnsureInsert(captureId, surfaceBuffer);
+        MEDIA_INFO_LOG("AuxiliaryBufferConsumer deepSurfaceBuffer_, captureId=%{public}d", captureId);
+    } else if (surfaceName == S_EXIF) {
+        streamCapture->captureIdExifMap_[captureId] = surfaceBuffer;
+        MEDIA_INFO_LOG("AuxiliaryBufferConsumer exifSurfaceBuffer_, captureId=%{public}d", captureId);
+    } else if (surfaceName == S_DEBUG) {
+        streamCapture->captureIdDebugMap_[captureId] = surfaceBuffer;
+        MEDIA_INFO_LOG("AuxiliaryBufferConsumer debugSurfaceBuffer_, captureId=%{public}d", captureId);
+    } else if (surfaceName == S_LHDR_GAINMAP) {
+        streamCapture->captureIdLhdrGainmapMap_[captureId] = surfaceBuffer;
+        MEDIA_INFO_LOG("AuxiliaryBufferConsumer lhdrGainmapSurfaceBuffer_, captureId=%{public}d", captureId);
+    } else if (surfaceName == S_OXYGEN_PHOTO) {
+        streamCapture->captureIdOxygenMap_[captureId] = surfaceBuffer;
+        MEDIA_INFO_LOG("AuxiliaryBufferConsumer oxygenSurfaceBuffer_, captureId=%{public}d", captureId);
+    } else if (surfaceName == S_PIGMENTATION_PHOTO) {
+        streamCapture->captureIdPigmentationMap_[captureId] = surfaceBuffer;
+        MEDIA_INFO_LOG("AuxiliaryBufferConsumer pigmentationSurfaceBuffer_, captureId=%{public}d", captureId);
+    }
+}
+} // namespace
 
 AuxiliaryBufferConsumer::AuxiliaryBufferConsumer(const std::string surfaceName, wptr<HStreamCapture> streamCapture)
     : surfaceName_(surfaceName), streamCapture_(streamCapture)
@@ -41,11 +90,20 @@ void AuxiliaryBufferConsumer::OnBufferAvailable()
     MEDIA_INFO_LOG("OnBufferAvailable E, surfaceName:%{public}s", surfaceName_.c_str());
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    wptr<AuxiliaryBufferConsumer> thisPtr(this);
+    if (surfaceName_ == S_OXYGEN_PHOTO || surfaceName_ == S_PIGMENTATION_PHOTO) {
+        CHECK_RETURN_ELOG(streamCapture->photoSubAuxPhotoTask_ == nullptr, "photoSubAuxPhotoTask is null");
+        streamCapture->photoSubAuxPhotoTask_->SubmitTask([thisPtr]() {
+            auto listener = thisPtr.promote();
+            CHECK_EXECUTE(listener, listener->ExecuteOnBufferAvailable());
+        });
+        MEDIA_INFO_LOG("OnBufferAvailable X");
+        return;
+    }
     CHECK_RETURN_ELOG(streamCapture->photoSubExifTask_ == nullptr, "photoSubTask is null");
     CHECK_RETURN_ELOG(streamCapture->photoSubGainMapTask_ == nullptr, "photoSubTask is null");
     CHECK_RETURN_ELOG(streamCapture->photoSubDebugTask_ == nullptr, "photoSubTask is null");
     CHECK_RETURN_ELOG(streamCapture->photoSubDeepTask_ == nullptr, "photoSubTask is null");
-    wptr<AuxiliaryBufferConsumer> thisPtr(this);
     if (surfaceName_ == S_EXIF) {
         streamCapture->photoSubExifTask_->SubmitTask([thisPtr]() {
             auto listener = thisPtr.promote();
@@ -76,18 +134,7 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
     CAMERA_SYNC_TRACE;
     sptr<HStreamCapture> streamCapture = streamCapture_.promote();
     CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
-    sptr<Surface> surface;
-    if (surfaceName_ == S_GAINMAP) {
-        surface = streamCapture->gainmapSurface_.Get();
-    } else if (surfaceName_ == S_DEEP) {
-        surface = streamCapture->deepSurface_.Get();
-    } else if (surfaceName_ == S_EXIF) {
-        surface = streamCapture->exifSurface_.Get();
-    } else if (surfaceName_ == S_DEBUG) {
-        surface = streamCapture->debugSurface_.Get();
-    } else if (surfaceName_ == S_LHDR_GAINMAP) {
-        surface = streamCapture->lhdrGainmapSurface_.Get();
-    }
+    sptr<Surface> surface = GetAuxConsumerSurface(streamCapture, surfaceName_);
     // acquire copy release buffer
     sptr<SurfaceBuffer> surfaceBuffer = nullptr;
     int32_t fence = -1;
@@ -112,6 +159,11 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
     MEDIA_INFO_LOG("AuxiliaryBufferConsumer captureId:%{public}d", captureId);
     {
         std::lock_guard<std::recursive_mutex> lock{streamCapture->g_photoImageMutex};
+        if (surfaceName_ == S_OXYGEN_PHOTO || surfaceName_ == S_PIGMENTATION_PHOTO) {
+            CHECK_RETURN_ILOG(streamCapture->captureIdAuxDegradeMap_.count(captureId) != 0 &&
+                streamCapture->captureIdAuxDegradeMap_[captureId] != 0,
+                "AuxiliaryBufferConsumer degraded capture, buffer dropped, captureId=%{public}d", captureId);
+        }
         if (streamCapture->captureIdAuxiliaryCountMap_.count(captureId)) {
             int32_t auxiliaryCount = streamCapture->captureIdAuxiliaryCountMap_[captureId];
             int32_t expectCount = streamCapture->captureIdCountMap_[captureId];
@@ -121,22 +173,7 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
         }
         // cache buffer and check assemble
         streamCapture->captureIdAuxiliaryCountMap_[captureId]++;
-        if (surfaceName_ == S_GAINMAP) {
-            streamCapture->captureIdGainmapMap_[captureId] = newSurfaceBuffer;
-            MEDIA_INFO_LOG("AuxiliaryBufferConsumer gainmapSurfaceBuffer_, captureId=%{public}d", captureId);
-        } else if (surfaceName_ == S_DEEP) {
-            streamCapture->captureIdDepthMap_.EnsureInsert(captureId, newSurfaceBuffer);
-            MEDIA_INFO_LOG("AuxiliaryBufferConsumer deepSurfaceBuffer_, captureId=%{public}d", captureId);
-        } else if (surfaceName_ == S_EXIF) {
-            streamCapture->captureIdExifMap_[captureId] = newSurfaceBuffer;
-            MEDIA_INFO_LOG("AuxiliaryBufferConsumer exifSurfaceBuffer_, captureId=%{public}d", captureId);
-        } else if (surfaceName_ == S_DEBUG) {
-            streamCapture->captureIdDebugMap_[captureId] = newSurfaceBuffer;
-            MEDIA_INFO_LOG("AuxiliaryBufferConsumer debugSurfaceBuffer_, captureId=%{public}d", captureId);
-        } else if (surfaceName_ == S_LHDR_GAINMAP) {
-            streamCapture->captureIdLhdrGainmapMap_[captureId] = newSurfaceBuffer;
-            MEDIA_INFO_LOG("AuxiliaryBufferConsumer lhdrGainmapSurfaceBuffer_, captureId=%{public}d", captureId);
-        }
+        CacheAuxConsumerBuffer(streamCapture, surfaceName_, captureId, newSurfaceBuffer);
         MEDIA_INFO_LOG("AuxiliaryBufferConsumer auxiliaryPhotoCount = %{public}d, captureCount = %{public}d, "
                        "surfaceName=%{public}s, captureId=%{public}d",
             streamCapture->captureIdAuxiliaryCountMap_[captureId], streamCapture->captureIdCountMap_[captureId],
@@ -147,10 +184,10 @@ void AuxiliaryBufferConsumer::ExecuteOnBufferAvailable()
             MEDIA_INFO_LOG("AuxiliaryBufferConsumer StopMonitor, surfaceName=%{public}s, pictureHandle = %{public}d, "
                            "captureId = %{public}d",
                 surfaceName_.c_str(), pictureHandle, captureId);
-            DeferredProcessing::Watchdog::GetGlobalWatchdog().DoTimeout(pictureHandle);
-            DeferredProcessing::Watchdog::GetGlobalWatchdog().StopMonitor(pictureHandle);
             streamCapture->captureIdAuxiliaryCountMap_[captureId] = -1;
             MEDIA_INFO_LOG("AuxiliaryBufferConsumer captureIdAuxiliaryCountMap_ = -1");
+            DeferredProcessing::Watchdog::GetGlobalWatchdog().DoTimeout(pictureHandle);
+            DeferredProcessing::Watchdog::GetGlobalWatchdog().StopMonitor(pictureHandle);
         }
     }
     MEDIA_INFO_LOG("A_ExecuteOnBufferAvailable X");

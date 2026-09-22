@@ -68,10 +68,13 @@ struct CallbackInfo {
     int32_t duration;
     int32_t drawingState;
     std::shared_ptr<Media::NativeImage> nativeImage;
+    std::shared_ptr<Media::NativeImage> oxygenImage;
+    std::shared_ptr<Media::NativeImage> pigmentationImage;
     std::shared_ptr<Media::Picture> picture;
     std::shared_ptr<Media::PixelMap> pixelMap;
     bool isRaw = false;
     bool isYuv = false;
+    bool isAuxiliary = false;
     std::string uri;
     int32_t cameraShotType;
     std::string burstKey;
@@ -153,6 +156,9 @@ public:
     void OnPhotoAvailable(
         const std::shared_ptr<Media::NativeImage> nativeImage, const bool isRaw = false) const override;
     void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
+    void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> mainImage,
+        const std::shared_ptr<Media::NativeImage> oxygenImage,
+        const std::shared_ptr<Media::NativeImage> pigmentationImage, bool isRaw) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri, const int32_t cameraShotType,
         const std::string &burstKey) const override;
     void OnThumbnailAvailable(
@@ -258,6 +264,8 @@ public:
     static napi_value IsGenerateOriginalImageSupported(napi_env env, napi_callback_info info);
     static napi_value IsAutoExtendedGainmapDeliverySupported(napi_env env, napi_callback_info info);
     static napi_value EnableAutoExtendedGainmapDelivery(napi_env env, napi_callback_info info);
+    static napi_value IsAutoAuxiliaryPhotoDeliverySupported(napi_env env, napi_callback_info info);
+    static napi_value SetAutoAuxiliaryPhotosDeliveryEnabled(napi_env env, napi_callback_info info);
 
     static napi_value OnQuickThumbnail(napi_env env, napi_callback_info info);
     static napi_value OffQuickThumbnail(napi_env env, napi_callback_info info);

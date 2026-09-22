@@ -454,6 +454,16 @@ std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::CloneCachedSettings
     return CameraFwkMetadataUtils::CopyMetadata(cachedSettings_);
 }
 
+void HCameraDevice::ReadCachedSettings(
+    const std::function<void(const std::shared_ptr<OHOS::Camera::CameraMetadata>&)>& reader)
+{
+    CHECK_RETURN_ELOG(reader == nullptr, "HCameraDevice::ReadCachedSettings reader is null");
+    std::lock_guard<std::mutex> cachedLock(cachedSettingsMutex_);
+    if (cachedSettings_ != nullptr) {
+        reader(cachedSettings_);
+    }
+}
+
 std::shared_ptr<OHOS::Camera::CameraMetadata> HCameraDevice::GetDeviceAbility()
 {
     CAMERA_SYNC_TRACE;

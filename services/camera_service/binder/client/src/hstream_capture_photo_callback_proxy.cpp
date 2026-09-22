@@ -78,5 +78,53 @@ int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(std::shared_ptr<Pictu
     return error;
 }
 #endif
+
+namespace {
+bool WriteAuxiliarySurfaceBuffer(MessageParcel& data, const sptr<SurfaceBuffer>& surfaceBuffer)
+{
+    if (surfaceBuffer == nullptr) {
+        data.WriteBool(false);
+        return true;
+    }
+    data.WriteBool(true);
+    surfaceBuffer->WriteToMessageParcel(data);
+    sptr<BufferExtraData> bufferExtraData = surfaceBuffer->GetExtraData();
+    CHECK_RETURN_RET_ELOG(bufferExtraData == nullptr, false, "bufferExtraData is null");
+    GSError ret = bufferExtraData->WriteToParcel(data);
+    CHECK_RETURN_RET_ELOG(ret != GSERROR_OK, false, "WriteToParcel failed, ret:%{public}d", ret);
+    return true;
+}
+}
+
+int32_t HStreamCapturePhotoCallbackProxy::OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer,
+    sptr<SurfaceBuffer> oxygenBuffer, sptr<SurfaceBuffer> pigmentationBuffer, int64_t timestamp, bool isRaw)
+{
+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackProxy::OnPhotoAvailable with auxiliary is called!");
+    CHECK_RETURN_RET_ELOG(mainBuffer == nullptr, ERR_INVALID_VALUE, "mainBuffer is null");
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    option.SetFlags(option.TF_ASYNC);
+
+    data.WriteInterfaceToken(GetDescriptor());
+    CHECK_RETURN_RET_ELOG(!WriteAuxiliarySurfaceBuffer(data, mainBuffer), ERR_INVALID_VALUE,
+        "Write mainBuffer failed");
+    CHECK_RETURN_RET_ELOG(!WriteAuxiliarySurfaceBuffer(data, oxygenBuffer), ERR_INVALID_VALUE,
+        "Write oxygenBuffer failed");
+    CHECK_RETURN_RET_ELOG(!WriteAuxiliarySurfaceBuffer(data, pigmentationBuffer), ERR_INVALID_VALUE,
+        "Write pigmentationBuffer failed");
+    data.WriteInt64(timestamp);
+    data.WriteBool(isRaw);
+
+    int error = Remote()->SendRequest(
+        static_cast<uint32_t>(
+            StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE_WITH_AUXILIARY),
+        data,
+        reply,
+        option);
+    CHECK_PRINT_ELOG(
+        error != ERR_NONE, "HStreamCapturePhotoCallbackProxy OnPhotoAvailable failed, error: %{public}d", error);
+    return error;
+}
 }  // namespace CameraStandard
 }  // namespace OHOS

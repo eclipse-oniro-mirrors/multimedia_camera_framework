@@ -46,6 +46,40 @@ Camera_ErrorCode OH_PhotoNative_Release(OH_PhotoNative* photo)
     return CAMERA_OK;
 }
 
+Camera_ErrorCode OH_PhotoNative_GetAuxiliaryImage(const OH_PhotoNative* photo, OH_Camera_AuxiliaryPhotoType type,
+    OH_ImageNative** outImage)
+{
+    CHECK_RETURN_RET_ELOG(photo == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, photo is null!");
+    CHECK_RETURN_RET_ELOG(outImage == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, outImage is null!");
+    return photo->GetAuxiliaryImage(type, outImage);
+}
+
+Camera_ErrorCode OH_PhotoNative_GetUncompressedAuxiliaryImage(const OH_PhotoNative* photo,
+    OH_Camera_AuxiliaryPhotoType type, OH_PictureNative** outImage)
+{
+    CHECK_RETURN_RET_ELOG(photo == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, photo is null!");
+    CHECK_RETURN_RET_ELOG(outImage == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, outImage is null!");
+    return photo->GetUncompressedAuxiliaryImage(type, outImage);
+}
+
+Camera_ErrorCode OH_PhotoNative_ReleasePicture(OH_PictureNative* picture)
+{
+    CHECK_RETURN_RET_ELOG(picture == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, picture is null!");
+    Image_ErrorCode errCode = OH_PictureNative_Release(picture);
+    CHECK_RETURN_RET_ELOG(errCode != IMAGE_SUCCESS, CAMERA_INVALID_ARGUMENT,
+        "OH_PhotoNative_ReleasePicture failed: %{public}d", errCode);
+    return CAMERA_OK;
+}
+
+Camera_ErrorCode OH_PhotoNative_ReleaseImage(OH_ImageNative* image)
+{
+    CHECK_RETURN_RET_ELOG(image == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, image is null!");
+    Image_ErrorCode errCode = OH_ImageNative_Release(image);
+    CHECK_RETURN_RET_ELOG(errCode != IMAGE_SUCCESS, CAMERA_INVALID_ARGUMENT,
+        "OH_PhotoNative_ReleaseImage failed: %{public}d", errCode);
+    return CAMERA_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif

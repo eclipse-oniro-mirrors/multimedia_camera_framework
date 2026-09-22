@@ -15,6 +15,7 @@
 
 #include "output/photo_output.h"
 
+#include <algorithm>
 #include <mutex>
 #include <securec.h>
 #include <nlohmann/json.hpp>
@@ -35,6 +36,9 @@
 #include "metadata_common_utils.h"
 #include "photo_asset_interface.h"
 #include "json_parse.h"
+// Unconditional: the extended stream ability (20/21) check is compiled regardless of the
+// CAMERA_CAPTURE_YUV build flag, so the HDI v1_7 types must always be visible.
+#include "v1_7/types.h"
 #ifdef CAMERA_CAPTURE_YUV
 #include "camera_security_utils.h"
 #endif
@@ -2022,6 +2026,192 @@ int32_t PhotoOutput::EnableAutoExtendedGainmapDelivery(bool enabled)
     }
     int32_t res = captureSession->EnableAutoExtendedGainmapDelivery(enabled);
     return res;
+}
+
+namespace {
+// Secondary check: confirm HAL reports the extended stream ability (20/21) so the auxiliary
+// streams can actually be configured for this type.
+bool IsExtendedStreamAbilityReported(const std::shared_ptr<Camera::CameraMetadata>& metadata,
+    CameraAuxiliaryPhotoType type)
+{
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(),
+        OHOS_ABILITY_AVAILABLE_EXTENDED_STREAM_INFO_TYPES, &item);
+    CHECK_RETURN_RET(ret != CAM_META_SUCCESS || item.count <= 0, false);
+    int32_t extendedStreamType = (type == CameraAuxiliaryPhotoType::OXYGEN) ?
+        static_cast<int32_t>(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_OXYGEN_PHOTO) :
+        static_cast<int32_t>(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_PIGMENTATION_PHOTO);
+    for (uint32_t i = 0; i < item.count; i++) {
+        if (item.data.i32[i] == extendedStreamType) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool IsAuxPhotoTypeSupportedInAbility(const camera_metadata_item_t& item, int32_t mode, uint32_t type)
+{
+    uint32_t groupStart = 0;
+    for (uint32_t i = 0; i <= item.count; i++) {
+        if (i < item.count && item.data.i32[i] != MODE_END) {
+            continue;
+        }
+        // a group closes at MODE_END or at the end of the array
+        if (groupStart < i && item.data.i32[groupStart] == mode) {
+            const int32_t* groupFirst = item.data.i32 + groupStart + STEP_ONE;
+            const int32_t* groupEnd = item.data.i32 + i;
+            return std::find(groupFirst, groupEnd, static_cast<int32_t>(type)) != groupEnd;
+        }
+        groupStart = i + STEP_ONE;
+    }
+    return false;
+}
+}
+
+int32_t PhotoOutput::IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType type, bool& isSupported)
+{
+    MEDIA_INFO_LOG("PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported is called");
+    isSupported = false;
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported error!, captureSession is nullptr");
+    CHECK_RETURN_RET_ELOG(!(session->IsSessionConfiged() || session->IsSessionCommited()),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported error!, session not configed or not commited");
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported error!, inputDevice is nullptr");
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported error!, cameraObj is nullptr");
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported error!, metadata is nullptr");
+    camera_metadata_item_t item;
+    int32_t ret = Camera::FindCameraMetadataItem(metadata->get(),
+        OHOS_ABILITY_AUTO_AUXILIARY_PHOTOS_DELIVERY, &item);
+    if (ret != CAM_META_SUCCESS || item.count <= 0) {
+        MEDIA_INFO_LOG("PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported ability not reported, "
+            "treat as unsupported, ret:%{public}d", ret);
+        return CameraErrorCode::SUCCESS;
+    }
+    SceneMode currentSceneMode = session->GetMode();
+    MEDIA_INFO_LOG("PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported current mode: %{public}d",
+        static_cast<int>(currentSceneMode));
+    // ability data format: [mode, type1, ..., MODE_END, mode2, ..., MODE_END]
+    if (IsAuxPhotoTypeSupportedInAbility(item, static_cast<int32_t>(currentSceneMode),
+        static_cast<uint32_t>(type))) {
+        isSupported = IsExtendedStreamAbilityReported(metadata, type);
+        MEDIA_INFO_LOG("IsAutoAuxiliaryPhotoDeliverySupported mode-type pair matched, "
+            "extended stream ability check result: %{public}d", isSupported);
+    } else {
+        MEDIA_INFO_LOG("IsAutoAuxiliaryPhotoDeliverySupported mode-type pair NOT matched "
+            "in ability data");
+    }
+    MEDIA_INFO_LOG("PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported result: %{public}d", isSupported);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t PhotoOutput::SetAutoAuxiliaryPhotosDeliveryEnabled(
+    const std::vector<CameraAuxiliaryPhotoType>& types, bool enable)
+{
+    MEDIA_INFO_LOG("PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled is called, enable:%{public}d", enable);
+    auto captureSession = GetSession();
+    CHECK_RETURN_RET_ELOG(captureSession == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled error!, captureSession is nullptr");
+    CHECK_RETURN_RET_ELOG(!(captureSession->IsSessionConfiged() || captureSession->IsSessionCommited()),
+        CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled error!, session not configed or not commited");
+    auto inputDevice = captureSession->GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled error!, inputDevice is nullptr");
+    if (enable) {
+        for (auto type : types) {
+            bool isSupported = false;
+            int32_t ret = IsAutoAuxiliaryPhotoDeliverySupported(type, isSupported);
+            CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
+                "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled error!");
+            CHECK_RETURN_RET_ELOG(!isSupported, InnerErrorCode::CAPABILITY_NOT_SUPPORTED,
+                "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled not supported");
+        }
+    }
+    // Set the stream switch on service side first, mutex conditions are checked with app config there.
+    auto streamCapturePtr = CastStream<IStreamCapture>(GetStream());
+    CHECK_RETURN_RET_ELOG(streamCapturePtr == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled error!, streamCapturePtr is nullptr");
+    std::vector<int32_t> auxPhotoTypes;
+    for (auto type : types) {
+        auxPhotoTypes.push_back(static_cast<int32_t>(type));
+    }
+    int32_t ret = streamCapturePtr->SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, enable);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ServiceToCameraError(ret),
+        "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled set stream switch failed");
+    // Mirror the per-type incremental switch kept on the service side: enable merges the types
+    // into the set, disable removes them. The control tag is marked dirty on the service side and
+    // delivered after CommitStreams on the next config commit (see HStreamOperator::LinkInputAndOutputs).
+    std::vector<CameraAuxiliaryPhotoType> newTypes = enabledAuxPhotoTypes_;
+    for (auto type : types) {
+        auto it = std::find(newTypes.begin(), newTypes.end(), type);
+        if (enable && it == newTypes.end()) {
+            newTypes.push_back(type);
+        } else if (!enable && it != newTypes.end()) {
+            newTypes.erase(it);
+        }
+    }
+    if (enabledAuxPhotoTypes_ != newTypes) {
+        int32_t rc = ReconfigSessionForAuxiliaryPhotos();
+        CHECK_RETURN_RET_ELOG(rc != CameraErrorCode::SUCCESS, rc,
+            "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled reconfig failed: %{public}d", rc);
+        // Commit the mirror only after a successful reconfig: on failure the old mirror is kept
+        // so a retried enable sees a change and triggers the reconfig again.
+        enabledAuxPhotoTypes_ = newTypes;
+    }
+    MEDIA_INFO_LOG("PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled X");
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t PhotoOutput::ReconfigSessionForAuxiliaryPhotos()
+{
+    MEDIA_INFO_LOG("PhotoOutput ReconfigSessionForAuxiliaryPhotos is called");
+    auto session = GetSession();
+    CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "ReconfigSessionForAuxiliaryPhotos session is nullptr");
+    // Query the state once and branch on the exact value: a combined use of IsSessionCommited()
+    // and IsSessionStarted() is racy (two IPC round trips) and their semantics overlap because
+    // IsSessionCommited() also returns true for the STARTED state.
+    CaptureSessionState state = CaptureSessionState::SESSION_INIT;
+    int32_t errCode = session->GetSessionCurrentState(state);
+    CHECK_RETURN_RET_ELOG(errCode != CameraErrorCode::SUCCESS, errCode,
+        "ReconfigSessionForAuxiliaryPhotos get session state failed");
+    bool needRestart = (state == CaptureSessionState::SESSION_STARTED);
+    if (!needRestart && state != CaptureSessionState::SESSION_CONFIG_COMMITTED) {
+        // CONFIG_INPROGRESS: the app's own commit is pending, the dirty control tag and the
+        // switch based stream filling apply at that commit. Other states need no reconfig.
+        MEDIA_INFO_LOG("ReconfigSessionForAuxiliaryPhotos skipped, session state: %{public}d",
+            static_cast<int32_t>(state));
+        return CameraErrorCode::SUCCESS;
+    }
+    MEDIA_INFO_LOG("ReconfigSessionForAuxiliaryPhotos, needRestart: %{public}d", needRestart);
+    // The reconfig tears the session down, keep the current control settings and restore them
+    // after the new configuration is committed (the same pattern as SetCallbackFlag).
+    FocusMode focusMode = session->GetFocusMode();
+    FlashMode flashMode = session->GetFlashMode();
+    errCode = session->BeginConfig();
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "ReconfigSessionForAuxiliaryPhotos BeginConfig failed: %{public}d", errCode);
+    errCode = session->CommitConfig();
+    CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+        "ReconfigSessionForAuxiliaryPhotos CommitConfig failed: %{public}d", errCode);
+    session->LockForControl();
+    session->SetFocusMode(focusMode);
+    session->SetFlashMode(flashMode);
+    session->UnlockForControl();
+    if (needRestart) {
+        errCode = session->Start();
+        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
+            "ReconfigSessionForAuxiliaryPhotos Start failed: %{public}d", errCode);
+    }
+    return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard
 } // namespace OHOS

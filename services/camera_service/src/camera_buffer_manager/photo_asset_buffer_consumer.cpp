@@ -101,6 +101,12 @@ void PhotoAssetBufferConsumer::ExecuteOnBufferAvailable()
         streamCapture->CreateMediaLibrary(cameraPhotoProxy, uri, cameraShotType, burstKey, timestamp);
         MEDIA_INFO_LOG("CreateMediaLibrary uri:%{public}s", uri.c_str());
         streamCapture->OnPhotoAssetAvailable(originCaptureId, uri, cameraShotType, burstKey);
+        // Auxiliary photos are never delivered on the photo asset path (segmented photo is
+        // mutually exclusive with them): clean the per-capture state so no orphan entries
+        // stay in the maps when the states overlap within a registration race window.
+        if (streamCapture->IsAuxPhotoEnabled()) {
+            streamCapture->CleanAuxPhotoState(originCaptureId);
+        }
 #ifdef CAMERA_CAPTURE_YUV
     }
 #endif
@@ -210,6 +216,7 @@ void PhotoAssetBufferConsumer::CleanAfterTransPicture(int32_t captureId)
     streamCapture->captureIdCountMap_.erase(captureId);
     streamCapture->captureIdHandleMap_.erase(captureId);
     streamCapture->captureIdLhdrGainmapMap_.erase(captureId);
+    streamCapture->CleanAuxPhotoState(captureId);
 }
 
 void PhotoAssetBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId, int32_t originCaptureId)

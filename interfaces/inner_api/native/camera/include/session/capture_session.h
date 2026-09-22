@@ -1809,6 +1809,13 @@ public:
      * @return Returns whether or not commit config.
      */
     bool IsSessionCommited();
+
+    /**
+     * @brief Get the current session state with a single query.
+     *
+     * @return Returns the state code, on success the state is filled.
+     */
+    int32_t GetSessionCurrentState(CaptureSessionState& state);
     bool SetBeautyValue(BeautyType beautyType, int32_t value);
     /**
      * @brief Get whether or not commit config.

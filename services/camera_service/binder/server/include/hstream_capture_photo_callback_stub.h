@@ -29,6 +29,7 @@ public:
 
 private:
     int HandleOnPhotoAvailable(MessageParcel& data);
+    int HandleOnPhotoAvailableWithAuxiliary(MessageParcel& data);
     int32_t HandleAddMetadataType(MessageParcel& data);
     int32_t HandleRemoveMetadataType(MessageParcel& data);
 #ifdef CAMERA_CAPTURE_YUV

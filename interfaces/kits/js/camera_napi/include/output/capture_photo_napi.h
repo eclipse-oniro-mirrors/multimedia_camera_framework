@@ -30,10 +30,16 @@ public:
         napi_env env, napi_value mainImage, sptr<SurfaceBuffer> imageBuffer = nullptr);
     static napi_value CreatePicture(
         napi_env env, napi_value picture, sptr<SurfaceBuffer> pictureBuffer = nullptr);
+    static napi_value CreatePhotoWithAuxiliary(napi_env env, napi_value mainImage, napi_value oxygenImage,
+        napi_value pigmentationImage, sptr<SurfaceBuffer> imageBuffer = nullptr);
+    static napi_value CreatePictureWithAuxiliary(napi_env env, napi_value picture, napi_value oxygenPicture,
+        napi_value pigmentationPicture, sptr<SurfaceBuffer> pictureBuffer = nullptr);
     CapturePhotoNapi();
     ~CapturePhotoNapi();
 
     static napi_value GetMain(napi_env env, napi_callback_info info);
+    static napi_value GetOxygenPhoto(napi_env env, napi_callback_info info);
+    static napi_value GetPigmentationPhoto(napi_env env, napi_callback_info info);
     static napi_value Release(napi_env env, napi_callback_info info);
     static void SafeDeleteReference(napi_env env, napi_ref& ref);
 
@@ -44,6 +50,8 @@ private:
     static thread_local napi_ref sConstructor_;
     static thread_local napi_ref sMainImageRef_;
     static thread_local napi_ref sPictureRef_;
+    static thread_local napi_ref sOxygenImageRef_;
+    static thread_local napi_ref sPigmentationImageRef_;
     static thread_local uint32_t photoTaskId;
     static sptr<SurfaceBuffer> imageBuffer_;
     static bool isCompressed_;
@@ -51,6 +59,8 @@ private:
     napi_env env_;
     napi_ref mainImageRef_;
     napi_ref pictureRef_;
+    napi_ref oxygenImageRef_;
+    napi_ref pigmentationImageRef_;
 };
 
 struct CapturePhotoAsyncContext : public AsyncContext {

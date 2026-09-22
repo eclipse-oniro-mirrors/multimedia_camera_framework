@@ -87,18 +87,26 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
     CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::PHOTO_AVAILABLE, captureId);
     CameraReportDfxUtils::GetInstance()->SetFirstBufferEndInfo(captureId);
     CameraReportDfxUtils::GetInstance()->SetPrepareProxyStartInfo(captureId);
+    int32_t auxiliaryCount = CameraSurfaceBufferUtil::GetImageCount(newSurfaceBuffer);
 #ifdef CAMERA_CAPTURE_YUV
     bool isSystemApp = PhotoLevelManager::GetInstance().GetPhotoLevelInfo(captureId);
     if (!isSystemApp && streamCapture_->isYuvCapture_) {
-        int32_t auxiliaryCount = CameraSurfaceBufferUtil::GetImageCount(newSurfaceBuffer);
-        MEDIA_INFO_LOG("OnBufferAvailable captureId:%{public}d auxiliaryCount:%{public}d", captureId, auxiliaryCount);
+        MEDIA_INFO_LOG("OnBufferAvailable captureId:%{public}d auxiliaryCount:%{public}d",
+            captureId, auxiliaryCount);
         StartWaitAuxiliaryTask(captureId, auxiliaryCount, timestamp, newSurfaceBuffer);
+    } else
+#endif
+    if (!isRaw_ && !streamCapture_->isYuvCapture_ && streamCapture_->IsAuxPhotoEnabled() &&
+        auxiliaryCount > 1 && !streamCapture_->IsAuxPhotoDegraded(captureId)) {
+        streamCapture_->StartWaitAuxPhotoTask(captureId, timestamp, newSurfaceBuffer);
     } else {
-#endif
         streamCapture->OnPhotoAvailable(newSurfaceBuffer, timestamp, isRaw_);
-#ifdef CAMERA_CAPTURE_YUV
+        // Direct delivery (aux not enabled / degraded capture / imageCount declared none):
+        // clean the per-capture auxiliary state so no orphan entries stay in the maps.
+        if (streamCapture_->IsAuxPhotoEnabled()) {
+            streamCapture_->CleanAuxPhotoState(captureId);
+        }
     }
-#endif
     MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable X");
 }
 
@@ -195,6 +203,31 @@ void PhotoBufferConsumer::CleanAfterTransPicture(int32_t captureId)
     streamCapture->captureIdCountMap_.erase(captureId);
     streamCapture->captureIdHandleMap_.erase(captureId);
     streamCapture->captureIdLhdrGainmapMap_.erase(captureId);
+    streamCapture->CleanAuxPhotoState(captureId);
+}
+
+namespace {
+// Embeds the oxygen/pigmentation auxiliary photo buffers (if delivered) into the main picture
+// as OXY_MAP/MEL_MAP auxiliary pictures, and clears the cached buffers on embed.
+void AppendAuxiliaryPicturesToMain(const sptr<HStreamCapture>& streamCapture,
+    const std::shared_ptr<PictureIntf>& picture, int32_t captureId)
+{
+    CHECK_RETURN_ELOG(picture == nullptr, "AppendAuxiliaryPicturesToMain picture is nullptr");
+    if (streamCapture->captureIdOxygenMap_[captureId]) {
+        MEDIA_INFO_LOG("AssembleDeferredPicture oxygenSurfaceBuffer");
+        LoggingSurfaceBufferInfo(streamCapture->captureIdOxygenMap_[captureId], "oxygenSurfaceBuffer");
+        picture->SetAuxiliaryPicture(
+            streamCapture->captureIdOxygenMap_[captureId], CameraAuxiliaryPictureType::OXY_MAP);
+        streamCapture->captureIdOxygenMap_[captureId] = nullptr;
+    }
+    if (streamCapture->captureIdPigmentationMap_[captureId]) {
+        MEDIA_INFO_LOG("AssembleDeferredPicture pigmentationSurfaceBuffer");
+        LoggingSurfaceBufferInfo(streamCapture->captureIdPigmentationMap_[captureId], "pigmentationSurfaceBuffer");
+        picture->SetAuxiliaryPicture(
+            streamCapture->captureIdPigmentationMap_[captureId], CameraAuxiliaryPictureType::MEL_MAP);
+        streamCapture->captureIdPigmentationMap_[captureId] = nullptr;
+    }
+}
 }
 
 void PhotoBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t captureId)
@@ -241,6 +274,7 @@ void PhotoBufferConsumer::AssembleDeferredPicture(int64_t timestamp, int32_t cap
             streamCapture->captureIdLhdrGainmapMap_[captureId], CameraAuxiliaryPictureType::LHDR_GAINMAP);
         streamCapture->captureIdLhdrGainmapMap_[captureId] = nullptr;
     }
+    AppendAuxiliaryPicturesToMain(streamCapture, picture, captureId);
     CHECK_RETURN_ELOG(!picture, "CreateMediaLibrary picture is nullptr");
     streamCapture->OnPhotoAvailable(picture);
 

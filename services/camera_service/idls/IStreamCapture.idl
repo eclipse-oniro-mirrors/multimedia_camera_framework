@@ -55,4 +55,5 @@ interface IStreamCapture extends IStreamCommon {
   [ipccode 26] void SetEditData([in] String editData);
   [ipccode 27] void EnableOriginalImage([in] boolean enabled);
   [ipccode 28] void SetShotParam([in] int captureID, [in] String shotData);
+  [ipccode 29] void SetAutoAuxiliaryPhotosDeliveryEnabled([in] int[] auxPhotoTypes, [in] boolean enabled);
 }
