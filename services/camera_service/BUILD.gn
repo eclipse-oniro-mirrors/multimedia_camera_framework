@@ -301,7 +301,17 @@ ohos_shared_library("camera_service") {
   if (camera_framework_feature_camera_service_priority) {
     defines += [ "CAMERA_SERVICE_PRIORITY" ]
   }
-  
+
+  if (camera_framework_feature_audio_resonance_protect) {
+    external_deps += [ "movement:movement_client" ]
+    defines += [ "CAMERA_FRAMEWORK_FEATURE_AUDIO_RESONANCE_PROTECT" , "CAMERA_USE_MOVEMENT"]
+    sources += [
+      "src/audio_resonance_protect_manager.cpp",
+      "src/audio_resonance_dialog_manager.cpp",
+      "src/audio_resonance_dialog_connection.cpp",
+    ]
+  }
+
   cflags_cc = cflags
 
   part_name = "camera_framework"
