@@ -207,7 +207,11 @@ void CameraServerPhotoProxy::GetServerPhotoProxyInfo(sptr<SurfaceBuffer>& surfac
     bufferHandle_ = bufferHandle;
     CHECK_RETURN_ELOG(bufferHandle == nullptr, "invalid bufferHandle");
     format_ = bufferHandle->format;
-    std::string imageIdStr = std::to_string(CameraSurfaceBufferUtil::GetImageId(surfaceBuffer));
+    std::string imageIdStr = "";
+    int64_t imageId = CameraSurfaceBufferUtil::GetImageId(surfaceBuffer);
+    if (imageId != 0) {
+        std::to_string(imageId);
+    }
     photoId_ = imageIdStr;
     photoWidth_ = CameraSurfaceBufferUtil::GetDataWidth(surfaceBuffer);
     photoHeight_ = CameraSurfaceBufferUtil::GetDataHeight(surfaceBuffer);
