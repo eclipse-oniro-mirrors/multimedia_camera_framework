@@ -210,7 +210,7 @@ void CameraServerPhotoProxy::GetServerPhotoProxyInfo(sptr<SurfaceBuffer>& surfac
     std::string imageIdStr = "";
     int64_t imageId = CameraSurfaceBufferUtil::GetImageId(surfaceBuffer);
     if (imageId != 0) {
-        std::to_string(imageId);
+        imageIdStr = std::to_string(imageId);
     }
     photoId_ = imageIdStr;
     photoWidth_ = CameraSurfaceBufferUtil::GetDataWidth(surfaceBuffer);
