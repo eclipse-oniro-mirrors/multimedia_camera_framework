@@ -37,6 +37,7 @@ namespace OHOS {
 namespace CameraStandard {
 using namespace AudioStandard;
 using namespace OHOS::Msdp;
+constexpr int32_t PARAM_NUM2 = 2;
 #ifdef CAMERA_USE_SENSOR
 constexpr int32_t POSTURE_INTERVAL = 50000000; // 50ms
 #endif
@@ -81,7 +82,7 @@ void AudioResonanceProtectManager::CheckForMusicNotify()
     CHECK_RETURN_ILOG(static_cast<int>(nowFoldStatus_) != 1, "arpm fold ret: %{public}d", nowFoldStatus_);
     CHECK_RETURN_ILOG(nowVolLevel_ <= 0, "arpm volume ret: %{public}d", nowVolLevel_);
     CHECK_RETURN_ILOG(!nowRenderRunning_, "arpm render ret: %{public}d", nowRenderRunning_);
-    CHECK_RETURN_ILOG(nowMovementValue_ != 2, "arpm movement ret: %{public}d", nowMovementValue_);
+    CHECK_RETURN_ILOG(nowMovementValue_ != PARAM_NUM2, "arpm movement ret: %{public}d", nowMovementValue_);
     CHECK_RETURN_ILOG(!IsMusicSpeakOutput(), "arpm music speak output ret");
     int64_t currentTime = GetTimestamp();
     CHECK_RETURN_ILOG(currentTime - lastMusicNotifyTime_ < MUSIC_NOTIFY_INTERVAL_MS, "arpm notify interval ret");
