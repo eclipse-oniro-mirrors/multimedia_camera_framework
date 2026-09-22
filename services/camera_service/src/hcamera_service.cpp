@@ -2833,6 +2833,10 @@ int32_t HCameraService::AllowOpenByOHSide(const std::string& cameraId, int32_t s
         MEDIA_ERR_LOG("HCameraService::AllowOpenByOHSide policy disabled");
         return CAMERA_OK;
     }
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    int32_t ret = CheckPermissionForBroker(uid);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "HCameraService::AllowOpenByOHSide Check OHOS_PERMISSION_CAMERA fail %{public}d", ret);
     std::vector<pid_t> activePids = HCameraDeviceManager::GetInstance()->GetActiveClient();
     if (activePids.size() == 0) {
         MEDIA_INFO_LOG("AllowOpenByOHSide::Open allow open camera");
@@ -2859,6 +2863,10 @@ int32_t HCameraService::NotifyCameraState(const std::string& cameraId, int32_t s
     // 把cameraId和前后台状态刷新给device manager
     MEDIA_INFO_LOG(
         "HCameraService::NotifyCameraState SetStateOfACamera %{public}s:%{public}d", cameraId.c_str(), state);
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    int32_t ret = CheckPermissionForBroker(uid);
+    CHECK_RETURN_RET_ELOG(
+        ret != CAMERA_OK, ret, "HCameraService::NotifyCameraState Check OHOS_PERMISSION_CAMERA fail %{public}d", ret);
     HCameraDeviceManager::GetInstance()->SetStateOfACamera(cameraId, state);
     return CAMERA_OK;
 }
@@ -4148,6 +4156,16 @@ sptr<HCaptureSession> HCameraService::GetSessionByCameraId(std::string cameraId)
         }
     }
     return session;
+}
+
+int32_t HCameraService::CheckPermissionForBroker(int32_t uid)
+{
+    if (uid == CAMERA_BROKER_UID) {
+        return CAMERA_OK;
+    } else {
+        MEDIA_INFO_LOG("CheckPermissionForBroker not broker uid, check failed");
+        return CAMERA_NO_PERMISSION;
+    }
 }
 } // namespace CameraStandard
 } // namespace OHOS
