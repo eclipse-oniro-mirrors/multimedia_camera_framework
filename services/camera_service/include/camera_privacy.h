@@ -61,9 +61,9 @@ public:
     ~CameraPrivacy();
     bool RegisterPermissionCallback();
     void UnregisterPermissionCallback();
-    bool StartUsingPermissionCallback();
+    bool StartUsingPermissionCallback(bool isAutomotiveDVR = false);
     void StopUsingPermissionCallback();
-    bool AddCameraPermissionUsedRecord();
+    bool AddCameraPermissionUsedRecord(bool isAutomotiveDVR = false);
     bool IsAllowUsingCamera();
     void SetClientName(const std::string& clientName);
 
