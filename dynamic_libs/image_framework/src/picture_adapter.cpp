@@ -113,6 +113,8 @@ bool PictureAdapter::RotateFaceCoordinate(std::vector<float>& floatValues, int32
     float iy1 = y1;
     float ix2 = x2;
     float iy2 = y2;
+    // Head angle, range is [-180, 180)
+    auto normalizeAngle = [](float& a) { a = fmodf(a + 180.0f, 360.0f) - 180.0f; };
     switch (degree) {
         case 90: {
             x1 = 1.f - iy2;
@@ -120,6 +122,7 @@ bool PictureAdapter::RotateFaceCoordinate(std::vector<float>& floatValues, int32
             x2 = 1.f - iy1;
             y2 = ix2;
             angle += 90;
+            normalizeAngle(angle);
             break;
         }
         case 180: {
@@ -128,6 +131,7 @@ bool PictureAdapter::RotateFaceCoordinate(std::vector<float>& floatValues, int32
             x2 = 1.f - ix1;
             y2 = 1.f - iy1;
             angle += 180;
+            normalizeAngle(angle);
             break;
         }
         case 270: {
@@ -136,6 +140,7 @@ bool PictureAdapter::RotateFaceCoordinate(std::vector<float>& floatValues, int32
             x2 = iy2;
             y2 = 1.f - ix1;
             angle -= 90;
+            normalizeAngle(angle);
             break;
         }
         case 0:
@@ -145,6 +150,7 @@ bool PictureAdapter::RotateFaceCoordinate(std::vector<float>& floatValues, int32
             MEDIA_ERR_LOG("invalid degree:%{public}d", degree);
             return false;
     }
+    MEDIA_INFO_LOG("PictureAdapter::RotateFaceCoordinate angle = %{public}f", angle);
     return true;
 }
 
