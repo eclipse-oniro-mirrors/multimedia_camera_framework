@@ -41,6 +41,7 @@ ohos_static_library("test_common") {
     "access_token:libtoken_setproc",
     "access_token:libtokenid_sdk",
     "access_token:libtokensetproc_shared",
+    "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_core",
     "graphic_surface:surface",
