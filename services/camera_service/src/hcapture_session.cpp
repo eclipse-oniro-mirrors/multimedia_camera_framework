@@ -3327,10 +3327,9 @@ uint32_t HCaptureSession::GetEquivalentFocus()
     int ret = OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_EQUIVALENT_FOCUS, &item);
     CHECK_RETURN_RET_ELOG(
         ret != CAM_META_SUCCESS, equivalentFocus, "HCaptureSession::GetEquivalentFocus get equivalentFocus failed");
-    for (uint32_t i = 0; i < item.count; i++) {
-        if ((i & 1) == 0) {
-            equivalentFocus = static_cast<uint32_t>(item.data.i32[i + 1]);
-        }
+    const int32_t TWO = 2;
+    for (uint32_t i = 0; i + 1 < item.count; i += TWO) {
+        equivalentFocus = static_cast<uint32_t>(item.data.i32[i + 1]);
     }
     MEDIA_DEBUG_LOG("HCaptureSession::GetEquivalentFocus equivalentFocus "
                    "%{public}d, sessionID: %{public}d",

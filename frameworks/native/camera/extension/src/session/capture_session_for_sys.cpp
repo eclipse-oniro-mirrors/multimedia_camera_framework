@@ -318,16 +318,15 @@ int32_t CaptureSessionForSys::GetZoomPointInfos(std::vector<ZoomPointInfo>& zoom
     int32_t defaultLen = 0;
     int32_t modeLen = 0;
     MEDIA_INFO_LOG("CaptureSessionForSys::GetZoomPointInfos mode:%{public}d", mode);
-    for (uint32_t i = 0; i < item.count; i++) {
-        if ((i & 1) == 0) {
-            MEDIA_DEBUG_LOG("CaptureSessionForSys::GetZoomPointInfos mode:%{public}d, equivalentFocus:%{public}d",
-                item.data.i32[i], item.data.i32[i + 1]);
-            if (SceneMode::NORMAL == item.data.i32[i]) {
-                defaultLen = item.data.i32[i + 1];
-            }
-            if (mode == item.data.i32[i]) {
-                modeLen = item.data.i32[i + 1];
-            }
+    const int32_t TWO = 2;
+    for (uint32_t i = 0; i + 1 < item.count; i += TWO) {
+        MEDIA_DEBUG_LOG("CaptureSessionForSys::GetZoomPointInfos mode:%{public}d, equivalentFocus:%{public}d",
+            item.data.i32[i], item.data.i32[i + 1]);
+        if (SceneMode::NORMAL == item.data.i32[i]) {
+            defaultLen = item.data.i32[i + 1];
+        }
+        if (mode == item.data.i32[i]) {
+            modeLen = item.data.i32[i + 1];
         }
     }
     // only return 1x zoomPointInfo
