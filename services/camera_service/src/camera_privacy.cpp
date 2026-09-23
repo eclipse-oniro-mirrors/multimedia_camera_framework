@@ -169,7 +169,7 @@ void CameraPrivacy::UnregisterPermissionCallback()
     permissionCallbackPtr_ = nullptr;
 }
 
-bool CameraPrivacy::AddCameraPermissionUsedRecord()
+bool CameraPrivacy::AddCameraPermissionUsedRecord(bool isAutomotiveDVR)
 {
     CAMERA_SYNC_TRACE;
     if (IsRemote()) {
@@ -177,13 +177,18 @@ bool CameraPrivacy::AddCameraPermissionUsedRecord()
         MEDIA_INFO_LOG("AddRemotePermissionUsedRecord is called, res: %{public}d", res);
         return res == ACCESS_TOKEN_KIT_RET_SUCCESS;
     }
-    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, OHOS_PERMISSION_CAMERA, 1, 0);
+    std::string permission = OHOS_PERMISSION_CAMERA;
+    if (isAutomotiveDVR) {
+        permission = OHOS_PERMISSION_DVRCAMERA;
+    }
+    int32_t res = PrivacyKit::AddPermissionUsedRecord(callerToken_, permission, 1, 0);
     MEDIA_INFO_LOG("CameraPrivacy::AddCameraPermissionUsedRecord res:%{public}d", res);
+    MEDIA_DEBUG_LOG("CameraPrivacy::AddCameraPermissionUsedRecord permission:%{public}s", permission.c_str());
     CHECK_PRINT_ELOG(res != CAMERA_OK, "AddCameraPermissionUsedRecord failed.");
     return res == CAMERA_OK;
 }
 
-bool CameraPrivacy::StartUsingPermissionCallback()
+bool CameraPrivacy::StartUsingPermissionCallback(bool isAutomotiveDVR)
 {
     MEDIA_INFO_LOG("CameraPrivacy::StartUsingPermissionCallback is called, pid_: %{public}d", pid_);
     CAMERA_SYNC_TRACE;
@@ -197,7 +202,12 @@ bool CameraPrivacy::StartUsingPermissionCallback()
         std::lock_guard<std::mutex> lock(cameraUseCbMutex_);
         CHECK_RETURN_RET_ELOG(cameraUseCallbackPtr_, true, "has StartUsingPermissionCallback!");
         cameraUseCallbackPtr_ = std::make_shared<CameraUseStateChangeCb>();
-        res = PrivacyKit::StartUsingPermission(callerToken_, OHOS_PERMISSION_CAMERA, cameraUseCallbackPtr_, pid_);
+        std::string permission = OHOS_PERMISSION_CAMERA;
+        if (isAutomotiveDVR) {
+            permission = OHOS_PERMISSION_DVRCAMERA;
+        }
+        res = PrivacyKit::StartUsingPermission(callerToken_, permission, cameraUseCallbackPtr_, pid_);
+        MEDIA_DEBUG_LOG("CameraPrivacy::StartUsingPermissionCallback permission:%{public}s", permission.c_str());
     }
     MEDIA_INFO_LOG("CameraPrivacy::StartUsingPermissionCallback res:%{public}d", res);
     bool ret = (res == CAMERA_OK || res == Security::AccessToken::ERR_EDM_POLICY_CHECK_FAILED ||

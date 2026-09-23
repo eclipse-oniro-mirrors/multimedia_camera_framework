@@ -683,6 +683,22 @@ int32_t HCameraDevice::CheckPermissionBeforeOpenDevice()
     return CAMERA_OK;
 }
 
+uint32_t HCameraDevice::GetCameraSensorType()
+{
+    MEDIA_DEBUG_LOG("HCameraDevice::GetScanScene E");
+    uint32_t cameraSensorType = -1;
+    std::shared_ptr<OHOS::Camera::CameraMetadata> ability = GetDeviceAbility();
+    CHECK_RETURN_RET(ability == nullptr, 0);
+    camera_metadata_item_t item;
+    int32_t ret =
+        OHOS::Camera::FindCameraMetadataItem(ability->get(), OHOS_ABILITY_AUTOMOTIVE_CAMERA_SENSOR_TYPE, &item);
+    if (ret == CAM_META_SUCCESS && item.count > 0) {
+        cameraSensorType = static_cast<uint32_t>(item.data.u8[0]);
+        MEDIA_DEBUG_LOG("HCameraDevice::GetScanScene res:%{public}d", cameraSensorType);
+    }
+    return cameraSensorType;
+}
+
 bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
 {
     MEDIA_INFO_LOG("enter HandlePrivacyBeforeOpenDevice");
@@ -695,12 +711,16 @@ bool HCameraDevice::HandlePrivacyBeforeOpenDevice()
     std::vector<sptr<HCameraDeviceHolder>> holders =
         HCameraDeviceManager::GetInstance()->GetCameraHolderByPid(cameraPid_);
     CHECK_RETURN_RET_ELOG(!holders.empty(), true, "current pid has active clients, no action is required");
+    uint32_t sensorType = GetCameraSensorType();
+    bool isAutomotiveDVRCamera = (sensorType == OHOS_AUTOMOTIVE_CAMERA_SENSOR_TYPE_DVR);
     if (HCameraDeviceManager::GetInstance()->IsMultiCameraActive(cameraPid_) == false) {
         MEDIA_INFO_LOG("do StartUsingPermissionCallback");
-        CHECK_RETURN_RET_ELOG(!cameraPrivacy->StartUsingPermissionCallback(), false, "start using permission failed");
+        CHECK_RETURN_RET_ELOG(!cameraPrivacy->StartUsingPermissionCallback(isAutomotiveDVRCamera),
+            false, "start using permission failed");
     }
     CHECK_RETURN_RET_ELOG(!cameraPrivacy->RegisterPermissionCallback(), false, "register permission failed");
-    CHECK_RETURN_RET_ELOG(!cameraPrivacy->AddCameraPermissionUsedRecord(), false, "add permission record failed");
+    CHECK_RETURN_RET_ELOG(!cameraPrivacy->AddCameraPermissionUsedRecord(isAutomotiveDVRCamera),
+        false, "add permission record failed");
     return true;
 }
 

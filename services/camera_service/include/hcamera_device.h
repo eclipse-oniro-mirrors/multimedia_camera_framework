@@ -358,6 +358,7 @@ private:
     void SaveKeyFrameInfo(std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
 #endif
     bool GetScanScene();
+    uint32_t GetCameraSensorType();
     void UpdateScanSceneMetadata(uint32_t previewQuality);
     std::vector<int32_t> frameRateRange_ = {0, 0};
     std::mutex clientNameMutex_;
