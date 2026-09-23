@@ -62,6 +62,7 @@ Camera Framework 是华为鸿蒙操作系统的核心多媒体组件，负责相
 3. **接口隔离**：上层模块不直接 `dlopen` 外部库，统一通过 dynamic_libs 的 Proxy 适配层访问。
 4. **HDI 版本兼容**：支持 HDI Camera Host V1_0 至 V1_7 共 8 个版本，HStreamOperator 兼容 v1_0 至 v1_5。
 5. **多用户隔离**：分段式处理按 userId 隔离，每个用户拥有独立的处理管线和作业队列。
+6. **逻辑相机与非逻辑相机**：逻辑相机将多个物理镜头组合为单一虚拟设备（如 VDE 折叠设备将内屏镜头作为前置使用），其镜头安装角度由框架 hook 为固定值（180 度），不反映真实物理镜头朝向，横屏等场景下原有兜底逻辑无法生效，必须从设置角度的源头（如 `SetPreviewRotation`）区分前后置做逆运算；非逻辑相机直接上报真实镜头安装角度，无需逆运算。修改角度/旋转相关逻辑时，须先确认目标设备是逻辑相机还是非逻辑相机，两条处理路径不能混用。
 
 ### 2.2 编码约束
 
@@ -71,28 +72,29 @@ Camera Framework 是华为鸿蒙操作系统的核心多媒体组件，负责相
 4. **错误码**：通用错误码（0/201/202/401）、相机操作错误码（7400101~7400114）、服务错误码（7400201），通过 `errorCodeMap` 映射表转换。
 5. **DFX**：使用 hilog 分级日志、hisysevent 事件上报、hitrace 性能追踪、CameraXCollie 超时检测。
 6. **线程安全**：回调管理使用互斥锁保护，NAPI 异步任务串行化执行（超时 2000ms），跨线程回调通过 `uv_async_send` 切换到 JS 线程。
-7. **项目宏复用**：日志和判空复用 `common/utils/camera_log.h` 中的宏（`MEDIA_DEBUG_LOG`/`MEDIA_INFO_LOG`/`MEDIA_ERR_LOG` 等 `camera_log.h:43-47`，`CHECK_RETURN_ELOG`/`CHECK_RETURN_RET_ELOG` 等 `camera_log.h:123-185`），事件上报复用 `CAMERA_SYSEVENT_*`（`camera_log.h:281-314`），不要重新实现等价功能。
-8. **日志域**：相机框架使用 `LOG_DOMAIN 0xD002B01`（`camera_log.h:27`）、`LOG_TAG "CAMERA"`；分段式处理服务使用 `0xD002B02`（`dp_log.h:27`），不要混用其他日志域。
-9. **错误码转换**：内部细分错误码（`InnerErrorCode` 74001021~74002017，`camera_error_code.h:56-72`）必须经 `errorCodeMap`/`GetCameraErrorCode`（`camera_error_code.h:74-96`）映射为公共 `CameraErrorCode`（7400101~7400201）后再返回上层，不要直接透传内部码给应用。
-10. **会话状态机**：`CaptureSessionState`（`SESSION_INIT`→`CONFIG_INPROGRESS`→`CONFIG_COMMITTED`→`STARTED`→`RELEASED`，`CameraTypes.idl:63`）由 `StateMachine`（`hcapture_session.h:75-103`）管理，状态迁移必须经 `Transfer`/`CheckTransfer`，禁止绕过状态机直接改 `currentState_`。
+7. **项目宏复用**：日志和判空复用 `common/utils/camera_log.h` 中的宏（`MEDIA_DEBUG_LOG`/`MEDIA_INFO_LOG`/`MEDIA_ERR_LOG` 等，`CHECK_RETURN_ELOG`/`CHECK_RETURN_RET_ELOG` 等），事件上报复用 `CAMERA_SYSEVENT_*`，不要重新实现等价功能。
+8. **日志域**：相机框架使用 `LOG_DOMAIN 0xD002B01`（`camera_log.h`）、`LOG_TAG "CAMERA"`；分段式处理服务使用 `0xD002B02`（`dp_log.h`），不要混用其他日志域。
+9. **错误码转换**：内部细分错误码（`InnerErrorCode` 74001021~74002017，`camera_error_code.h`）必须经 `errorCodeMap`/`GetCameraErrorCode`（`camera_error_code.h`）映射为公共 `CameraErrorCode`（7400101~7400201）后再返回上层，不要直接透传内部码给应用。
+10. **会话状态机**：`CaptureSessionState`（`SESSION_INIT`→`CONFIG_INPROGRESS`→`CONFIG_COMMITTED`→`STARTED`→`RELEASED`，`CameraTypes.idl`）由 `StateMachine`（`hcapture_session.h`）管理，状态迁移必须经 `Transfer`/`CheckTransfer`，禁止绕过状态机直接改 `currentState_`。
+11. **镜头类型的校验与确认**：涉及前后置镜头判断的代码必须同时校验 `CAMERA_POSITION_FRONT` 与 `CAMERA_POSITION_FOLD_INNER`，统一复用 `CameraPropertyUtils::IsFrontDeviceWithFoldInner`（`camera_property_utils.cpp`）。VDE 折叠设备会将内屏镜头上报为 `FOLD_INNER` 但实际作为前置使用，遗漏该类型将导致前置场景失效。历史教训：2025年12月小红书伙伴 pura x 升级 6.0.115 版本后，打开旋转开关横屏持握时前置出图倒置（竖屏正常）。根因是逻辑相机将镜头安装角度 hook 成 180 度，原有兜底逻辑无法满足横屏场景，需从设置角度的源头 `SetPreviewRotation`（`preview_output.cpp`）区分前后置做逆运算，而判断条件未包含 VDE 的 `foldinner` 镜头，导致 VDE 前置遗漏。修复方案：增加 `foldinner` 判断条件。
 
 ### 2.3 性能约束
 
-- **帧回调为高频路径**：`OnBufferAvailable`（`photo_output_callback.cpp:341`、`metadata_output.cpp:553`、`composition_feature.cpp:249`）、`OnFrameAvailable` 等回调在每帧触发，禁止在其中添加同步 IPC、字符串格式化、INFO 及以上级别日志或全量扫描。
-- **回调内禁止耗时操作**：帧数据处理应转发到 TaskManager 异步执行（参考 `PhotoNativeConsumer` 通过 listener `ExecuteOnBufferAvailable` 异步处理，`photo_output_callback.cpp:357`）。
+- **帧回调为高频路径**：`OnBufferAvailable`（`photo_output_callback.cpp`、`metadata_output.cpp`、`composition_feature.cpp`）、`OnFrameAvailable` 等回调在每帧触发，禁止在其中添加同步 IPC、字符串格式化、全量扫描。
+- **回调内禁止耗时操作**：帧数据处理应转发到 TaskManager 异步执行（参考 `PhotoNativeConsumer` 通过 listener `ExecuteOnBufferAvailable` 异步处理，`photo_output_callback.cpp`）。
 - **NAPI 异步任务串行化**：使用 `napi_create_async_work` + `napi_queue_async_work_with_qos`（`camera_session_napi.cpp`、`photo_output_napi.cpp` 等），不要在回调线程同步等待业务结果。
-- **HDI 版本判断避免重复查询**：`GetVersionId` 结果应缓存，`CAST_IF_VERSION_GT`（`hcamera_host_manager.cpp:299-312`）已封装版本向下兼容分支，不要在每帧路径重复获取版本号。
+- **HDI 版本判断避免重复查询**：`GetVersionId` 结果应缓存，`CAST_IF_VERSION_GT`（`hcamera_host_manager.cpp`）已封装版本向下兼容分支，不要在每帧路径重复获取版本号。
 
 ### 2.4 公共 API 约束
 
 **Do not（禁止）：**
 - 修改已发布 NDK C API（`interfaces/kits/native/include/camera/*.h`）的函数签名、参数个数/顺序/类型、返回值类型
-- 修改 `Camera_ErrorCode` 枚举值（7400101~7400201，`camera.h:67-140`）或删除已有枚举项
-- 修改 NAPI 错误码映射表 `mapCameraErrorCode`（`camera_napi.h:280-295`）
+- 修改 `Camera_ErrorCode` 枚举值（7400101~7400201，`camera.h`）或删除已有枚举项
+- 修改 NAPI 错误码映射表 `mapCameraErrorCode`（`camera_napi.h`）
 - 删除或重命名已发布公共 API（带 `@since 11/12/26.0.0` 标注的接口）
 - 修改已有 API 行为语义（如异步变同步、阻塞变非阻塞、错误码含义变更）
 
-**Ask before（修改前必须确认）：**
+**Ask before（是否涉及）：**
 - 新增公共 API：确认是否需要 `CheckPermission` 权限校验、`MEDIA_*_LOG` 日志、`CAMERA_SYSEVENT_*` 事件上报、`@since` 版本标注
 - 新增系统 API（`frameworks/js/camera_napi_for_sys/`）：确认系统应用权限（202）检查逻辑
 - 修改 inner API（`interfaces/inner_api/`）：评估是否影响 NDK/NAPI/仓颉等多语言绑定兼容性
@@ -101,16 +103,16 @@ Camera Framework 是华为鸿蒙操作系统的核心多媒体组件，负责相
 ### 2.5 安全与权限边界
 
 **Do not（禁止）：**
-- 绕过 `CheckPermission`（`camera_util.cpp:394`，基于 `AccessTokenKit::VerifyAccessToken`）权限校验
-- 绕过 `CheckPermissionBeforeOpenDevice`（`hcamera_device.cpp:677`）直接打开相机设备
-- 用缓存的 token 代替 `IPCSkeleton::GetCallingTokenID()` 实时取调用方 token 进行鉴权（`hcamera_service.cpp:1144/1352/4730` 等均在调用入口取 token）
+- 绕过 `CheckPermission`（`camera_util.cpp`，基于 `AccessTokenKit::VerifyAccessToken`）权限校验
+- 绕过 `CheckPermissionBeforeOpenDevice`（`hcamera_device.cpp`）直接打开相机设备
+- 用缓存的 token 代替 `IPCSkeleton::GetCallingTokenID()` 实时取调用方 token 进行鉴权（`hcamera_service.cpp` 等均在调用入口取 token）
 - 在日志中打印敏感信息（拍照内容、人脸元数据、token 等）；`MEDIA_*_LOG` 中 `%{public}` 默认公开，敏感字段须用 `%{private}`
 - 修改 DPS 多用户隔离逻辑：分段式处理按 `userId_` 隔离处理管线和作业队列（`deferred_photo_processing_session.cpp`、`deferred_video_processing_session.cpp`、各 command 均以 `userId_` 为 key，`DPS_SendCommand<XXXCommand>(userId_, ...)`）
 - 修改安全相机（SecureCamera）相关隐私状态上报（`camera_privacy.cpp` 的 `CameraUseStateChangeCb::StateChangeNotify`）未经安全评审
 
-**Ask before（修改前必须确认）：**
-- 涉及 `ohos.permission.CAMERA` / `CAMERA_BACKGROUND` / `CAMERA_CONTROL` / `CAMERA_SHARED` / `MANAGE_CAMERA_CONFIG` / `MICROPHONE` 权限常量的改动（`hstream_capture.cpp:1847`、`hcamera_service.cpp:1365/2794/3512` 等）
-- 涉及 `CheckPermissionForBroker`（`hcamera_service.cpp:5224`）等特权/代理判断的改动
+**Ask before（是否涉及）：**
+- 涉及 `ohos.permission.CAMERA` / `CAMERA_BACKGROUND` / `CAMERA_CONTROL` / `CAMERA_SHARED` / `MANAGE_CAMERA_CONFIG` / `MICROPHONE` 权限常量的改动（`hstream_capture.cpp`、`hcamera_service.cpp` 等）
+- 涉及 `CheckPermissionForBroker`（`hcamera_service.cpp`）等特权/代理判断的改动
 - 涉及安全相机、隐私态、防窥屏等安全特性的改动
 - 涉及跨用户数据（按 `userId` 隔离的图片/视频资源）访问逻辑的改动
 
@@ -120,9 +122,9 @@ Camera Framework 是华为鸿蒙操作系统的核心多媒体组件，负责相
 - 修改 IDL 文件（`services/camera_service/idls/*.idl`、`services/deferred_processing_service/idls/*.idl`）中已有方法的 `[ipccode N]` 编号（如 `ICameraService.idl` `[ipccode 0..25]`、`ICaptureSession.idl` `[ipccode 0..49]`）
 - 修改 IDL 中已有方法的参数个数、顺序、类型（破坏 `MessageParcel` 序列化兼容）
 - 修改 `CameraTypes.idl` 中已有枚举值或 `struct` 字段顺序（如 `CaptureSessionState`、`EffectParam`、`MetadataObjectType`）
-- 修改 HDI 版本判断的降级行为：`GetVersionId(major, minor) >= HDI_VERSION_ID_1_X` 分支（`hstream_operator.cpp:1682/1930/2615`、`hcapture_session` 间接、`hcamera_host_manager.cpp:329-343`）控制各版本能力可用性
+- 修改 HDI 版本判断的降级行为：`GetVersionId(major, minor) >= HDI_VERSION_ID_1_X` 分支（`hstream_operator.cpp`、`hcapture_session` 间接、`hcamera_host_manager.cpp`）控制各版本能力可用性
 
-**Ask before（修改前必须确认）：**
+**Ask before（是否涉及）：**
 - 新增 IPC 接口：必须追加新的 `[ipccode N]`（不能复用/插入已有编号），确认跨版本与跨进程兼容
 - 新增 HDI 版本分支：确认对旧版本设备的降级行为是否完整
 - 修改跨进程传递的数据结构：评估 `Parcel` 序列化前后兼容性
@@ -138,15 +140,7 @@ Camera Framework 是华为鸿蒙操作系统的核心多媒体组件，负责相
 - 修改 `CameraTypes.idl` 共享类型定义
 - 生成代码不满足需求时，调整 IDL 定义或使用回调机制（`I*Callback` 接口）
 
-### 2.8 设备操作约束
-
-**涉及真实相机硬件时的注意事项：**
-- 不执行可能影响设备正常运行的破坏性操作（如强制关闭相机、跳过 `Release`/`delayedClose` 流程，`hcamera_device.cpp:599/1165`）
-- 相机设备生命周期遵循 Open → 使用 → Close/Release 顺序，延迟关闭走 `delayedClose`（`hcamera_device.cpp:599`）
-- HDI 交互返回的 `CamRetCode` 必须转换为 `CameraErrorCode` 后再返回上层，禁止直接透传 HDI 错误码给应用
-- 涉及相机硬件的改动需提供板侧证据（`hilog`/`hitrace` 输出、截图或 `hdc` 输出）
-
-### 2.9 必须遵守的约束（红线清单）
+### 2.8 必须遵守的约束（红线清单）
 
 - **禁止**在 interfaces 模块中编写 .cpp 实现代码
 - **禁止**在 frameworks 层直接处理 Binder 序列化/反序列化逻辑
@@ -381,7 +375,7 @@ NextBuild --cache ./build_system.sh --abi-type generic_generic_arm_64only --devi
 在修改代码前，按以下顺序确认：
 1. 确认任务类别（参照"按任务类型定位代码"表）
 2. 根据场景路由表确定需要阅读的文档
-3. 根据本文件"项目宪法"（2.1~2.9）确认不违反任何约束，特别是公共 API、安全/权限、协议兼容、生成代码边界
+3. 根据本文件"项目宪法"（2.1~2.8）确认不违反任何约束，特别是公共 API、安全/权限、协议兼容、生成代码边界
 4. 声明："我将修改 X，已阅读 Y 文档，遵循 Z 约束"
 
 ### 3.4 场景路由索引
