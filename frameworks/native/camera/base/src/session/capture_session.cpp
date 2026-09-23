@@ -955,13 +955,11 @@ void CaptureSession::UpdateDeviceDeferredability()
     CHECK_RETURN(ret != CAM_META_SUCCESS);
     MEDIA_DEBUG_LOG("UpdateDeviceDeferredability get ret: %{public}d item: %{public}d count: %{public}d",
         ret, item.item, item.count);
-    for (uint32_t i = 0; i < item.count; i++) {
-        if (i % DEFERRED_MODE_DATA_SIZE == 0) {
-            MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, deferredType:%{public}d",
-                item.data.u8[i], item.data.u8[i + 1]);
-            deviceInfo->modeDeferredType_[item.data.u8[i]] =
-                static_cast<DeferredDeliveryImageType>(item.data.u8[i + 1]);
-        }
+    for (uint32_t i = 0; i + 1 < item.count; i += DEFERRED_MODE_DATA_SIZE) {
+        MEDIA_DEBUG_LOG("UpdateDeviceDeferredability mode index:%{public}d, deferredType:%{public}d",
+            item.data.u8[i], item.data.u8[i + 1]);
+        deviceInfo->modeDeferredType_[item.data.u8[i]] =
+            static_cast<DeferredDeliveryImageType>(item.data.u8[i + 1]);
     }
 
     deviceInfo->ClearModeVideoDeferredType();
