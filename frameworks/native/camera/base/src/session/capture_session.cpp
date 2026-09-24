@@ -4758,6 +4758,17 @@ bool CaptureSession::IsSessionCommited()
     return isCommitConfig;
 }
 
+int32_t CaptureSession::GetSessionCurrentState(CaptureSessionState& state)
+{
+    MEDIA_DEBUG_LOG("CaptureSession::GetSessionCurrentState is called");
+    auto captureSession = GetCaptureSession();
+    CHECK_RETURN_RET_ELOG(captureSession == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+        "CaptureSession::GetSessionCurrentState captureSession is nullptr");
+    captureSession->GetSessionState(state);
+    MEDIA_INFO_LOG("CaptureSession::GetSessionCurrentState state: %{public}d", static_cast<int32_t>(state));
+    return CameraErrorCode::SUCCESS;
+}
+
 bool CaptureSession::IsSessionStarted()
 {
     bool isStarted = false;

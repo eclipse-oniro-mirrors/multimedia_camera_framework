@@ -487,3 +487,65 @@ Camera_ErrorCode Camera_PhotoOutput::EnableAutoExtendedGainmapDelivery(bool enab
     int32_t ret = innerPhotoOutput_->EnableAutoExtendedGainmapDelivery(enabled);
     return FrameworkToNdkCameraError(ret);
 }
+
+Camera_ErrorCode Camera_PhotoOutput::IsAutoAuxiliaryPhotoDeliverySupported(
+    OH_Camera_AuxiliaryPhotoType auxPhotoType, bool* isSupported) const
+{
+    MEDIA_INFO_LOG("Camera_PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported is called");
+    CHECK_RETURN_RET_ELOG(isSupported == nullptr, CAMERA_INVALID_ARGUMENT,
+        "Camera_PhotoOutput::IsAutoAuxiliaryPhotoDeliverySupported failed, isSupported is null");
+    CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::IsAutoAuxiliaryPhotoDeliverySupported failed, innerPhotoOutput_ is null");
+    if (auxPhotoType != OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN &&
+        auxPhotoType != OH_CAMERA_AUXILIARY_PHOTO_TYPE_PIGMENTATION) {
+        return CAMERA_ERROR_PARAM_OUT_OF_RANGE;
+    }
+    int32_t ret = innerPhotoOutput_->IsAutoAuxiliaryPhotoDeliverySupported(
+        static_cast<CameraAuxiliaryPhotoType>(auxPhotoType), *isSupported);
+    if (ret == static_cast<int32_t>(CameraErrorCode::SESSION_NOT_CONFIG)) {
+        // Align with TS behavior: return unsupported instead of an error when session is not configured.
+        MEDIA_INFO_LOG("Camera_PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported session not configured");
+        *isSupported = false;
+        return CAMERA_OK;
+    }
+    return FrameworkToNdkCameraError(ret);
+}
+
+Camera_ErrorCode Camera_PhotoOutput::SetAutoAuxiliaryPhotosDeliveryEnabled(
+    const OH_Camera_AuxiliaryPhotoType* auxPhotoTypes, uint32_t size, bool enable)
+{
+    MEDIA_INFO_LOG("Camera_PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled is called, enable:%{public}d", enable);
+    CHECK_RETURN_RET_ELOG(innerPhotoOutput_ == nullptr, CAMERA_SERVICE_FATAL_ERROR,
+        "Camera_PhotoOutput::SetAutoAuxiliaryPhotosDeliveryEnabled failed, innerPhotoOutput_ is null");
+    if (enable) {
+        CHECK_RETURN_RET_ELOG(auxPhotoTypes == nullptr || size == 0, CAMERA_INVALID_ARGUMENT,
+            "Camera_PhotoOutput::SetAutoAuxiliaryPhotosDeliveryEnabled failed, auxPhotoTypes is invalid");
+        constexpr uint32_t maxAuxiliaryPhotoCount = 2;
+        CHECK_RETURN_RET_ELOG(size > maxAuxiliaryPhotoCount, CAMERA_ERROR_PARAM_OUT_OF_RANGE,
+            "Camera_PhotoOutput::SetAutoAuxiliaryPhotosDeliveryEnabled failed, auxPhotoTypes size is invalid");
+    }
+    for (uint32_t i = 0; auxPhotoTypes != nullptr && i < size; i++) {
+        if (auxPhotoTypes[i] != OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN &&
+            auxPhotoTypes[i] != OH_CAMERA_AUXILIARY_PHOTO_TYPE_PIGMENTATION) {
+            return CAMERA_ERROR_PARAM_OUT_OF_RANGE;
+        }
+        for (uint32_t j = i + 1; j < size; j++) {
+            CHECK_RETURN_RET_ELOG(auxPhotoTypes[i] == auxPhotoTypes[j], CAMERA_ERROR_PARAM_OUT_OF_RANGE,
+                "Camera_PhotoOutput::SetAutoAuxiliaryPhotosDeliveryEnabled failed, type is duplicated");
+        }
+    }
+    std::vector<CameraAuxiliaryPhotoType> typeList;
+    for (uint32_t i = 0; auxPhotoTypes != nullptr && i < size; i++) {
+        typeList.push_back(static_cast<CameraAuxiliaryPhotoType>(auxPhotoTypes[i]));
+    }
+    int32_t ret = innerPhotoOutput_->SetAutoAuxiliaryPhotosDeliveryEnabled(typeList, enable);
+    if (ret == static_cast<int32_t>(CameraErrorCode::SUCCESS)) {
+        return CAMERA_OK;
+    }
+    // Map inner error codes to the API designed set. Inner codes are kept in logs for diagnostics.
+    MEDIA_ERR_LOG("Camera_PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled inner code:%{public}d", ret);
+    if (ret == static_cast<int32_t>(CameraErrorCode::PARAM_OUT_OF_RANGE)) {
+        return CAMERA_ERROR_PARAM_OUT_OF_RANGE;
+    }
+    return CAMERA_SERVICE_FATAL_ERROR;
+}

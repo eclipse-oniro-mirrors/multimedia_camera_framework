@@ -40,6 +40,10 @@ enum DeferredDeliveryImageType {
     DELIVERY_PHOTO,
     DELIVERY_VIDEO,
 };
+enum CameraAuxiliaryPhotoType {
+    OXYGEN = 0,
+    PIGMENTATION = 1,
+};
 enum CaptureOutputType {
     CAPTURE_OUTPUT_TYPE_PREVIEW,
     CAPTURE_OUTPUT_TYPE_PHOTO,

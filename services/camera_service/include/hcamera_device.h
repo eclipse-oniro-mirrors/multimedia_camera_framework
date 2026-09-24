@@ -84,6 +84,10 @@ public:
     int32_t OnResult(uint64_t timestamp, const std::vector<uint8_t>& result) override;
     std::shared_ptr<OHOS::Camera::CameraMetadata> GetDeviceAbility();
     std::shared_ptr<OHOS::Camera::CameraMetadata> CloneCachedSettings();
+    // Runs the reader under the cached settings lock without copying the metadata, for hot-path
+    // tag checks (e.g. per-capture mutex validation). The reader must not retain the pointer.
+    void ReadCachedSettings(
+        const std::function<void(const std::shared_ptr<OHOS::Camera::CameraMetadata>&)>& reader);
     std::string GetCameraId();
     int32_t GetCameraType();
     int32_t GetCameraPosition();

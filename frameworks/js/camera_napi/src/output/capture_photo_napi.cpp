@@ -26,11 +26,15 @@ namespace CameraStandard {
 thread_local napi_ref CapturePhotoNapi::sConstructor_ = nullptr;
 thread_local napi_ref CapturePhotoNapi::sMainImageRef_ = nullptr;
 thread_local napi_ref CapturePhotoNapi::sPictureRef_ = nullptr;
+thread_local napi_ref CapturePhotoNapi::sOxygenImageRef_ = nullptr;
+thread_local napi_ref CapturePhotoNapi::sPigmentationImageRef_ = nullptr;
 sptr<SurfaceBuffer> CapturePhotoNapi::imageBuffer_ = nullptr;
 thread_local uint32_t CapturePhotoNapi::photoTaskId = PHOTO_TASKID;
 bool CapturePhotoNapi::isCompressed_ = false;
 
-CapturePhotoNapi::CapturePhotoNapi() : env_(nullptr), mainImageRef_(nullptr), pictureRef_(nullptr) {}
+CapturePhotoNapi::CapturePhotoNapi()
+    : env_(nullptr), mainImageRef_(nullptr), pictureRef_(nullptr),
+      oxygenImageRef_(nullptr), pigmentationImageRef_(nullptr) {}
 
 CapturePhotoNapi::~CapturePhotoNapi()
 {
@@ -53,6 +57,8 @@ napi_value CapturePhotoNapi::CapturePhotoNapiConstructor(napi_env env, napi_call
         obj->env_ = env;
         obj->mainImageRef_ = sMainImageRef_;
         obj->pictureRef_ = sPictureRef_;
+        obj->oxygenImageRef_ = sOxygenImageRef_;
+        obj->pigmentationImageRef_ = sPigmentationImageRef_;
         status = napi_wrap(env, thisVar, reinterpret_cast<void*>(obj.get()),
                            CapturePhotoNapi::CapturePhotoNapiDestructor, nullptr, nullptr);
         if (status == napi_ok) {
@@ -84,6 +90,8 @@ napi_value CapturePhotoNapi::Init(napi_env env, napi_value exports)
     napi_property_descriptor photo_properties[] = {
         // CapturePhoto
         DECLARE_NAPI_GETTER("main", GetMain),
+        DECLARE_NAPI_GETTER("oxygenPhoto", GetOxygenPhoto),
+        DECLARE_NAPI_GETTER("pigmentationPhoto", GetPigmentationPhoto),
         DECLARE_NAPI_FUNCTION("release", Release),
     };
 
@@ -116,6 +124,8 @@ napi_value CapturePhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, spt
         napi_ref mainImageRef;
         napi_create_reference(env, mainImage, 1, &mainImageRef);
         sMainImageRef_ = mainImageRef;
+        sOxygenImageRef_ = nullptr;
+        sPigmentationImageRef_ = nullptr;
         MEDIA_DEBUG_LOG("main image");
 
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
@@ -129,6 +139,46 @@ napi_value CapturePhotoNapi::CreatePhoto(napi_env env, napi_value mainImage, spt
     }
     napi_get_undefined(env, &result);
     MEDIA_ERR_LOG("CreatePhoto call Failed");
+    return result;
+}
+
+napi_value CapturePhotoNapi::CreatePhotoWithAuxiliary(napi_env env, napi_value mainImage, napi_value oxygenImage,
+    napi_value pigmentationImage, sptr<SurfaceBuffer> imageBuffer)
+{
+    MEDIA_DEBUG_LOG("CreatePhotoWithAuxiliary is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    napi_get_undefined(env, &result);
+
+    imageBuffer_ = imageBuffer;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        napi_ref mainImageRef;
+        napi_create_reference(env, mainImage, 1, &mainImageRef);
+        sMainImageRef_ = mainImageRef;
+        sOxygenImageRef_ = nullptr;
+        sPigmentationImageRef_ = nullptr;
+        if (oxygenImage != nullptr) {
+            napi_create_reference(env, oxygenImage, 1, &sOxygenImageRef_);
+        }
+        if (pigmentationImage != nullptr) {
+            napi_create_reference(env, pigmentationImage, 1, &sPigmentationImageRef_);
+        }
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sMainImageRef_ = nullptr;
+        sOxygenImageRef_ = nullptr;
+        sPigmentationImageRef_ = nullptr;
+        isCompressed_ = true;
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create photo obj instance");
+        }
+    }
+    napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CreatePhotoWithAuxiliary call Failed");
     return result;
 }
 
@@ -147,8 +197,12 @@ napi_value CapturePhotoNapi::CreatePicture(napi_env env, napi_value picture, spt
         napi_ref pictureRef;
         napi_create_reference(env, picture, 1, &pictureRef);
         sPictureRef_ = pictureRef;
+        sOxygenImageRef_ = nullptr;
+        sPigmentationImageRef_ = nullptr;
         status = napi_new_instance(env, constructor, 0, nullptr, &result);
         sPictureRef_ = nullptr;
+        sOxygenImageRef_ = nullptr;
+        sPigmentationImageRef_ = nullptr;
         isCompressed_ = false;
         if (status == napi_ok && result != nullptr) {
             return result;
@@ -158,6 +212,46 @@ napi_value CapturePhotoNapi::CreatePicture(napi_env env, napi_value picture, spt
     }
     napi_get_undefined(env, &result);
     MEDIA_ERR_LOG("CreatePicture call Failed");
+    return result;
+}
+
+napi_value CapturePhotoNapi::CreatePictureWithAuxiliary(napi_env env, napi_value picture, napi_value oxygenPicture,
+    napi_value pigmentationPicture, sptr<SurfaceBuffer> pictureBuffer)
+{
+    MEDIA_DEBUG_LOG("CreatePictureWithAuxiliary is called");
+    CAMERA_SYNC_TRACE;
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value constructor;
+    napi_get_undefined(env, &result);
+
+    imageBuffer_ = pictureBuffer;
+    status = napi_get_reference_value(env, sConstructor_, &constructor);
+    if (status == napi_ok) {
+        napi_ref pictureRef;
+        napi_create_reference(env, picture, 1, &pictureRef);
+        sPictureRef_ = pictureRef;
+        sOxygenImageRef_ = nullptr;
+        sPigmentationImageRef_ = nullptr;
+        if (oxygenPicture != nullptr) {
+            napi_create_reference(env, oxygenPicture, 1, &sOxygenImageRef_);
+        }
+        if (pigmentationPicture != nullptr) {
+            napi_create_reference(env, pigmentationPicture, 1, &sPigmentationImageRef_);
+        }
+        status = napi_new_instance(env, constructor, 0, nullptr, &result);
+        sPictureRef_ = nullptr;
+        sOxygenImageRef_ = nullptr;
+        sPigmentationImageRef_ = nullptr;
+        isCompressed_ = false;
+        if (status == napi_ok && result != nullptr) {
+            return result;
+        } else {
+            MEDIA_ERR_LOG("Failed to create picture obj instance");
+        }
+    }
+    napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CreatePictureWithAuxiliary call Failed");
     return result;
 }
 
@@ -189,6 +283,68 @@ napi_value CapturePhotoNapi::GetMain(napi_env env, napi_callback_info info)
     }
     napi_get_undefined(env, &result);
     MEDIA_ERR_LOG("CapturePhotoNapi::GetMain call Failed");
+    return result;
+}
+
+napi_value CapturePhotoNapi::GetOxygenPhoto(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetOxygenPhoto is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    MEDIA_DEBUG_LOG("CapturePhotoNapi::GetOxygenPhoto get js args");
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CapturePhotoNapi* CapturePhotoNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&CapturePhotoNapi));
+    if (status == napi_ok && CapturePhotoNapi != nullptr) {
+        napi_value oxygenPhoto = nullptr;
+        if (CapturePhotoNapi->oxygenImageRef_ != nullptr) {
+            napi_get_reference_value(env, CapturePhotoNapi->oxygenImageRef_, &oxygenPhoto);
+        } else {
+            napi_get_undefined(env, &oxygenPhoto);
+        }
+        result = oxygenPhoto;
+        MEDIA_INFO_LOG("CapturePhotoNapi::GetOxygenPhoto Success");
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CapturePhotoNapi::GetOxygenPhoto call Failed");
+    return result;
+}
+
+napi_value CapturePhotoNapi::GetPigmentationPhoto(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("GetPigmentationPhoto is called");
+    napi_status status;
+    napi_value result = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    napi_value thisVar = nullptr;
+
+    MEDIA_DEBUG_LOG("CapturePhotoNapi::GetPigmentationPhoto get js args");
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+
+    napi_get_undefined(env, &result);
+    CapturePhotoNapi* CapturePhotoNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&CapturePhotoNapi));
+    if (status == napi_ok && CapturePhotoNapi != nullptr) {
+        napi_value pigmentationPhoto = nullptr;
+        if (CapturePhotoNapi->pigmentationImageRef_ != nullptr) {
+            napi_get_reference_value(env, CapturePhotoNapi->pigmentationImageRef_, &pigmentationPhoto);
+        } else {
+            napi_get_undefined(env, &pigmentationPhoto);
+        }
+        result = pigmentationPhoto;
+        MEDIA_INFO_LOG("CapturePhotoNapi::GetPigmentationPhoto Success");
+        return result;
+    }
+    napi_get_undefined(env, &result);
+    MEDIA_ERR_LOG("CapturePhotoNapi::GetPigmentationPhoto call Failed");
     return result;
 }
 
@@ -231,6 +387,8 @@ napi_value CapturePhotoNapi::Release(napi_env env, napi_callback_info info)
                 if (context->objectInfo != nullptr) {
                     CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->mainImageRef_);
                     CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->pictureRef_);
+                    CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->oxygenImageRef_);
+                    CapturePhotoNapi::SafeDeleteReference(env, context->objectInfo->pigmentationImageRef_);
                 }
                 napi_get_undefined(env, &result);
                 napi_resolve_deferred(env, context->deferred, result);

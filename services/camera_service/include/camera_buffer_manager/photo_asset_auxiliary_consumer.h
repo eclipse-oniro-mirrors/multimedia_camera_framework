@@ -30,6 +30,8 @@ static const std::string S_LHDR_GAINMAP = "lhdrGainmap";
 static const std::string S_DEEP = "deep";
 static const std::string S_EXIF = "exif";
 static const std::string S_DEBUG = "debug";
+static const std::string S_OXYGEN_PHOTO = "oxygenPhoto";
+static const std::string S_PIGMENTATION_PHOTO = "pigmentationPhoto";
 
 class AuxiliaryBufferConsumer : public IBufferConsumerListener {
 public:

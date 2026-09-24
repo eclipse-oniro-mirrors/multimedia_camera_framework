@@ -15,6 +15,7 @@
 
 #include "output/photo_output_napi.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -47,6 +48,8 @@
 #include "photo_output.h"
 #include "picture_napi.h"
 #include "pixel_map_napi.h"
+#include "auxiliary_picture.h"
+#include "picture.h"
 #include "refbase.h"
 #include "native_common_napi.h"
 #include "napi/native_node_api.h"
@@ -204,6 +207,48 @@ inline void LoggingSurfaceBufferInfo(sptr<SurfaceBuffer> buffer, std::string buf
             buffer->GetWidth(), buffer->GetHeight(), buffer->GetFormat());
     }
 };
+
+napi_value CreateAuxiliaryPictureFromMain(napi_env env, const std::shared_ptr<Media::Picture>& mainPicture,
+    Media::AuxiliaryPictureType type)
+{
+    CHECK_RETURN_RET(mainPicture == nullptr, nullptr);
+    std::shared_ptr<Media::AuxiliaryPicture> auxiliaryPicture = mainPicture->GetAuxiliaryPicture(type);
+    CHECK_RETURN_RET(auxiliaryPicture == nullptr, nullptr);
+    std::shared_ptr<Media::PixelMap> contentPixel = auxiliaryPicture->GetContentPixel();
+    CHECK_RETURN_RET(contentPixel == nullptr, nullptr);
+    std::unique_ptr<Media::Picture> auxiliaryPhotoPtr = Media::Picture::Create(contentPixel);
+    CHECK_RETURN_RET(auxiliaryPhotoPtr == nullptr, nullptr);
+    std::shared_ptr<Media::Picture> auxiliaryPhoto = std::move(auxiliaryPhotoPtr);
+    napi_value result = Media::PictureNapi::CreatePicture(env, auxiliaryPhoto);
+    CHECK_RETURN_RET_ELOG(result == nullptr, nullptr, "CreateAuxiliaryPictureFromMain CreatePicture failed");
+    return result;
+}
+
+// Compressed (JPG/HEIF) delivery with auxiliary photos: wraps the main and auxiliary native
+// images and builds the CapturePhoto object in one shot.
+napi_value CreateCompressedPhotoWithAuxiliary(napi_env env, const CallbackInfo& info)
+{
+    napi_value mainImage = Media::ImageNapi::Create(env, info.nativeImage);
+    if (mainImage == nullptr) {
+        MEDIA_ERR_LOG("ImageNapi Create failed");
+        napi_get_undefined(env, &mainImage);
+    }
+    napi_value oxygenImage = nullptr;
+    if (info.oxygenImage != nullptr) {
+        oxygenImage = Media::ImageNapi::Create(env, info.oxygenImage);
+    }
+    napi_value pigmentationImage = nullptr;
+    if (info.pigmentationImage != nullptr) {
+        pigmentationImage = Media::ImageNapi::Create(env, info.pigmentationImage);
+    }
+    sptr<SurfaceBuffer> imageBuffer;
+    if (info.nativeImage) {
+        // bind imageBuffer life cycle with photoNapiObj
+        imageBuffer = info.nativeImage->GetBuffer();
+    }
+    return CapturePhotoNapi::CreatePhotoWithAuxiliary(env, mainImage, oxygenImage,
+        pigmentationImage, imageBuffer);
+}
 
 std::shared_ptr<Location> GetLocationBySettings(std::shared_ptr<PhotoCaptureSetting> settings)
 {
@@ -428,6 +473,21 @@ void PhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::Picture>
     UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_PHOTO_AVAILABLE, info);
 }
 
+void PhotoOutputCallback::OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> mainImage,
+    const std::shared_ptr<Media::NativeImage> oxygenImage,
+    const std::shared_ptr<Media::NativeImage> pigmentationImage, bool isRaw) const
+{
+    MEDIA_DEBUG_LOG("PhotoOutputCallback::OnPhotoAvailable with auxiliary is called!");
+    CallbackInfo info;
+    info.nativeImage = mainImage;
+    info.oxygenImage = oxygenImage;
+    info.pigmentationImage = pigmentationImage;
+    info.isRaw = isRaw;
+    info.isYuv = false;
+    info.isAuxiliary = true;
+    UpdateJSCallbackAsync(PhotoOutputEventType::CAPTURE_PHOTO_AVAILABLE, info);
+}
+
 void PhotoOutputCallback::OnPhotoAssetAvailable(
     const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey) const
 {
@@ -612,7 +672,14 @@ void PhotoOutputCallback::ExecutePhotoAvailableCb(const CallbackInfo& info) cons
                 // bind pictureBuffer life cycle with photoNapiObj
                 pictureBuffer = info.picture->GetMaintenanceData();
             }
-            callbackObj = CapturePhotoNapi::CreatePicture(env_, picture, pictureBuffer);
+            napi_value oxygenPicture = CreateAuxiliaryPictureFromMain(env_, info.picture,
+                Media::AuxiliaryPictureType::OXY_MAP);
+            napi_value pigmentationPicture = CreateAuxiliaryPictureFromMain(env_, info.picture,
+                Media::AuxiliaryPictureType::MEL_MAP);
+            callbackObj = CapturePhotoNapi::CreatePictureWithAuxiliary(env_, picture, oxygenPicture,
+                pigmentationPicture, pictureBuffer);
+        } else if (info.isAuxiliary && g_callbackExtendFlag) {
+            callbackObj = CreateCompressedPhotoWithAuxiliary(env_, info);
         } else {
             napi_value mainImage = Media::ImageNapi::Create(env_, info.nativeImage);
             if (mainImage == nullptr) {
@@ -871,7 +938,9 @@ napi_value PhotoOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("enableOriginalImage", EnableOriginalImage),
         DECLARE_NAPI_FUNCTION("isGenerateOriginalImageSupported", IsGenerateOriginalImageSupported),
         DECLARE_NAPI_FUNCTION("isAutoExtendedGainmapDeliverySupported", IsAutoExtendedGainmapDeliverySupported),
-        DECLARE_NAPI_FUNCTION("enableAutoExtendedGainmapDelivery", EnableAutoExtendedGainmapDelivery)
+        DECLARE_NAPI_FUNCTION("enableAutoExtendedGainmapDelivery", EnableAutoExtendedGainmapDelivery),
+        DECLARE_NAPI_FUNCTION("isAutoAuxiliaryPhotoDeliverySupported", IsAutoAuxiliaryPhotoDeliverySupported),
+        DECLARE_NAPI_FUNCTION("setAutoAuxiliaryPhotosDeliveryEnabled", SetAutoAuxiliaryPhotosDeliveryEnabled)
     };
 
     status = napi_define_class(env, CAMERA_PHOTO_OUTPUT_NAPI_CLASS_NAME, NAPI_AUTO_LENGTH, PhotoOutputNapiConstructor,
@@ -2796,6 +2865,135 @@ napi_value PhotoOutputNapi::EnableAutoExtendedGainmapDelivery(napi_env env, napi
         return result;
     }
     MEDIA_DEBUG_LOG("PhotoOutputNapi::EnableAutoExtendedGainmapDelivery success");
+    return result;
+}
+
+napi_value PhotoOutputNapi::IsAutoAuxiliaryPhotoDeliverySupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PhotoOutputNapi::IsAutoAuxiliaryPhotoDeliverySupported is called");
+    auto result = CameraNapiUtils::GetUndefinedValue(env);
+    bool isSupported = false;
+    napi_get_boolean(env, isSupported, &result);
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    int32_t auxPhotoType = -1;
+    CameraNapiParamParser jsParamParser(env, info, photoOutputNapi, auxPhotoType);
+    if (!jsParamParser.IsStatusOk()) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoAuxiliaryPhotoDeliverySupported invalid argument");
+        return result;
+    }
+    if (auxPhotoType < static_cast<int32_t>(CameraAuxiliaryPhotoType::OXYGEN) ||
+        auxPhotoType > static_cast<int32_t>(CameraAuxiliaryPhotoType::PIGMENTATION)) {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoAuxiliaryPhotoDeliverySupported auxPhotoType invalid");
+        CameraNapiUtils::ThrowError(env, PARAM_OUT_OF_RANGE, "auxPhotoType is out of range");
+        return result;
+    }
+    if (photoOutputNapi->photoOutput_ != nullptr) {
+        int32_t retCode = photoOutputNapi->photoOutput_->IsAutoAuxiliaryPhotoDeliverySupported(
+            static_cast<CameraAuxiliaryPhotoType>(auxPhotoType), isSupported);
+        if (retCode != 0) {
+            MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoAuxiliaryPhotoDeliverySupported fail %{public}d", retCode);
+            return result;
+        }
+        napi_get_boolean(env, isSupported, &result);
+    } else {
+        MEDIA_ERR_LOG("PhotoOutputNapi::IsAutoAuxiliaryPhotoDeliverySupported get native object fail");
+    }
+    return result;
+}
+
+namespace {
+// Maps inner error codes to the API designed set: capability/mutex conflicts map to 801,
+// parameter errors map to 7400115, others map to 7400201.
+int32_t MapAuxPhotoInnerCodeToApiError(int32_t retCode)
+{
+    if (retCode == InnerErrorCode::CAPABILITY_NOT_SUPPORTED ||
+        retCode == CameraErrorCode::OPERATION_NOT_ALLOWED) {
+        return InnerErrorCode::CAPABILITY_NOT_SUPPORTED;
+    }
+    if (retCode == CameraErrorCode::PARAM_OUT_OF_RANGE) {
+        return CameraErrorCode::PARAM_OUT_OF_RANGE;
+    }
+    return CameraErrorCode::SERVICE_FATL_ERROR;
+}
+
+napi_status ParseAuxiliaryPhotoArgs(napi_env env, const napi_value* argv,
+    bool& isEnable, std::vector<CameraAuxiliaryPhotoType>& auxPhotoTypes)
+{
+    napi_status status = napi_get_value_bool(env, argv[PARAM1], &isEnable);
+    CHECK_RETURN_RET_ELOG(status != napi_ok, status, "ParseAuxiliaryPhotoArgs get enable flag failed");
+    uint32_t arrayLength = 0;
+    status = napi_get_array_length(env, argv[PARAM0], &arrayLength);
+    CHECK_RETURN_RET_ELOG(status != napi_ok, status, "ParseAuxiliaryPhotoArgs get array length failed");
+    constexpr uint32_t maxAuxiliaryPhotoCount = 2;
+    if (arrayLength > maxAuxiliaryPhotoCount) {
+        return napi_invalid_arg;
+    }
+    for (uint32_t i = 0; i < arrayLength; i++) {
+        napi_value value = nullptr;
+        status = napi_get_element(env, argv[PARAM0], i, &value);
+        int32_t auxPhotoType = -1;
+        status = napi_get_value_int32(env, value, &auxPhotoType);
+        if (status != napi_ok || auxPhotoType < static_cast<int32_t>(CameraAuxiliaryPhotoType::OXYGEN) ||
+            auxPhotoType > static_cast<int32_t>(CameraAuxiliaryPhotoType::PIGMENTATION)) {
+            return napi_invalid_arg;
+        }
+        auto type = static_cast<CameraAuxiliaryPhotoType>(auxPhotoType);
+        if (std::find(auxPhotoTypes.begin(), auxPhotoTypes.end(), type) != auxPhotoTypes.end()) {
+            return napi_invalid_arg;
+        }
+        auxPhotoTypes.push_back(type);
+    }
+    return napi_ok;
+}
+}
+
+napi_value PhotoOutputNapi::SetAutoAuxiliaryPhotosDeliveryEnabled(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("PhotoOutputNapi::SetAutoAuxiliaryPhotosDeliveryEnabled is called");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_get_undefined(env, &result);
+    size_t argc = ARGS_TWO;
+    napi_value argv[ARGS_TWO] = { 0 };
+    napi_value thisVar = nullptr;
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    bool isArray = false;
+    napi_valuetype valueType = napi_undefined;
+    if (argc == ARGS_TWO) {
+        napi_is_array(env, argv[PARAM0], &isArray);
+        napi_typeof(env, argv[PARAM1], &valueType);
+    }
+    PhotoOutputNapi* photoOutputNapi = nullptr;
+    if (argc != ARGS_TWO || !isArray || valueType != napi_boolean) {
+        MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled requires an array and a boolean parameter");
+        CameraNapiUtils::ThrowError(env, PARAM_OUT_OF_RANGE, "requires an array and a boolean parameter");
+        return result;
+    }
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&photoOutputNapi));
+    if (status != napi_ok || photoOutputNapi == nullptr || photoOutputNapi->GetPhotoOutput() == nullptr) {
+        MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled get native object fail");
+        CameraNapiUtils::ThrowError(env, SERVICE_FATL_ERROR, "get native object fail");
+        return result;
+    }
+    bool isEnable = false;
+    std::vector<CameraAuxiliaryPhotoType> auxPhotoTypes;
+    status = ParseAuxiliaryPhotoArgs(env, argv, isEnable, auxPhotoTypes);
+    if (status != napi_ok || (isEnable && auxPhotoTypes.empty())) {
+        MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled auxPhotoTypes is invalid or empty");
+        CameraNapiUtils::ThrowError(env, PARAM_OUT_OF_RANGE, "auxPhotoTypes is invalid or empty");
+        return result;
+    }
+    int32_t retCode = photoOutputNapi->GetPhotoOutput()->SetAutoAuxiliaryPhotosDeliveryEnabled(
+        auxPhotoTypes, isEnable);
+    if (retCode != CameraErrorCode::SUCCESS) {
+        int32_t mappedCode = MapAuxPhotoInnerCodeToApiError(retCode);
+        MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled inner code:%{public}d mapped:%{public}d",
+            retCode, mappedCode);
+        if (!CameraNapiUtils::CheckErrorV2(env, mappedCode)) {
+            return result;
+        }
+    }
+    MEDIA_DEBUG_LOG("PhotoOutputNapi::SetAutoAuxiliaryPhotosDeliveryEnabled success");
     return result;
 }
 

@@ -121,6 +121,35 @@ int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(std::shared_ptr<Pictur
 }
 #endif
 
+int32_t HStreamCapturePhotoCallbackImpl::OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer,
+    sptr<SurfaceBuffer> oxygenBuffer, sptr<SurfaceBuffer> pigmentationBuffer, int64_t timestamp, bool isRaw)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable with auxiliary E");
+    auto photoOutput = GetPhotoOutput();
+    CHECK_RETURN_RET_ELOG(photoOutput == nullptr, CAMERA_OK,
+        "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable photoOutput is nullptr");
+    auto callback = photoOutput->GetAppPhotoCallback();
+    CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_OK,
+        "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable callback is nullptr");
+    CHECK_RETURN_RET_ELOG(mainBuffer == nullptr, CAMERA_OK,
+        "HStreamCapturePhotoCallbackImpl::OnPhotoAvailable mainBuffer is nullptr");
+    std::shared_ptr<CameraBufferProcessor> bufferProcessor;
+    std::shared_ptr<Media::NativeImage> mainImage =
+        std::make_shared<Media::NativeImage>(mainBuffer, bufferProcessor, timestamp);
+    std::shared_ptr<Media::NativeImage> oxygenImage = nullptr;
+    if (oxygenBuffer != nullptr) {
+        oxygenImage = std::make_shared<Media::NativeImage>(oxygenBuffer, bufferProcessor, timestamp);
+    }
+    std::shared_ptr<Media::NativeImage> pigmentationImage = nullptr;
+    if (pigmentationBuffer != nullptr) {
+        pigmentationImage = std::make_shared<Media::NativeImage>(pigmentationBuffer, bufferProcessor, timestamp);
+    }
+    callback->OnPhotoAvailable(mainImage, oxygenImage, pigmentationImage, isRaw);
+    MEDIA_INFO_LOG("HStreamCapturePhotoCallbackImpl OnPhotoAvailable with auxiliary X");
+    return CAMERA_OK;
+}
+
 int32_t HStreamCapturePhotoAssetCallbackImpl::OnPhotoAssetAvailable(
     const int32_t captureId, const std::string &uri, int32_t cameraShotType, const std::string &burstKey)
 {

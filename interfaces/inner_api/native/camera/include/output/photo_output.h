@@ -594,6 +594,20 @@ public:
     int32_t EnableAutoExtendedGainmapDelivery(bool enabled);
 
     /**
+     * @brief Check whether the current mode supports auto auxiliary photos delivery.
+     *
+     * @return Return the supported result.
+     */
+    int32_t IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType type, bool& isSupported);
+
+    /**
+     * @brief To enable the auto auxiliary photos delivery.
+     *
+     * @return Returns the result of the auto auxiliary photos delivery enable.
+     */
+    int32_t SetAutoAuxiliaryPhotosDeliveryEnabled(const std::vector<CameraAuxiliaryPhotoType>& types, bool enable);
+
+    /**
      * @brief Get photo buffer.
      */
     sptr<Surface> GetPhotoSurface();
@@ -671,6 +685,8 @@ private:
     bool ParseQualityPrioritization(int32_t modeName, common_metadata_header_t* metadata,
         camera_photo_quality_prioritization_t type);
     bool IsQualityPrioritizationTypeSupported(int32_t* originInfo, uint32_t start, uint32_t end, int32_t type);
+    int32_t ReconfigSessionForAuxiliaryPhotos();
+    std::vector<CameraAuxiliaryPhotoType> enabledAuxPhotoTypes_ = {};
 };
 
 class HStreamCaptureCallbackImpl : public StreamCaptureCallbackStub {

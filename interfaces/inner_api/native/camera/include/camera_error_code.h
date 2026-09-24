@@ -51,6 +51,7 @@ enum CameraErrorCode : int32_t {
 
     UNSUPPORTED_MULTI_CAMERA_COMBINATION =  7400113,
     DEVICE_REPLACED = 7400114,
+    PARAM_OUT_OF_RANGE = 7400115,
 };
 
 enum InnerErrorCode : int32_t {

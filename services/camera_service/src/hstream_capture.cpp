@@ -16,6 +16,8 @@
 #include "hstream_capture.h"
 
 #include <cstdint>
+#include <algorithm>
+#include <functional>
 #include <memory>
 #include <uuid.h>
 
@@ -34,6 +36,8 @@
 #include "picture_interface.h"
 #include "hstream_operator_manager.h"
 #include "hstream_operator.h"
+#include "hcamera_device.h"
+#include "camera_metadata.h"
 #include "display/graphic/common/v2_1/cm_color_space.h"
 #include "picture_proxy.h"
 #ifdef HOOK_CAMERA_OPERATOR
@@ -44,6 +48,8 @@
 #include "camera_buffer_manager/photo_asset_auxiliary_consumer.h"
 #include "camera_buffer_manager/thumbnail_buffer_consumer.h"
 #include "camera_buffer_manager/picture_assembler.h"
+#include "camera_surface_buffer_util.h"
+#include "watch_dog.h"
 #include "image_receiver.h"
 #ifdef MEMMGR_OVERRID
 #include "mem_mgr_client.h"
@@ -66,6 +72,9 @@ static const int8_t PHOTO_ASSET_TIMEOUT = 10;
 static const std::string BURST_UUID_BEGIN = "";
 static std::string g_currentBurstUuid = BURST_UUID_BEGIN;
 static const uint32_t TASKMANAGER_ONE = 1;
+static const int32_t AUXILIARY_PHOTO_TYPE_OXYGEN = 0;
+static const int32_t AUXILIARY_PHOTO_TYPE_PIGMENTATION = 1;
+static const float AUX_PHOTO_DEFAULT_ZOOM_RATIO = 1.0f;
 #ifdef CAMERA_CAPTURE_YUV
 static const uint32_t PHOTO_SAVE_MAX_NUM = 3;
 static const uint32_t PHOTO_STATE_TIMEOUT = 20; // 20s
@@ -241,6 +250,10 @@ HStreamCapture::~HStreamCapture()
         photoSubDeepTask_->CancelAllTasks();
         photoSubDeepTask_ = nullptr;
     }
+    if (photoSubAuxPhotoTask_ != nullptr) {
+        photoSubAuxPhotoTask_->CancelAllTasks();
+        photoSubAuxPhotoTask_ = nullptr;
+    }
     if (thumbnailTask_ != nullptr) {
         thumbnailTask_->CancelAllTasks();
         thumbnailTask_ = nullptr;
@@ -344,6 +357,84 @@ void HStreamCapture::FillingPictureExtendLhdrGainmapStreamInfos(StreamInfo_V1_5 
     streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
 }
 
+void HStreamCapture::FillingAuxiliaryPhotoStreamInfos(StreamInfo_V1_5 &streamInfo, int32_t format)
+{
+    // Snapshot the enabled types under the lock, the switch vector is written by the enable IPC.
+    std::vector<int32_t> enabledTypes;
+    {
+        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+        enabledTypes = enabledAuxPhotoTypes_;
+    }
+    if (enabledTypes.empty()) {
+        return;
+    }
+    MEDIA_INFO_LOG("HStreamCapture::FillingAuxiliaryPhotoStreamInfos enter, format:%{public}d", format);
+    auto fillAuxStreamInfo = [this, &streamInfo, format](int32_t hdiExtendedType,
+        const sptr<BufferProducerSequenceable>& bufferQueue) {
+        if (bufferQueue == nullptr) {
+            return;
+        }
+        HDI::Camera::V1_1::ExtendedStreamInfo auxStreamInfo = {
+            .type = static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(hdiExtendedType),
+            .width = width_ / 2, // auxiliary photo size is half of the main photo
+            .height = height_ / 2,
+            .format = format,
+            .dataspace = static_cast<int32_t>(CM_ColorSpaceType_V2_1::CM_SRGB_FULL),
+            .bufferQueue = bufferQueue,
+        };
+        streamInfo.extendedStreamInfos.push_back(auxStreamInfo);
+    };
+    for (auto type : enabledTypes) {
+        if (type == AUXILIARY_PHOTO_TYPE_OXYGEN) {
+            fillAuxStreamInfo(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_OXYGEN_PHOTO, oxygenBufferQueue_.Get());
+        } else if (type == AUXILIARY_PHOTO_TYPE_PIGMENTATION) {
+            fillAuxStreamInfo(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_PIGMENTATION_PHOTO,
+                pigmentationBufferQueue_.Get());
+        }
+    }
+}
+
+void HStreamCapture::CreateAuxiliaryPhotoSurfaces()
+{
+    MEDIA_INFO_LOG("HStreamCapture::CreateAuxiliaryPhotoSurfaces E");
+    if (photoSubAuxPhotoTask_ == nullptr) {
+        photoSubAuxPhotoTask_ = std::make_shared<DeferredProcessing::TaskManager>(
+            "photoSubAuxPhotoTask_", TASKMANAGER_ONE, false);
+    }
+    SurfaceError ret;
+    auto oxygenSurfaceObj = oxygenSurface_.Get();
+    if (oxygenSurfaceObj == nullptr) {
+        oxygenSurface_.Set(Surface::CreateSurfaceAsConsumer("oxygenImage"));
+        oxygenSurfaceObj = oxygenSurface_.Get();
+        if (oxygenSurfaceObj != nullptr) {
+            MEDIA_INFO_LOG("CreateAuxiliaryPhotoSurfaces oxygen surfaceId: %{public}" PRIu64,
+                oxygenSurfaceObj->GetUniqueId());
+            oxygenBufferQueue_.Set(new BufferProducerSequenceable(oxygenSurfaceObj->GetProducer()));
+            oxygenListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_OXYGEN_PHOTO, this);
+            CHECK_RETURN_ELOG(oxygenListener_ == nullptr, "oxygenListener_ is null");
+            ret = oxygenSurfaceObj->RegisterConsumerListener((sptr<IBufferConsumerListener> &)oxygenListener_);
+            CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register oxygen consumer failed:%{public}d", ret);
+        }
+    }
+    auto pigmentationSurfaceObj = pigmentationSurface_.Get();
+    if (pigmentationSurfaceObj == nullptr) {
+        pigmentationSurface_.Set(Surface::CreateSurfaceAsConsumer("pigmentationImage"));
+        pigmentationSurfaceObj = pigmentationSurface_.Get();
+        if (pigmentationSurfaceObj != nullptr) {
+            MEDIA_INFO_LOG("CreateAuxiliaryPhotoSurfaces pigmentation surfaceId: %{public}" PRIu64,
+                pigmentationSurfaceObj->GetUniqueId());
+            pigmentationBufferQueue_.Set(
+                new BufferProducerSequenceable(pigmentationSurfaceObj->GetProducer()));
+            pigmentationListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_PIGMENTATION_PHOTO, this);
+            CHECK_RETURN_ELOG(pigmentationListener_ == nullptr, "pigmentationListener_ is null");
+            ret = pigmentationSurfaceObj->RegisterConsumerListener(
+                (sptr<IBufferConsumerListener> &)pigmentationListener_);
+            CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register pigmentation consumer failed:%{public}d", ret);
+        }
+    }
+    MEDIA_INFO_LOG("HStreamCapture::CreateAuxiliaryPhotoSurfaces X");
+}
+
 void HStreamCapture::SetDataSpaceForCapture(StreamInfo_V1_5 &streamInfo)
 {
     // LCOV_EXCL_START
@@ -379,6 +470,7 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_5 &streamInfo)
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_3::ENCODE_TYPE_HEIC);
         streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_BLOB;
+        FillingAuxiliaryPhotoStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_BLOB);
     } else if (format_ == OHOS_CAMERA_FORMAT_YCRCB_420_SP) { // NV21
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_NULL;
         streamInfo.v1_0.format_ = GRAPHIC_PIXEL_FMT_YCRCB_420_SP; // NV21
@@ -392,12 +484,14 @@ void HStreamCapture::SetStreamInfo(StreamInfo_V1_5 &streamInfo)
         if (isNeedLhdrGainmap_ && !isDeferredImageDeliveryEnabled) {
             FillingPictureExtendLhdrGainmapStreamInfos(streamInfo);
         }
+        FillingAuxiliaryPhotoStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
     } else if (format_ == OHOS_CAMERA_FORMAT_DNG_XDRAW) {
         streamInfo.v1_0.encodeType_ =
             static_cast<HDI::Camera::V1_0::EncodeType>(HDI::Camera::V1_4::ENCODE_TYPE_DNG_XDRAW);
     } else if (format_ == OHOS_CAMERA_FORMAT_DNG) {
     } else {
         streamInfo.v1_0.encodeType_ = ENCODE_TYPE_JPEG;
+        FillingAuxiliaryPhotoStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_BLOB);
     }
     // LCOV_EXCL_STOP
     FillingRawAndThumbnailStreamInfo(streamInfo);
@@ -670,6 +764,7 @@ int32_t HStreamCapture::OnPhotoAvailable(std::shared_ptr<PictureIntf> picture)
     return CAMERA_OK;
 }
 
+
 std::shared_ptr<PhotoAssetIntf> HStreamCapture::GetPhotoAssetInstanceForPub(int32_t captureId)
 {
     CAMERA_SYNC_TRACE;
@@ -705,6 +800,337 @@ void PhotoLevelManager::ClearPhotoLevelInfo()
     photoLevelMap_.clear();
 }
 #endif
+
+namespace {
+// Mutex tag rules for oxygen/pigmentation auxiliary photo delivery: a rule conflicts when the
+// app-submitted configuration carries a conflicting control value. Scoped to tags the framework
+// can observe; watermark/night-enhancement/personalized-color-card have no control tag and are
+// backstopped by HAL.
+struct AuxPhotoMutexTagRule {
+    const char* name;
+    uint32_t tag;
+    std::function<bool(const camera_metadata_item_t& item)> isConflict;
+};
+
+const std::vector<AuxPhotoMutexTagRule>& GetAuxPhotoMutexTagRules()
+{
+    static const std::vector<AuxPhotoMutexTagRule> rules = {
+        {"beauty", OHOS_CONTROL_BEAUTY_TYPE, [](const camera_metadata_item_t& item) {
+            return item.data.u8[0] != OHOS_CAMERA_BEAUTY_TYPE_OFF;
+        }},
+        {"zoomRatio", OHOS_CONTROL_ZOOM_RATIO, [](const camera_metadata_item_t& item) {
+            return item.data.f[0] != AUX_PHOTO_DEFAULT_ZOOM_RATIO;
+        }},
+        {"macro", OHOS_CONTROL_CAMERA_MACRO, [](const camera_metadata_item_t& item) {
+            return item.data.u8[0] == OHOS_CAMERA_MACRO_ENABLE;
+        }},
+        {"virtualAperture", OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE,
+            [](const camera_metadata_item_t& item) { return item.data.f[0] > 0; }},
+        {"autoHighQuality", OHOS_CONTROL_HIGH_QUALITY_MODE, [](const camera_metadata_item_t& item) {
+            return item.data.u8[0] != 0;
+        }},
+        {"cloudImageEnhance", OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, [](const camera_metadata_item_t& item) {
+            return item.data.u8[0] != 0;
+        }},
+        {"aigcPhoto", OHOS_CONTROL_AUTO_AIGC_PHOTO, [](const camera_metadata_item_t& item) {
+            return item.data.u8[0] != 0;
+        }},
+    };
+    return rules;
+}
+
+bool IsAuxPhotoMutexHitInMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings)
+{
+    for (const auto& rule : GetAuxPhotoMutexTagRules()) {
+        camera_metadata_item_t item;
+        int32_t ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), rule.tag, &item);
+        if (ret == CAM_META_SUCCESS && item.count > 0 && rule.isConflict(item)) {
+            MEDIA_ERR_LOG("AuxPhotoMutex rule hit: %{public}s", rule.name);
+            return true;
+        }
+    }
+    return false;
+}
+}
+
+int32_t HStreamCapture::CheckAuxiliaryPhotoMutex()
+{
+    MEDIA_INFO_LOG("HStreamCapture::CheckAuxiliaryPhotoMutex E");
+    // Only single-segment capture is supported: deferred (multi-segment) photo conflicts.
+    if (deferredPhotoSwitch_ == 1) {
+        MEDIA_ERR_LOG("CheckAuxiliaryPhotoMutex deferred photo (multi-segment) is enabled");
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+    // The photo asset callback is the segmented photo delivery channel and is mutually exclusive
+    // with auxiliary photos, which are delivered only via onCapturePhotoAvailable.
+    if (photoAssetAvaiableCallback_ != nullptr) {
+        MEDIA_ERR_LOG("CheckAuxiliaryPhotoMutex photo asset callback is registered");
+        return CAMERA_OPERATION_NOT_ALLOWED;
+    }
+    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    CHECK_RETURN_RET_ELOG(hStreamOperatorSptr == nullptr, CAMERA_OK,
+        "HStreamCapture::CheckAuxiliaryPhotoMutex hStreamOperator is null, skip check");
+    auto cameraDevice = hStreamOperatorSptr->GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(cameraDevice == nullptr, CAMERA_OK,
+        "HStreamCapture::CheckAuxiliaryPhotoMutex cameraDevice is null, skip check");
+    // Scan the cached settings under the device lock without cloning: this check runs per
+    // capture, a full metadata deep copy on the hot path is too expensive.
+    bool isMutexHit = false;
+    cameraDevice->ReadCachedSettings(
+        [&isMutexHit](const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) {
+            isMutexHit = IsAuxPhotoMutexHitInMetadata(settings);
+        });
+    CHECK_RETURN_RET_ELOG(isMutexHit, CAMERA_OPERATION_NOT_ALLOWED,
+        "HStreamCapture::CheckAuxiliaryPhotoMutex mutex rule hit");
+    MEDIA_INFO_LOG("HStreamCapture::CheckAuxiliaryPhotoMutex X, no mutex conflict");
+    return CAMERA_OK;
+}
+
+int32_t HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled(
+    const std::vector<int32_t>& auxPhotoTypes, bool enabled)
+{
+    MEDIA_INFO_LOG("HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled E, enabled:%{public}d, size:%{public}zu",
+        enabled, auxPhotoTypes.size());
+    constexpr size_t maxAuxiliaryPhotoCount = 2;
+    if (auxPhotoTypes.empty()) {
+        // An empty enable list is invalid, an empty disable list is a no-op.
+        CHECK_RETURN_RET_ELOG(enabled, CAMERA_INVALID_ARG,
+            "SetAutoAuxiliaryPhotosDeliveryEnabled enable with an empty type list");
+        return CAMERA_OK;
+    }
+    bool isTypesInvalid = auxPhotoTypes.size() > maxAuxiliaryPhotoCount;
+    for (size_t i = 0; !isTypesInvalid && i < auxPhotoTypes.size(); i++) {
+        isTypesInvalid = (auxPhotoTypes[i] != AUXILIARY_PHOTO_TYPE_OXYGEN &&
+            auxPhotoTypes[i] != AUXILIARY_PHOTO_TYPE_PIGMENTATION) ||
+            std::find(auxPhotoTypes.begin() + static_cast<std::ptrdiff_t>(i) + 1, auxPhotoTypes.end(),
+                auxPhotoTypes[i]) != auxPhotoTypes.end();
+    }
+    if (isTypesInvalid) {
+        MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled auxPhotoTypes is invalid");
+        return CAMERA_INVALID_ARG;
+    }
+    std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+    // Per-type incremental switch: enable merges the types into the enabled set, disable removes
+    // them, so a type enabled or disabled by an earlier call is kept unless it is in this list.
+    std::vector<int32_t> newTypes = enabledAuxPhotoTypes_;
+    for (auto auxPhotoType : auxPhotoTypes) {
+        auto it = std::find(newTypes.begin(), newTypes.end(), auxPhotoType);
+        if (enabled && it == newTypes.end()) {
+            newTypes.push_back(auxPhotoType);
+        } else if (!enabled && it != newTypes.end()) {
+            newTypes.erase(it);
+        }
+    }
+    bool isChanged = (newTypes != enabledAuxPhotoTypes_);
+    if (enabled) {
+        int32_t ret = CheckAuxiliaryPhotoMutex();
+        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
+            "SetAutoAuxiliaryPhotosDeliveryEnabled mutex check failed: %{public}d", ret);
+        CreateAuxiliaryPhotoSurfaces();
+    }
+    enabledAuxPhotoTypes_ = newTypes;
+    // The control tag is delivered after CommitStreams on the next config commit (deferred-effective);
+    // mark dirty only when there is a non-empty type set to send, an empty set cannot be written as
+    // a metadata entry (count 0 is rejected by the metadata API).
+    if (isChanged) {
+        isAuxControlTagDirty_ = !enabledAuxPhotoTypes_.empty();
+    }
+    MEDIA_INFO_LOG("HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled X, size:%{public}zu, dirty:%{public}d",
+        enabledAuxPhotoTypes_.size(), isAuxControlTagDirty_.load());
+    return CAMERA_OK;
+}
+
+bool HStreamCapture::IsAuxPhotoEnabled()
+{
+    std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+    return !enabledAuxPhotoTypes_.empty();
+}
+
+bool HStreamCapture::IsAuxPhotoDegraded(int32_t captureId)
+{
+    std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+    auto itDegrade = captureIdAuxDegradeMap_.find(captureId);
+    return itDegrade != captureIdAuxDegradeMap_.end() && itDegrade->second != 0;
+}
+
+uint32_t HStreamCapture::GetArrivedAuxPhotoCount(int32_t captureId)
+{
+    std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+    uint32_t arrivedCount = 0;
+    if (captureIdOxygenMap_.count(captureId) > 0) {
+        arrivedCount++;
+    }
+    if (captureIdPigmentationMap_.count(captureId) > 0) {
+        arrivedCount++;
+    }
+    return arrivedCount;
+}
+
+uint32_t HStreamCapture::StartAuxPhotoWatchdog(int32_t captureId, int64_t timestamp)
+{
+    uint32_t pictureHandle = 0;
+    constexpr uint32_t delayMilli = 1 * 1000;
+    wptr<HStreamCapture> thisPtr(this);
+    DeferredProcessing::Watchdog::GetGlobalWatchdog().StartMonitor(
+        pictureHandle, delayMilli, [thisPtr, captureId, timestamp](uint32_t handle) {
+            MEDIA_INFO_LOG("StartWaitAuxPhotoTask Watchdog executed, handle: %{public}d, captureId:%{public}d",
+                static_cast<int>(handle), captureId);
+            auto ptr = thisPtr.promote();
+            CHECK_RETURN(ptr == nullptr);
+            ptr->AssembleCompressedPhotoWithAux(timestamp, captureId);
+        });
+    return pictureHandle;
+}
+
+// Caller must hold g_photoImageMutex.
+bool HStreamCapture::ArmAuxPhotoConsumerTrigger(int32_t captureId, uint32_t pictureHandle,
+    uint32_t expectedCount)
+{
+    captureIdHandleMap_[captureId] = pictureHandle;
+    captureIdCountMap_[captureId] = static_cast<int32_t>(expectedCount);
+    int32_t arrivedCount = captureIdAuxiliaryCountMap_.count(captureId) > 0 ?
+        captureIdAuxiliaryCountMap_[captureId] : 0;
+    // True when all auxiliary buffers arrived while the monitor was being registered.
+    return arrivedCount != -1 && arrivedCount >= static_cast<int32_t>(expectedCount);
+}
+
+void HStreamCapture::StartWaitAuxPhotoTask(int32_t captureId, int64_t timestamp,
+    sptr<SurfaceBuffer>& mainBuffer)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("StartWaitAuxPhotoTask E, captureId:%{public}d", captureId);
+    uint32_t expectedCount = 0;
+    bool isComplete = false;
+    {
+        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+        if (captureIdMainPhotoMap_.count(captureId) > 0) {
+            MEDIA_WARNING_LOG("StartWaitAuxPhotoTask captureId:%{public}d already waiting", captureId);
+            return;
+        }
+        captureIdMainPhotoMap_[captureId] = mainBuffer;
+        int32_t imageCount = CameraSurfaceBufferUtil::GetImageCount(mainBuffer);
+        int32_t imageAuxCount = imageCount - 1;
+        expectedCount = imageAuxCount > 0 ? static_cast<uint32_t>(imageAuxCount) : 0;
+        // Auxiliary buffers may have arrived before the main photo, check by map presence.
+        uint32_t arrivedCount = GetArrivedAuxPhotoCount(captureId);
+        isComplete = arrivedCount >= expectedCount;
+        MEDIA_INFO_LOG("StartWaitAuxPhotoTask expect auxiliary photos, captureId:%{public}d, "
+            "imageCount:%{public}d, expectedCount:%{public}u, arrivedCount:%{public}u",
+            captureId, imageCount, expectedCount, arrivedCount);
+    }
+    // Assemble outside the lock: the delivery callback sends an IPC, keep the photo mutex hold
+    // time minimal. The main photo map guard in the assemble makes re-entry a no-op.
+    if (isComplete) {
+        MEDIA_INFO_LOG("StartWaitAuxPhotoTask auxiliary photos complete, captureId:%{public}d", captureId);
+        AssembleCompressedPhotoWithAux(timestamp, captureId);
+        return;
+    }
+    uint32_t pictureHandle = StartAuxPhotoWatchdog(captureId, timestamp);
+    {
+        // Arm the consumer trigger only after the handle is stored, so the consumer equality
+        // path never fires DoTimeout with an unset (zero) handle.
+        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+        isComplete = ArmAuxPhotoConsumerTrigger(captureId, pictureHandle, expectedCount);
+    }
+    if (isComplete) {
+        DeferredProcessing::Watchdog::GetGlobalWatchdog().StopMonitor(pictureHandle);
+        AssembleCompressedPhotoWithAux(timestamp, captureId);
+        return;
+    }
+    MEDIA_INFO_LOG("StartWaitAuxPhotoTask monitor started, pictureHandle:%{public}u, captureId:%{public}d",
+        pictureHandle, captureId);
+}
+
+void HStreamCapture::AssembleCompressedPhotoWithAux(int64_t timestamp, int32_t captureId)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("AssembleCompressedPhotoWithAux E, captureId:%{public}d", captureId);
+    sptr<SurfaceBuffer> mainBuffer = nullptr;
+    sptr<SurfaceBuffer> oxygenBuffer = nullptr;
+    sptr<SurfaceBuffer> pigmentationBuffer = nullptr;
+    {
+        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+        auto itMain = captureIdMainPhotoMap_.find(captureId);
+        if (itMain == captureIdMainPhotoMap_.end()) {
+            MEDIA_WARNING_LOG("AssembleCompressedPhotoWithAux captureId:%{public}d already assembled", captureId);
+            return;
+        }
+        mainBuffer = itMain->second;
+        captureIdMainPhotoMap_.erase(itMain);
+        auto itOxygen = captureIdOxygenMap_.find(captureId);
+        if (itOxygen != captureIdOxygenMap_.end() && itOxygen->second != nullptr) {
+            oxygenBuffer = itOxygen->second;
+        }
+        auto itPigmentation = captureIdPigmentationMap_.find(captureId);
+        if (itPigmentation != captureIdPigmentationMap_.end() && itPigmentation->second != nullptr) {
+            pigmentationBuffer = itPigmentation->second;
+        }
+        // Do not stop the watchdog here: the manual-trigger path (consumer DoTimeout) invokes this
+        // function synchronously with the watchdog mutex held, and a nested StopMonitor would
+        // deadlock on that non-recursive mutex. The callers stop the monitor themselves, and a late
+        // timeout fire is a no-op due to the main photo map guard above.
+        CleanAuxPhotoState(captureId);
+        captureIdHandleMap_.erase(captureId);
+        captureIdAuxiliaryCountMap_.erase(captureId);
+        captureIdCountMap_.erase(captureId);
+    }
+    CHECK_RETURN_ELOG(mainBuffer == nullptr, "AssembleCompressedPhotoWithAux mainBuffer is nullptr");
+    OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer, timestamp, false);
+    MEDIA_INFO_LOG("AssembleCompressedPhotoWithAux X, captureId:%{public}d", captureId);
+}
+
+void HStreamCapture::SendAuxiliaryPhotoControlTagIfDirty()
+{
+    if (!isAuxControlTagDirty_.load()) {
+        return;
+    }
+    // Snapshot the enabled types under the lock, the switch vector is written by the enable IPC.
+    std::vector<int32_t> controlTypes;
+    {
+        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+        for (auto type : enabledAuxPhotoTypes_) {
+            controlTypes.push_back(type);
+        }
+    }
+    if (controlTypes.empty()) {
+        // Nothing valid to send: an empty type set cannot be written as a metadata entry
+        // (count 0 is rejected by the metadata API), the disable takes effect through the
+        // stream configuration (aux streams are removed on the next commit).
+        isAuxControlTagDirty_ = false;
+        return;
+    }
+    MEDIA_INFO_LOG("SendAuxiliaryPhotoControlTagIfDirty E, size:%{public}zu", controlTypes.size());
+    constexpr int32_t defaultItemCount = 1;
+    constexpr int32_t defaultDataLength = 8;
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItemCount, defaultDataLength);
+    CHECK_RETURN_ELOG(changedMetadata == nullptr, "SendAuxiliaryPhotoControlTagIfDirty metadata is null");
+    bool status = AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_AUTO_AUXILIARY_PHOTOS_DELIVERY,
+        controlTypes.data(), controlTypes.size());
+    CHECK_RETURN_ELOG(!status, "SendAuxiliaryPhotoControlTagIfDirty AddOrUpdateMetadata failed");
+    auto hStreamOperatorSptr = hStreamOperator_.promote();
+    CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "SendAuxiliaryPhotoControlTagIfDirty operator is null");
+    auto cameraDevice = hStreamOperatorSptr->GetCameraDevice();
+    CHECK_RETURN_ELOG(cameraDevice == nullptr, "SendAuxiliaryPhotoControlTagIfDirty cameraDevice is null");
+    // Tag delivery failure does not roll back the committed streams: keep the dirty flag so the
+    // next successful commit retries.
+    int32_t errCode = cameraDevice->UpdateSetting(changedMetadata);
+    CHECK_RETURN_ELOG(errCode != CAMERA_OK, "SendAuxiliaryPhotoControlTagIfDirty UpdateSetting failed: %{public}d",
+        errCode);
+    isAuxControlTagDirty_ = false;
+    MEDIA_INFO_LOG("SendAuxiliaryPhotoControlTagIfDirty X");
+}
+
+void HStreamCapture::CleanAuxPhotoState(int32_t captureId)
+{
+    std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+    captureIdAuxDegradeMap_.erase(captureId);
+    captureIdOxygenMap_.erase(captureId);
+    captureIdPigmentationMap_.erase(captureId);
+    captureIdMainPhotoMap_.erase(captureId);
+    captureIdHandleMap_.erase(captureId);
+    captureIdAuxiliaryCountMap_.erase(captureId);
+    captureIdCountMap_.erase(captureId);
+}
 
 void ConcurrentMap::Insert(const int32_t& key, const std::shared_ptr<PhotoAssetIntf>& value)
 {
@@ -925,7 +1351,9 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     MEDIA_INFO_LOG("HStreamCapture::Capture Entry, streamId:%{public}d", GetFwkStreamId());
     CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::CAPTURE_FWK, CAPTURE_ID_UNSET);
     auto streamOperator = GetStreamOperator();
-    CHECK_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
+    CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
+        "HStreamCapture::Capture failed, stream not linked (hdi operator null), streamId:%{public}d",
+        GetFwkStreamId());
     // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(isCaptureReady_ == false, CAMERA_CAPTURE_NOT_READY,
         "HStreamCapture::Capture failed due to capture not ready");
@@ -938,6 +1366,18 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         "HStreamCapture::Capture Failed to allocate a captureId");
     ret = CheckBurstCapture(captureSettings, preparedCaptureId);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "HStreamCapture::Capture Failed with burst state error");
+    // Auxiliary photos apply to normal single captures only. Burst captures and captures whose
+    // mutex conditions drifted after enable (e.g. zoom/beauty changed) degrade to main photo
+    // delivery without waiting for auxiliary buffers.
+    if (IsAuxPhotoEnabled()) {
+        // Burst always degrades: check it first so the burst shots skip the expensive
+        // mutex re-check (CloneCachedSettings per capture).
+        bool isDegraded = IsBurstCapture(preparedCaptureId) || (CheckAuxiliaryPhotoMutex() != CAMERA_OK);
+        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+        captureIdAuxDegradeMap_[preparedCaptureId] = isDegraded ? 1 : 0;
+        MEDIA_INFO_LOG("Capture aux degrade flag, captureId:%{public}d, degraded:%{public}d",
+            preparedCaptureId, isDegraded);
+    }
 
     CaptureDfxInfo captureDfxInfo;
     captureDfxInfo.captureId = preparedCaptureId;
@@ -1202,7 +1642,8 @@ int32_t HStreamCapture::ConfirmCapture()
 {
     CAMERA_SYNC_TRACE;
     auto streamOperator = GetStreamOperator();
-    CHECK_RETURN_RET(streamOperator == nullptr, CAMERA_INVALID_STATE);
+    CHECK_RETURN_RET_ELOG(streamOperator == nullptr, CAMERA_INVALID_STATE,
+        "HStreamCapture::ConfirmCapture failed, stream not linked (hdi operator null)");
     // LCOV_EXCL_START
     int32_t ret = 0;
 
@@ -1368,6 +1809,10 @@ int32_t HStreamCapture::SetPhotoAssetAvailableCallback(const sptr<IStreamCapture
         surface_ == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAssetAvailableCallback surface is null");
     CHECK_RETURN_RET_ELOG(
         callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetPhotoAssetAvailableCallback callback is null");
+    // Segmented photo delivery (photo asset callback) is mutually exclusive with auxiliary
+    // photos, which are delivered only via onCapturePhotoAvailable.
+    CHECK_RETURN_RET_ELOG(IsAuxPhotoEnabled(), CAMERA_OPERATION_NOT_ALLOWED,
+        "HStreamCapture::SetPhotoAssetAvailableCallback auxiliary photos are enabled");
     std::lock_guard<std::mutex> lock(photoCallbackLock_);
     photoAssetAvaiableCallback_ = callback;
     // register photoAsset surface buffer consumer
@@ -1583,6 +2028,16 @@ int32_t HStreamCapture::OnCaptureEnded(int32_t captureId, int32_t frameCount)
 
 int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
 {
+    // Clean the per-capture auxiliary state BEFORE taking callbackLock_: the buffer consumer
+    // path holds g_photoImageMutex and acquires photoCallbackLock_ (via OnPhotoAvailable), so
+    // acquiring g_photoImageMutex while holding callbackLock_ here would invert the lock order.
+    CleanAuxPhotoState(captureId);
+    {
+        std::lock_guard<std::recursive_mutex> auxLock{g_photoImageMutex};
+        captureIdHandleMap_.erase(captureId);
+        captureIdAuxiliaryCountMap_.erase(captureId);
+        captureIdCountMap_.erase(captureId);
+    }
     std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
         // LCOV_EXCL_START
@@ -1685,6 +2140,21 @@ int32_t HStreamCapture::OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, cons
     auto photoAvaiableCallback = photoAvaiableCallback_.Get();
     if (photoAvaiableCallback != nullptr) {
         photoAvaiableCallback->OnPhotoAvailable(surfaceBuffer, timestamp, isRaw);
+    }
+    return CAMERA_OK;
+    // LCOV_EXCL_STOP
+}
+
+int32_t HStreamCapture::OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
+    sptr<SurfaceBuffer> pigmentationBuffer, const int64_t timestamp, bool isRaw)
+{
+    // LCOV_EXCL_START
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("HStreamCapture::OnPhotoAvailable with auxiliary is called!");
+    std::lock_guard<std::mutex> lock(photoCallbackLock_);
+    auto photoAvaiableCallback = photoAvaiableCallback_.Get();
+    if (photoAvaiableCallback != nullptr) {
+        photoAvaiableCallback->OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer, timestamp, isRaw);
     }
     return CAMERA_OK;
     // LCOV_EXCL_STOP

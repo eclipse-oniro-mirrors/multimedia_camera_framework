@@ -28,14 +28,21 @@ public:
 
     Camera_ErrorCode GetMainImage(OH_ImageNative** mainImage);
     Camera_ErrorCode GetPicture(OH_PictureNative** picture);
+    Camera_ErrorCode GetAuxiliaryImage(OH_Camera_AuxiliaryPhotoType type, OH_ImageNative** outImage) const;
+    Camera_ErrorCode GetUncompressedAuxiliaryImage(OH_Camera_AuxiliaryPhotoType type,
+        OH_PictureNative** outImage) const;
 
     void SetMainImage(const std::shared_ptr<OHOS::Media::NativeImage> &mainImage);
     void SetRawImage(const std::shared_ptr<OHOS::Media::NativeImage> &rawImage);
     void SetPicture(const std::shared_ptr<OHOS::Media::Picture> &picture);
+    void SetOxygenImage(const std::shared_ptr<OHOS::Media::NativeImage> &oxygenImage);
+    void SetPigmentationImage(const std::shared_ptr<OHOS::Media::NativeImage> &pigmentationImage);
 
 private:
     std::shared_ptr<OHOS::Media::NativeImage> mainImage_ = nullptr;
     std::shared_ptr<OHOS::Media::NativeImage> rawImage_ = nullptr;
     std::shared_ptr<OHOS::Media::Picture> picture_ = nullptr;
+    std::shared_ptr<OHOS::Media::NativeImage> oxygenImage_ = nullptr;
+    std::shared_ptr<OHOS::Media::NativeImage> pigmentationImage_ = nullptr;
 };
 #endif // OHOS_PHOTO_NATIVE_IMPL_H

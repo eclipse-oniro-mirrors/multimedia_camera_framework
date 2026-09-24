@@ -34,6 +34,8 @@ enum class CameraAuxiliaryPictureType {
     LINEAR_MAP = 4,
     FRAGMENT_MAP = 5,
     LHDR_GAINMAP = 10,
+    OXY_MAP = 11,
+    MEL_MAP = 12,
 };
 
 class PictureIntf : public Parcelable {

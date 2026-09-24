@@ -136,7 +136,23 @@ typedef enum Camera_ErrorCode {
     * The capability is not supported.
     * @since 26.0.0
     */
-    CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED = 7400114
+    CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED = 7400114,
+
+    /**
+     * The multiple cameras combination isn't supported. This error is returned when attempting to use an unsupported
+     * combination of multiple cameras due to hardware limitations or driver constraints.
+     * Consider using a different camera combination or check the device's supported camera configurations.
+     * @since 26.1.0
+     */
+    CAMERA_ERROR_UNSUPPORTED_MULTI_CAMERA_COMBINATION = 7400115,
+
+    /**
+     * The parameter is out of range. This error is returned when a parameter value exceeds the valid range,
+     * such as ISO, exposure time, or focus distance. Check the parameter constraints in the API documentation
+     * and ensure the value is within the supported range for the current camera configuration.
+     * @since 26.1.0
+     */
+    CAMERA_ERROR_PARAM_OUT_OF_RANGE = 7400116,
 } Camera_ErrorCode;
 
 /**
@@ -1464,6 +1480,26 @@ typedef enum Camera_QualityPrioritization {
      */
     POWER_BALANCE = 1
 } Camera_QualityPrioritization;
+
+/**
+ * @brief Enumerates the camera auxiliary photo types for skin analysis.
+ * Use these types to specify the detection target when capturing auxiliary photos for skin health assessment.
+ *
+ * @since 26.1.0
+ */
+typedef enum OH_Camera_AuxiliaryPhotoType {
+    /**
+     * Auxiliary photo type oxygen.
+     * @since 26.1.0
+     */
+    OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN = 0,
+
+    /**
+     * Auxiliary photo type pigmentation.
+     * @since 26.1.0
+     */
+    OH_CAMERA_AUXILIARY_PHOTO_TYPE_PIGMENTATION = 1,
+} OH_Camera_AuxiliaryPhotoType;
 
 /**
  * @brief Enum for camera concurrent type.

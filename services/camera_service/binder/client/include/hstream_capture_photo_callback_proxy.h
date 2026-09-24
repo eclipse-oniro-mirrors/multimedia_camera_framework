@@ -32,6 +32,8 @@ public:
 #ifdef CAMERA_CAPTURE_YUV
     int32_t OnPhotoAvailable(std::shared_ptr<PictureIntf> picture) override;
 #endif
+    int32_t OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
+        sptr<SurfaceBuffer> pigmentationBuffer, int64_t timestamp, bool isRaw) override;
 
 private:
     static inline BrokerDelegator<HStreamCapturePhotoCallbackProxy> delegator_;

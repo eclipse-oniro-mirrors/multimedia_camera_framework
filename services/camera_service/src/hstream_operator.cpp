@@ -904,6 +904,15 @@ int32_t HStreamOperator::LinkInputAndOutputs(const std::shared_ptr<OHOS::Camera:
     }
 
     rc = CreateAndCommitStreams(allStreamInfos, settings, opMode);
+    // Deliver the auxiliary photos control tag after CommitStreams succeeds, aligned with the
+    // requirement sequence diagram (createStreams -> commitStreams -> updateSettings).
+    if (rc == CAMERA_OK) {
+        for (auto& stream : allStream) {
+            if (stream->GetStreamType() == StreamType::CAPTURE) {
+                CastStream<HStreamCapture>(stream)->SendAuxiliaryPhotoControlTagIfDirty();
+            }
+        }
+    }
     MEDIA_INFO_LOG("HStreamOperator::LinkInputAndOutputs execute success");
     return rc;
 }

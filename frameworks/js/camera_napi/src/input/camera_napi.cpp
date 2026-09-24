@@ -127,6 +127,8 @@ napi_value CameraNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("TorchMode", CreateObjectWithMap(env, "TorchMode", mapTorchMode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY(
             "CameraErrorCode", CreateObjectWithMap(env, "CameraErrorCode", mapCameraErrorCode, g_ignoreRef_)),
+        DECLARE_NAPI_PROPERTY("CameraAuxiliaryPhotoType",
+            CreateObjectWithMap(env, "CameraAuxiliaryPhotoType", mapCameraAuxiliaryPhotoType, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CameraInputErrorCode",
             CreateObjectWithMap(env, "CameraInputErrorCode", mapCameraInputErrorCode, g_ignoreRef_)),
         DECLARE_NAPI_PROPERTY("CaptureSessionErrorCode",
