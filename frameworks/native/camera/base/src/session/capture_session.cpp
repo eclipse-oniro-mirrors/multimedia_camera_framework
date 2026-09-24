@@ -6199,7 +6199,7 @@ int32_t CaptureSession::GetColorTintRange(std::vector<int32_t> &colorTintRange)
         colorTintRange.push_back(item.data.i32[1]);
         colorTintRange.push_back(item.data.i32[2]);
         MEDIA_INFO_LOG("CaptureSession::GetColorTintRange: [%{public}d, %{public}d]",
-            colorTintRange[1], colorTintRange[2]);
+            colorTintRange[0], colorTintRange[1]);
     } else {
         MEDIA_ERR_LOG("CaptureSession::GetColorTintRange: invalid metadata item count %{public}d",
             static_cast<int32_t>(item.count));
