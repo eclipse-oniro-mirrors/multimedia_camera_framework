@@ -31,6 +31,12 @@ public:
 
 private:
     void ExecuteOnBufferAvailable();
+    void StartWaitAuxPhotoTask(int32_t captureId, int64_t timestamp, sptr<SurfaceBuffer>& mainBuffer);
+    void AssembleCompressedPhotoWithAux(int64_t timestamp, int32_t captureId);
+    uint32_t GetArrivedAuxPhotoCount(const sptr<HStreamCapture>& streamCapture, int32_t captureId);
+    uint32_t StartAuxPhotoWatchdog(int32_t captureId, int64_t timestamp);
+    bool ArmAuxPhotoConsumerTrigger(const sptr<HStreamCapture>& streamCapture, int32_t captureId,
+        uint32_t pictureHandle, uint32_t expectedCount);
 #ifdef CAMERA_CAPTURE_YUV
     void StartWaitAuxiliaryTask(
         const int32_t captureId, const int32_t auxiliaryCount, int64_t timestamp, sptr<SurfaceBuffer> &surfaceBuffer);

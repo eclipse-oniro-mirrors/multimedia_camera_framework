@@ -909,6 +909,13 @@ int32_t HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled(
         MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled auxPhotoTypes is invalid");
         return CAMERA_INVALID_ARG;
     }
+    std::lock_guard<std::mutex> enableLock{auxPhotoEnableMutex_};
+    if (enabled) {
+        int32_t ret = CheckAuxiliaryPhotoMutex();
+        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
+            "SetAutoAuxiliaryPhotosDeliveryEnabled mutex check failed: %{public}d", ret);
+        CreateAuxiliaryPhotoSurfaces();
+    }
     std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
     // Per-type incremental switch: enable merges the types into the enabled set, disable removes
     // them, so a type enabled or disabled by an earlier call is kept unless it is in this list.
@@ -922,12 +929,6 @@ int32_t HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled(
         }
     }
     bool isChanged = (newTypes != enabledAuxPhotoTypes_);
-    if (enabled) {
-        int32_t ret = CheckAuxiliaryPhotoMutex();
-        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
-            "SetAutoAuxiliaryPhotosDeliveryEnabled mutex check failed: %{public}d", ret);
-        CreateAuxiliaryPhotoSurfaces();
-    }
     enabledAuxPhotoTypes_ = newTypes;
     // The control tag is delivered after CommitStreams on the next config commit (deferred-effective);
     // mark dirty only when there is a non-empty type set to send, an empty set cannot be written as
@@ -951,132 +952,6 @@ bool HStreamCapture::IsAuxPhotoDegraded(int32_t captureId)
     std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
     auto itDegrade = captureIdAuxDegradeMap_.find(captureId);
     return itDegrade != captureIdAuxDegradeMap_.end() && itDegrade->second != 0;
-}
-
-uint32_t HStreamCapture::GetArrivedAuxPhotoCount(int32_t captureId)
-{
-    std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
-    uint32_t arrivedCount = 0;
-    if (captureIdOxygenMap_.count(captureId) > 0) {
-        arrivedCount++;
-    }
-    if (captureIdPigmentationMap_.count(captureId) > 0) {
-        arrivedCount++;
-    }
-    return arrivedCount;
-}
-
-uint32_t HStreamCapture::StartAuxPhotoWatchdog(int32_t captureId, int64_t timestamp)
-{
-    uint32_t pictureHandle = 0;
-    constexpr uint32_t delayMilli = 1 * 1000;
-    wptr<HStreamCapture> thisPtr(this);
-    DeferredProcessing::Watchdog::GetGlobalWatchdog().StartMonitor(
-        pictureHandle, delayMilli, [thisPtr, captureId, timestamp](uint32_t handle) {
-            MEDIA_INFO_LOG("StartWaitAuxPhotoTask Watchdog executed, handle: %{public}d, captureId:%{public}d",
-                static_cast<int>(handle), captureId);
-            auto ptr = thisPtr.promote();
-            CHECK_RETURN(ptr == nullptr);
-            ptr->AssembleCompressedPhotoWithAux(timestamp, captureId);
-        });
-    return pictureHandle;
-}
-
-// Caller must hold g_photoImageMutex.
-bool HStreamCapture::ArmAuxPhotoConsumerTrigger(int32_t captureId, uint32_t pictureHandle,
-    uint32_t expectedCount)
-{
-    captureIdHandleMap_[captureId] = pictureHandle;
-    captureIdCountMap_[captureId] = static_cast<int32_t>(expectedCount);
-    int32_t arrivedCount = captureIdAuxiliaryCountMap_.count(captureId) > 0 ?
-        captureIdAuxiliaryCountMap_[captureId] : 0;
-    // True when all auxiliary buffers arrived while the monitor was being registered.
-    return arrivedCount != -1 && arrivedCount >= static_cast<int32_t>(expectedCount);
-}
-
-void HStreamCapture::StartWaitAuxPhotoTask(int32_t captureId, int64_t timestamp,
-    sptr<SurfaceBuffer>& mainBuffer)
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("StartWaitAuxPhotoTask E, captureId:%{public}d", captureId);
-    uint32_t expectedCount = 0;
-    bool isComplete = false;
-    {
-        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
-        if (captureIdMainPhotoMap_.count(captureId) > 0) {
-            MEDIA_WARNING_LOG("StartWaitAuxPhotoTask captureId:%{public}d already waiting", captureId);
-            return;
-        }
-        captureIdMainPhotoMap_[captureId] = mainBuffer;
-        int32_t imageCount = CameraSurfaceBufferUtil::GetImageCount(mainBuffer);
-        int32_t imageAuxCount = imageCount - 1;
-        expectedCount = imageAuxCount > 0 ? static_cast<uint32_t>(imageAuxCount) : 0;
-        // Auxiliary buffers may have arrived before the main photo, check by map presence.
-        uint32_t arrivedCount = GetArrivedAuxPhotoCount(captureId);
-        isComplete = arrivedCount >= expectedCount;
-        MEDIA_INFO_LOG("StartWaitAuxPhotoTask expect auxiliary photos, captureId:%{public}d, "
-            "imageCount:%{public}d, expectedCount:%{public}u, arrivedCount:%{public}u",
-            captureId, imageCount, expectedCount, arrivedCount);
-    }
-    // Assemble outside the lock: the delivery callback sends an IPC, keep the photo mutex hold
-    // time minimal. The main photo map guard in the assemble makes re-entry a no-op.
-    if (isComplete) {
-        MEDIA_INFO_LOG("StartWaitAuxPhotoTask auxiliary photos complete, captureId:%{public}d", captureId);
-        AssembleCompressedPhotoWithAux(timestamp, captureId);
-        return;
-    }
-    uint32_t pictureHandle = StartAuxPhotoWatchdog(captureId, timestamp);
-    {
-        // Arm the consumer trigger only after the handle is stored, so the consumer equality
-        // path never fires DoTimeout with an unset (zero) handle.
-        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
-        isComplete = ArmAuxPhotoConsumerTrigger(captureId, pictureHandle, expectedCount);
-    }
-    if (isComplete) {
-        DeferredProcessing::Watchdog::GetGlobalWatchdog().StopMonitor(pictureHandle);
-        AssembleCompressedPhotoWithAux(timestamp, captureId);
-        return;
-    }
-    MEDIA_INFO_LOG("StartWaitAuxPhotoTask monitor started, pictureHandle:%{public}u, captureId:%{public}d",
-        pictureHandle, captureId);
-}
-
-void HStreamCapture::AssembleCompressedPhotoWithAux(int64_t timestamp, int32_t captureId)
-{
-    CAMERA_SYNC_TRACE;
-    MEDIA_INFO_LOG("AssembleCompressedPhotoWithAux E, captureId:%{public}d", captureId);
-    sptr<SurfaceBuffer> mainBuffer = nullptr;
-    sptr<SurfaceBuffer> oxygenBuffer = nullptr;
-    sptr<SurfaceBuffer> pigmentationBuffer = nullptr;
-    {
-        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
-        auto itMain = captureIdMainPhotoMap_.find(captureId);
-        if (itMain == captureIdMainPhotoMap_.end()) {
-            MEDIA_WARNING_LOG("AssembleCompressedPhotoWithAux captureId:%{public}d already assembled", captureId);
-            return;
-        }
-        mainBuffer = itMain->second;
-        captureIdMainPhotoMap_.erase(itMain);
-        auto itOxygen = captureIdOxygenMap_.find(captureId);
-        if (itOxygen != captureIdOxygenMap_.end() && itOxygen->second != nullptr) {
-            oxygenBuffer = itOxygen->second;
-        }
-        auto itPigmentation = captureIdPigmentationMap_.find(captureId);
-        if (itPigmentation != captureIdPigmentationMap_.end() && itPigmentation->second != nullptr) {
-            pigmentationBuffer = itPigmentation->second;
-        }
-        // Do not stop the watchdog here: the manual-trigger path (consumer DoTimeout) invokes this
-        // function synchronously with the watchdog mutex held, and a nested StopMonitor would
-        // deadlock on that non-recursive mutex. The callers stop the monitor themselves, and a late
-        // timeout fire is a no-op due to the main photo map guard above.
-        CleanAuxPhotoState(captureId);
-        captureIdHandleMap_.erase(captureId);
-        captureIdAuxiliaryCountMap_.erase(captureId);
-        captureIdCountMap_.erase(captureId);
-    }
-    CHECK_RETURN_ELOG(mainBuffer == nullptr, "AssembleCompressedPhotoWithAux mainBuffer is nullptr");
-    OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer, timestamp, false);
-    MEDIA_INFO_LOG("AssembleCompressedPhotoWithAux X, captureId:%{public}d", captureId);
 }
 
 void HStreamCapture::SendAuxiliaryPhotoControlTagIfDirty()
