@@ -31,6 +31,8 @@ class MockStreamCapturePhotoCallback : public IStreamCapturePhotoCallback {
 public:
     MOCK_METHOD3(OnPhotoAvailable, int32_t(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw));
     MOCK_METHOD1(OnPhotoAvailable, int32_t(std::shared_ptr<PictureIntf> picture));
+    MOCK_METHOD5(OnPhotoAvailable, int32_t(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
+        sptr<SurfaceBuffer> pigmentationBuffer, int64_t timestamp, bool isRaw));
     sptr<IRemoteObject> AsObject() override
     {
         return nullptr;

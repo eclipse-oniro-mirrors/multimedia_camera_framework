@@ -138,6 +138,11 @@ public:
     {
         return 0;
     }
+
+    ErrCode SetAutoAuxiliaryPhotosDeliveryEnabled(const std::vector<int32_t>& auxPhotoTypes, bool enabled) override
+    {
+        return 0;
+    }
 };
 }  // namespace CameraStandard
 }  // namespace OHOS
