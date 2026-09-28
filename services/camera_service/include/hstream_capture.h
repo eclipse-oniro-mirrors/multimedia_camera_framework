@@ -192,11 +192,6 @@ public:
     void FillingAuxiliaryPhotoStreamInfos(StreamInfo_V1_5 &streamInfo, int32_t format);
     bool IsAuxPhotoEnabled();
     bool IsAuxPhotoDegraded(int32_t captureId);
-    uint32_t GetArrivedAuxPhotoCount(int32_t captureId);
-    void StartWaitAuxPhotoTask(int32_t captureId, int64_t timestamp, sptr<SurfaceBuffer>& mainBuffer);
-    uint32_t StartAuxPhotoWatchdog(int32_t captureId, int64_t timestamp);
-    bool ArmAuxPhotoConsumerTrigger(int32_t captureId, uint32_t pictureHandle, uint32_t expectedCount);
-    void AssembleCompressedPhotoWithAux(int64_t timestamp, int32_t captureId);
     void SendAuxiliaryPhotoControlTagIfDirty();
     void CleanAuxPhotoState(int32_t captureId);
     inline void SetIsNeedLhdrGainmap(bool isNeedLhdrGainmap)
@@ -330,6 +325,7 @@ private:
     std::mutex editDataLock_;
     std::unordered_map<int32_t, std::string> captureId2EditData_;
     bool enableOriginImage_ = false;
+    std::mutex auxPhotoEnableMutex_;
     std::vector<int32_t> enabledAuxPhotoTypes_ = {};
     std::atomic<bool> isAuxControlTagDirty_{false};
 };

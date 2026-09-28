@@ -98,7 +98,7 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
 #endif
     if (!isRaw_ && !streamCapture_->isYuvCapture_ && streamCapture_->IsAuxPhotoEnabled() &&
         auxiliaryCount > 1 && !streamCapture_->IsAuxPhotoDegraded(captureId)) {
-        streamCapture_->StartWaitAuxPhotoTask(captureId, timestamp, newSurfaceBuffer);
+        StartWaitAuxPhotoTask(captureId, timestamp, newSurfaceBuffer);
     } else {
         streamCapture->OnPhotoAvailable(newSurfaceBuffer, timestamp, isRaw_);
         // Direct delivery (aux not enabled / degraded capture / imageCount declared none):
@@ -108,6 +108,133 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
         }
     }
     MEDIA_INFO_LOG("P_ExecuteOnBufferAvailable X");
+}
+
+uint32_t PhotoBufferConsumer::GetArrivedAuxPhotoCount(const sptr<HStreamCapture>& streamCapture,
+    int32_t captureId)
+{
+    std::lock_guard<std::recursive_mutex> lock{streamCapture->g_photoImageMutex};
+    uint32_t arrivedCount = 0;
+    if (streamCapture->captureIdOxygenMap_.count(captureId) > 0) {
+        arrivedCount++;
+    }
+    if (streamCapture->captureIdPigmentationMap_.count(captureId) > 0) {
+        arrivedCount++;
+    }
+    return arrivedCount;
+}
+
+uint32_t PhotoBufferConsumer::StartAuxPhotoWatchdog(int32_t captureId, int64_t timestamp)
+{
+    uint32_t pictureHandle = 0;
+    constexpr uint32_t delayMilli = 1 * 1000;
+    wptr<PhotoBufferConsumer> thisPtr(this);
+    DeferredProcessing::Watchdog::GetGlobalWatchdog().StartMonitor(
+        pictureHandle, delayMilli, [thisPtr, captureId, timestamp](uint32_t handle) {
+            MEDIA_INFO_LOG("StartWaitAuxPhotoTask Watchdog executed, handle: %{public}d, captureId:%{public}d",
+                static_cast<int>(handle), captureId);
+            auto ptr = thisPtr.promote();
+            CHECK_RETURN(ptr == nullptr);
+            ptr->AssembleCompressedPhotoWithAux(timestamp, captureId);
+        });
+    return pictureHandle;
+}
+
+// Caller must hold HStreamCapture::g_photoImageMutex.
+bool PhotoBufferConsumer::ArmAuxPhotoConsumerTrigger(const sptr<HStreamCapture>& streamCapture,
+    int32_t captureId, uint32_t pictureHandle, uint32_t expectedCount)
+{
+    streamCapture->captureIdHandleMap_[captureId] = pictureHandle;
+    streamCapture->captureIdCountMap_[captureId] = static_cast<int32_t>(expectedCount);
+    int32_t arrivedCount = streamCapture->captureIdAuxiliaryCountMap_.count(captureId) > 0 ?
+        streamCapture->captureIdAuxiliaryCountMap_[captureId] : 0;
+    // True when all auxiliary buffers arrived while the monitor was being registered.
+    return arrivedCount != -1 && arrivedCount >= static_cast<int32_t>(expectedCount);
+}
+
+void PhotoBufferConsumer::StartWaitAuxPhotoTask(int32_t captureId, int64_t timestamp,
+    sptr<SurfaceBuffer>& mainBuffer)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("StartWaitAuxPhotoTask E, captureId:%{public}d", captureId);
+    sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    uint32_t expectedCount = 0;
+    bool isComplete = false;
+    {
+        std::lock_guard<std::recursive_mutex> lock{streamCapture->g_photoImageMutex};
+        if (streamCapture->captureIdMainPhotoMap_.count(captureId) > 0) {
+            MEDIA_WARNING_LOG("StartWaitAuxPhotoTask captureId:%{public}d already waiting", captureId);
+            return;
+        }
+        streamCapture->captureIdMainPhotoMap_[captureId] = mainBuffer;
+        int32_t imageCount = CameraSurfaceBufferUtil::GetImageCount(mainBuffer);
+        int32_t imageAuxCount = imageCount - 1;
+        expectedCount = imageAuxCount > 0 ? static_cast<uint32_t>(imageAuxCount) : 0;
+        // Auxiliary buffers may have arrived before the main photo, check by map presence.
+        uint32_t arrivedCount = GetArrivedAuxPhotoCount(streamCapture, captureId);
+        isComplete = arrivedCount >= expectedCount;
+        MEDIA_INFO_LOG("StartWaitAuxPhotoTask expect auxiliary photos, captureId:%{public}d, "
+            "imageCount:%{public}d, expectedCount:%{public}u, arrivedCount:%{public}u",
+            captureId, imageCount, expectedCount, arrivedCount);
+    }
+    // Assemble outside the lock: the delivery callback sends an IPC, keep the photo mutex hold
+    // time minimal. The main photo map guard in the assemble makes re-entry a no-op.
+    if (isComplete) {
+        MEDIA_INFO_LOG("StartWaitAuxPhotoTask auxiliary photos complete, captureId:%{public}d", captureId);
+        AssembleCompressedPhotoWithAux(timestamp, captureId);
+        return;
+    }
+    uint32_t pictureHandle = StartAuxPhotoWatchdog(captureId, timestamp);
+    {
+        // Arm the consumer trigger only after the handle is stored, so the consumer equality
+        // path never fires DoTimeout with an unset (zero) handle.
+        std::lock_guard<std::recursive_mutex> lock{streamCapture->g_photoImageMutex};
+        isComplete = ArmAuxPhotoConsumerTrigger(streamCapture, captureId, pictureHandle, expectedCount);
+    }
+    if (isComplete) {
+        DeferredProcessing::Watchdog::GetGlobalWatchdog().StopMonitor(pictureHandle);
+        AssembleCompressedPhotoWithAux(timestamp, captureId);
+        return;
+    }
+    MEDIA_INFO_LOG("StartWaitAuxPhotoTask monitor started, pictureHandle:%{public}u, captureId:%{public}d",
+        pictureHandle, captureId);
+}
+
+void PhotoBufferConsumer::AssembleCompressedPhotoWithAux(int64_t timestamp, int32_t captureId)
+{
+    CAMERA_SYNC_TRACE;
+    MEDIA_INFO_LOG("AssembleCompressedPhotoWithAux E, captureId:%{public}d", captureId);
+    sptr<HStreamCapture> streamCapture = streamCapture_.promote();
+    CHECK_RETURN_ELOG(streamCapture == nullptr, "streamCapture is null");
+    sptr<SurfaceBuffer> mainBuffer = nullptr;
+    sptr<SurfaceBuffer> oxygenBuffer = nullptr;
+    sptr<SurfaceBuffer> pigmentationBuffer = nullptr;
+    {
+        std::lock_guard<std::recursive_mutex> lock{streamCapture->g_photoImageMutex};
+        auto itMain = streamCapture->captureIdMainPhotoMap_.find(captureId);
+        if (itMain == streamCapture->captureIdMainPhotoMap_.end()) {
+            MEDIA_WARNING_LOG("AssembleCompressedPhotoWithAux captureId:%{public}d already assembled", captureId);
+            return;
+        }
+        mainBuffer = itMain->second;
+        streamCapture->captureIdMainPhotoMap_.erase(itMain);
+        auto itOxygen = streamCapture->captureIdOxygenMap_.find(captureId);
+        if (itOxygen != streamCapture->captureIdOxygenMap_.end() && itOxygen->second != nullptr) {
+            oxygenBuffer = itOxygen->second;
+        }
+        auto itPigmentation = streamCapture->captureIdPigmentationMap_.find(captureId);
+        if (itPigmentation != streamCapture->captureIdPigmentationMap_.end() && itPigmentation->second != nullptr) {
+            pigmentationBuffer = itPigmentation->second;
+        }
+        streamCapture->CleanAuxPhotoState(captureId);
+        streamCapture->captureIdHandleMap_.erase(captureId);
+        streamCapture->captureIdAuxiliaryCountMap_.erase(captureId);
+        streamCapture->captureIdCountMap_.erase(captureId);
+    }
+    CHECK_RETURN_ELOG(mainBuffer == nullptr, "AssembleCompressedPhotoWithAux mainBuffer is nullptr");
+    streamCapture->OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer, timestamp, false);
+    MEDIA_INFO_LOG("AssembleCompressedPhotoWithAux X, captureId:%{public}d", captureId);
 }
 
 #ifdef CAMERA_CAPTURE_YUV
