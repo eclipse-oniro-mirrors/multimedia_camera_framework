@@ -33,10 +33,16 @@ public:
     int64_t GetSpecificImplPtr();
     void SetMain(ImageType const& main);
     ImageType GetMain();
+    void SetOxygenPhoto(optional_view<ImageType> oxygenPhoto);
+    optional<ImageType> GetOxygenPhoto();
+    void SetPigmentationPhoto(optional_view<ImageType> pigmentationPhoto);
+    optional<ImageType> GetPigmentationPhoto();
     void ReleaseSync();
 
 private:
     ImageType imageTypeValue_;
+    optional<ImageType> oxygenImageValue_;
+    optional<ImageType> pigmentationImageValue_;
 };
 } // namespace Ani::Camera
 #endif //FRAMEWORKS_TAIHE_INCLUDE_CAPTURE_PHOTO_TAIHE_H

@@ -47,6 +47,38 @@ ImageType CapturePhotoImpl::GetMain()
     return imageTypeValue_;
 }
 
+void CapturePhotoImpl::SetOxygenPhoto(optional_view<ImageType> oxygenPhoto)
+{
+    MEDIA_DEBUG_LOG("CapturePhotoImpl::SetOxygenPhoto is called");
+    if (oxygenPhoto.has_value()) {
+        oxygenImageValue_ = optional<ImageType>(std::in_place, oxygenPhoto.value());
+    } else {
+        oxygenImageValue_ = optional<ImageType>();
+    }
+}
+
+optional<ImageType> CapturePhotoImpl::GetOxygenPhoto()
+{
+    MEDIA_DEBUG_LOG("CapturePhotoImpl::GetOxygenPhoto is called");
+    return oxygenImageValue_;
+}
+
+void CapturePhotoImpl::SetPigmentationPhoto(optional_view<ImageType> pigmentationPhoto)
+{
+    MEDIA_DEBUG_LOG("CapturePhotoImpl::SetPigmentationPhoto is called");
+    if (pigmentationPhoto.has_value()) {
+        pigmentationImageValue_ = optional<ImageType>(std::in_place, pigmentationPhoto.value());
+    } else {
+        pigmentationImageValue_ = optional<ImageType>();
+    }
+}
+
+optional<ImageType> CapturePhotoImpl::GetPigmentationPhoto()
+{
+    MEDIA_DEBUG_LOG("CapturePhotoImpl::GetPigmentationPhoto is called");
+    return pigmentationImageValue_;
+}
+
 void CapturePhotoImpl::ReleaseSync()
 {
     MEDIA_DEBUG_LOG("CapturePhotoImpl::ReleaseSync is called");

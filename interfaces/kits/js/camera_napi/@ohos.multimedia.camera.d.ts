@@ -426,6 +426,26 @@ function getCameraManager(context: Context): CameraManager;
     UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS = 7400110,
 
     /**
+     * Unsupported multiple camera combination.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.1 dynamic&static
+     */
+    UNSUPPORTED_MULTI_CAMERA_COMBINATION = 7400113,
+    
+    /**
+     * Parameter out of range.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.1 dynamic&static
+     */
+    PARAM_OUT_OF_RANGE = 7400115,
+
+    /**
      * Camera service fatal error.
      *
      * @syscap SystemCapability.Multimedia.Camera.Core
@@ -9029,6 +9049,37 @@ function getCameraManager(context: Context): CameraManager;
   }
 
   /**
+   * Enum for camera auxiliary photo type.
+   *
+   * @enum { number }
+   * @syscap SystemCapability.Multimedia.Camera.Core
+   * @stagemodelonly
+   * @atomicservice
+   * @since 26.0.1 dynamic&static
+   */
+  enum CameraAuxiliaryPhotoType {
+    /**
+     * Oxygen photo type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.1 dynamic&static
+     */
+    OXYGEN = 0,
+
+    /**
+     * Pigmentation photo type.
+     *
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.1 dynamic&static
+     */
+    PIGMENTATION = 1
+  }
+
+  /**
    * CapturePhoto object, which supports capturing uncompressed photo, compared to Photo.
    *
    * @typedef CapturePhoto
@@ -9048,6 +9099,28 @@ function getCameraManager(context: Context): CameraManager;
      * @since 23 dynamic&static
      */
     main: ImageType;
+
+    /**
+     * Oxygen photo.
+     *
+     * @type { ?ImageType }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.1 dynamic&static
+     */
+    oxygenPhoto?: ImageType;
+
+    /**
+     * Pigmentation photo.
+     *
+     * @type { ?ImageType }
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.1 dynamic&static
+     */
+    pigmentationPhoto?: ImageType;
 
     /**
      * Release CapturePhoto object.
@@ -9714,6 +9787,35 @@ function getCameraManager(context: Context): CameraManager;
      * @since 13
      */
     enableAutoHighQualityPhoto(enabled: boolean): void;
+
+    /**
+     * Confirm if the automatic auxiliary photo delivery is supported.
+     *
+     * @param { CameraAuxiliaryPhotoType } auxPhotoType - Target auxiliary photo type.
+     * @returns { boolean } TRUE if the automatic auxiliary photo delivery is supported.
+     * @throws { BusinessError } 7400115 - Parameter out of range.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.1 dynamic&static
+     */
+    isAutoAuxiliaryPhotoDeliverySupported(auxPhotoType: CameraAuxiliaryPhotoType): boolean;
+
+    /**
+     * Enable or disable the automatic auxiliary photo delivery.
+     *
+     * @param { Array<CameraAuxiliaryPhotoType> } auxPhotoTypes - Target auxiliary photo types.
+     * @param { boolean } enabled - Target state for the automatic auxiliary photo delivery.
+     * @throws { BusinessError } 7400115 - Parameter out of range.
+     * @throws { BusinessError } 801 - Capability not supported.
+     * @throws { BusinessError } 7400201 - Camera service fatal error.
+     * @syscap SystemCapability.Multimedia.Camera.Core
+     * @stagemodelonly
+     * @atomicservice
+     * @since 26.0.1 dynamic&static
+     */
+    setAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes: Array<CameraAuxiliaryPhotoType>,
+        enabled: boolean): void;
 
     /**
      * Confirm if the auto cloud image enhancement is supported.

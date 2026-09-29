@@ -168,6 +168,8 @@ enum CameraErrorCode : i32 {
   UNRESOLVED_CONFLICTS_WITH_CURRENT_CONFIGURATIONS = 7400110,
   DEVICE_FREQUENTLY_SWITCHED = 7400111,
   CAMERA_LENS_RETRACTED = 7400112,
+  UNSUPPORTED_MULTI_CAMERA_COMBINATION = 7400113,
+  PARAM_OUT_OF_RANGE = 7400115,
   SERVICE_FATAL_ERROR = 7400201
 }
 
@@ -504,6 +506,10 @@ interface CapturePhoto {
   GetSpecificImplPtr(): i64;
   @set SetMain(main: ImageType): void;
   @get GetMain(): ImageType;
+  @set SetOxygenPhoto(oxygenPhoto: Optional<ImageType>): void;
+  @get GetOxygenPhoto(): Optional<ImageType>;
+  @set SetPigmentationPhoto(pigmentationPhoto: Optional<ImageType>): void;
+  @get GetPigmentationPhoto(): Optional<ImageType>;
   @gen_promise("release")
   ReleaseSync(): void;
 }
@@ -2394,6 +2400,12 @@ interface PhotoOutput : CameraOutput {
   SetPhotoQualityPrioritization(qualityPrioritization: PhotoQualityPrioritization): void;
   EnableAutoExtendedGainmapDelivery(enabled: bool): void;
   IsAutoExtendedGainmapDeliverySupported(): bool;
+  IsAutoAuxiliaryPhotoDeliverySupported(auxPhotoType: CameraAuxiliaryPhotoType): bool;
+  SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes: Array<CameraAuxiliaryPhotoType>, enabled: bool): void;
+}
+enum CameraAuxiliaryPhotoType : i32{
+  OXYGEN = 0,
+  PIGMENTATION = 1
 }
 
 enum VideoCodecType : i32{
