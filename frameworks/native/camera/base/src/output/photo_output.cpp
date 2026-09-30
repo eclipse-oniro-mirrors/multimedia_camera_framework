@@ -2079,10 +2079,10 @@ int32_t PhotoOutput::IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoT
         CameraErrorCode::SESSION_NOT_CONFIG,
         "PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported error!, session not configed or not commited");
     auto inputDevice = session->GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG, // LCOV_EXCL_LINE
         "PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported error!, inputDevice is nullptr");
     sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
-    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(cameraObj == nullptr, CameraErrorCode::SESSION_NOT_CONFIG, // LCOV_EXCL_LINE
         "PhotoOutput IsAutoAuxiliaryPhotoDeliverySupported error!, cameraObj is nullptr");
     std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
     CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
@@ -2123,7 +2123,7 @@ int32_t PhotoOutput::SetAutoAuxiliaryPhotosDeliveryEnabled(
         CameraErrorCode::SESSION_NOT_CONFIG,
         "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled error!, session not configed or not commited");
     auto inputDevice = captureSession->GetInputDevice();
-    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SESSION_NOT_CONFIG, // LCOV_EXCL_LINE
         "PhotoOutput SetAutoAuxiliaryPhotosDeliveryEnabled error!, inputDevice is nullptr");
     if (enable) {
         for (auto type : types) {
@@ -2174,14 +2174,14 @@ int32_t PhotoOutput::ReconfigSessionForAuxiliaryPhotos()
 {
     MEDIA_INFO_LOG("PhotoOutput ReconfigSessionForAuxiliaryPhotos is called");
     auto session = GetSession();
-    CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG,
+    CHECK_RETURN_RET_ELOG(session == nullptr, CameraErrorCode::SESSION_NOT_CONFIG, // LCOV_EXCL_LINE
         "ReconfigSessionForAuxiliaryPhotos session is nullptr");
     // Query the state once and branch on the exact value: a combined use of IsSessionCommited()
     // and IsSessionStarted() is racy (two IPC round trips) and their semantics overlap because
     // IsSessionCommited() also returns true for the STARTED state.
     CaptureSessionState state = CaptureSessionState::SESSION_INIT;
     int32_t errCode = session->GetSessionCurrentState(state);
-    CHECK_RETURN_RET_ELOG(errCode != CameraErrorCode::SUCCESS, errCode,
+    CHECK_RETURN_RET_ELOG(errCode != CameraErrorCode::SUCCESS, errCode, // LCOV_EXCL_LINE
         "ReconfigSessionForAuxiliaryPhotos get session state failed");
     bool needRestart = (state == CaptureSessionState::SESSION_STARTED);
     if (!needRestart && state != CaptureSessionState::SESSION_CONFIG_COMMITTED) {

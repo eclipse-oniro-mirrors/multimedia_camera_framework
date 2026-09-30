@@ -33,6 +33,7 @@ group("camera_fuzz_test") {
     "fuzztest/hcameradevice_fuzzer:fuzztest",
     "fuzztest/hcameraservicecallbackstub_fuzzer:fuzztest",
     "fuzztest/hstreamcapture_fuzzer:fuzztest",
+    "fuzztest/hstreamcapturestub_fuzzer:fuzztest",
     "fuzztest/lightscansession_fuzzer:fuzztest",
     "fuzztest/mediamanagerproxy_fuzzer:fuzztest",
     "fuzztest/mooncaptureboostfeature_fuzzer:fuzztest",

@@ -283,7 +283,7 @@ public:
         CHECK_RETURN_ELOG(photoAvailableCallback_ == nullptr, "callback is null");
         CHECK_RETURN_ELOG(mainImage == nullptr, "mainImage is null");
         OH_PhotoNative *photoNative = new (std::nothrow) OH_PhotoNative;
-        CHECK_RETURN_ELOG(photoNative == nullptr, "Create photo native failed");
+        CHECK_RETURN_ELOG(photoNative == nullptr, "Create photo native failed"); // LCOV_EXCL_LINE
         if (!isRaw) {
             photoNative->SetMainImage(mainImage);
         } else {

@@ -299,6 +299,24 @@ void HStreamCaptureStubFuzzTest22(FuzzedDataProvider& fdp)
         static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_CREATE_MEDIA_LIBRARY), data, reply, option);
 }
 
+void HStreamCaptureStubFuzzTest23(FuzzedDataProvider& fdp)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    std::vector<int32_t> auxPhotoTypes;
+    uint32_t typeCount = fdp.ConsumeIntegralInRange<uint32_t>(0, 3); // 3: max fuzz type count
+    for (uint32_t i = 0; i < typeCount; i++) {
+        auxPhotoTypes.push_back(fdp.ConsumeIntegralInRange<int32_t>(-1, 2)); // 2: fuzz type upper bound
+    }
+    data.WriteInterfaceToken(INTERFACE_TOKEN);
+    data.WriteInt32Vector(auxPhotoTypes);
+    data.WriteBool(fdp.ConsumeBool());
+    g_hStreamCaptureStubFuzz->OnRemoteRequestInner(
+        static_cast<uint32_t>(IStreamCaptureIpcCode::COMMAND_SET_AUTO_AUXILIARY_PHOTOS_DELIVERY_ENABLED),
+        data, reply, option);
+}
+
 void Init()
 {
     g_hStreamCaptureStubFuzz = std::make_shared<HStreamCaptureStubFuzz>();
@@ -313,7 +331,8 @@ void Test(FuzzedDataProvider& fdp)
             HStreamCaptureStubFuzzTest11, HStreamCaptureStubFuzzTest12, HStreamCaptureStubFuzzTest13,
             HStreamCaptureStubFuzzTest14, HStreamCaptureStubFuzzTest15, HStreamCaptureStubFuzzTest16,
             HStreamCaptureStubFuzzTest17, HStreamCaptureStubFuzzTest18, HStreamCaptureStubFuzzTest19,
-            HStreamCaptureStubFuzzTest20, HStreamCaptureStubFuzzTest21, HStreamCaptureStubFuzzTest22 });
+            HStreamCaptureStubFuzzTest20, HStreamCaptureStubFuzzTest21, HStreamCaptureStubFuzzTest22,
+            HStreamCaptureStubFuzzTest23 });
     func(fdp);
 }
 

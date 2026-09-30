@@ -791,5 +791,111 @@ HWTEST_F(HStreamOperatorUnitTest, GetSupportRedoXtStyle_002, TestSize.Level0)
     ColorStylePhotoType flag = streamOp_->GetSupportRedoXtStyle();
     EXPECT_EQ(flag, ColorStylePhotoType::UNSET);
 }
+
+class HdiStreamOperatorMockForAux : public OHOS::HDI::Camera::V1_0::IStreamOperator {
+public:
+    HdiStreamOperatorMockForAux() = default;
+    ~HdiStreamOperatorMockForAux() override = default;
+
+    int32_t IsStreamsSupported(OHOS::HDI::Camera::V1_0::OperationMode mode,
+        const std::vector<uint8_t>& modeSetting, const std::vector<OHOS::HDI::Camera::V1_0::StreamInfo>& infos,
+        OHOS::HDI::Camera::V1_0::StreamSupportType& type) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t CreateStreams(const std::vector<OHOS::HDI::Camera::V1_0::StreamInfo>& streamInfos) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t ReleaseStreams(const std::vector<int32_t>& streamIds) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t CommitStreams(OHOS::HDI::Camera::V1_0::OperationMode mode,
+        const std::vector<uint8_t>& modeSetting) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t GetStreamAttributes(std::vector<OHOS::HDI::Camera::V1_0::StreamAttribute>& attributes) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t AttachBufferQueue(int32_t streamId,
+        const sptr<OHOS::HDI::Camera::V1_0::BufferProducerSequenceable>& bufferProducer) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t DetachBufferQueue(int32_t streamId) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t Capture(int32_t captureId, const OHOS::HDI::Camera::V1_0::CaptureInfo& info, bool isStreaming) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t CancelCapture(int32_t captureId) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t ChangeToOfflineStream(const std::vector<int32_t>& streamIds,
+        const sptr<OHOS::HDI::Camera::V1_0::IStreamOperatorCallback>& callbackObj,
+        sptr<OHOS::HDI::Camera::V1_0::IOfflineStreamOperator>& offlineOperator) override
+    {
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    int32_t GetVersion(uint32_t& majorVer, uint32_t& minorVer)
+    {
+        majorVer = 1;
+        minorVer = 0;
+        return HDI::Camera::V1_0::NO_ERROR;
+    }
+
+    bool IsProxy()
+    {
+        return false;
+    }
+
+    const std::u16string GetDesc()
+    {
+        return metaDescriptor_;
+    }
+
+private:
+    std::u16string metaDescriptor_ = u"mock_i_stream_operator_for_aux";
+};
+
+HWTEST_F(HStreamOperatorUnitTest, LinkInputAndOutputs_AuxPhotoControlTag_001, TestSize.Level0)
+{
+    sptr<HStreamCapture> capture = GenStreamCapture(PHOTO_DEFAULT_WIDTH, PHOTO_DEFAULT_HEIGHT);
+    ASSERT_NE(capture, nullptr);
+    ASSERT_EQ(streamOp_->AddOutput(StreamType::CAPTURE, capture), CAMERA_OK);
+
+    sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager, "", callerToken);
+    ASSERT_NE(camDevice, nullptr);
+    camDevice->cachedSettings_ = std::make_shared<OHOS::Camera::CameraMetadata>(8, 64);
+    streamOp_->SetCameraDevice(camDevice);
+    streamOp_->streamOperator_ = new HdiStreamOperatorMockForAux();
+
+    std::vector<int32_t> auxPhotoTypes = {0};
+    ASSERT_EQ(capture->SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, true), CAMERA_OK);
+    EXPECT_TRUE(capture->isAuxControlTagDirty_.load());
+
+    auto settings = std::make_shared<OHOS::Camera::CameraMetadata>(8, 64);
+    ASSERT_NE(settings, nullptr);
+    EXPECT_EQ(streamOp_->LinkInputAndOutputs(settings, 0), CAMERA_OK);
+    EXPECT_FALSE(capture->isAuxControlTagDirty_.load());
+}
 } // namespace CameraStandard
 } // namespace OHOS
