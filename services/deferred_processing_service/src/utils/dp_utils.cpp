@@ -15,6 +15,8 @@
 
 #include "dp_utils.h"
 
+#include <climits>
+#include <cstdlib>
 #include <dirent.h>
 #include <filesystem>
 #include <regex>
@@ -127,15 +129,29 @@ uint64_t GetFolderSize(const std::string& path)
     return totalSize;
 }
 
+constexpr char EL2_SERVICE_BASE[] = "/data/service/el2/";
+constexpr char CAMERA_TEMP_SUBDIR[] = "/hmdfs/account/files/cameraCache/temp/";
+
 bool CheckFilePath(const std::string& path)
 {
+    DP_CHECK_RETURN_RET_LOG(path.empty(), false, "video path is empty.");
+    DP_CHECK_ERROR_RETURN_RET_LOG(path.find(EL2_SERVICE_BASE) != 0, false,
+        "video path is not under allowed base: %{private}s", path.c_str());
     const std::filesystem::path p(path);
-    const auto fileName = p.filename().string();
-    const auto filePath = p.parent_path().string();
-    DP_DEBUG_LOG("CheckFilePath path: %{public}s, fileName:%{public}s", filePath.c_str(), fileName.c_str());
-    DP_CHECK_ERROR_RETURN_RET_LOG(!std::filesystem::exists(filePath), false, "video path invalid.");
-    const std::regex pattern(R"(^[a-zA-Z0-9_-]+_tmp[12]\.mp4$)");
-    return std::regex_match(fileName, pattern);
+    for (const auto& part : p) {
+        if (part == "..") {
+            DP_ERR_LOG("video path contains '..' traversal: %{private}s", path.c_str());
+            return false;
+        }
+    }
+    char resolved[PATH_MAX] = {0};
+    DP_CHECK_ERROR_RETURN_RET_LOG(realpath(path.c_str(), resolved) == nullptr, false,
+        "video path realpath failed: %{private}s", path.c_str());
+    const std::regex pathPattern(std::string("^") + EL2_SERVICE_BASE + "[0-9]+" + CAMERA_TEMP_SUBDIR +
+        "[a-zA-Z0-9_-]+_tmp[12]\\.mp4$");
+    DP_CHECK_ERROR_RETURN_RET_LOG(!std::regex_match(resolved, pathPattern), false,
+        "video path is outside allowed temp dir: %{private}s", resolved);
+    return true;
 }
 } // namespace DeferredProcessing
 } // namespace CameraStandard
