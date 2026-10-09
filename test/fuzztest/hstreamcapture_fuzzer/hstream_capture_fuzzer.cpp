@@ -17,6 +17,7 @@
 #include "camera_log.h"
 #include "message_parcel.h"
 #include "iservice_registry.h"
+#include "system_ability_definition.h"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -41,9 +42,11 @@ const int32_t PHOTO_HEIGHT = 960;
 const int32_t PHOTO_FORMAT = 2000;
 const int32_t ITEMCOUNT = 10;
 const int32_t DATASIZE = 100;
+const uint32_t MAX_AUX_PHOTO_TYPE_COUNT = 3;
 
 static sptr<IBufferProducer> g_producer;
 static sptr<Surface> g_photoSurface;
+static sptr<SurfaceBuffer> g_auxPhotoProxyBuffer;
 
 static HStreamCapture& GetInstance()
 {
@@ -186,6 +189,68 @@ void CreateMediaLibrary(FuzzedDataProvider& fdp)
     GetInstance().CreateMediaLibrary(photoProxy, uri, type, burstKey, timestamp);
 }
 
+void SetAutoAuxiliaryPhotosDeliveryEnabled(FuzzedDataProvider& fdp)
+{
+    std::vector<int32_t> auxPhotoTypes;
+    uint32_t auxPhotoTypeCount = fdp.ConsumeIntegralInRange<uint32_t>(0, MAX_AUX_PHOTO_TYPE_COUNT);
+    for (uint32_t i = 0; i < auxPhotoTypeCount; i++) {
+        auxPhotoTypes.push_back(fdp.ConsumeIntegralInRange<int32_t>(-1, 2));
+    }
+    GetInstance().SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, fdp.ConsumeBool());
+}
+
+void AuxPhotoStateFuzzTest(FuzzedDataProvider& fdp)
+{
+    GetInstance().IsAuxPhotoEnabled();
+    GetInstance().IsAuxPhotoDegraded(fdp.ConsumeIntegral<int32_t>());
+    GetInstance().SendAuxiliaryPhotoControlTagIfDirty();
+    GetInstance().CleanAuxPhotoState(fdp.ConsumeIntegral<int32_t>());
+    StreamInfo_V1_5 streamInfo;
+    GetInstance().SetStreamInfo(streamInfo);
+}
+
+void OnPhotoAvailableWithAuxiliary(FuzzedDataProvider& fdp)
+{
+    sptr<SurfaceBuffer> mainBuffer = fdp.ConsumeBool() ? SurfaceBuffer::Create() : nullptr;
+    sptr<SurfaceBuffer> oxygenBuffer = fdp.ConsumeBool() ? SurfaceBuffer::Create() : nullptr;
+    sptr<SurfaceBuffer> pigmentationBuffer = fdp.ConsumeBool() ? SurfaceBuffer::Create() : nullptr;
+    GetInstance().OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer,
+        fdp.ConsumeIntegral<int64_t>(), fdp.ConsumeBool());
+}
+
+void OnPhotoAvailableWithAuxiliaryStub(FuzzedDataProvider& fdp)
+{
+    auto stub = sptr<MockStreamCapturePhotoCallback>::MakeSptr();
+    CHECK_RETURN(stub == nullptr);
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(stub->GetDescriptor());
+    data.WriteBool(fdp.ConsumeBool());
+    data.WriteBool(fdp.ConsumeBool());
+    data.WriteBool(fdp.ConsumeBool());
+    data.WriteInt64(fdp.ConsumeIntegral<int64_t>());
+    data.WriteBool(fdp.ConsumeBool());
+    stub->OnRemoteRequest(static_cast<uint32_t>(
+        StreamCapturePhotoCallbackInterfaceCode::CAMERA_STREAM_CAPTURE_ON_PHOTO_AVAILABLE_WITH_AUXILIARY),
+        data, reply, option);
+}
+
+void OnPhotoAvailableWithAuxiliaryProxy(FuzzedDataProvider& fdp)
+{
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_RETURN(samgr == nullptr);
+    auto object = samgr->GetSystemAbility(CAMERA_SERVICE_ID);
+    CHECK_RETURN(object == nullptr);
+    auto proxy = iface_cast<IStreamCapturePhotoCallback>(object);
+    CHECK_RETURN(proxy == nullptr);
+    sptr<SurfaceBuffer> mainBuffer = fdp.ConsumeBool() ? g_auxPhotoProxyBuffer : nullptr;
+    sptr<SurfaceBuffer> oxygenBuffer = fdp.ConsumeBool() ? g_auxPhotoProxyBuffer : nullptr;
+    sptr<SurfaceBuffer> pigmentationBuffer = fdp.ConsumeBool() ? g_auxPhotoProxyBuffer : nullptr;
+    proxy->OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer,
+        fdp.ConsumeIntegral<int64_t>(), fdp.ConsumeBool());
+}
+
 void StreamCaptureFuzzTest1(FuzzedDataProvider& fdp)
 {
     int32_t captureId = fdp.ConsumeIntegral<int32_t>();
@@ -270,6 +335,20 @@ void Init()
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
     g_photoSurface = Surface::CreateSurfaceAsConsumer("g_hStreamCapture");
     g_producer = g_photoSurface->GetProducer();
+    sptr<SurfaceBuffer> auxPhotoBuffer = SurfaceBuffer::Create();
+    if (auxPhotoBuffer != nullptr) {
+        BufferRequestConfig config = {
+            .width = 64,
+            .height = 64,
+            .strideAlignment = 0x8,
+            .format = GRAPHIC_PIXEL_FMT_RGBA_8888,
+            .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
+            .timeout = 0,
+        };
+        if (auxPhotoBuffer->Alloc(config) == GSERROR_OK) {
+            g_auxPhotoProxyBuffer = auxPhotoBuffer;
+        }
+    }
     sptr<HDI::Camera::V1_0::IStreamOperator> streamOperator;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
         std::make_shared<OHOS::Camera::CameraMetadata>(ITEMCOUNT, DATASIZE);
@@ -304,6 +383,11 @@ void Test(FuzzedDataProvider& fdp)
         UnSetPhotoAssetAvailableCallback,
         UnSetThumbnailCallback,
         CreateMediaLibrary,
+        SetAutoAuxiliaryPhotosDeliveryEnabled,
+        AuxPhotoStateFuzzTest,
+        OnPhotoAvailableWithAuxiliary,
+        OnPhotoAvailableWithAuxiliaryStub,
+        OnPhotoAvailableWithAuxiliaryProxy,
     });
     func(fdp);
 }

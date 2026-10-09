@@ -1804,5 +1804,162 @@ HWTEST_F(CameraPhotoOutputUnitTest, camera_photo_output_unittest_044, TestSize.L
     EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
     ReleaseImageReceiver();
 }
+
+HWTEST_F(CameraPhotoOutputUnitTest, IsAutoAuxiliaryPhotoDeliverySupported_001, TestSize.Level0)
+{
+    bool isSupported = true;
+    EXPECT_EQ(OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(nullptr,
+        OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN, &isSupported), CAMERA_INVALID_ARGUMENT);
+
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    isSupported = true;
+    ret = OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(photoOutput,
+        OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_FALSE(isSupported);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+
+    EXPECT_EQ(OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(photoOutput,
+        OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN, nullptr), CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(photoOutput,
+        static_cast<OH_Camera_AuxiliaryPhotoType>(-1), &isSupported), CAMERA_ERROR_PARAM_OUT_OF_RANGE);
+    EXPECT_EQ(OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(photoOutput,
+        static_cast<OH_Camera_AuxiliaryPhotoType>(2), &isSupported), CAMERA_ERROR_PARAM_OUT_OF_RANGE);
+    isSupported = true;
+    ret = OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(photoOutput,
+        OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN, &isSupported);
+    EXPECT_EQ(ret, CAMERA_OK);
+
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+HWTEST_F(CameraPhotoOutputUnitTest, SetAutoAuxiliaryPhotosDeliveryEnabled_001, TestSize.Level0)
+{
+    Camera_CaptureSession* captureSession = nullptr;
+    Camera_ErrorCode ret = OH_CameraManager_CreateCaptureSession(cameraManager, &captureSession);
+    EXPECT_EQ(ret, CAMERA_OK);
+    ASSERT_NE(captureSession, nullptr);
+    ret = OH_CaptureSession_SetSessionMode(captureSession, NORMAL_PHOTO);
+    EXPECT_EQ(ret, CAMERA_OK);
+    Camera_Input *cameraInput = nullptr;
+    ret = OH_CameraManager_CreateCameraInput(cameraManager, cameraDevice, &cameraInput);
+    ASSERT_NE(cameraInput, nullptr);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(CameraNdkCommon::DisMdmOpenCheck(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Open(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_BeginConfig(captureSession), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_AddInput(captureSession, cameraInput), CAMERA_OK);
+    Camera_PhotoOutput *photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    ret = OH_CaptureSession_AddPhotoOutput(captureSession, photoOutput);
+    EXPECT_EQ(ret, CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_CommitConfig(captureSession), CAMERA_OK);
+
+    const OH_Camera_AuxiliaryPhotoType validTypes[] = {OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN,
+        OH_CAMERA_AUXILIARY_PHOTO_TYPE_PIGMENTATION};
+    const OH_Camera_AuxiliaryPhotoType duplicatedTypes[] = {OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN,
+        OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN};
+    const OH_Camera_AuxiliaryPhotoType invalidTypes[] = {OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN,
+        static_cast<OH_Camera_AuxiliaryPhotoType>(-1)};
+    const OH_Camera_AuxiliaryPhotoType oversizeTypes[] = {OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN,
+        OH_CAMERA_AUXILIARY_PHOTO_TYPE_PIGMENTATION, OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN};
+
+    EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(nullptr, validTypes, 1, true),
+        CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, nullptr, 1, true),
+        CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, validTypes, 0, true),
+        CAMERA_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, oversizeTypes, 3, true),
+        CAMERA_ERROR_PARAM_OUT_OF_RANGE);
+    EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, duplicatedTypes, 2, true),
+        CAMERA_ERROR_PARAM_OUT_OF_RANGE);
+    EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, invalidTypes, 2, true),
+        CAMERA_ERROR_PARAM_OUT_OF_RANGE);
+
+    bool isSupported = false;
+    ret = OH_PhotoOutput_IsAutoAuxiliaryPhotoDeliverySupported(photoOutput,
+        OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN, &isSupported);
+    if (isSupported) {
+        EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, validTypes, 2, true),
+            CAMERA_OK);
+        EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, validTypes, 2, false),
+            CAMERA_OK);
+    } else {
+        EXPECT_EQ(ret, CAMERA_OK);
+        EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, validTypes, 2, true),
+            CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED);
+        EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, validTypes, 2, false),
+            CAMERA_OK);
+    }
+
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+    EXPECT_EQ(OH_CameraInput_Release(cameraInput), CAMERA_OK);
+    EXPECT_EQ(OH_CaptureSession_Release(captureSession), CAMERA_OK);
+}
+
+namespace {
+bool g_auxPhotoCallbackCalled = false;
+bool g_auxPhotoCallbackHasOxygen = false;
+bool g_auxPhotoCallbackHasPigmentation = false;
+}
+
+HWTEST_F(CameraPhotoOutputUnitTest, InnerPhotoOutputCallback_OnPhotoAvailableWithAuxiliary_001, TestSize.Level0)
+{
+    Camera_PhotoOutput* photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    InnerPhotoOutputCallback callback(photoOutput);
+    auto mainImage = std::make_shared<OHOS::Media::NativeImage>(nullptr, nullptr);
+    ASSERT_NE(mainImage, nullptr);
+    auto oxygenImage = std::make_shared<OHOS::Media::NativeImage>(nullptr, nullptr);
+    ASSERT_NE(oxygenImage, nullptr);
+    auto pigmentationImage = std::make_shared<OHOS::Media::NativeImage>(nullptr, nullptr);
+    ASSERT_NE(pigmentationImage, nullptr);
+
+    callback.OnPhotoAvailable(mainImage, oxygenImage, pigmentationImage, false);
+    EXPECT_FALSE(g_auxPhotoCallbackCalled);
+
+    OH_PhotoOutput_PhotoAvailable photoCallback = [](Camera_PhotoOutput* photoOutput, OH_PhotoNative* photo) {
+        g_auxPhotoCallbackCalled = true;
+        OH_ImageNative* image = nullptr;
+        g_auxPhotoCallbackHasOxygen = (OH_PhotoNative_GetAuxiliaryImage(photo,
+            OH_CAMERA_AUXILIARY_PHOTO_TYPE_OXYGEN, &image) == CAMERA_OK);
+        g_auxPhotoCallbackHasPigmentation = (OH_PhotoNative_GetAuxiliaryImage(photo,
+            OH_CAMERA_AUXILIARY_PHOTO_TYPE_PIGMENTATION, &image) == CAMERA_OK);
+    };
+    callback.SavePhotoAvailableCallback(photoCallback);
+
+    callback.OnPhotoAvailable(nullptr, oxygenImage, pigmentationImage, false);
+    EXPECT_FALSE(g_auxPhotoCallbackCalled);
+
+    callback.OnPhotoAvailable(mainImage, nullptr, nullptr, false);
+    EXPECT_TRUE(g_auxPhotoCallbackCalled);
+    EXPECT_FALSE(g_auxPhotoCallbackHasOxygen);
+    EXPECT_FALSE(g_auxPhotoCallbackHasPigmentation);
+
+    callback.OnPhotoAvailable(mainImage, oxygenImage, pigmentationImage, true);
+    EXPECT_TRUE(g_auxPhotoCallbackHasOxygen);
+    EXPECT_TRUE(g_auxPhotoCallbackHasPigmentation);
+    EXPECT_EQ(OH_PhotoOutput_Release(photoOutput), CAMERA_OK);
+}
 } // CameraStandard
 } // OHOS

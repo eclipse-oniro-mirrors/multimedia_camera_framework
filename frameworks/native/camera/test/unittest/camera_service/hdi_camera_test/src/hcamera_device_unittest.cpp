@@ -2038,5 +2038,28 @@ HWTEST_F(HCameraDeviceUnit, hcamera_device_unittest_075, TestSize.Level0)
     camDevice->UnsetSpectrumCallback();
     EXPECT_EQ(camDevice->GetSpectrumCallback(), nullptr);
 }
+
+HWTEST_F(HCameraDeviceUnit, ReadCachedSettings_001, TestSize.Level0)
+{
+    uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
+    sptr<HCameraDevice> camDevice = new (std::nothrow) HCameraDevice(cameraHostManager_, "", callerToken);
+    ASSERT_NE(camDevice, nullptr);
+
+    camDevice->ReadCachedSettings(nullptr);
+
+    bool isReaderCalled = false;
+    auto reader = [&isReaderCalled](const std::shared_ptr<OHOS::Camera::CameraMetadata>& settings) {
+        isReaderCalled = true;
+    };
+    camDevice->ReadCachedSettings(reader);
+    EXPECT_FALSE(isReaderCalled);
+
+    auto settings = std::make_shared<OHOS::Camera::CameraMetadata>(8, 64);
+    ASSERT_NE(settings, nullptr);
+    camDevice->cachedSettings_ = settings;
+    camDevice->ReadCachedSettings(reader);
+    EXPECT_TRUE(isReaderCalled);
+    camDevice->cachedSettings_ = nullptr;
+}
 }
 }

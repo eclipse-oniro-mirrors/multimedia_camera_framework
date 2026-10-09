@@ -36,6 +36,9 @@
 #include "os_account_manager.h"
 #include "picture_proxy.h"
 #include "test_token.h"
+#include "photo_output_callback.h"
+#include "ability/camera_ability_parse_util.h"
+#include "v1_7/types.h"
 
 using namespace testing::ext;
 using ::testing::A;
@@ -2353,6 +2356,376 @@ HWTEST_F(CameraPhotoOutputUnit, photo_output_unittest_049, TestSize.Level0)
     EXPECT_EQ(settings->GetCompressionQuality(), 85);
     settings->SetCompressionQuality(50);
     EXPECT_EQ(settings->GetCompressionQuality(), 50);
+}
+
+namespace {
+class TestAuxPhotoAvailableCallback : public PhotoAvailableCallback {
+public:
+    void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const override {}
+
+    void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override {}
+
+    void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> mainImage,
+        const std::shared_ptr<Media::NativeImage> oxygenImage,
+        const std::shared_ptr<Media::NativeImage> pigmentationImage, bool isRaw) const override
+    {
+        auxCalled = true;
+        hasOxygen = oxygenImage != nullptr;
+        hasPigmentation = pigmentationImage != nullptr;
+    }
+
+    mutable bool auxCalled = false;
+    mutable bool hasOxygen = false;
+    mutable bool hasPigmentation = false;
+};
+
+sptr<SurfaceBuffer> CreateAllocatedSurfaceBufferForAuxTest()
+{
+    sptr<SurfaceBuffer> buffer = SurfaceBuffer::Create();
+    if (buffer == nullptr) {
+        return nullptr;
+    }
+    BufferRequestConfig config = {
+        .width = 64,
+        .height = 64,
+        .strideAlignment = 0x8,
+        .format = GRAPHIC_PIXEL_FMT_RGBA_8888,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
+        .timeout = 0,
+    };
+    if (buffer->Alloc(config) != GSERROR_OK) {
+        return nullptr;
+    }
+    return buffer;
+}
+}
+
+HWTEST_F(CameraPhotoOutputUnit, PhotoOutputCallbackImpl_OnPhotoAvailableWithAuxiliary_001, TestSize.Level0)
+{
+    std::shared_ptr<HStreamCapturePhotoCallbackImpl> nullCallback =
+        std::make_shared<HStreamCapturePhotoCallbackImpl>(nullptr);
+    sptr<SurfaceBuffer> buffer = CreateAllocatedSurfaceBufferForAuxTest();
+    ASSERT_NE(buffer, nullptr);
+    EXPECT_EQ(nullCallback->OnPhotoAvailable(buffer, nullptr, nullptr, 0, false), CAMERA_OK);
+
+    sptr<PhotoOutput> photoOutput = new PhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    std::shared_ptr<HStreamCapturePhotoCallbackImpl> svcCallback =
+        std::make_shared<HStreamCapturePhotoCallbackImpl>(photoOutput.GetRefPtr());
+    EXPECT_EQ(svcCallback->OnPhotoAvailable(buffer, nullptr, nullptr, 0, false), CAMERA_OK);
+
+    auto appCallback = std::make_shared<TestAuxPhotoAvailableCallback>();
+    photoOutput->appPhotoCallback_ = appCallback;
+    EXPECT_EQ(svcCallback->OnPhotoAvailable(nullptr, buffer, buffer, 0, false), CAMERA_OK);
+    EXPECT_FALSE(appCallback->auxCalled);
+    EXPECT_EQ(svcCallback->OnPhotoAvailable(buffer, nullptr, nullptr, 100, false), CAMERA_OK);
+    EXPECT_TRUE(appCallback->auxCalled);
+    EXPECT_FALSE(appCallback->hasOxygen);
+    EXPECT_FALSE(appCallback->hasPigmentation);
+    EXPECT_EQ(svcCallback->OnPhotoAvailable(buffer, buffer, buffer, 100, true), CAMERA_OK);
+    EXPECT_TRUE(appCallback->hasOxygen);
+    EXPECT_TRUE(appCallback->hasPigmentation);
+}
+
+HWTEST_F(CameraPhotoOutputUnit, IsAutoAuxiliaryPhotoDeliverySupported_001, TestSize.Level0)
+{
+    sptr<PhotoOutput> phtOutput = new PhotoOutput();
+    ASSERT_NE(phtOutput, nullptr);
+    bool isSupported = true;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::PIGMENTATION, isSupported),
+        CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+HWTEST_F(CameraPhotoOutputUnit, SetAutoAuxiliaryPhotosDeliveryEnabled_001, TestSize.Level0)
+{
+    sptr<PhotoOutput> phtOutput = new PhotoOutput();
+    ASSERT_NE(phtOutput, nullptr);
+    std::vector<CameraAuxiliaryPhotoType> types = {CameraAuxiliaryPhotoType::OXYGEN,
+        CameraAuxiliaryPhotoType::PIGMENTATION};
+    EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, true),
+        CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, false),
+        CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+HWTEST_F(CameraPhotoOutputUnit, IsAutoAuxiliaryPhotoDeliverySupported_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(GetCameraErrorCode(session->AddOutput(photoOutput)), CameraErrorCode::SERVICE_FATL_ERROR);
+    bool isSupported = true;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SESSION_NOT_CONFIG);
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::PIGMENTATION, isSupported),
+        CameraErrorCode::SESSION_NOT_CONFIG);
+}
+
+HWTEST_F(CameraPhotoOutputUnit, IsAutoAuxiliaryPhotoDeliverySupported_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    CaptureSessionState sessionState = CaptureSessionState::SESSION_INIT;
+    EXPECT_EQ(session->GetSessionCurrentState(sessionState), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(sessionState, CaptureSessionState::SESSION_CONFIG_COMMITTED);
+
+    bool isSupported = true;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SUCCESS);
+    EXPECT_FALSE(isSupported);
+    input->Close();
+    session->Release();
+    input->Release();
+}
+
+HWTEST_F(CameraPhotoOutputUnit, IsAutoAuxiliaryPhotoDeliverySupported_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetCachedMetadata();
+    ASSERT_NE(metadata, nullptr);
+    int32_t currentMode = session->GetMode();
+    int32_t abilityData[] = {currentMode, static_cast<int32_t>(CameraAuxiliaryPhotoType::OXYGEN),
+        static_cast<int32_t>(CameraAuxiliaryPhotoType::PIGMENTATION), MODE_END};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AUTO_AUXILIARY_PHOTOS_DELIVERY,
+        abilityData, sizeof(abilityData) / sizeof(abilityData[0])));
+    int32_t extendedStreamTypes[] = {static_cast<int32_t>(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_OXYGEN_PHOTO),
+        static_cast<int32_t>(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_PIGMENTATION_PHOTO)};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AVAILABLE_EXTENDED_STREAM_INFO_TYPES,
+        extendedStreamTypes, sizeof(extendedStreamTypes) / sizeof(extendedStreamTypes[0])));
+
+    bool isSupported = false;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SUCCESS);
+    EXPECT_TRUE(isSupported);
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::PIGMENTATION, isSupported),
+        CameraErrorCode::SUCCESS);
+    EXPECT_TRUE(isSupported);
+
+    int32_t abilityDataNoMatch[] = {currentMode, static_cast<int32_t>(CameraAuxiliaryPhotoType::PIGMENTATION),
+        MODE_END};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AUTO_AUXILIARY_PHOTOS_DELIVERY,
+        abilityDataNoMatch, sizeof(abilityDataNoMatch) / sizeof(abilityDataNoMatch[0])));
+    isSupported = true;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SUCCESS);
+    EXPECT_FALSE(isSupported);
+
+    int32_t abilityDataOtherMode[] = {currentMode + 1, static_cast<int32_t>(CameraAuxiliaryPhotoType::OXYGEN),
+        MODE_END};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AUTO_AUXILIARY_PHOTOS_DELIVERY,
+        abilityDataOtherMode, sizeof(abilityDataOtherMode) / sizeof(abilityDataOtherMode[0])));
+    isSupported = true;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SUCCESS);
+    EXPECT_FALSE(isSupported);
+
+    int32_t abilityDataMultiGroup[] = {currentMode + 1, static_cast<int32_t>(CameraAuxiliaryPhotoType::PIGMENTATION),
+        MODE_END, currentMode, static_cast<int32_t>(CameraAuxiliaryPhotoType::OXYGEN)};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AUTO_AUXILIARY_PHOTOS_DELIVERY,
+        abilityDataMultiGroup, sizeof(abilityDataMultiGroup) / sizeof(abilityDataMultiGroup[0])));
+    isSupported = false;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SUCCESS);
+    EXPECT_TRUE(isSupported);
+
+    EXPECT_EQ(OHOS::Camera::DeleteCameraMetadataItem(metadata->get(),
+        OHOS_ABILITY_AVAILABLE_EXTENDED_STREAM_INFO_TYPES), CAM_META_SUCCESS);
+    isSupported = true;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SUCCESS);
+    EXPECT_FALSE(isSupported);
+
+    input->Close();
+    session->Release();
+    input->Release();
+}
+
+HWTEST_F(CameraPhotoOutputUnit, SetAutoAuxiliaryPhotosDeliveryEnabled_002, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    std::vector<CameraAuxiliaryPhotoType> types = {CameraAuxiliaryPhotoType::OXYGEN};
+    bool isSupported = false;
+    int32_t ret = phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported);
+    if (isSupported) {
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, true), CameraErrorCode::SUCCESS);
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, false), CameraErrorCode::SUCCESS);
+    } else {
+        EXPECT_EQ(ret, CameraErrorCode::SUCCESS);
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, true),
+            InnerErrorCode::CAPABILITY_NOT_SUPPORTED);
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, false), CameraErrorCode::SUCCESS);
+    }
+    input->Close();
+    session->Release();
+    input->Release();
+}
+
+HWTEST_F(CameraPhotoOutputUnit, SetAutoAuxiliaryPhotosDeliveryEnabled_003, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetCachedMetadata();
+    ASSERT_NE(metadata, nullptr);
+    int32_t currentMode = session->GetMode();
+    int32_t abilityData[] = {currentMode, static_cast<int32_t>(CameraAuxiliaryPhotoType::OXYGEN),
+        static_cast<int32_t>(CameraAuxiliaryPhotoType::PIGMENTATION), MODE_END};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AUTO_AUXILIARY_PHOTOS_DELIVERY,
+        abilityData, sizeof(abilityData) / sizeof(abilityData[0])));
+    int32_t extendedStreamTypes[] = {static_cast<int32_t>(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_OXYGEN_PHOTO),
+        static_cast<int32_t>(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_PIGMENTATION_PHOTO)};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AVAILABLE_EXTENDED_STREAM_INFO_TYPES,
+        extendedStreamTypes, sizeof(extendedStreamTypes) / sizeof(extendedStreamTypes[0])));
+    EXPECT_EQ(session->CommitConfig(), 0);
+    EXPECT_EQ(session->Start(), 0);
+
+    bool isSupported = false;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SUCCESS);
+    if (isSupported) {
+        std::vector<CameraAuxiliaryPhotoType> types = {CameraAuxiliaryPhotoType::OXYGEN,
+            CameraAuxiliaryPhotoType::PIGMENTATION};
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, true), CameraErrorCode::SUCCESS);
+        EXPECT_EQ(session->IsSessionStarted(), true);
+        std::vector<CameraAuxiliaryPhotoType> oxygenTypes = {CameraAuxiliaryPhotoType::OXYGEN};
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(oxygenTypes, true), CameraErrorCode::SUCCESS);
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(oxygenTypes, false), CameraErrorCode::SUCCESS);
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, false), CameraErrorCode::SUCCESS);
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(oxygenTypes, false), CameraErrorCode::SUCCESS);
+    }
+    session->Stop();
+    session->Release();
+    input->Close();
+    input->Release();
+}
+
+HWTEST_F(CameraPhotoOutputUnit, SetAutoAuxiliaryPhotosDeliveryEnabled_004, TestSize.Level0)
+{
+    std::vector<sptr<CameraDevice>> cameras = cameraManager_->GetCameraDeviceListFromServer();
+    ASSERT_FALSE(cameras.empty());
+    sptr<CaptureInput> input = cameraManager_->CreateCameraInput(cameras[0]);
+    ASSERT_NE(input, nullptr);
+    sptr<CameraInput> camInput = (sptr<CameraInput>&)input;
+    if (camInput->GetCameraDevice()) {
+        camInput->GetCameraDevice()->SetMdmCheck(false);
+        camInput->GetCameraDevice()->Open();
+    }
+    sptr<CaptureOutput> photoOutput = CreatePhotoOutput();
+    ASSERT_NE(photoOutput, nullptr);
+    sptr<PhotoOutput> phtOutput = (sptr<PhotoOutput>&)photoOutput;
+    sptr<CaptureSession> session = cameraManager_->CreateCaptureSession();
+    ASSERT_NE(session, nullptr);
+    EXPECT_EQ(session->BeginConfig(), 0);
+    EXPECT_EQ(session->AddInput(input), 0);
+    EXPECT_EQ(session->AddOutput(photoOutput), 0);
+
+    std::shared_ptr<OHOS::Camera::CameraMetadata> metadata =
+        session->GetInputDevice()->GetCameraDeviceInfo()->GetCachedMetadata();
+    ASSERT_NE(metadata, nullptr);
+    int32_t currentMode = session->GetMode();
+    int32_t abilityData[] = {currentMode, static_cast<int32_t>(CameraAuxiliaryPhotoType::OXYGEN),
+        static_cast<int32_t>(CameraAuxiliaryPhotoType::PIGMENTATION), MODE_END};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AUTO_AUXILIARY_PHOTOS_DELIVERY,
+        abilityData, sizeof(abilityData) / sizeof(abilityData[0])));
+    int32_t extendedStreamTypes[] = {static_cast<int32_t>(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_OXYGEN_PHOTO),
+        static_cast<int32_t>(HDI::Camera::V1_7::EXTENDED_STREAM_INFO_PIGMENTATION_PHOTO)};
+    ASSERT_TRUE(AddOrUpdateMetadata(metadata, OHOS_ABILITY_AVAILABLE_EXTENDED_STREAM_INFO_TYPES,
+        extendedStreamTypes, sizeof(extendedStreamTypes) / sizeof(extendedStreamTypes[0])));
+
+    CaptureSessionState sessionState = CaptureSessionState::SESSION_INIT;
+    EXPECT_EQ(session->GetSessionCurrentState(sessionState), CameraErrorCode::SUCCESS);
+    EXPECT_EQ(sessionState, CaptureSessionState::SESSION_CONFIG_INPROGRESS);
+    EXPECT_EQ(session->CommitConfig(), 0);
+
+    bool isSupported = false;
+    EXPECT_EQ(phtOutput->IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType::OXYGEN, isSupported),
+        CameraErrorCode::SUCCESS);
+    if (isSupported) {
+        EXPECT_EQ(session->BeginConfig(), 0);
+        EXPECT_EQ(session->GetSessionCurrentState(sessionState), CameraErrorCode::SUCCESS);
+        EXPECT_EQ(sessionState, CaptureSessionState::SESSION_CONFIG_INPROGRESS);
+        std::vector<CameraAuxiliaryPhotoType> types = {CameraAuxiliaryPhotoType::OXYGEN};
+        EXPECT_EQ(phtOutput->SetAutoAuxiliaryPhotosDeliveryEnabled(types, true), CameraErrorCode::SUCCESS);
+    }
+    input->Close();
+    session->Release();
+    input->Release();
 }
 } // namespace CameraStandard
 } // namespace OHOS

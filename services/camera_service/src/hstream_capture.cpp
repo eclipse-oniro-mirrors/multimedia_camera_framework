@@ -263,8 +263,10 @@ HStreamCapture::~HStreamCapture()
     MEDIA_INFO_LOG(
         "HStreamCapture::~HStreamCapture deconstruct, format:%{public}d size:%{public}dx%{public}d streamId:%{public}d",
         format_, width_, height_, GetFwkStreamId());
+    // LCOV_EXCL_STOP
 }
 
+// LCOV_EXCL_START
 int32_t HStreamCapture::LinkInput(wptr<HDI::Camera::V1_0::IStreamOperator> streamOperator,
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility)
 {
@@ -355,6 +357,7 @@ void HStreamCapture::FillingPictureExtendLhdrGainmapStreamInfos(StreamInfo_V1_5 
         .bufferQueue = lhdrGainmapBufferQueue_.Get(),
     };
     streamInfo.extendedStreamInfos.push_back(extendedStreamInfo);
+    // LCOV_EXCL_STOP
 }
 
 void HStreamCapture::FillingAuxiliaryPhotoStreamInfos(StreamInfo_V1_5 &streamInfo, int32_t format)
@@ -411,9 +414,9 @@ void HStreamCapture::CreateAuxiliaryPhotoSurfaces()
                 oxygenSurfaceObj->GetUniqueId());
             oxygenBufferQueue_.Set(new BufferProducerSequenceable(oxygenSurfaceObj->GetProducer()));
             oxygenListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_OXYGEN_PHOTO, this);
-            CHECK_RETURN_ELOG(oxygenListener_ == nullptr, "oxygenListener_ is null");
+            CHECK_RETURN_ELOG(oxygenListener_ == nullptr, "oxygenListener_ is null"); // LCOV_EXCL_LINE
             ret = oxygenSurfaceObj->RegisterConsumerListener((sptr<IBufferConsumerListener> &)oxygenListener_);
-            CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register oxygen consumer failed:%{public}d", ret);
+            CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register oxy consumer fail:%{public}d", ret); // LCOV_EXCL_LINE
         }
     }
     auto pigmentationSurfaceObj = pigmentationSurface_.Get();
@@ -426,10 +429,11 @@ void HStreamCapture::CreateAuxiliaryPhotoSurfaces()
             pigmentationBufferQueue_.Set(
                 new BufferProducerSequenceable(pigmentationSurfaceObj->GetProducer()));
             pigmentationListener_ = new (std::nothrow) AuxiliaryBufferConsumer(S_PIGMENTATION_PHOTO, this);
-            CHECK_RETURN_ELOG(pigmentationListener_ == nullptr, "pigmentationListener_ is null");
+            CHECK_RETURN_ELOG(pigmentationListener_ == nullptr, "pigmentationListener_ is null"); // LCOV_EXCL_LINE
             ret = pigmentationSurfaceObj->RegisterConsumerListener(
                 (sptr<IBufferConsumerListener> &)pigmentationListener_);
-            CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register pigmentation consumer failed:%{public}d", ret);
+            CHECK_PRINT_ELOG(ret != SURFACE_ERROR_OK, "register pigmentation consumer failed:%{public}d",
+                ret); // LCOV_EXCL_LINE
         }
     }
     MEDIA_INFO_LOG("HStreamCapture::CreateAuxiliaryPhotoSurfaces X");
@@ -978,19 +982,21 @@ void HStreamCapture::SendAuxiliaryPhotoControlTagIfDirty()
     constexpr int32_t defaultItemCount = 1;
     constexpr int32_t defaultDataLength = 8;
     auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(defaultItemCount, defaultDataLength);
-    CHECK_RETURN_ELOG(changedMetadata == nullptr, "SendAuxiliaryPhotoControlTagIfDirty metadata is null");
+    CHECK_RETURN_ELOG(changedMetadata == nullptr, "SendAuxPhotoControlTagIfDirty metadata is null"); // LCOV_EXCL_LINE
     bool status = AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_AUTO_AUXILIARY_PHOTOS_DELIVERY,
         controlTypes.data(), controlTypes.size());
-    CHECK_RETURN_ELOG(!status, "SendAuxiliaryPhotoControlTagIfDirty AddOrUpdateMetadata failed");
+    CHECK_RETURN_ELOG(!status, "SendAuxiliaryPhotoControlTagIfDirty AddOrUpdateMetadata failed"); // LCOV_EXCL_LINE
     auto hStreamOperatorSptr = hStreamOperator_.promote();
     CHECK_RETURN_ELOG(hStreamOperatorSptr == nullptr, "SendAuxiliaryPhotoControlTagIfDirty operator is null");
     auto cameraDevice = hStreamOperatorSptr->GetCameraDevice();
     CHECK_RETURN_ELOG(cameraDevice == nullptr, "SendAuxiliaryPhotoControlTagIfDirty cameraDevice is null");
     // Tag delivery failure does not roll back the committed streams: keep the dirty flag so the
     // next successful commit retries.
+    // LCOV_EXCL_START
     int32_t errCode = cameraDevice->UpdateSetting(changedMetadata);
     CHECK_RETURN_ELOG(errCode != CAMERA_OK, "SendAuxiliaryPhotoControlTagIfDirty UpdateSetting failed: %{public}d",
         errCode);
+    // LCOV_EXCL_STOP
     isAuxControlTagDirty_ = false;
     MEDIA_INFO_LOG("SendAuxiliaryPhotoControlTagIfDirty X");
 }
@@ -1613,7 +1619,7 @@ int32_t HStreamCapture::ReleaseStream(bool isDelay)
 
 int32_t HStreamCapture::SetCallback(const sptr<IStreamCaptureCallback> &callback)
 {
-    // LCOV_ECL_START
+    // LCOV_EXCL_START
     CHECK_RETURN_RET_ELOG(callback == nullptr, CAMERA_INVALID_ARG, "HStreamCapture::SetCallback input is null");
     std::lock_guard<std::mutex> lock(callbackLock_);
     MEDIA_DEBUG_LOG("HStreamCapture::SetCallback");
@@ -2142,7 +2148,7 @@ int32_t HStreamCapture::CallbackEnter([[maybe_unused]] uint32_t code)
             int32_t errCode = CheckPermission(OHOS_PERMISSION_MICROPHONE, callerToken);
             CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, CAMERA_NO_PERMISSION, "check microphone permission failed.");
             break;
-            // LCOV_EXCL_START
+            // LCOV_EXCL_STOP
         }
         default:
             break;

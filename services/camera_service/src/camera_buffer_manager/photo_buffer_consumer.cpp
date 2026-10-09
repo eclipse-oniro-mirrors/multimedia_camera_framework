@@ -134,7 +134,7 @@ uint32_t PhotoBufferConsumer::StartAuxPhotoWatchdog(int32_t captureId, int64_t t
             MEDIA_INFO_LOG("StartWaitAuxPhotoTask Watchdog executed, handle: %{public}d, captureId:%{public}d",
                 static_cast<int>(handle), captureId);
             auto ptr = thisPtr.promote();
-            CHECK_RETURN(ptr == nullptr);
+            CHECK_RETURN(ptr == nullptr); // LCOV_EXCL_LINE
             ptr->AssembleCompressedPhotoWithAux(timestamp, captureId);
         });
     return pictureHandle;

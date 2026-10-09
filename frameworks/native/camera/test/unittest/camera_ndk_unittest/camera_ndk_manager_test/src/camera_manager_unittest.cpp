@@ -1122,6 +1122,12 @@ HWTEST_F(CameraManagerUnitTest, camera_manager_unittest_031, TestSize.Level0)
     err = CameraErrorCode::SESSION_CONFIG_LOCKED;
     ret = FrameworkToNdkCameraError(err);
     EXPECT_EQ(ret, CAMERA_SESSION_CONFIG_LOCKED);
+    err = CameraErrorCode::UNSUPPORTED_MULTI_CAMERA_COMBINATION;
+    ret = FrameworkToNdkCameraError(err);
+    EXPECT_EQ(ret, CAMERA_ERROR_UNSUPPORTED_MULTI_CAMERA_COMBINATION);
+    err = CameraErrorCode::PARAM_OUT_OF_RANGE;
+    ret = FrameworkToNdkCameraError(err);
+    EXPECT_EQ(ret, CAMERA_ERROR_PARAM_OUT_OF_RANGE);
     err = -1;
     ret = FrameworkToNdkCameraError(err);
     EXPECT_EQ(ret, CAMERA_OK);

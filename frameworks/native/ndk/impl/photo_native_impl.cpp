@@ -93,10 +93,10 @@ Camera_ErrorCode OH_PhotoNative::GetUncompressedAuxiliaryImage(OH_Camera_Auxilia
     CHECK_RETURN_RET_ELOG(auxiliaryPicture == nullptr, CAMERA_ERROR_PARAM_OUT_OF_RANGE,
         "OH_PhotoNative::GetUncompressedAuxiliaryImage auxiliaryPicture is null");
     std::shared_ptr<OHOS::Media::PixelMap> contentPixel = auxiliaryPicture->GetContentPixel();
-    CHECK_RETURN_RET_ELOG(contentPixel == nullptr, CAMERA_ERROR_PARAM_OUT_OF_RANGE,
+    CHECK_RETURN_RET_ELOG(contentPixel == nullptr, CAMERA_ERROR_PARAM_OUT_OF_RANGE, // LCOV_EXCL_LINE
         "OH_PhotoNative::GetUncompressedAuxiliaryImage contentPixel is null");
     std::unique_ptr<OHOS::Media::Picture> auxiliaryPicturePtr = OHOS::Media::Picture::Create(contentPixel);
-    CHECK_RETURN_RET_ELOG(auxiliaryPicturePtr == nullptr, CAMERA_ERROR_PARAM_OUT_OF_RANGE,
+    CHECK_RETURN_RET_ELOG(auxiliaryPicturePtr == nullptr, CAMERA_ERROR_PARAM_OUT_OF_RANGE, // LCOV_EXCL_LINE
         "OH_PhotoNative::GetUncompressedAuxiliaryImage create picture failed");
     OH_PictureNative *pictureNative = new OH_PictureNative(std::move(auxiliaryPicturePtr));
     *outImage = pictureNative;

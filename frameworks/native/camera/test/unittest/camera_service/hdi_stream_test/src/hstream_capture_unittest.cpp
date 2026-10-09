@@ -15,12 +15,17 @@
 
 #include "camera_log.h"
 #include "camera_util.h"
+#include "camera_metadata.h"
 #include "hstream_capture_unittest.h"
+#include "hstream_operator.h"
 #include "ipc_skeleton.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 #include "gmock/gmock.h"
 #include "stream_capture_callback_stub.h"
+#include "surface.h"
+#include "surface_buffer.h"
+#include "v1_7/types.h"
 #ifdef CAMERA_CAPTURE_YUV
 #include "photo_asset_proxy.h"
 #endif
@@ -37,6 +42,8 @@ const int32_t HStreamCaptureUnitTest_TWO = 2;
 const int32_t HStreamCaptureUnitTest_THREE = 3;
 const int32_t HStreamCaptureUnitTest_FOUR = 4;
 const uint64_t HStreamCaptureUnitTest_HUNDRED = 100;
+const int32_t HStreamCaptureUnitTest_AUX_TYPE_OXYGEN = 0;
+const int32_t HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION = 1;
 
 class IStreamOperatorFork : public IStreamOperator {
 public:
@@ -135,13 +142,14 @@ public:
     ~MockHStreamCaptureCallbackStub() {}
 };
 
-#ifdef CAMERA_CAPTURE_YUV
 class MockStreamCapturePhotoCallback : public IStreamCapturePhotoCallback {
 public:
     MOCK_METHOD3(OnPhotoAvailable, int32_t(sptr<SurfaceBuffer> surfaceBuffer, int64_t timestamp, bool isRaw));
-    MOCK_METHOD1(OnPhotoAvailable, int32_t(std::shared_ptr<PictureIntf> picture));
     MOCK_METHOD5(OnPhotoAvailable, int32_t(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
         sptr<SurfaceBuffer> pigmentationBuffer, int64_t timestamp, bool isRaw));
+#ifdef CAMERA_CAPTURE_YUV
+    MOCK_METHOD1(OnPhotoAvailable, int32_t(std::shared_ptr<PictureIntf> picture));
+#endif
     sptr<IRemoteObject> AsObject() override
     {
         return nullptr;
@@ -156,7 +164,6 @@ public:
                 const std::string& burstKey));
     sptr<IRemoteObject> AsObject() override { return nullptr; }
 };
-#endif
 
 void HStreamCaptureUnitTest::SetUpTestCase(void)
 {
@@ -1632,6 +1639,443 @@ HWTEST_F(HStreamCaptureUnitTest, camera_fwcoverage_hstream_capture_001, TestSize
     EXPECT_EQ(streamCapture->OnFrameShutter(captureId, timestamp), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnFrameShutterEnd(captureId, timestamp), CAMERA_OK);
     EXPECT_EQ(streamCapture->OnCaptureReady(captureId, timestamp), CAMERA_OK);
+}
+
+static sptr<HStreamCapture> CreateStreamCaptureForAuxPhotoTest(sptr<IBufferProducer>& producer)
+{
+    int32_t format = CAMERA_FORMAT_YUV_420_SP;
+    int32_t width = 1920;
+    int32_t height = 1080;
+    sptr<IConsumerSurface> surface = IConsumerSurface::Create();
+    if (surface == nullptr) {
+        return nullptr;
+    }
+    producer = surface->GetProducer();
+    return new (std::nothrow) HStreamCapture(producer, format, width, height);
+}
+
+static sptr<HCameraDevice> CreateCameraDeviceForAuxPhotoTest()
+{
+    sptr<HCameraHostManager> cameraHostManager = new HCameraHostManager(nullptr);
+    uint32_t callingTokenId = IPCSkeleton::GetCallingTokenID();
+    return new (std::nothrow) HCameraDevice(cameraHostManager, "", callingTokenId);
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SetAutoAuxiliaryPhotosDeliveryEnabled_001, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled({}, true), CAMERA_INVALID_ARG);
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled({}, false), CAMERA_OK);
+    EXPECT_FALSE(streamCapture->IsAuxPhotoEnabled());
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SetAutoAuxiliaryPhotosDeliveryEnabled_002, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    std::vector<int32_t> oversizeTypes = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN,
+        HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION, HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(oversizeTypes, true), CAMERA_INVALID_ARG);
+    std::vector<int32_t> unknownTypes = {HStreamCaptureUnitTest_TWO};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(unknownTypes, true), CAMERA_INVALID_ARG);
+    std::vector<int32_t> duplicatedTypes = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN,
+        HStreamCaptureUnitTest_AUX_TYPE_OXYGEN};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(duplicatedTypes, true), CAMERA_INVALID_ARG);
+    std::vector<int32_t> negativeTypes = {-1};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(negativeTypes, false), CAMERA_INVALID_ARG);
+    EXPECT_FALSE(streamCapture->IsAuxPhotoEnabled());
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SetAutoAuxiliaryPhotosDeliveryEnabled_003, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    streamCapture->deferredPhotoSwitch_ = 1;
+    std::vector<int32_t> auxPhotoTypes = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, true),
+        CAMERA_OPERATION_NOT_ALLOWED);
+    EXPECT_FALSE(streamCapture->IsAuxPhotoEnabled());
+    streamCapture->deferredPhotoSwitch_ = 0;
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SetAutoAuxiliaryPhotosDeliveryEnabled_004, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    streamCapture->photoAssetAvaiableCallback_ = new (std::nothrow) MockStreamCapturePhotoAssetCallback();
+    ASSERT_NE(streamCapture->photoAssetAvaiableCallback_, nullptr);
+    std::vector<int32_t> auxPhotoTypes = {HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, true),
+        CAMERA_OPERATION_NOT_ALLOWED);
+    EXPECT_FALSE(streamCapture->IsAuxPhotoEnabled());
+    streamCapture->photoAssetAvaiableCallback_ = nullptr;
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SetAutoAuxiliaryPhotosDeliveryEnabled_005, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    std::vector<int32_t> oxygenTypes = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(oxygenTypes, true), CAMERA_OK);
+    EXPECT_TRUE(streamCapture->IsAuxPhotoEnabled());
+    EXPECT_TRUE(streamCapture->isAuxControlTagDirty_.load());
+    EXPECT_NE(streamCapture->oxygenSurface_.Get(), nullptr);
+    EXPECT_NE(streamCapture->oxygenBufferQueue_.Get(), nullptr);
+    EXPECT_NE(streamCapture->oxygenListener_, nullptr);
+    EXPECT_NE(streamCapture->pigmentationSurface_.Get(), nullptr);
+    EXPECT_NE(streamCapture->pigmentationBufferQueue_.Get(), nullptr);
+    EXPECT_NE(streamCapture->pigmentationListener_, nullptr);
+    EXPECT_NE(streamCapture->photoSubAuxPhotoTask_, nullptr);
+    EXPECT_EQ(streamCapture->enabledAuxPhotoTypes_.size(), 1U);
+
+    std::vector<int32_t> pigmentationTypes = {HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(pigmentationTypes, true), CAMERA_OK);
+    EXPECT_EQ(streamCapture->enabledAuxPhotoTypes_.size(), 2U);
+
+    streamCapture->isAuxControlTagDirty_ = false;
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(oxygenTypes, true), CAMERA_OK);
+    EXPECT_EQ(streamCapture->enabledAuxPhotoTypes_.size(), 2U);
+    EXPECT_FALSE(streamCapture->isAuxControlTagDirty_.load());
+
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(oxygenTypes, false), CAMERA_OK);
+    EXPECT_EQ(streamCapture->enabledAuxPhotoTypes_.size(), 1U);
+    EXPECT_TRUE(streamCapture->IsAuxPhotoEnabled());
+
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(pigmentationTypes, false), CAMERA_OK);
+    EXPECT_FALSE(streamCapture->IsAuxPhotoEnabled());
+    EXPECT_FALSE(streamCapture->isAuxControlTagDirty_.load());
+
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(pigmentationTypes, false), CAMERA_OK);
+    EXPECT_FALSE(streamCapture->IsAuxPhotoEnabled());
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, CheckAuxiliaryPhotoMutex_001, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    sptr<HStreamOperator> streamOperator = new HStreamOperator();
+    ASSERT_NE(streamOperator, nullptr);
+    streamCapture->SetStreamOperator(streamOperator);
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    streamCapture->deferredPhotoSwitch_ = 1;
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    streamCapture->deferredPhotoSwitch_ = 0;
+    streamCapture->photoAssetAvaiableCallback_ = new (std::nothrow) MockStreamCapturePhotoAssetCallback();
+    ASSERT_NE(streamCapture->photoAssetAvaiableCallback_, nullptr);
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    streamCapture->photoAssetAvaiableCallback_ = nullptr;
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, CheckAuxiliaryPhotoMutex_002, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    sptr<HCameraDevice> camDevice = CreateCameraDeviceForAuxPhotoTest();
+    ASSERT_NE(camDevice, nullptr);
+    auto settings = std::make_shared<OHOS::Camera::CameraMetadata>(16, 128);
+    ASSERT_NE(settings, nullptr);
+    camDevice->cachedSettings_ = settings;
+    sptr<HStreamOperator> streamOperator = new HStreamOperator();
+    ASSERT_NE(streamOperator, nullptr);
+    streamOperator->SetCameraDevice(camDevice);
+    streamCapture->SetStreamOperator(streamOperator);
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+
+    uint8_t beautyOff = OHOS_CAMERA_BEAUTY_TYPE_OFF;
+    uint8_t beautyOn = static_cast<uint8_t>(OHOS_CAMERA_BEAUTY_TYPE_OFF + 1);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_BEAUTY_TYPE, &beautyOff, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_BEAUTY_TYPE, &beautyOn, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_BEAUTY_TYPE, &beautyOff, 1));
+
+    float zoomDefault = 1.0f;
+    float zoomOther = 2.0f;
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_ZOOM_RATIO, &zoomDefault, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_ZOOM_RATIO, &zoomOther, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_ZOOM_RATIO, &zoomDefault, 1));
+
+    uint8_t macroOff = static_cast<uint8_t>(OHOS_CAMERA_MACRO_ENABLE + 1);
+    uint8_t macroOn = static_cast<uint8_t>(OHOS_CAMERA_MACRO_ENABLE);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_CAMERA_MACRO, &macroOff, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_CAMERA_MACRO, &macroOn, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_CAMERA_MACRO, &macroOff, 1));
+
+    float apertureOff = 0.0f;
+    float apertureOn = 1.5f;
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &apertureOff, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &apertureOn, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_CAMERA_VIRTUAL_APERTURE_VALUE, &apertureOff, 1));
+
+    uint8_t disabled = 0;
+    uint8_t enabled = 1;
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_HIGH_QUALITY_MODE, &disabled, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_HIGH_QUALITY_MODE, &enabled, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_HIGH_QUALITY_MODE, &disabled, 1));
+
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &disabled, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &enabled, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_AUTO_CLOUD_IMAGE_ENHANCE, &disabled, 1));
+
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_AUTO_AIGC_PHOTO, &disabled, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_AUTO_AIGC_PHOTO, &enabled, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OPERATION_NOT_ALLOWED);
+    ASSERT_TRUE(AddOrUpdateMetadata(settings, OHOS_CONTROL_AUTO_AIGC_PHOTO, &disabled, 1));
+    EXPECT_EQ(streamCapture->CheckAuxiliaryPhotoMutex(), CAMERA_OK);
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, IsAuxPhotoDegradedAndCleanAuxPhotoState_001, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    int32_t captureId = HStreamCaptureUnitTest_ONE;
+    EXPECT_FALSE(streamCapture->IsAuxPhotoDegraded(captureId));
+    streamCapture->captureIdAuxDegradeMap_[captureId] = 0;
+    EXPECT_FALSE(streamCapture->IsAuxPhotoDegraded(captureId));
+    streamCapture->captureIdAuxDegradeMap_[captureId] = 1;
+    streamCapture->captureIdOxygenMap_[captureId] = SurfaceBuffer::Create();
+    streamCapture->captureIdPigmentationMap_[captureId] = SurfaceBuffer::Create();
+    streamCapture->captureIdMainPhotoMap_[captureId] = SurfaceBuffer::Create();
+    streamCapture->captureIdHandleMap_[captureId] = HStreamCaptureUnitTest_ONE;
+    streamCapture->captureIdAuxiliaryCountMap_[captureId] = HStreamCaptureUnitTest_ONE;
+    streamCapture->captureIdCountMap_[captureId] = HStreamCaptureUnitTest_ONE;
+    EXPECT_TRUE(streamCapture->IsAuxPhotoDegraded(captureId));
+    streamCapture->CleanAuxPhotoState(captureId);
+    EXPECT_FALSE(streamCapture->IsAuxPhotoDegraded(captureId));
+    EXPECT_EQ(streamCapture->captureIdAuxDegradeMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdOxygenMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdPigmentationMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdMainPhotoMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdHandleMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdAuxiliaryCountMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdCountMap_.count(captureId), 0U);
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SendAuxiliaryPhotoControlTagIfDirty_001, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    streamCapture->isAuxControlTagDirty_ = false;
+    streamCapture->SendAuxiliaryPhotoControlTagIfDirty();
+    EXPECT_FALSE(streamCapture->isAuxControlTagDirty_.load());
+    streamCapture->isAuxControlTagDirty_ = true;
+    streamCapture->SendAuxiliaryPhotoControlTagIfDirty();
+    EXPECT_FALSE(streamCapture->isAuxControlTagDirty_.load());
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SendAuxiliaryPhotoControlTagIfDirty_002, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    std::vector<int32_t> auxPhotoTypes = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, true), CAMERA_OK);
+    EXPECT_TRUE(streamCapture->isAuxControlTagDirty_.load());
+    streamCapture->SendAuxiliaryPhotoControlTagIfDirty();
+    EXPECT_TRUE(streamCapture->isAuxControlTagDirty_.load());
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SendAuxiliaryPhotoControlTagIfDirty_003, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    sptr<HCameraDevice> camDevice = CreateCameraDeviceForAuxPhotoTest();
+    ASSERT_NE(camDevice, nullptr);
+    auto settings = std::make_shared<OHOS::Camera::CameraMetadata>(8, 64);
+    ASSERT_NE(settings, nullptr);
+    camDevice->cachedSettings_ = settings;
+    sptr<HStreamOperator> streamOperator = new HStreamOperator();
+    ASSERT_NE(streamOperator, nullptr);
+    streamOperator->SetCameraDevice(camDevice);
+    streamCapture->SetStreamOperator(streamOperator);
+    std::vector<int32_t> auxPhotoTypes = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN,
+        HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, true), CAMERA_OK);
+    EXPECT_TRUE(streamCapture->isAuxControlTagDirty_.load());
+    streamCapture->SendAuxiliaryPhotoControlTagIfDirty();
+    EXPECT_FALSE(streamCapture->isAuxControlTagDirty_.load());
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, SendAuxiliaryPhotoControlTagIfDirty_004, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    sptr<HStreamOperator> streamOperator = new HStreamOperator();
+    ASSERT_NE(streamOperator, nullptr);
+    streamCapture->SetStreamOperator(streamOperator);
+    std::vector<int32_t> auxPhotoTypes = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN};
+    EXPECT_EQ(streamCapture->SetAutoAuxiliaryPhotosDeliveryEnabled(auxPhotoTypes, true), CAMERA_OK);
+    EXPECT_TRUE(streamCapture->isAuxControlTagDirty_.load());
+    streamCapture->SendAuxiliaryPhotoControlTagIfDirty();
+    EXPECT_TRUE(streamCapture->isAuxControlTagDirty_.load());
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, FillingAuxiliaryPhotoStreamInfos_001, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    StreamInfo_V1_5 streamInfo;
+    streamCapture->FillingAuxiliaryPhotoStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_BLOB);
+    EXPECT_TRUE(streamInfo.extendedStreamInfos.empty());
+    streamCapture->enabledAuxPhotoTypes_ = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN,
+        HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION};
+    streamCapture->FillingAuxiliaryPhotoStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_BLOB);
+    EXPECT_TRUE(streamInfo.extendedStreamInfos.empty());
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, FillingAuxiliaryPhotoStreamInfos_002, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    sptr<IConsumerSurface> auxSurface = IConsumerSurface::Create();
+    ASSERT_NE(auxSurface, nullptr);
+    sptr<IBufferProducer> auxProducer = auxSurface->GetProducer();
+    ASSERT_NE(auxProducer, nullptr);
+    streamCapture->oxygenBufferQueue_.Set(new BufferProducerSequenceable(auxProducer));
+    streamCapture->pigmentationBufferQueue_.Set(new BufferProducerSequenceable(auxProducer));
+
+    StreamInfo_V1_5 streamInfo;
+    streamCapture->enabledAuxPhotoTypes_ = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN};
+    streamCapture->FillingAuxiliaryPhotoStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_BLOB);
+    ASSERT_EQ(streamInfo.extendedStreamInfos.size(), 1U);
+    EXPECT_EQ(streamInfo.extendedStreamInfos[0].type,
+        static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
+            HDI::Camera::V1_7::EXTENDED_STREAM_INFO_OXYGEN_PHOTO));
+
+    streamInfo.extendedStreamInfos.clear();
+    streamCapture->enabledAuxPhotoTypes_ = {HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION};
+    streamCapture->FillingAuxiliaryPhotoStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_BLOB);
+    ASSERT_EQ(streamInfo.extendedStreamInfos.size(), 1U);
+    EXPECT_EQ(streamInfo.extendedStreamInfos[0].type,
+        static_cast<HDI::Camera::V1_1::ExtendedStreamInfoType>(
+            HDI::Camera::V1_7::EXTENDED_STREAM_INFO_PIGMENTATION_PHOTO));
+
+    streamInfo.extendedStreamInfos.clear();
+    streamCapture->enabledAuxPhotoTypes_ = {HStreamCaptureUnitTest_AUX_TYPE_OXYGEN,
+        HStreamCaptureUnitTest_AUX_TYPE_PIGMENTATION};
+    streamCapture->FillingAuxiliaryPhotoStreamInfos(streamInfo, GRAPHIC_PIXEL_FMT_BLOB);
+    EXPECT_EQ(streamInfo.extendedStreamInfos.size(), 2U);
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, CreateAuxiliaryPhotoSurfaces_001, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    streamCapture->CreateAuxiliaryPhotoSurfaces();
+    sptr<Surface> oxygenSurface = streamCapture->oxygenSurface_.Get();
+    sptr<Surface> pigmentationSurface = streamCapture->pigmentationSurface_.Get();
+    ASSERT_NE(oxygenSurface, nullptr);
+    ASSERT_NE(pigmentationSurface, nullptr);
+    EXPECT_NE(streamCapture->oxygenBufferQueue_.Get(), nullptr);
+    EXPECT_NE(streamCapture->pigmentationBufferQueue_.Get(), nullptr);
+    EXPECT_NE(streamCapture->oxygenListener_, nullptr);
+    EXPECT_NE(streamCapture->pigmentationListener_, nullptr);
+    EXPECT_NE(streamCapture->photoSubAuxPhotoTask_, nullptr);
+    streamCapture->CreateAuxiliaryPhotoSurfaces();
+    EXPECT_EQ(streamCapture->oxygenSurface_.Get(), oxygenSurface);
+    EXPECT_EQ(streamCapture->pigmentationSurface_.Get(), pigmentationSurface);
+    streamCapture->Release();
+}
+
+HWTEST_F(HStreamCaptureUnitTest, OnCaptureError_CleanAuxPhotoState_001, TestSize.Level0)
+{
+    sptr<IBufferProducer> producer = nullptr;
+    sptr<HStreamCapture> streamCapture = CreateStreamCaptureForAuxPhotoTest(producer);
+    ASSERT_NE(streamCapture, nullptr);
+    int32_t captureId = HStreamCaptureUnitTest_ONE;
+    streamCapture->captureIdAuxDegradeMap_[captureId] = 1;
+    streamCapture->captureIdOxygenMap_[captureId] = SurfaceBuffer::Create();
+    streamCapture->captureIdPigmentationMap_[captureId] = SurfaceBuffer::Create();
+    streamCapture->captureIdMainPhotoMap_[captureId] = SurfaceBuffer::Create();
+    streamCapture->captureIdHandleMap_[captureId] = HStreamCaptureUnitTest_ONE;
+    streamCapture->captureIdAuxiliaryCountMap_[captureId] = HStreamCaptureUnitTest_ONE;
+    streamCapture->captureIdCountMap_[captureId] = HStreamCaptureUnitTest_ONE;
+    EXPECT_EQ(streamCapture->OnCaptureError(captureId, 0), CAMERA_OK);
+    EXPECT_EQ(streamCapture->captureIdAuxDegradeMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdOxygenMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdPigmentationMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdMainPhotoMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdHandleMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdAuxiliaryCountMap_.count(captureId), 0U);
+    EXPECT_EQ(streamCapture->captureIdCountMap_.count(captureId), 0U);
+    streamCapture->Release();
+}
+
+static sptr<SurfaceBuffer> CreateAllocatedSurfaceBufferForTest()
+{
+    sptr<SurfaceBuffer> buffer = SurfaceBuffer::Create();
+    if (buffer == nullptr) {
+        return nullptr;
+    }
+    BufferRequestConfig config = {
+        .width = 64,
+        .height = 64,
+        .strideAlignment = 0x8,
+        .format = GRAPHIC_PIXEL_FMT_RGBA_8888,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
+        .timeout = 0,
+    };
+    if (buffer->Alloc(config) != GSERROR_OK) {
+        return nullptr;
+    }
+    return buffer;
+}
+
+HWTEST_F(HStreamCaptureUnitTest, PhotoCallbackProxy_OnPhotoAvailableWithAuxiliary_001, TestSize.Level0)
+{
+    auto samgr = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    ASSERT_NE(samgr, nullptr);
+    sptr<IRemoteObject> object = samgr->GetSystemAbility(AUDIO_POLICY_SERVICE_ID);
+    ASSERT_NE(object, nullptr);
+    sptr<IStreamCapturePhotoCallback> photoCallback = iface_cast<IStreamCapturePhotoCallback>(object);
+    ASSERT_NE(photoCallback, nullptr);
+    sptr<SurfaceBuffer> buffer = CreateAllocatedSurfaceBufferForTest();
+    ASSERT_NE(buffer, nullptr);
+    int64_t timestamp = static_cast<int64_t>(HStreamCaptureUnitTest_HUNDRED);
+    EXPECT_EQ(photoCallback->OnPhotoAvailable(nullptr, nullptr, nullptr, timestamp, false), ERR_INVALID_VALUE);
+    EXPECT_NE(photoCallback->OnPhotoAvailable(buffer, nullptr, nullptr, timestamp, false), ERR_INVALID_VALUE);
+    EXPECT_NE(photoCallback->OnPhotoAvailable(buffer, buffer, buffer, timestamp, true), ERR_INVALID_VALUE);
 }
 
 #ifdef CAMERA_CAPTURE_YUV
