@@ -86,6 +86,9 @@ public:
     void OnConstellationDrawingState(const int32_t state) const override;
     void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const override;
     void OnPhotoAvailable(const std::shared_ptr<Media::Picture> picture) const override;
+    void OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> mainImage,
+        const std::shared_ptr<Media::NativeImage> oxygenImage,
+        const std::shared_ptr<Media::NativeImage> pigmentationImage, bool isRaw) const override;
     void OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri,
         int32_t cameraShotType, const std::string &burstKey) const override;
     void OnThumbnailAvailable(int32_t captureId, int64_t timestamp,
@@ -102,6 +105,9 @@ private:
     void OnOfflineDeliveryFinishedCallback(const int32_t captureId) const;
     void OnPhotoAvailableCallback(const std::shared_ptr<Media::NativeImage> nativeImage, bool isRaw) const;
     void OnPhotoAvailableCallback(const std::shared_ptr<Media::Picture> picture) const;
+    void OnPhotoAvailableCallback(const std::shared_ptr<Media::NativeImage> mainImage,
+        const std::shared_ptr<Media::NativeImage> oxygenImage,
+        const std::shared_ptr<Media::NativeImage> pigmentationImage, bool isRaw) const;
     void OnPhotoAssetAvailableCallback(const int32_t captureId, const std::string &uri,
         int32_t cameraShotType, const std::string &burstKey) const;
     void OnThumbnailAvailableCallback(int32_t captureId, int64_t timestamp,
@@ -177,6 +183,8 @@ public:
     void SetPhotoQualityPrioritization(PhotoQualityPrioritization qualityPrioritization);
     void EnableAutoExtendedGainmapDelivery(bool enabled);
     bool IsAutoExtendedGainmapDeliverySupported();
+    bool IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType auxPhotoType);
+    void SetAutoAuxiliaryPhotosDeliveryEnabled(array_view<CameraAuxiliaryPhotoType> auxPhotoTypes, bool enabled);
 
     static uint32_t photoOutputTaskId_;
 private:

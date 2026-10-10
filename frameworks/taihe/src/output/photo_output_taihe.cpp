@@ -81,6 +81,59 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
 }
 
+// Extracts the oxygen/pigmentation auxiliary picture (if delivered) from the main uncompressed
+// picture and rewraps its content pixelmap as a standalone picture.
+std::shared_ptr<Media::Picture> GetAuxiliaryPictureFromMain(const std::shared_ptr<Media::Picture>& mainPicture,
+    Media::AuxiliaryPictureType type)
+{
+    if (mainPicture == nullptr) {
+        return nullptr;
+    }
+    std::shared_ptr<Media::AuxiliaryPicture> auxiliaryPicture = mainPicture->GetAuxiliaryPicture(type);
+    if (auxiliaryPicture == nullptr) {
+        return nullptr;
+    }
+    std::shared_ptr<Media::PixelMap> contentPixel = auxiliaryPicture->GetContentPixel();
+    if (contentPixel == nullptr) {
+        return nullptr;
+    }
+    std::unique_ptr<Media::Picture> auxiliaryPhotoPtr = Media::Picture::Create(contentPixel);
+    if (auxiliaryPhotoPtr == nullptr) {
+        return nullptr;
+    }
+    return auxiliaryPhotoPtr;
+}
+
+static optional<ohos::multimedia::image::image::Image> MakeOptionalImage(
+    const std::shared_ptr<Media::NativeImage>& nativeImage)
+{
+    if (nativeImage == nullptr) {
+        return optional<ohos::multimedia::image::image::Image>();
+    }
+    optional<ohos::multimedia::image::image::Image> imageValue =
+        optional<ohos::multimedia::image::image::Image>(
+            std::in_place, ANI::Image::ImageImpl::Create(nativeImage));
+    if (has_error()) {
+        reset_error();
+    }
+    return imageValue;
+}
+
+static optional<ohos::multimedia::image::image::Picture> MakeOptionalPicture(
+    const std::shared_ptr<Media::Picture>& picture)
+{
+    if (picture == nullptr) {
+        return optional<ohos::multimedia::image::image::Picture>();
+    }
+    optional<ohos::multimedia::image::image::Picture> pictureValue =
+        optional<ohos::multimedia::image::image::Picture>(
+            std::in_place, ANI::Image::PictureImpl::CreatePicture(picture));
+    if (has_error()) {
+        reset_error();
+    }
+    return pictureValue;
+}
+
 void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Media::Picture> picture) const
 {
     MEDIA_INFO_LOG("PhotoOutputCallbackAni::OnPhotoAvailableCallback");
@@ -88,13 +141,69 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
     if (has_error()) {
         reset_error();
     }
+    optional<ohos::multimedia::image::image::Picture> oxygenPicture =
+        MakeOptionalPicture(GetAuxiliaryPictureFromMain(picture, Media::AuxiliaryPictureType::OXY_MAP));
+    optional<ohos::multimedia::image::image::Picture> pigmentationPicture =
+        MakeOptionalPicture(GetAuxiliaryPictureFromMain(picture, Media::AuxiliaryPictureType::MEL_MAP));
     auto sharePtr = shared_from_this();
-    auto task = [mainPicture, sharePtr]() {
+    auto task = [mainPicture, oxygenPicture, pigmentationPicture, sharePtr]() {
         CapturePhoto capturePhotoValue = make_holder<Ani::Camera::CapturePhotoImpl, CapturePhoto>();
         ImageType imageType = ImageType::make_picture(mainPicture);
         capturePhotoValue->SetMain(imageType);
+        if (oxygenPicture.has_value()) {
+            capturePhotoValue->SetOxygenPhoto(
+                optional<ImageType>(std::in_place, ImageType::make_picture(oxygenPicture.value())));
+        }
+        if (pigmentationPicture.has_value()) {
+            capturePhotoValue->SetPigmentationPhoto(
+                optional<ImageType>(std::in_place, ImageType::make_picture(pigmentationPicture.value())));
+        }
         CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteCallback(
             CONST_CAPTURE_PHOTO_AVAILABLE, capturePhotoValue));
+    };
+    CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
+    mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
+}
+
+void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Media::NativeImage> mainImage,
+    const std::shared_ptr<Media::NativeImage> oxygenImage,
+    const std::shared_ptr<Media::NativeImage> pigmentationImage, bool isRaw) const
+{
+    MEDIA_INFO_LOG("PhotoOutputCallbackAni::OnPhotoAvailableCallback with auxiliary");
+    int32_t errCode = 0;
+    std::string message = "success";
+    ohos::multimedia::image::image::Image mainImageValue = ANI::Image::ImageImpl::Create(mainImage);
+    if (has_error()) {
+        reset_error();
+        errCode = -1;
+        message = "ImageTaihe Create failed";
+    }
+    optional<ohos::multimedia::image::image::Image> oxygenImageValue = MakeOptionalImage(oxygenImage);
+    optional<ohos::multimedia::image::image::Image> pigmentationImageValue =
+        MakeOptionalImage(pigmentationImage);
+    bool extendFlag = g_callbackExtendFlag.load();
+    auto sharePtr = shared_from_this();
+    auto task = [mainImageValue, oxygenImageValue, pigmentationImageValue, isRaw, errCode, message, extendFlag,
+                 sharePtr]() {
+        MEDIA_DEBUG_LOG("PhotoOutputCallbackAni::OnPhotoAvailableCallback extend flag %{public}d", extendFlag);
+        if (extendFlag) {
+            CapturePhoto capturePhotoValue = make_holder<Ani::Camera::CapturePhotoImpl, CapturePhoto>();
+            capturePhotoValue->SetMain(ImageType::make_image(mainImageValue));
+            if (oxygenImageValue.has_value()) {
+                capturePhotoValue->SetOxygenPhoto(
+                    optional<ImageType>(std::in_place, ImageType::make_image(oxygenImageValue.value())));
+            }
+            if (pigmentationImageValue.has_value()) {
+                capturePhotoValue->SetPigmentationPhoto(
+                    optional<ImageType>(std::in_place, ImageType::make_image(pigmentationImageValue.value())));
+            }
+            CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteCallback(
+                CONST_CAPTURE_PHOTO_AVAILABLE, capturePhotoValue));
+        } else {
+            Photo photoValue = make_holder<Ani::Camera::PhotoImpl, Photo>(mainImageValue, isRaw);
+            CHECK_EXECUTE(sharePtr != nullptr, sharePtr->ExecuteAsyncCallback(
+                CONST_CAPTURE_PHOTO_AVAILABLE, errCode, message, photoValue));
+        }
     };
     CHECK_RETURN_ELOG(mainHandler_ == nullptr, "callback failed, mainHandler_ is nullptr!");
     mainHandler_->PostTask(task, "OnPhotoAvailableCallback", 0, OHOS::AppExecFwk::EventQueue::Priority::IMMEDIATE, {});
@@ -313,6 +422,14 @@ void PhotoOutputCallbackAni::OnPhotoAvailable(const std::shared_ptr<Media::Pictu
 {
     MEDIA_DEBUG_LOG("OnPhotoAvailable is called!");
     OnPhotoAvailableCallback(picture);
+}
+
+void PhotoOutputCallbackAni::OnPhotoAvailable(const std::shared_ptr<Media::NativeImage> mainImage,
+    const std::shared_ptr<Media::NativeImage> oxygenImage,
+    const std::shared_ptr<Media::NativeImage> pigmentationImage, bool isRaw) const
+{
+    MEDIA_DEBUG_LOG("OnPhotoAvailable with auxiliary is called!");
+    OnPhotoAvailableCallback(mainImage, oxygenImage, pigmentationImage, isRaw);
 }
 
 void PhotoOutputCallbackAni::OnPhotoAssetAvailable(const int32_t captureId, const std::string &uri,
@@ -1329,6 +1446,56 @@ bool PhotoOutputImpl::IsAutoExtendedGainmapDeliverySupported()
     MEDIA_DEBUG_LOG("PhotoOutputImpl::IsAutoExtendedGainmapDeliverySupported is %{public}d",
         isAutoExtendedGainmapDeliverySupported);
     return isAutoExtendedGainmapDeliverySupported;
+}
+
+bool PhotoOutputImpl::IsAutoAuxiliaryPhotoDeliverySupported(CameraAuxiliaryPhotoType auxPhotoType)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputImpl::IsAutoAuxiliaryPhotoDeliverySupported is called");
+    int32_t auxTypeValue = static_cast<int32_t>(auxPhotoType.get_value());
+    if (auxTypeValue < static_cast<int32_t>(OHOS::CameraStandard::CameraAuxiliaryPhotoType::OXYGEN) ||
+        auxTypeValue > static_cast<int32_t>(OHOS::CameraStandard::CameraAuxiliaryPhotoType::PIGMENTATION)) {
+        MEDIA_ERR_LOG("IsAutoAuxiliaryPhotoDeliverySupported auxPhotoType invalid");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::PARAM_OUT_OF_RANGE, "auxPhotoType is out of range");
+        return false;
+    }
+    CHECK_RETURN_RET_ELOG(photoOutput_ == nullptr,
+        false, "IsAutoAuxiliaryPhotoDeliverySupported failed, photoOutput_ is nullptr");
+    bool isSupported = false;
+    int32_t retCode = photoOutput_->IsAutoAuxiliaryPhotoDeliverySupported(
+        static_cast<OHOS::CameraStandard::CameraAuxiliaryPhotoType>(auxTypeValue), isSupported);
+    CHECK_RETURN_RET(!CameraUtilsTaihe::CheckError(retCode), false);
+    MEDIA_DEBUG_LOG("PhotoOutputImpl::IsAutoAuxiliaryPhotoDeliverySupported is %{public}d", isSupported);
+    return isSupported;
+}
+
+void PhotoOutputImpl::SetAutoAuxiliaryPhotosDeliveryEnabled(array_view<CameraAuxiliaryPhotoType> auxPhotoTypes,
+    bool enabled)
+{
+    MEDIA_DEBUG_LOG("PhotoOutputImpl::SetAutoAuxiliaryPhotosDeliveryEnabled is called");
+    if (enabled && auxPhotoTypes.empty()) {
+        MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled auxPhotoTypes is empty");
+        CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::PARAM_OUT_OF_RANGE, "auxPhotoTypes is invalid or empty");
+        return;
+    }
+    for (auto auxPhotoType : auxPhotoTypes) {
+        int32_t auxTypeValue = static_cast<int32_t>(auxPhotoType.get_value());
+        if (auxTypeValue < static_cast<int32_t>(OHOS::CameraStandard::CameraAuxiliaryPhotoType::OXYGEN) ||
+            auxTypeValue > static_cast<int32_t>(OHOS::CameraStandard::CameraAuxiliaryPhotoType::PIGMENTATION)) {
+            MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled auxPhotoType invalid");
+            CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::PARAM_OUT_OF_RANGE,
+                "auxPhotoType is out of range");
+            return;
+        }
+    }
+    CHECK_RETURN_ELOG(photoOutput_ == nullptr, "SetAutoAuxiliaryPhotosDeliveryEnabled photoOutput_ is nullptr");
+    std::vector<OHOS::CameraStandard::CameraAuxiliaryPhotoType> types;
+    for (auto auxPhotoType : auxPhotoTypes) {
+        types.push_back(static_cast<OHOS::CameraStandard::CameraAuxiliaryPhotoType>(auxPhotoType.get_value()));
+    }
+    int32_t retCode = photoOutput_->SetAutoAuxiliaryPhotosDeliveryEnabled(types, enabled);
+    CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode),
+        "PhotoOutputImpl::SetAutoAuxiliaryPhotosDeliveryEnabled fail %{public}d", retCode);
+    MEDIA_DEBUG_LOG("PhotoOutputImpl::SetAutoAuxiliaryPhotosDeliveryEnabled success");
 }
 } // namespace Camera
 } // namespace Ani
