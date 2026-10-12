@@ -906,6 +906,9 @@ interface PhotoSession : Session, Flash, Zoom, AutoExposure, AutoDeviceSwitch, C
   OnExposureInfoChangeWithoutErr(callback:(data: ExposureInfo)=> void): void;
   @rename("offExposureInfoChange")
   OffExposureInfoChangeWithoutErr(callback: Optional<(data: ExposureInfo)=> void>): void;
+
+  OnCameraSwitchRequest(callback: (data: CameraDevice)=> void): void;
+  OffCameraSwitchRequest(callback: Optional<(data: CameraDevice)=> void>): void;
 }
 
 interface PhotoConflictFunctions : ZoomQuery, MacroQuery {
@@ -1116,6 +1119,9 @@ interface VideoSession : Session, Flash, Zoom, Stabilization, ColorManagement, A
   OnApertureInfoChangeWithoutErr(callback: (data: ApertureInfo)=> void): void;
   @rename("offApertureInfoChange")
  	OffApertureInfoChangeWithoutErr(callback: Optional<(data: ApertureInfo)=> void>);
+
+  OnCameraSwitchRequest(callback: (data: CameraDevice)=> void): void;
+  OffCameraSwitchRequest(callback: Optional<(data: CameraDevice)=> void>): void;
 }
 
 interface VideoConflictFunctions : ZoomQuery, MacroQuery {
