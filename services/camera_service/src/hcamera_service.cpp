@@ -1418,6 +1418,7 @@ int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
     sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     MEDIA_INFO_LOG("HCameraService::CreateDeferredVideoProcessingSession enter.");
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> videoSession;
     int32_t uid = IPCSkeleton::GetCallingUid();
