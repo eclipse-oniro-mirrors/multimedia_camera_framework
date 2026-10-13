@@ -2646,6 +2646,7 @@ interface AutoDeviceSwitch : AutoDeviceSwitchQuery {
 interface ColorControlsQuery {
   IsSaturationSupported(): bool;
   IsRGBBiasSupported(): bool;
+  IsContrastSupported(): bool;
 }
 
 interface ColorControls : ColorControlsQuery {
@@ -2653,6 +2654,8 @@ interface ColorControls : ColorControlsQuery {
   SetSaturation(val: f64): void;
   GetRGBBias(): RGBBias;
   SetRGBBias(bias: RGBBias): void;
+  GetContrast(): f64;
+  SetContrast(val: f64): void;
 }
 
 enum MetadataObjectType: i32 {

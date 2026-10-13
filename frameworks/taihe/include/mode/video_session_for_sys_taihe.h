@@ -64,6 +64,9 @@ public:
     double GetSaturation() override;
     void SetSaturation(double val) override;
     bool IsSaturationSupported() override;
+    double GetContrast() override;
+    void SetContrast(double val) override;
+    bool IsContrastSupported() override;
     bool IsRGBBiasSupported() override;
     void SetRGBBias(RGBBias bias) override;
     RGBBias GetRGBBias() override;

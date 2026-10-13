@@ -1639,7 +1639,7 @@ double ColorControlsImpl::GetSaturation()
         static_cast<double>(saturationVal), "SystemApi GetSaturation is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not GetSaturation in current session!");
-    return false;
+    return static_cast<double>(saturationVal);
 }
 
 void ColorControlsImpl::SetSaturation(double val)
@@ -1656,6 +1656,33 @@ bool ColorControlsQueryImpl::IsSaturationSupported()
         "SystemApi IsSaturationSupported is called!");
     CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
         "can not IsSaturationSupported in current session!");
+    return false;
+}
+
+double ColorControlsImpl::GetContrast()
+{
+    float contrastVal = 0.0f;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        static_cast<double>(contrastVal), "SystemApi GetContrast is called!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not GetContrast in current session!");
+    return static_cast<double>(contrastVal);
+}
+
+void ColorControlsImpl::SetContrast(double val)
+{
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi SetContrast is called!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not SetContrast in current session!");
+}
+
+bool ColorControlsQueryImpl::IsContrastSupported()
+{
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi IsContrastSupported is called!");
+    CameraUtilsTaihe::ThrowError(OHOS::CameraStandard::OPERATION_NOT_ALLOWED,
+        "can not IsContrastSupported in current session!");
     return false;
 }
 

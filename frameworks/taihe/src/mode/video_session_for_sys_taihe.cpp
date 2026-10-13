@@ -139,6 +139,47 @@ void VideoSessionForSysImpl::SetSaturation(double saturationVal)
         "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
 }
 
+bool VideoSessionForSysImpl::IsContrastSupported()
+{
+    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
+        "SystemApi %{public}s is called!", __FUNCTION__);
+    CHECK_RETURN_RET_ELOG(
+        videoSessionForSys_ == nullptr, false, "%{public}s videoSessionForSys_ is nullptr", __FUNCTION__);
+    bool isSupported = false;
+    int32_t retCode = videoSessionForSys_->IsContrastSupported(isSupported);
+    CHECK_RETURN_RET_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS, false,
+        "%{public}s call Failed", __FUNCTION__);
+    return isSupported;
+}
+
+double VideoSessionForSysImpl::GetContrast()
+{
+    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    float contrastVal = 0.0f;
+    CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        static_cast<double>(contrastVal), "SystemApi %{public}s is called!", __FUNCTION__);
+    CHECK_RETURN_RET_ELOG(videoSessionForSys_ == nullptr, static_cast<double>(contrastVal),
+        "%{public}s: videoSessionForSys_ is nullptr", __FUNCTION__);
+    int32_t retCode = videoSessionForSys_->GetContrast(contrastVal);
+    CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
+        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
+    return static_cast<double>(contrastVal);
+}
+
+void VideoSessionForSysImpl::SetContrast(double contrastVal)
+{
+    MEDIA_INFO_LOG("%{public}s is called.", __FUNCTION__);
+    CHECK_RETURN_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(),
+        "SystemApi %{public}s is called!", __FUNCTION__);
+    CHECK_RETURN_ELOG(videoSessionForSys_ == nullptr, "%{public}s videoSessionForSys_ is nullptr", __FUNCTION__);
+    videoSessionForSys_->LockForControl();
+    int32_t retCode = videoSessionForSys_->SetContrast(static_cast<float>(contrastVal));
+    videoSessionForSys_->UnlockForControl();
+    CHECK_PRINT_ELOG(retCode != OHOS::CameraStandard::CameraErrorCode::SUCCESS,
+        "%{public}s call failed, retCode: %{public}d", __FUNCTION__, retCode);
+}
+
 bool VideoSessionForSysImpl::IsRGBBiasSupported()
 {
     CHECK_RETURN_RET_ELOG(!OHOS::CameraStandard::CameraAniSecurity::CheckSystemApp(), false,
