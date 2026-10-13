@@ -20,6 +20,7 @@
 #include "picture_proxy.h"
 #include "camera_log.h"
 #include "camera_surface_buffer_util.h"
+#include "camera_util.h"
 #include "buffer_extra_data_impl.h"
 #include "sync_fence.h"
 #include "surface.h"
@@ -510,15 +511,14 @@ HWTEST_F(PhotoBufferConsumerUnitTest, ExecuteOnBufferAvailable_AuxPhoto_001, Tes
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
         .timeout = 0,
     };
-    sptr<SurfaceBuffer> requestBuffer = nullptr;
-    sptr<SyncFence> requestFence = SyncFence::InvalidFence();
-    ASSERT_EQ(producer->RequestBuffer(requestBuffer, requestFence, config), GSERROR_OK);
-    ASSERT_NE(requestBuffer, nullptr);
-    sptr<BufferExtraData> extraData = requestBuffer->GetExtraData();
-    ASSERT_NE(extraData, nullptr);
-    extraData->ExtraSet(OHOS::Camera::captureId, captureId);
-    extraData->ExtraSet(OHOS::Camera::imageCount, 3);
-    ASSERT_EQ(producer->FlushBuffer(requestBuffer, requestFence, config), GSERROR_OK);
+    sptr<BufferExtraData> bedata = new BufferExtraDataImpl();
+    IBufferProducer::RequestBufferReturnValue retval;
+    ASSERT_EQ(producer->RequestBuffer(config, bedata, retval), GSERROR_OK);
+    ASSERT_NE(retval.buffer, nullptr);
+    bedata->ExtraSet(OHOS::Camera::captureId, captureId);
+    bedata->ExtraSet(OHOS::Camera::imageCount, 3);
+    BufferFlushConfigWithDamages flushConfig = {};
+    ASSERT_EQ(producer->FlushBuffer(retval.sequence, bedata, retval.fence, flushConfig), GSERROR_OK);
 
     auto consumer = std::make_shared<PhotoBufferConsumer>(streamCapture, false);
     consumer->ExecuteOnBufferAvailable();
@@ -554,15 +554,14 @@ HWTEST_F(PhotoBufferConsumerUnitTest, ExecuteOnBufferAvailable_AuxPhoto_002, Tes
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
         .timeout = 0,
     };
-    sptr<SurfaceBuffer> requestBuffer = nullptr;
-    sptr<SyncFence> requestFence = SyncFence::InvalidFence();
-    ASSERT_EQ(producer->RequestBuffer(requestBuffer, requestFence, config), GSERROR_OK);
-    ASSERT_NE(requestBuffer, nullptr);
-    sptr<BufferExtraData> extraData = requestBuffer->GetExtraData();
-    ASSERT_NE(extraData, nullptr);
-    extraData->ExtraSet(OHOS::Camera::captureId, captureId);
-    extraData->ExtraSet(OHOS::Camera::imageCount, 3);
-    ASSERT_EQ(producer->FlushBuffer(requestBuffer, requestFence, config), GSERROR_OK);
+    sptr<BufferExtraData> bedata = new BufferExtraDataImpl();
+    IBufferProducer::RequestBufferReturnValue retval;
+    ASSERT_EQ(producer->RequestBuffer(config, bedata, retval), GSERROR_OK);
+    ASSERT_NE(retval.buffer, nullptr);
+    bedata->ExtraSet(OHOS::Camera::captureId, captureId);
+    bedata->ExtraSet(OHOS::Camera::imageCount, 3);
+    BufferFlushConfigWithDamages flushConfig = {};
+    ASSERT_EQ(producer->FlushBuffer(retval.sequence, bedata, retval.fence, flushConfig), GSERROR_OK);
 
     auto consumer = std::make_shared<PhotoBufferConsumer>(streamCapture, false);
     EXPECT_CALL(*mockCallbackRaw, OnPhotoAvailable(_, _, _)).WillOnce(testing::Return(0));
@@ -593,15 +592,14 @@ HWTEST_F(PhotoBufferConsumerUnitTest, ExecuteOnBufferAvailable_AuxPhoto_003, Tes
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
         .timeout = 0,
     };
-    sptr<SurfaceBuffer> requestBuffer = nullptr;
-    sptr<SyncFence> requestFence = SyncFence::InvalidFence();
-    ASSERT_EQ(producer->RequestBuffer(requestBuffer, requestFence, config), GSERROR_OK);
-    ASSERT_NE(requestBuffer, nullptr);
-    sptr<BufferExtraData> extraData = requestBuffer->GetExtraData();
-    ASSERT_NE(extraData, nullptr);
-    extraData->ExtraSet(OHOS::Camera::captureId, captureId);
-    extraData->ExtraSet(OHOS::Camera::imageCount, 1);
-    ASSERT_EQ(producer->FlushBuffer(requestBuffer, requestFence, config), GSERROR_OK);
+    sptr<BufferExtraData> bedata = new BufferExtraDataImpl();
+    IBufferProducer::RequestBufferReturnValue retval;
+    ASSERT_EQ(producer->RequestBuffer(config, bedata, retval), GSERROR_OK);
+    ASSERT_NE(retval.buffer, nullptr);
+    bedata->ExtraSet(OHOS::Camera::captureId, captureId);
+    bedata->ExtraSet(OHOS::Camera::imageCount, 1);
+    BufferFlushConfigWithDamages flushConfig = {};
+    ASSERT_EQ(producer->FlushBuffer(retval.sequence, bedata, retval.fence, flushConfig), GSERROR_OK);
 
     auto consumer = std::make_shared<PhotoBufferConsumer>(streamCapture, false);
     EXPECT_CALL(*mockCallbackRaw, OnPhotoAvailable(_, _, _)).WillOnce(testing::Return(0));
@@ -635,15 +633,14 @@ HWTEST_F(PhotoBufferConsumerUnitTest, PhotoAssetBufferConsumer_CleanAuxState_001
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
         .timeout = 0,
     };
-    sptr<SurfaceBuffer> requestBuffer = nullptr;
-    sptr<SyncFence> requestFence = SyncFence::InvalidFence();
-    ASSERT_EQ(producer->RequestBuffer(requestBuffer, requestFence, config), GSERROR_OK);
-    ASSERT_NE(requestBuffer, nullptr);
-    sptr<BufferExtraData> extraData = requestBuffer->GetExtraData();
-    ASSERT_NE(extraData, nullptr);
-    extraData->ExtraSet(OHOS::Camera::captureId, captureId);
-    extraData->ExtraSet(OHOS::Camera::imageCount, 1);
-    ASSERT_EQ(producer->FlushBuffer(requestBuffer, requestFence, config), GSERROR_OK);
+    sptr<BufferExtraData> bedata = new BufferExtraDataImpl();
+    IBufferProducer::RequestBufferReturnValue retval;
+    ASSERT_EQ(producer->RequestBuffer(config, bedata, retval), GSERROR_OK);
+    ASSERT_NE(retval.buffer, nullptr);
+    bedata->ExtraSet(OHOS::Camera::captureId, captureId);
+    bedata->ExtraSet(OHOS::Camera::imageCount, 1);
+    BufferFlushConfigWithDamages flushConfig = {};
+    ASSERT_EQ(producer->FlushBuffer(retval.sequence, bedata, retval.fence, flushConfig), GSERROR_OK);
 
     auto consumer = std::make_shared<PhotoAssetBufferConsumer>(streamCapture);
     EXPECT_CALL(*mockAssetCallbackRaw, OnPhotoAssetAvailable(captureId, _, _, _)).WillOnce(testing::Return(0));
