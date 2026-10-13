@@ -2501,6 +2501,9 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
 int32_t HCameraService::EnableControlCenter(bool status, bool needPersistEnable)
 {
     MEDIA_INFO_LOG("HCameraService::EnableControlCenter");
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    int32_t permRet = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, IPCSkeleton::GetCallingTokenID());
+    CHECK_RETURN_RET_ELOG(permRet != CAMERA_OK, permRet, "HCameraService::EnableControlCenter permission denied");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition_, CAMERA_INVALID_STATE, "ControlCenterPrecondition false.");
     lock_guard<mutex> lock(controlCenterStatusMutex_);
     auto ret = UpdateDataShareAndTag(status, needPersistEnable);
@@ -2526,6 +2529,9 @@ int32_t HCameraService::EnableControlCenter(bool status, bool needPersistEnable)
 int32_t HCameraService::SetControlCenterPrecondition(bool condition)
 {
     MEDIA_INFO_LOG("HCameraService::SetControlCenterPrecondition %{public}d", condition);
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    int32_t permRet = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, IPCSkeleton::GetCallingTokenID());
+    CHECK_RETURN_RET_ELOG(permRet != CAMERA_OK, permRet, "HCameraService::SetControlCenterPrecondition permission denied");
     sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
     controlCenterPrecondition_ = condition;
     if (sessionForControlCenter != nullptr) {
