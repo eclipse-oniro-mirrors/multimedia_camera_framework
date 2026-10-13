@@ -753,6 +753,10 @@ public:
     static napi_value GetSaturation(napi_env env, napi_callback_info info);
     static napi_value SetSaturation(napi_env env, napi_callback_info info);
 
+    static napi_value IsContrastSupported(napi_env env, napi_callback_info info);
+    static napi_value GetContrast(napi_env env, napi_callback_info info);
+    static napi_value SetContrast(napi_env env, napi_callback_info info);
+
     static napi_value IsColorCubeSupported(napi_env env, napi_callback_info info);
     static napi_value EnableColorCube(napi_env env, napi_callback_info info);
     static napi_value DisableColorCube(napi_env env, napi_callback_info info);

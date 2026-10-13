@@ -84,6 +84,8 @@ const std::string AUDIO_EXTRA_PARAM_AUDIO_EFFECT = "audio_effect";
 const std::string AUDIO_EXTRA_PARAM_ZOOM_RATIO = "zoom_ratio";
 constexpr float SATURATION_VALUE_MIN = -1.0f;
 constexpr float SATURATION_VALUE_MAX = 1.0f;
+constexpr float CONTRAST_VALUE_MIN = -1.0f;
+constexpr float CONTRAST_VALUE_MAX = 1.0f;
 } // namespace
 
 static const std::unordered_map<CaptureOutputType, std::set<CaptureOutputType>> typeConflictMap = {
@@ -8422,6 +8424,146 @@ int32_t CaptureSession::ExpandLhdrGainmapStream(bool enabled)
         CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, CameraErrorCode::SERVICE_FATL_ERROR,
             "Failed to ExpandLhdrGainmapStream, %{public}d", errCode);
     }
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetSupportedContrastRange(std::vector<int32_t> &contrastRange)
+{
+    CHECK_RETURN_RET_ELOG(!(IsSessionCommited() || IsSessionConfiged()), CameraErrorCode::SESSION_NOT_CONFIG,
+        "GetSupportedContrastRange not committed");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(inputDevice == nullptr, CameraErrorCode::SUCCESS,
+        "GetSupportedContrastRange camera device is null");
+    auto deviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(deviceInfo == nullptr, CameraErrorCode::SUCCESS,
+        "GetSupportedContrastRange camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = deviceInfo->GetCachedMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS,
+        "GetSupportedContrastRange camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_ABILITY_CONTRAST_RANGE, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
+        "GetSupportedContrastRange Failed with return code %{public}d", ret);
+    for (uint32_t i = 0; i < item.count; i++) {
+        MEDIA_DEBUG_LOG("GetSupportedContrastRange i: %{public}d, val:%{public}d", i, item.data.i32[i]);
+        contrastRange.emplace_back(item.data.i32[i]);
+    }
+    return CameraErrorCode::SUCCESS;
+}
+
+void CaptureSession::GetContrastRangeForCurrentMode(
+    const std::vector<int32_t> &contrastRange, int32_t &minVal, int32_t &maxVal)
+{
+    // contrastRange format: [SceneMode, minVal, maxVal, terminator] per group
+    constexpr size_t contrastGroupSize = 4;
+    constexpr size_t minValOffset = 1;
+    constexpr size_t maxValOffset = 2;
+    CHECK_RETURN_ELOG(contrastRange.size() < contrastGroupSize,
+        "GetContrastRangeForCurrentMode contrastRange size is invalid");
+    int32_t currentMode = static_cast<int32_t>(GetMode());
+    bool modeMatched = false;
+    int32_t defaultMinVal = 0;
+    int32_t defaultMaxVal = 0;
+    bool defaultFound = false;
+    for (size_t i = 0; i + contrastGroupSize <= contrastRange.size(); i += contrastGroupSize) {
+        int32_t sceneMode = contrastRange[i];
+        if (sceneMode == currentMode) {
+            minVal = contrastRange[i + minValOffset];
+            maxVal = contrastRange[i + maxValOffset];
+            modeMatched = true;
+            break;
+        }
+        if (sceneMode == SceneMode::NORMAL && !defaultFound) {
+            defaultMinVal = contrastRange[i + minValOffset];
+            defaultMaxVal = contrastRange[i + maxValOffset];
+            defaultFound = true;
+        }
+    }
+    if (!modeMatched) {
+        CHECK_RETURN_ELOG(
+            !defaultFound, "GetContrastRangeForCurrentMode no matching SceneMode and no default mode found");
+        minVal = defaultMinVal;
+        maxVal = defaultMaxVal;
+    }
+}
+
+int32_t CaptureSession::IsContrastSupported(bool &isSupported)
+{
+    isSupported = false;
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "IsContrastSupported SystemApi called!");
+    std::vector<int32_t> contrastRange;
+    (void)GetSupportedContrastRange(contrastRange);
+    constexpr size_t contrastGroupSize = 4;
+    if (contrastRange.size() < contrastGroupSize) {
+        MEDIA_ERR_LOG("contrastRange.size < contrastGroupSize");
+        return CameraErrorCode::SUCCESS;
+    }
+    int32_t currentMode = static_cast<int32_t>(GetMode());
+    for (size_t i = 0; i + contrastGroupSize <= contrastRange.size(); i += contrastGroupSize) {
+        if (contrastRange[i] == currentMode || contrastRange[i] == 0) {
+            isSupported = true;
+            return CameraErrorCode::SUCCESS;
+        }
+    }
+    MEDIA_INFO_LOG("IsContrastSupported isSupported: %{public}d", isSupported);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::GetContrast(float &contrastVal)
+{
+    contrastVal = 0.0f;
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "GetContrast SystemApi called!");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "GetContrast Session is not committed");
+    auto inputDevice = GetInputDevice();
+    CHECK_RETURN_RET_ELOG(!inputDevice, CameraErrorCode::SUCCESS, "GetContrast camera device is null");
+    auto inputDeviceInfo = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(!inputDeviceInfo, CameraErrorCode::SUCCESS, "GetContrast camera deviceInfo is null");
+    std::shared_ptr<Camera::CameraMetadata> metadata = GetMetadata();
+    CHECK_RETURN_RET_ELOG(metadata == nullptr, CameraErrorCode::SUCCESS, "GetContrast camera metadata is null");
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(), OHOS_CONTROL_CONTRAST, &item);
+    CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
+                          "GetContrast Failed with return code %{public}d", ret);
+    int32_t contrastValTemp = item.data.i32[0];
+    std::vector<int32_t> contrastRangeAll;
+    (void)GetSupportedContrastRange(contrastRangeAll);
+    int32_t minVal = 0;
+    int32_t maxVal = 0;
+    GetContrastRangeForCurrentMode(contrastRangeAll, minVal, maxVal);
+    if (maxVal > 0 && maxVal > minVal) {
+        int32_t clamped_val = std::clamp(contrastValTemp, minVal, maxVal);
+        contrastVal = static_cast<float>(clamped_val) / maxVal;
+    }
+    MEDIA_INFO_LOG("Get contrastVal: %{public}d, clamped_val: %{public}f", contrastValTemp, contrastVal);
+    return CameraErrorCode::SUCCESS;
+}
+
+int32_t CaptureSession::SetContrast(float contrastVal)
+{
+    CHECK_RETURN_RET_ELOG(
+        !CameraSecurity::CheckSystemApp(), NO_SYSTEM_APP_PERMISSION, "SetContrast SystemApi called!");
+    MEDIA_INFO_LOG("SetContrast is called");
+    CHECK_RETURN_RET_ELOG(
+        !IsSessionCommited(), CameraErrorCode::SESSION_NOT_CONFIG, "SetContrast not committed");
+    CHECK_RETURN_RET_ELOG(
+        changedMetadata_ == nullptr, CameraErrorCode::SUCCESS, "SetContrast changedMetadata is null");
+    float contrastValTemp = std::clamp(contrastVal, CONTRAST_VALUE_MIN, CONTRAST_VALUE_MAX);
+    std::vector<int32_t> contrastRangeAll;
+    auto ret = GetSupportedContrastRange(contrastRangeAll);
+    CHECK_RETURN_RET_ELOG(ret != CameraErrorCode::SUCCESS, ret,
+        "SetContrast Failed to get supported contrast range, ret:%{public}d", ret);
+    int32_t minVal = 0;
+    int32_t maxVal = 0;
+    GetContrastRangeForCurrentMode(contrastRangeAll, minVal, maxVal);
+    CHECK_RETURN_RET_ELOG(maxVal <= minVal, CameraErrorCode::SUCCESS,
+        "SetContrast Failed to get contrast range for current mode");
+    int32_t clamped_val = static_cast<int32_t>(contrastValTemp * static_cast<float>(maxVal));
+    MEDIA_INFO_LOG("Set contrastVal: %{public}f, clamped_val: %{public}d", contrastValTemp, clamped_val);
+    bool status = AddOrUpdateMetadata(changedMetadata_, OHOS_CONTROL_CONTRAST, &clamped_val, 1);
+    CHECK_PRINT_ELOG(!status, "SetContrast Failed to set contrastVal");
     return CameraErrorCode::SUCCESS;
 }
 } // namespace CameraStandard

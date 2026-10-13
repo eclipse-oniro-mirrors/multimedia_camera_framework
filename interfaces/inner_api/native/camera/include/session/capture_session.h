@@ -1584,6 +1584,28 @@ public:
     int32_t SetSaturation(float saturationVal);
 
     /**
+     * @brief Checks whether the contrast feature is supported by the current hardware configuration.
+     * @param isSupported [out] Receives true if supported, false otherwise.
+     * @return Returns errCode. 0 indicates success.
+     */
+    int32_t IsContrastSupported(bool &isSupported);
+
+    /**
+     * @brief Retrieves the current contrast adjustment value.
+     * @param contrastVal [out] Receives the current contrast value.
+     * @return Returns errCode. 0 indicates success.
+     */
+    int32_t GetContrast(float &contrastVal);
+
+    /**
+     * @brief Sets the contrast adjustment value.
+     * @param contrastVal The desired contrast value.
+     * @return Returns errCode. 0 indicates success. Invalid range or unsupported feature will return a specific error
+     * code.
+     */
+    int32_t SetContrast(float contrastVal);
+
+    /**
      * @brief Checks whether color cube (LUT) is supported.
      * @param isSupported True if supported false otherwise.
      * @return Returns errCode.
@@ -2618,6 +2640,9 @@ protected:
 
     private:
     void GetSaturationRangeForCurrentMode(const std::vector<int32_t> &saturationRange,
+        int32_t &minVal, int32_t &maxVal);
+    int32_t GetSupportedContrastRange(std::vector<int32_t> &contrastRange);
+    void GetContrastRangeForCurrentMode(const std::vector<int32_t> &contrastRange,
         int32_t &minVal, int32_t &maxVal);
     void GetRGBGainsRangeForCurrentMode(
         const std::vector<int32_t>& rgbGainsRange, int32_t& minGain, int32_t& maxGain);

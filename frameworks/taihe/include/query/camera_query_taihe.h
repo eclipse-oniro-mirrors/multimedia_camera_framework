@@ -412,6 +412,7 @@ public:
     virtual ~ColorControlsQueryImpl() = default;
     virtual bool IsSaturationSupported();
     virtual bool IsRGBBiasSupported();
+    virtual bool IsContrastSupported();
 };
 
 class ColorControlsImpl : public ColorControlsQueryImpl {
@@ -422,6 +423,8 @@ public:
     virtual void SetSaturation(double val);
     virtual void SetRGBBias(RGBBias bias);
     virtual RGBBias GetRGBBias();
+    virtual double GetContrast();
+    virtual void SetContrast(double val);
 };
 
 class ImagingModeQueryImpl : virtual public SessionBase {

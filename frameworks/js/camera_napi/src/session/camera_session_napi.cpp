@@ -387,7 +387,10 @@ const std::vector<napi_property_descriptor> CameraSessionNapi::color_cube_props 
     DECLARE_NAPI_FUNCTION("getSupportedCubeDimension", CameraSessionNapi::GetSupportedCubeDimension),
     DECLARE_NAPI_FUNCTION("isRGBBiasSupported", CameraSessionNapi::IsWhiteBalanceGainsSupported),
     DECLARE_NAPI_FUNCTION("getRGBBias", CameraSessionNapi::GetWhiteBalanceGains),
-    DECLARE_NAPI_FUNCTION("setRGBBias", CameraSessionNapi::SetWhiteBalanceGains)
+    DECLARE_NAPI_FUNCTION("setRGBBias", CameraSessionNapi::SetWhiteBalanceGains),
+    DECLARE_NAPI_FUNCTION("isContrastSupported", CameraSessionNapi::IsContrastSupported),
+    DECLARE_NAPI_FUNCTION("getContrast", CameraSessionNapi::GetContrast),
+    DECLARE_NAPI_FUNCTION("setContrast", CameraSessionNapi::SetContrast)
 };
 
 const std::vector<napi_property_descriptor> CameraSessionNapi::camera_switch_cb_props = {
@@ -6998,6 +7001,67 @@ napi_value CameraSessionNapi::DisableColorCube(napi_env env, napi_callback_info 
     } else {
         MEDIA_ERR_LOG("CameraSessionNapi::DisableColorCube get native object fail");
     }
+    return result;
+}
+
+napi_value CameraSessionNapi::IsContrastSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("IsContrastSupported is called.");
+    bool isSupported = false;
+    napi_value result = nullptr;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (jsParamParser.IsStatusOk() && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t retCode = cameraSessionNapi->cameraSession_->IsContrastSupported(isSupported);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return CameraNapiUtils::GetUndefinedValue(env);
+        }
+    } else {
+        MEDIA_ERR_LOG("IsContrastSupported get native object fail");
+    }
+    napi_get_boolean(env, isSupported, &result);
+    return result;
+}
+
+napi_value CameraSessionNapi::SetContrast(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("SetContrast is called.");
+    double contrastVal = 0.0;
+    double maxVal = 1.0;
+    double minVal = -1.0;
+    double scaleFactor = 100.0;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi, contrastVal);
+    if (jsParamParser.IsStatusOk() && cameraSessionNapi->cameraSession_ != nullptr) {
+        cameraSessionNapi->cameraSession_->LockForControl();
+        double clamped_val = std::clamp(contrastVal, minVal, maxVal);
+        float rounded_float = static_cast<float>(std::round(clamped_val * scaleFactor) / scaleFactor);
+        int32_t retCode =
+            cameraSessionNapi->cameraSession_->SetContrast(rounded_float);
+        cameraSessionNapi->cameraSession_->UnlockForControl();
+        CHECK_RETURN_RET(!CameraNapiUtils::CheckError(env, retCode), nullptr);
+    } else {
+        MEDIA_ERR_LOG("SetContrast call Failed!");
+    }
+    return CameraNapiUtils::GetUndefinedValue(env);
+}
+
+napi_value CameraSessionNapi::GetContrast(napi_env env, napi_callback_info info)
+{
+    MEDIA_DEBUG_LOG("GetContrast is called.");
+    float contrastVal = 0.0f;
+    napi_value result = nullptr;
+    CameraSessionNapi* cameraSessionNapi = nullptr;
+    CameraNapiParamParser jsParamParser(env, info, cameraSessionNapi);
+    if (jsParamParser.IsStatusOk() && cameraSessionNapi->cameraSession_ != nullptr) {
+        int32_t retCode = cameraSessionNapi->cameraSession_->GetContrast(contrastVal);
+        if (!CameraNapiUtils::CheckError(env, retCode)) {
+            return CameraNapiUtils::GetUndefinedValue(env);
+        }
+    } else {
+        MEDIA_ERR_LOG("GetContrast call Failed!");
+    }
+    napi_create_double(env, CameraNapiUtils::FloatToDouble(contrastVal), &result);
     return result;
 }
 } // namespace CameraStandard
