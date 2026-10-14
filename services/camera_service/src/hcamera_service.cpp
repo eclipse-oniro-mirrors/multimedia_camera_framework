@@ -2875,7 +2875,8 @@ int32_t HCameraService::NotifyCameraState(const std::string& cameraId, int32_t s
 int32_t HCameraService::SetPeerCallback(const sptr<ICameraBroker>& callback)
 {
     MEDIA_INFO_LOG("SetPeerCallback get callback");
-    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::SetPeerCallback CheckSystemApp fail");
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "HCameraService::SetPeerCallback CheckSystemApp fail");
     CHECK_RETURN_RET(callback == nullptr, CAMERA_INVALID_ARG);
     {
         std::lock_guard<std::mutex> lock(peerCallbackMutex_);
@@ -2890,7 +2891,8 @@ int32_t HCameraService::SetPeerCallback(const sptr<ICameraBroker>& callback)
 int32_t HCameraService::UnsetPeerCallback()
 {
     MEDIA_INFO_LOG("UnsetPeerCallback callback");
-    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::UnsetPeerCallback CheckSystemApp fail");
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
+        "HCameraService::UnsetPeerCallback CheckSystemApp fail");
     {
         std::lock_guard<std::mutex> lock(peerCallbackMutex_);
         peerCallback_ = nullptr;
