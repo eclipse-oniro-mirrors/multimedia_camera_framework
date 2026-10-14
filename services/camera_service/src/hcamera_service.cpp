@@ -2531,7 +2531,8 @@ int32_t HCameraService::SetControlCenterPrecondition(bool condition)
     MEDIA_INFO_LOG("HCameraService::SetControlCenterPrecondition %{public}d", condition);
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     int32_t permRet = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, IPCSkeleton::GetCallingTokenID());
-    CHECK_RETURN_RET_ELOG(permRet != CAMERA_OK, permRet, "HCameraService::SetControlCenterPrecondition permission denied");
+    CHECK_RETURN_RET_ELOG(permRet != CAMERA_OK, permRet,
+        "HCameraService::SetControlCenterPrecondition permission denied");
     sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
     controlCenterPrecondition_ = condition;
     if (sessionForControlCenter != nullptr) {
