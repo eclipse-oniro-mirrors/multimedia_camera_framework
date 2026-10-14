@@ -1762,6 +1762,8 @@ int32_t HCameraService::CreateMovieFileOutput(
 #ifdef CAMERA_MOVIE_FILE
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreateMovieFileOutput start");
+    CHECK_RETURN_RET_ELOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CreateMovieFileOutput CheckSystemApp failed");
     if (videoProfile.width <= 0 || videoProfile.height <= 0) {
         rc = CAMERA_INVALID_ARG;
         MEDIA_ERR_LOG("HCameraService::CreateMovieFileOutput width or height is invalid");
