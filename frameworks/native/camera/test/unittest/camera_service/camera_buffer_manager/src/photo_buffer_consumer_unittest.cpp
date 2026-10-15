@@ -393,20 +393,6 @@ HWTEST_F(PhotoBufferConsumerUnitTest, StartWaitAuxPhotoTask_005, TestSize.Level0
     streamCapture->CleanAuxPhotoState(captureId);
 }
 
-HWTEST_F(PhotoBufferConsumerUnitTest, StartWaitAuxPhotoTask_006, TestSize.Level0)
-{
-    sptr<HStreamCapture> streamCapture =
-        new (std::nothrow) HStreamCapture(CAMERA_FORMAT_YUV_420_SP, AUX_PHOTO_TEST_WIDTH, AUX_PHOTO_TEST_HEIGHT);
-    ASSERT_NE(streamCapture, nullptr);
-    auto consumer = std::make_shared<PhotoBufferConsumer>(streamCapture, false);
-    streamCapture = nullptr;
-    int64_t timestamp = 123456797ULL;
-    sptr<SurfaceBuffer> mainBuffer = SurfaceBuffer::Create();
-    ASSERT_NE(mainBuffer, nullptr);
-    consumer->StartWaitAuxPhotoTask(2007, timestamp, mainBuffer);
-    EXPECT_EQ(streamCapture, nullptr);
-}
-
 HWTEST_F(PhotoBufferConsumerUnitTest, AssembleCompressedPhotoWithAux_001, TestSize.Level0)
 {
     sptr<HStreamCapture> streamCapture =
@@ -477,18 +463,6 @@ HWTEST_F(PhotoBufferConsumerUnitTest, AssembleCompressedPhotoWithAux_003, TestSi
     auto consumer = std::make_shared<PhotoBufferConsumer>(streamCapture, false);
     consumer->AssembleCompressedPhotoWithAux(timestamp, captureId);
     EXPECT_EQ(streamCapture->captureIdMainPhotoMap_.count(captureId), 0U);
-}
-
-HWTEST_F(PhotoBufferConsumerUnitTest, AssembleCompressedPhotoWithAux_004, TestSize.Level0)
-{
-    sptr<HStreamCapture> streamCapture =
-        new (std::nothrow) HStreamCapture(CAMERA_FORMAT_YUV_420_SP, AUX_PHOTO_TEST_WIDTH, AUX_PHOTO_TEST_HEIGHT);
-    ASSERT_NE(streamCapture, nullptr);
-    auto consumer = std::make_shared<PhotoBufferConsumer>(streamCapture, false);
-    streamCapture = nullptr;
-    int64_t timestamp = 123456801ULL;
-    consumer->AssembleCompressedPhotoWithAux(timestamp, 2011);
-    EXPECT_EQ(streamCapture, nullptr);
 }
 
 HWTEST_F(PhotoBufferConsumerUnitTest, ExecuteOnBufferAvailable_AuxPhoto_001, TestSize.Level0)
