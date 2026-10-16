@@ -344,6 +344,8 @@ napi_value MetadataOutputNapi::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isLockMetadataObjectTrackingSupported", IsLockMetadataObjectTrackingSupported),
         DECLARE_NAPI_FUNCTION("lockMetadataObjectTracking", LockMetadataObjectTracking),
         DECLARE_NAPI_FUNCTION("unlockMetadataObjectTracking", UnlockMetadataObjectTracking),
+        DECLARE_NAPI_FUNCTION("isInFrameMetadataForEncoderSupported", IsInFrameMetadataForEncoderSupported),
+        DECLARE_NAPI_FUNCTION("setInFrameMetadataForEncoderEnabled", SetInFrameMetadataForEncoderEnabled),
         DECLARE_NAPI_FUNCTION("start", Start),
         DECLARE_NAPI_FUNCTION("stop", Stop),
         DECLARE_NAPI_FUNCTION("release", Release),
@@ -643,6 +645,79 @@ napi_value MetadataOutputNapi::UnlockMetadataObjectTracking(napi_env env, napi_c
         MEDIA_ERR_LOG("UnlockMetadataObjectTracking failure!");
     }
     MEDIA_INFO_LOG("UnlockMetadataObjectTracking: success");
+    return result;
+}
+
+napi_value MetadataOutputNapi::IsInFrameMetadataForEncoderSupported(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("IsInFrameMetadataForEncoderSupported is called");
+    napi_status status;
+    napi_value result = nullptr;
+    napi_value thisVar = nullptr;
+    size_t argc = ARGS_ZERO;
+    napi_value argv[ARGS_ZERO];
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    napi_get_boolean(env, false, &result);
+
+    MetadataOutputNapi* metadataOutputNapi = nullptr;
+    status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataOutputNapi));
+    if (status != napi_ok || metadataOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("IsInFrameMetadataForEncoderSupported: napi_unwrap failure!");
+        return result;
+    }
+
+    if (metadataOutputNapi->metadataOutput_ == nullptr) {
+        MEDIA_ERR_LOG("IsInFrameMetadataForEncoderSupported: metadataOutput_ is nullptr!");
+        return result;
+    }
+    bool isSupported = metadataOutputNapi->metadataOutput_->IsInFrameMetadataForEncoderSupported();
+    napi_get_boolean(env, isSupported, &result);
+
+    MEDIA_INFO_LOG("IsInFrameMetadataForEncoderSupported: result = %{public}d", isSupported);
+    return result;
+}
+
+napi_value MetadataOutputNapi::SetInFrameMetadataForEncoderEnabled(napi_env env, napi_callback_info info)
+{
+    MEDIA_INFO_LOG("SetInFrameMetadataForEncoderEnabled is called");
+    napi_value result = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {0};
+    napi_value thisVar = nullptr;
+
+    CAMERA_NAPI_GET_JS_ARGS(env, info, argc, argv, thisVar);
+    NAPI_ASSERT(env, argc == ARGS_ONE, "requires 1 parameter");
+
+    napi_get_undefined(env, &result);
+    MetadataOutputNapi* metadataOutputNapi = nullptr;
+    napi_status status = napi_unwrap(env, thisVar, reinterpret_cast<void**>(&metadataOutputNapi));
+    if (status != napi_ok || metadataOutputNapi == nullptr) {
+        MEDIA_ERR_LOG("SetInFrameMetadataForEncoderEnabled: napi_unwrap failure!");
+        return result;
+    }
+
+    bool enable = false;
+    if (napi_get_value_bool(env, argv[PARAM0], &enable) != napi_ok) {
+        MEDIA_ERR_LOG("SetInFrameMetadataForEncoderEnabled: failed to parse boolean parameter");
+        return result;
+    }
+
+    if (metadataOutputNapi->metadataOutput_ == nullptr) {
+        MEDIA_ERR_LOG("SetInFrameMetadataForEncoderEnabled: metadataOutput_ is nullptr!");
+        return result;
+    }
+    if (!metadataOutputNapi->metadataOutput_->IsInFrameMetadataForEncoderSupported()) {
+        MEDIA_ERR_LOG("SetInFrameMetadataForEncoderEnabled: capability not supported");
+        CameraNapiUtils::ThrowError(env, InnerErrorCode::CAPABILITY_NOT_SUPPORTED,
+            "Capability not supported. Check if the camera device supports the required "
+            "in frame metadata delivery for encoder by using capability query APIs.");
+        return result;
+    }
+    int32_t retCode = metadataOutputNapi->metadataOutput_->SetInFrameMetadataForEncoderEnabled(enable);
+    if (!CameraNapiUtils::CheckBusinessError(env, retCode)) {
+        MEDIA_ERR_LOG("SetInFrameMetadataForEncoderEnabled failure!");
+    }
+    MEDIA_INFO_LOG("SetInFrameMetadataForEncoderEnabled: enable = %{public}d", enable);
     return result;
 }
 

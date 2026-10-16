@@ -296,6 +296,29 @@ Camera_ErrorCode OH_MetadataOutput_LockMetadataObjectTracking(Camera_MetadataOut
  */
 Camera_ErrorCode OH_MetadataOutput_UnlockMetadataObjectTracking(Camera_MetadataOutput* metadataOutput);
 
+/**
+ * @brief Check if in frame metdata for encoder is supported.
+ *
+ * @param metadataOutput Pointer to a MetadataOutput instance.
+ * @return **true** if supported, **false** otherwise.
+ * @since 26.0.1
+ */
+bool OH_MetadataOutput_IsInFrameMetadataForEncoderSupported(const Camera_MetadataOutput* metadataOutput);
+
+/**
+ * @brief Enable or disable in frame metadata delivery for encoder.
+ *
+ * @param metadataOutput Pointer to a MetadataOutput instance.
+ * @param enable Whether to enable delivery of in frame metadata for encoder.
+ *     **true** to enable, **false** otherwise.
+ * @return **CAMERA_OK**: The operation is successful.
+ *     <br>**CAMERA_INVALID_ARGUMENT**: A parameter is missing or the parameter type is incorrect.
+ *     <br>**CAMERA_SERVICE_FATAL_ERROR**: The camera service is abnormal.
+ * @since 26.0.1
+ */
+Camera_ErrorCode OH_MetadataOutput_SetInFrameMetadataForEncoderEnabled(Camera_MetadataOutput* metadataOutput,
+    bool enable);
+
 #ifdef __cplusplus
 }
 #endif

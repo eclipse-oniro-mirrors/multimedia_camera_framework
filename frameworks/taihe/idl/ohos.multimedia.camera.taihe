@@ -2729,6 +2729,8 @@ interface MetadataOutput : CameraOutput {
   IsLockMetadataObjectTrackingSupported(): bool;
   LockMetadataObjectTracking(pointOfInterest: Point): void;
   UnlockMetadataObjectTracking(): void;
+  IsInFrameMetadataForEncoderSupported(): bool;
+  SetInFrameMetadataForEncoderEnabled(enable: bool): void;
 }
 
 struct MovieInfo {

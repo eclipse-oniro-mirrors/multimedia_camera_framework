@@ -185,6 +185,24 @@ Camera_ErrorCode OH_MetadataOutput_UnlockMetadataObjectTracking(
     return metadataOutput->UnlockMetadataObjectTracking();
 }
 
+bool OH_MetadataOutput_IsInFrameMetadataForEncoderSupported(
+    const Camera_MetadataOutput* metadataOutput)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, false, "Invalid argument, metadataOutput is null!");
+
+    return metadataOutput->IsInFrameMetadataForEncoderSupported();
+}
+
+Camera_ErrorCode OH_MetadataOutput_SetInFrameMetadataForEncoderEnabled(
+    Camera_MetadataOutput* metadataOutput, bool enable)
+{
+    CHECK_RETURN_RET_ELOG(
+        metadataOutput == nullptr, CAMERA_INVALID_ARGUMENT, "Invalid argument, metadataOutput is null!");
+
+    return metadataOutput->SetInFrameMetadataForEncoderEnabled(enable);
+}
+
 Camera_ErrorCode OH_MetadataOutput_RegisterMetadataObjectExtAvailableCallback(Camera_MetadataOutput* metadataOutput,
     void* context, OH_MetadataOutput_OnMetadataObjectExtAvailable callback)
 {

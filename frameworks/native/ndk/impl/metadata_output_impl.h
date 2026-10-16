@@ -57,6 +57,10 @@ public:
 
     Camera_ErrorCode UnlockMetadataObjectTracking();
 
+    bool IsInFrameMetadataForEncoderSupported() const;
+
+    Camera_ErrorCode SetInFrameMetadataForEncoderEnabled(bool enable);
+
 private:
     OHOS::CameraStandard::MetadataObjectType convert(Camera_MetadataObjectType type);
     OHOS::sptr<OHOS::CameraStandard::MetadataOutput> innerMetadataOutput_;

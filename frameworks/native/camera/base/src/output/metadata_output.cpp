@@ -733,6 +733,48 @@ int32_t MetadataOutput::UnlockMetadataObjectTracking()
     // LCOV_EXCL_STOP
 }
 
+bool MetadataOutput::IsInFrameMetadataForEncoderSupported()
+{
+    auto session = GetSession();
+    CHECK_RETURN_RET(session == nullptr, false);
+    auto inputDevice = session->GetInputDevice();
+    CHECK_RETURN_RET(inputDevice == nullptr, false);
+    sptr<CameraDevice> cameraObj = inputDevice->GetCameraDeviceInfo();
+    CHECK_RETURN_RET(cameraObj == nullptr, false);
+    std::shared_ptr<Camera::CameraMetadata> metadata = cameraObj->GetCachedMetadata();
+    CHECK_RETURN_RET(metadata == nullptr, false);
+
+    camera_metadata_item_t item;
+    int ret = Camera::FindCameraMetadataItem(metadata->get(),
+        OHOS_ABILITY_IN_FRAME_METADATA_FOR_ENCODER, &item);
+    CHECK_RETURN_RET(ret != CAM_META_SUCCESS, false);
+    CHECK_RETURN_RET_DLOG(item.count == 0 || item.data.u8 == nullptr,
+                          false,
+                          "IsInFrameMetadataForEncoderSupported: empty data or null");
+    MEDIA_DEBUG_LOG("IsInFrameMetadataForEncoderSupported: supported = %{public}d", item.data.u8[0]);
+    return item.data.u8[0] != 0;
+}
+
+int32_t MetadataOutput::SetInFrameMetadataForEncoderEnabled(bool enable)
+{
+    sptr<ICameraDeviceService> cameraDeviceObj = nullptr;
+    CHECK_RETURN_RET_ELOG(GetICameraDeviceService(cameraDeviceObj) != CameraErrorCode::SUCCESS,
+                          CameraErrorCode::SERVICE_FATL_ERROR,
+                          "SetInFrameMetadataForEncoderEnabled cameraDeviceObj failed");
+    uint8_t enableValue = enable ? 1 : 0;
+    auto changedMetadata = std::make_shared<OHOS::Camera::CameraMetadata>(1, 1);
+    bool result = AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_IN_FRAME_METADATA_FOR_ENCODER, &enableValue, 1);
+    CHECK_RETURN_RET_ELOG(!result,
+                          CameraErrorCode::SERVICE_FATL_ERROR,
+                          "SetInFrameMetadataForEncoderEnabled: failed to set enable");
+    int32_t ret = cameraDeviceObj->UpdateSetting(changedMetadata);
+    CHECK_RETURN_RET_ELOG(ret != CAMERA_OK,
+                          CameraErrorCode::SERVICE_FATL_ERROR,
+                          "SetInFrameMetadataForEncoderEnabled: Failed to update settings, errCode = %{public}d", ret);
+    MEDIA_DEBUG_LOG("SetInFrameMetadataForEncoderEnabled: success, enable = %{public}d", enable);
+    return CameraErrorCode::SUCCESS;
+}
+
 int32_t MetadataOutput::GetICameraDeviceService(sptr<ICameraDeviceService>& cameraDeviceObj)
 {
     auto session = GetSession();

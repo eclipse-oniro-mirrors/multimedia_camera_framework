@@ -476,6 +476,10 @@ public:
 
     int32_t UnlockMetadataObjectTracking();
 
+    bool IsInFrameMetadataForEncoderSupported();
+
+    int32_t SetInFrameMetadataForEncoderEnabled(bool enable);
+
     bool reportFaceResults_ = false;
     bool reportLastFaceResults_ = false;
     void ProcessMetadata(const int32_t streamId, const std::shared_ptr<OHOS::Camera::CameraMetadata>& result,

@@ -290,3 +290,13 @@ Camera_ErrorCode Camera_MetadataOutput::UnlockMetadataObjectTracking()
     int32_t ret = innerMetadataOutput_->UnlockMetadataObjectTracking();
     return FrameworkToNdkCameraError(ret);
 }
+bool Camera_MetadataOutput::IsInFrameMetadataForEncoderSupported() const
+{
+    return innerMetadataOutput_->IsInFrameMetadataForEncoderSupported();
+}
+
+Camera_ErrorCode Camera_MetadataOutput::SetInFrameMetadataForEncoderEnabled(bool enable)
+{
+    int32_t ret = innerMetadataOutput_->SetInFrameMetadataForEncoderEnabled(enable);
+    return FrameworkToNdkCameraError(ret);
+}
