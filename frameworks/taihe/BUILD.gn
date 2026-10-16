@@ -135,6 +135,7 @@ taihe_shared_library("camera_taihe") {
     cfi_cross_dso = true
     debug = false
   }
+  branch_protector_ret = "pac_ret"
   cflags = [
     "-fPIC",
     "-fdata-sections",
@@ -222,6 +223,7 @@ taihe_shared_library("camera_picker_taihe") {
     cfi_cross_dso = true
     debug = false
   }
+  branch_protector_ret = "pac_ret"
   cflags = [
     "-fPIC",
     "-fdata-sections",
