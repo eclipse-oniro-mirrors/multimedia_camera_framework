@@ -249,5 +249,20 @@ void MetadataOutputImpl::UnlockMetadataObjectTracking()
     int32_t retCode = metadataOutput_->UnlockMetadataObjectTracking();
     CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode), "UnlockMetadataObjectTracking failure!");
 }
+
+bool MetadataOutputImpl::IsInFrameMetadataForEncoderSupported()
+{
+    MEDIA_INFO_LOG("IsInFrameMetadataForEncoderSupported is called");
+    CHECK_RETURN_RET_ELOG(metadataOutput_ == nullptr, false, "metadataOutput_ is nullptr!");
+    return metadataOutput_->IsInFrameMetadataForEncoderSupported();
+}
+
+void MetadataOutputImpl::SetInFrameMetadataForEncoderEnabled(bool enable)
+{
+    MEDIA_INFO_LOG("SetInFrameMetadataForEncoderEnabled is called");
+    CHECK_RETURN_ELOG(metadataOutput_ == nullptr, "metadataOutput_ is nullptr!");
+    int32_t retCode = metadataOutput_->SetInFrameMetadataForEncoderEnabled(enable);
+    CHECK_PRINT_ELOG(!CameraUtilsTaihe::CheckError(retCode), "SetInFrameMetadataForEncoderEnabled failure!");
+}
 } // namespace Camera
 } // namespace Ani

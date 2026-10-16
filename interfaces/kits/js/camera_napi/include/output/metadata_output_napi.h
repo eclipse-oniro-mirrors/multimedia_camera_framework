@@ -116,6 +116,8 @@ public:
     static napi_value IsLockMetadataObjectTrackingSupported(napi_env env, napi_callback_info info);
     static napi_value LockMetadataObjectTracking(napi_env env, napi_callback_info info);
     static napi_value UnlockMetadataObjectTracking(napi_env env, napi_callback_info info);
+    static napi_value IsInFrameMetadataForEncoderSupported(napi_env env, napi_callback_info info);
+    static napi_value SetInFrameMetadataForEncoderEnabled(napi_env env, napi_callback_info info);
     MetadataOutputNapi();
     ~MetadataOutputNapi() override;
     sptr<MetadataOutput> GetMetadataOutput();

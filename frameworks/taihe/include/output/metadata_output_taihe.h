@@ -65,6 +65,8 @@ public:
     bool IsLockMetadataObjectTrackingSupported();
     void LockMetadataObjectTracking(Point pointOfInterest);
     void UnlockMetadataObjectTracking();
+    bool IsInFrameMetadataForEncoderSupported();
+    void SetInFrameMetadataForEncoderEnabled(bool enable);
     std::shared_ptr<MetadataOutputCallbackListener> metadataOutputCallback_;
     std::shared_ptr<MetadataObjectsAvailableCallbackListener> metadataObjectsAvailableCallback_;
     sptr<CameraStandard::MetadataOutput> GetMetadataOutput()
