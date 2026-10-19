@@ -461,8 +461,25 @@ PressureStatus HCameraService::TransferTemperToPressure(int32_t temperLevel)
 }
 
 #ifdef NOTIFICATION_ENABLE
+int32_t HCameraService::SetBeautyForDefaultActiveCase(int32_t beautyStatus)
+{
+    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
+    CHECK_RETURN_RET_ELOG(sessionForControlCenter == nullptr, CAMERA_INVALID_STATE,
+        "SetBeautyForDefaultActiveCase failed, not in video session.");
+    int32_t beautyType = BeautyType::AUTO_TYPE;
+    int32_t beautyLevel = 0;
+    if (beautyStatus == BEAUTY_STATUS_ON) {
+        beautyLevel = BEAUTY_LEVEL;
+    }
+    bool needPersist = beautyLevel > 0;
+    return sessionForControlCenter->SetBeautyValue(beautyType, beautyLevel, needPersist);
+}
+ 
 int32_t HCameraService::SetBeauty(int32_t beautyStatus)
 {
+    if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
+        return SetBeautyForDefaultActiveCase(beautyStatus);
+    }
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
@@ -1302,6 +1319,26 @@ void HCameraService::SetControlCenterDefaultActiveCase()
     }
 }
 
+void HCameraService::SetControlCenterSession(sptr<HCaptureSession>& realSession, int32_t opMode)
+{
+    bool isDefaultActive = system::GetParameter("const.multimedia.camera.default_active_control_center",
+        "false") == "true";
+    if (isDefaultActive) {
+        if (opMode == SceneMode::VIDEO || opMode == SceneMode::CAPTURE) {
+            SetControlCenterInVideo(realSession);
+        }
+    } else {
+        sptr<HCaptureSession> oldControlCenterSession = nullptr;
+        if (opMode == SceneMode::VIDEO) {
+            SetControlCenterInVideo(realSession);
+        } else {
+            oldControlCenterSession = ClearSessionForControlCenter();
+            MEDIA_INFO_LOG("Clear videoSession of controlCenter, hasOldSession: %{public}d",
+                oldControlCenterSession != nullptr);
+        }
+    }
+}
+
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
@@ -1351,13 +1388,7 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     }
     sptr<HCaptureSession> realSession = wrapper->GetRealSession();
     sptr<HCaptureSession> oldControlCenterSession = nullptr;
-    if (opMode == SceneMode::VIDEO) {
-        SetControlCenterInVideo(realSession);
-    } else {
-        oldControlCenterSession = ClearSessionForControlCenter();
-        MEDIA_INFO_LOG("Clear videoSession of controlCenter, hasOldSession: %{public}d",
-            oldControlCenterSession != nullptr);
-    }
+    SetControlCenterSession(realSession, opMode);
     #ifdef HOOK_CAMERA_OPERATOR
         std::string clientName = GetClientBundle(IPCSkeleton::GetCallingUid());
         CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName, realSession);
