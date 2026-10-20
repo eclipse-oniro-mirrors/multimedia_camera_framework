@@ -411,6 +411,10 @@ private:
     void OnMechMetadata(const std::shared_ptr<OHOS::Camera::CameraMetadata> cameraResult);
     void OnSessionStatusChange(bool status);
     int32_t SetBeautyValueByType(int32_t type, int32_t value, bool needPersist);
+#ifdef NOTIFICATION_ENABLE
+    bool IsNeedBeautyNotification(void);
+    int32_t SetBeautyNotificationValueByType(int32_t type, int32_t value, bool needPersist);
+#endif
 
     std::mutex cbMutex_;
     // Make sure device thread safe,set device by {SetCameraDevice}, get device by {GetCameraDevice}

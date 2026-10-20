@@ -331,6 +331,7 @@ private:
     int32_t GetSupportedAbilities(const uint32_t& tagId, const uint8_t& tagType, std::vector<std::string>& abilities);
     void SetControlCenterInVideo(sptr<HCaptureSession>& captureSession);
     void SetControlCenterDefaultActiveCase(void);
+    void SetControlCenterSession(sptr<HCaptureSession>& realSession, int32_t opMode);
     int32_t CheckPermissionForBroker(int32_t uid);
     sptr<HCaptureSession> videoSessionForControlCenter_;
     bool deviceControlCenterAbility_ = false;
@@ -341,6 +342,7 @@ private:
 
 #ifdef NOTIFICATION_ENABLE
     int32_t SetBeauty(int32_t beautyStatus);
+    int32_t SetBeautyForDefaultActiveCase(int32_t beautyStatus);
 #endif
 
 #ifdef MEMMGR_OVERRID
