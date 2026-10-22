@@ -474,7 +474,7 @@ int32_t HCameraService::SetBeautyForDefaultActiveCase(int32_t beautyStatus)
     bool needPersist = beautyLevel > 0;
     return sessionForControlCenter->SetBeautyValue(beautyType, beautyLevel, needPersist);
 }
- 
+
 int32_t HCameraService::SetBeauty(int32_t beautyStatus)
 {
     if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
@@ -1327,6 +1327,8 @@ void HCameraService::SetControlCenterSession(sptr<HCaptureSession>& realSession,
     if (isDefaultActive) {
         if (opMode == SceneMode::VIDEO || opMode == SceneMode::CAPTURE) {
             SetControlCenterInVideo(realSession);
+        } else {
+            ClearSessionForControlCenter();
         }
     } else {
         sptr<HCaptureSession> oldControlCenterSession = nullptr;
