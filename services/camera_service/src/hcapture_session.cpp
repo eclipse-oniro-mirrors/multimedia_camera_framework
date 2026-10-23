@@ -1822,7 +1822,7 @@ int32_t HCaptureSession::CreateRecorder4CinematicVideo(sptr<IStreamCommon> strea
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreateRecorder start");
 
-    HStreamRepeat* movieFileStreamRepeat = static_cast<HStreamRepeat*>(stream.GetRefPtr());
+    HStreamRepeat* movieFileStreamRepeat = dynamic_cast<HStreamRepeat*>(stream.GetRefPtr());
     CHECK_RETURN_RET_ELOG(movieFileStreamRepeat == nullptr, CAMERA_INVALID_ARG,
         "HCameraService::CreateMovieFileOutput stream is nullptr");
     sptr<MovieFileRecorder> recorder = new (nothrow) MovieFileRecorder();
@@ -2825,7 +2825,9 @@ int32_t HCaptureSession::OperatePermissionCheck(uint32_t interfaceCode)
     CHECK_RETURN_RET_ELOG(stateMachine_.GetCurrentState() == CaptureSessionState::SESSION_RELEASED,
         CAMERA_INVALID_STATE, "HCaptureSession::OperatePermissionCheck session is released");
     switch (static_cast<ICaptureSessionIpcCode>(interfaceCode)) {
-        case ICaptureSessionIpcCode::COMMAND_START: {
+        case ICaptureSessionIpcCode::COMMAND_START:
+        case ICaptureSessionIpcCode::COMMAND_BEGIN_CONFIG:
+        case ICaptureSessionIpcCode::COMMAND_ADD_OUTPUT: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             CHECK_RETURN_RET_ELOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HCaptureSession::OperatePermissionCheck fail, callerToken not legal");
