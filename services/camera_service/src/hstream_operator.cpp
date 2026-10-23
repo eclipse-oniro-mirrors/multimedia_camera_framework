@@ -300,8 +300,7 @@ void HStreamOperator::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
 void HStreamOperator::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream)
 {
     std::lock_guard<std::mutex> lock(releaseOperatorLock_);
-    CHECK_RETURN(!displayListener_);
-    displayListener_->RemoveHstreamRepeatForListener(repeatStream);
+    CHECK_EXECUTE(displayListener_, displayListener_->RemoveHstreamRepeatForListener(repeatStream));
 }
 
 int32_t HStreamOperator::SetPreviewRotation(std::string &deviceClass)
