@@ -2268,6 +2268,7 @@ int32_t HCameraService::SetDeviceControlCenterAbility(bool ability)
 
 int32_t HCameraService::GetDeviceControlCenterAbility(bool &ability)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     ability = deviceControlCenterAbility_;
     return CAMERA_OK;
 }
@@ -2780,6 +2781,12 @@ void HCameraService::DumpCameraStreamInfo(common_metadata_header_t* metadataEntr
     ret =
         OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     if (ret == CAM_META_SUCCESS) {
+        if (item.count % unitLen != 0) {
+            MEDIA_ERR_LOG("DumpCameraStreamInfo: item count %{public}u is not a multiple of %{public}u",
+                item.count, unitLen);
+            infoDumper.Pop();
+            return;
+        }
         infoDumper.Title("Basic Stream Info Size: " + to_string(item.count / unitLen));
         for (uint32_t index = 0; index < item.count; index += unitLen) {
             map<int, string>::const_iterator iter = g_cameraFormat.find(item.data.i32[index]);

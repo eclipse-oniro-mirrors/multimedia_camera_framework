@@ -28,7 +28,6 @@ using namespace taihe;
 using namespace ohos::multimedia::camera;
 static std::mutex g_photoImageMutex;
 static std::mutex g_assembleImageMutex;
-static std::atomic<bool> g_callbackExtendFlag = false;
 uint32_t PhotoOutputImpl::photoOutputTaskId_ = CAMERA_PHOTO_OUTPUT_TASKID;
 
 void PhotoOutputCallbackAni::OnCaptureStartedWithInfoCallback(const int32_t captureId, uint32_t exposureTime) const
