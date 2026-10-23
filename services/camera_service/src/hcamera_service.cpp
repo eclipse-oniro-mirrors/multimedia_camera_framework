@@ -461,25 +461,8 @@ PressureStatus HCameraService::TransferTemperToPressure(int32_t temperLevel)
 }
 
 #ifdef NOTIFICATION_ENABLE
-int32_t HCameraService::SetBeautyForDefaultActiveCase(int32_t beautyStatus)
-{
-    sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
-    CHECK_RETURN_RET_ELOG(sessionForControlCenter == nullptr, CAMERA_INVALID_STATE,
-        "SetBeautyForDefaultActiveCase failed, not in video session.");
-    int32_t beautyType = BeautyType::AUTO_TYPE;
-    int32_t beautyLevel = 0;
-    if (beautyStatus == BEAUTY_STATUS_ON) {
-        beautyLevel = BEAUTY_LEVEL;
-    }
-    bool needPersist = beautyLevel > 0;
-    return sessionForControlCenter->SetBeautyValue(beautyType, beautyLevel, needPersist);
-}
-
 int32_t HCameraService::SetBeauty(int32_t beautyStatus)
 {
-    if (system::GetParameter("const.multimedia.camera.default_active_control_center", "false") == "true") {
-        return SetBeautyForDefaultActiveCase(beautyStatus);
-    }
     constexpr int32_t DEFAULT_ITEMS = 1;
     constexpr int32_t DEFAULT_DATA_LENGTH = 1;
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
@@ -966,8 +949,7 @@ vector<shared_ptr<CameraMetaInfo>> HCameraService::ChooseDeFaultCameras(vector<s
     pid_t callerPid = IPCSkeleton::GetCallingPid();
     MEDIA_INFO_LOG("CreateCameraDevice E, pid:%{public}d", callerPid);
     string permissionName = OHOS_PERMISSION_CAMERA_DRIVER_MONITOR;
-    bool ret = (CheckPermission(permissionName, callerToken) == CAMERA_OK);
-    MEDIA_DEBUG_LOG("ChooseDeFaultCameras OHOS_PERMISSION_CAMERA_DRIVER_MONITOR ret:%{public}d", ret);
+    int32_t ret = CheckPermission(permissionName, callerToken);
     vector<shared_ptr<CameraMetaInfo>> choosedCameras;
     for (auto& camera : cameraInfos) {
         MEDIA_DEBUG_LOG("ChooseDeFaultCameras camera ID:%s, Camera position:%{public}d, Connection Type:%{public}d, "
@@ -1320,28 +1302,6 @@ void HCameraService::SetControlCenterDefaultActiveCase()
     }
 }
 
-void HCameraService::SetControlCenterSession(sptr<HCaptureSession>& realSession, int32_t opMode)
-{
-    bool isDefaultActive = system::GetParameter("const.multimedia.camera.default_active_control_center",
-        "false") == "true";
-    if (isDefaultActive) {
-        if (opMode == SceneMode::VIDEO || opMode == SceneMode::CAPTURE) {
-            SetControlCenterInVideo(realSession);
-        } else {
-            ClearSessionForControlCenter();
-        }
-    } else {
-        sptr<HCaptureSession> oldControlCenterSession = nullptr;
-        if (opMode == SceneMode::VIDEO) {
-            SetControlCenterInVideo(realSession);
-        } else {
-            oldControlCenterSession = ClearSessionForControlCenter();
-            MEDIA_INFO_LOG("Clear videoSession of controlCenter, hasOldSession: %{public}d",
-                oldControlCenterSession != nullptr);
-        }
-    }
-}
-
 int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int32_t opMode)
 {
     CAMERA_SYNC_TRACE;
@@ -1391,7 +1351,13 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     }
     sptr<HCaptureSession> realSession = wrapper->GetRealSession();
     sptr<HCaptureSession> oldControlCenterSession = nullptr;
-    SetControlCenterSession(realSession, opMode);
+    if (opMode == SceneMode::VIDEO) {
+        SetControlCenterInVideo(realSession);
+    } else {
+        oldControlCenterSession = ClearSessionForControlCenter();
+        MEDIA_INFO_LOG("Clear videoSession of controlCenter, hasOldSession: %{public}d",
+            oldControlCenterSession != nullptr);
+    }
     #ifdef HOOK_CAMERA_OPERATOR
         std::string clientName = GetClientBundle(IPCSkeleton::GetCallingUid());
         CameraRotatePlugin::GetInstance()->SetCaptureSession(clientName, realSession);
@@ -2623,6 +2589,7 @@ int32_t HCameraService::SetDeviceControlCenterAbility(bool ability)
 
 int32_t HCameraService::GetDeviceControlCenterAbility(bool &ability)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     ability = deviceControlCenterAbility_;
     return CAMERA_OK;
 }
@@ -3147,6 +3114,12 @@ void HCameraService::DumpCameraStreamInfo(common_metadata_header_t* metadataEntr
     ret =
         OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     if (ret == CAM_META_SUCCESS) {
+        if (item.count % unitLen != 0) {
+            MEDIA_ERR_LOG("DumpCameraStreamInfo: item count %{public}u is not a multiple of %{public}u",
+                item.count, unitLen);
+            infoDumper.Pop();
+            return;
+        }
         infoDumper.Title("Basic Stream Info Size: " + to_string(item.count / unitLen));
         for (uint32_t index = 0; index < item.count; index += unitLen) {
             map<int, string>::const_iterator iter = g_cameraFormat.find(item.data.i32[index]);
