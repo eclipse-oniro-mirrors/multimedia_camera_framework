@@ -15,7 +15,7 @@
 
 #ifndef FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_PHOTO_OUTPUT_TAIHE_H
 #define FRAMEWORKS_TAIHE_INCLUDE_OUTPUT_PHOTO_OUTPUT_TAIHE_H
-
+#include <atomic>
 #include "photo_output.h"
 #include "photo_output_callback.h"
 #include "camera_output_taihe.h"
@@ -73,7 +73,8 @@ class PhotoOutputCallbackAni : public OHOS::CameraStandard::PhotoStateCallback,
 public:
     explicit PhotoOutputCallbackAni(ani_env* env) : ListenerBase(env) {}
     ~PhotoOutputCallbackAni() = default;
-
+    void SetCallbackExtendFlag(bool flag) { callbackExtendFlag_.store(flag); }
+    bool GetCallbackExtendFlag() const { return callbackExtendFlag_.load(); }
     void OnCaptureStarted(const int32_t captureId) const override;
     void OnCaptureStarted(const int32_t captureId, uint32_t exposureTime) const override;
     void OnCaptureEnded(const int32_t captureId, const int32_t frameCount) const override;
@@ -106,6 +107,7 @@ private:
         int32_t cameraShotType, const std::string &burstKey) const;
     void OnThumbnailAvailableCallback(int32_t captureId, int64_t timestamp,
         std::unique_ptr<Media::PixelMap>& pixelMap) const;
+    mutable std::atomic<bool> callbackExtendFlag_ = false;
 };
 
 class PhotoOutputImpl : public CameraOutputImpl,

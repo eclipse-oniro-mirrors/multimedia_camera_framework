@@ -1622,7 +1622,8 @@ int32_t HStreamCapture::CallbackEnter([[maybe_unused]] uint32_t code)
         case IStreamCaptureIpcCode::COMMAND_ENABLE_RAW_DELIVERY:
         case IStreamCaptureIpcCode::COMMAND_DEFER_IMAGE_DELIVERY_FOR:
         case IStreamCaptureIpcCode::COMMAND_CONFIRM_CAPTURE:
-        case IStreamCaptureIpcCode::COMMAND_ENABLE_OFFLINE_PHOTO : {
+        case IStreamCaptureIpcCode::COMMAND_ENABLE_OFFLINE_PHOTO:
+        case IStreamCaptureIpcCode::COMMAND_CREATE_MEDIA_LIBRARY: {
             CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamCapture::CheckSystemApp fail");
             break;
         }
