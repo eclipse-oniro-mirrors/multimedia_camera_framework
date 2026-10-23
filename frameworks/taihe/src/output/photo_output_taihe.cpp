@@ -28,7 +28,6 @@ using namespace taihe;
 using namespace ohos::multimedia::camera;
 static std::mutex g_photoImageMutex;
 static std::mutex g_assembleImageMutex;
-static std::atomic<bool> g_callbackExtendFlag = false;
 uint32_t PhotoOutputImpl::photoOutputTaskId_ = CAMERA_PHOTO_OUTPUT_TASKID;
 
 void PhotoOutputCallbackAni::OnCaptureStartedWithInfoCallback(const int32_t captureId, uint32_t exposureTime) const
@@ -64,8 +63,8 @@ void PhotoOutputCallbackAni::OnPhotoAvailableCallback(const std::shared_ptr<Medi
     auto sharePtr = shared_from_this();
     auto task = [mainImage, isRaw, errCode, message, sharePtr]() {
         MEDIA_DEBUG_LOG("PhotoOutputCallbackAni::OnPhotoAvailableCallback extend flag %{public}d",
-            g_callbackExtendFlag.load());
-        if (g_callbackExtendFlag) {
+            sharePtr->GetCallbackExtendFlag());
+        if (sharePtr->GetCallbackExtendFlag()) {
             CapturePhoto capturePhotoValue = make_holder<Ani::Camera::CapturePhotoImpl, CapturePhoto>();
             ImageType imageType = ImageType::make_image(mainImage);
             capturePhotoValue->SetMain(imageType);
@@ -792,13 +791,17 @@ void PhotoOutputImpl::OffPhotoAvailable(optional_view<callback<void(uintptr_t, w
 
 void PhotoOutputImpl::OnCapturePhotoAvailable(callback_view<void(weak::CapturePhoto)> callback)
 {
-    g_callbackExtendFlag = true;
     ListenerTemplate<PhotoOutputImpl>::On(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
+    if (photoOutputCallback_ != nullptr) {
+        photoOutputCallback_->SetCallbackExtendFlag(true);
+    }
 }
 void PhotoOutputImpl::OffCapturePhotoAvailable(optional_view<callback<void(weak::CapturePhoto)>> callback)
 {
-    g_callbackExtendFlag = false;
     ListenerTemplate<PhotoOutputImpl>::Off(this, callback, CONST_CAPTURE_PHOTO_AVAILABLE);
+    if (photoOutputCallback_ != nullptr) {
+        photoOutputCallback_->SetCallbackExtendFlag(true);
+    }
 }
 
 void PhotoOutputImpl::OnDeferredPhotoProxyAvailable(callback_view<void(uintptr_t, weak::DeferredPhotoProxy)> callback)
