@@ -96,6 +96,10 @@
 #ifdef HOOK_CAMERA_OPERATOR
 #include "camera_rotate_plugin.h"
 #endif
+#ifdef NOTIFICATION_ENABLE
+#include "camera_beauty_notification.h"
+#include "camera_notification_interface.h"
+#endif
 
 using namespace OHOS::AAFwk;
 namespace OHOS {
@@ -141,6 +145,7 @@ static int32_t GenerateSessionId()
 namespace MultiBeautyType {
 
 constexpr int32_t PER_BEAUTY_VAL_NUM = 6;
+constexpr int32_t DEFAULT_BEAUTY_VAL = 6;
 constexpr int32_t SUPPORT_BEAUTY_START = SKIN_SMOOTH;
 constexpr int32_t SUPPORT_BEAUTY_END = NOSE_SLENDER;
 constexpr int32_t BEAUTY_TYPE_NUM = SUPPORT_BEAUTY_END - SUPPORT_BEAUTY_START + 1;
@@ -1088,7 +1093,7 @@ int32_t HCaptureSession::GetColorEffectsMetadata(std::vector<int32_t>& colorEffe
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode,
         "HCaptureSession::GetColorEffectsMetadata check permission failed.");
- 
+
     auto device = GetCameraDevice();
     CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     auto settings = device->GetDeviceAbility();
@@ -1130,11 +1135,11 @@ int32_t HCaptureSession::GetColorEffect(int32_t& colourEffect)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "HCaptureSession::GetColorEffect check permission failed.");
- 
+
     auto device = GetCameraDevice();
     CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     auto settings = device->GetDeviceAbility();
- 
+
     camera_metadata_item_t item;
     int ret = OHOS::Camera::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_SUPPORTED_COLOR_MODES, &item);
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count == 0, ret,
@@ -1156,7 +1161,7 @@ int32_t HCaptureSession::SetColorEffect(int32_t colourEffect)
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
     int32_t errCode = CheckPermission(OHOS_PERMISSION_CAMERA, callerToken);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "HCaptureSession::SetColorEffect check permission failed.");
- 
+
     auto device = GetCameraDevice();
     CHECK_RETURN_RET(!device, CAMERA_INVALID_STATE);
     constexpr int32_t DEFAULT_ITEMS = 1;
@@ -1272,8 +1277,88 @@ int32_t HCaptureSession::SetBeautyValue(int32_t type, int32_t value, bool needPe
     return CAMERA_OK;
 }
 
+#ifdef NOTIFICATION_ENABLE
+bool HCaptureSession::IsNeedBeautyNotification()
+{
+    bool ret = false;
+    std::string notificationInfo = system::GetParameter("const.camera.notification_info", "");
+    std::string bundleName = GetBundleForControlCenter();
+    const int32_t CONFIG_SIZE = 3;
+    std::vector<std::string> configInfos = SplitString(notificationInfo, '#');
+    for (uint32_t i = 0; i < configInfos.size(); i++) {
+        std::vector<std::string> configInfo = SplitString(configInfos[i], '|');
+        CHECK_CONTINUE(configInfo.size() < CONFIG_SIZE);
+        std::string configBundleName = configInfo[0];
+        if (configBundleName == bundleName) {
+            ret = true;
+            break;
+        }
+    }
+    return ret;
+}
+
+int32_t HCaptureSession::SetBeautyNotificationValueByType(int32_t type, int32_t value, bool needPersist)
+{
+    int32_t errCode = CAMERA_OK;
+    int32_t beautyStatus = CameraBeautyNotification::GetInstance()->GetBeautyStatus();
+    if (beautyStatus == BEAUTY_STATUS_OFF && false == needPersist) {
+        MEDIA_INFO_LOG("IsNeedBeautyNotification with beauty off");
+        return errCode;
+    }
+    int32_t shareVal = 0;
+    auto device = GetCameraDevice();
+    CHECK_RETURN_RET_ELOG(device == nullptr, CAMERA_INVALID_ARG, "device is null.");
+    const int32_t BEAUTY_LEVEL = 100;
+    if (value == BEAUTY_LEVEL && true == needPersist) {
+        errCode = GetBeautyFromDataShareHelper(shareVal);
+        int32_t backShareVal = 0;
+        CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "GetBeautyFromDataShareHelper Failed");
+        for (int32_t type = MultiBeautyType::SUPPORT_BEAUTY_START;
+            type < MultiBeautyType::SUPPORT_BEAUTY_END + 1; type++) {
+            errCode = MultiBeautyType::SwitchDataShareValToBeautyVal(device, type, shareVal, value);
+            CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "SwitchDataShareValToBeautyVal Failed");
+            value = shareVal > 0 ? value : MultiBeautyType::DEFAULT_BEAUTY_VAL;
+            errCode = MultiBeautyType::SwitchBeautyValToDataShareVal(device, type, value, backShareVal);
+            CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "SwitchDataShareValToBeautyVal Failed");
+            errCode = MultiBeautyType::UpdateBeauty(device, type, value);
+            CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "UpdateBeauty type:%d Failed", type);
+        }
+        shareVal = backShareVal;
+        CameraBeautyNotification::GetInstance()->SetBeautyStatus(BEAUTY_STATUS_ON);
+        CameraBeautyNotification::GetInstance()->SetBeautyStatusFromDataShareHelper(BEAUTY_STATUS_ON);
+        CameraBeautyNotification::GetInstance()->PublishNotification(false);
+        if (needPersist) {
+            SetBeautyToDataShareHelper(shareVal);
+            needPersist = false;
+        }
+    }  else if (!needPersist) {
+        shareVal = value;
+        for (int32_t type = MultiBeautyType::SUPPORT_BEAUTY_START;
+            type < MultiBeautyType::SUPPORT_BEAUTY_END + 1; type++) {
+            errCode = MultiBeautyType::SwitchDataShareValToBeautyVal(device, type, shareVal, value);
+            CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "SwitchDataShareValToBeautyVal Failed");
+            errCode = MultiBeautyType::UpdateBeauty(device, type, value);
+            CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "UpdateBeauty type:%d Failed", type);
+        }
+    }
+    return CAMERA_OK;
+}
+#endif
+
 int32_t HCaptureSession::SetBeautyValueByType(int32_t type, int32_t value, bool needPersist)
 {
+#ifdef NOTIFICATION_ENABLE
+    if (IsNeedBeautyNotification() && type == static_cast<int32_t>(AUTO_TYPE)) {
+        return SetBeautyNotificationValueByType(type, value, needPersist);
+    }
+    if (IsNeedBeautyNotification() && type != static_cast<int32_t>(AUTO_TYPE)) {
+        CameraBeautyNotification::GetInstance()->SetBeautyStatus(BEAUTY_STATUS_ON);
+        CameraBeautyNotification::GetInstance()->SetBeautyStatusFromDataShareHelper(BEAUTY_STATUS_ON);
+        CameraBeautyNotification::GetInstance()->PublishNotification(false);
+        const int32_t BEAUTY_LEVEL = 100;
+        SetBeautyNotificationValueByType(static_cast<int32_t>(AUTO_TYPE), BEAUTY_LEVEL, true);
+    }
+#endif
     int32_t errCode = CAMERA_OK;
     int32_t shareVal = 0;
     auto device = GetCameraDevice();
@@ -1737,7 +1822,7 @@ int32_t HCaptureSession::CreateRecorder4CinematicVideo(sptr<IStreamCommon> strea
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreateRecorder start");
 
-    HStreamRepeat* movieFileStreamRepeat = dynamic_cast<HStreamRepeat*>(stream.GetRefPtr());
+    HStreamRepeat* movieFileStreamRepeat = static_cast<HStreamRepeat*>(stream.GetRefPtr());
     CHECK_RETURN_RET_ELOG(movieFileStreamRepeat == nullptr, CAMERA_INVALID_ARG,
         "HCameraService::CreateMovieFileOutput stream is nullptr");
     sptr<MovieFileRecorder> recorder = new (nothrow) MovieFileRecorder();
@@ -1915,7 +2000,7 @@ int32_t HCaptureSession::CommitConfig()
         }
 #ifdef CAMERA_MOVING_PHOTO
         ExpandXtStyleMovingPhotoRepeatStream();
-        
+
 #endif
         auto device = GetCameraDevice();
         if (device == nullptr) {
@@ -2740,9 +2825,7 @@ int32_t HCaptureSession::OperatePermissionCheck(uint32_t interfaceCode)
     CHECK_RETURN_RET_ELOG(stateMachine_.GetCurrentState() == CaptureSessionState::SESSION_RELEASED,
         CAMERA_INVALID_STATE, "HCaptureSession::OperatePermissionCheck session is released");
     switch (static_cast<ICaptureSessionIpcCode>(interfaceCode)) {
-        case ICaptureSessionIpcCode::COMMAND_START:
-        case ICaptureSessionIpcCode::COMMAND_BEGIN_CONFIG:
-        case ICaptureSessionIpcCode::COMMAND_ADD_OUTPUT: {
+        case ICaptureSessionIpcCode::COMMAND_START: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             CHECK_RETURN_RET_ELOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HCaptureSession::OperatePermissionCheck fail, callerToken not legal");
