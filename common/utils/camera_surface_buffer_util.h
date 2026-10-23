@@ -141,7 +141,7 @@ public:
                 uint32_t dstRemaining = dstSize - static_cast<uint32_t>(h) * static_cast<uint32_t>(dstRowLen);
                 uint32_t srcOffset = static_cast<uint32_t>(h) * static_cast<uint32_t>(srcRowLen);
                 if (srcOffset + static_cast<uint32_t>(dstRowLen) > srcSize) {
-                    MEDIA_ERR_LOG("DeepCopyThumbnailBuffer src OOB at row %{public}d: offset=%{public}u, rowLen=%{public}d,
+                    MEDIA_ERR_LOG("DeepCopyThumbnailBuffer OOB row %{public}d: offset=%{public}u, rowLen=%{public}d,
                         srcSize=%{public}u", h, srcOffset, dstRowLen, srcSize);
                     return nullptr;
                 }
