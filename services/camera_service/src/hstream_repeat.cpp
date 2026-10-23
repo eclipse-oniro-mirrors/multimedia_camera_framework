@@ -971,7 +971,9 @@ int32_t HStreamRepeat::CallbackEnter([[maybe_unused]] uint32_t code)
     switch (static_cast<IStreamRepeatIpcCode>(code)) {
         case IStreamRepeatIpcCode::COMMAND_ADD_DEFERRED_SURFACE:
         case IStreamRepeatIpcCode::COMMAND_FORK_SKETCH_STREAM_REPEAT:
-        case IStreamRepeatIpcCode::COMMAND_UPDATE_SKETCH_RATIO: {
+        case IStreamRepeatIpcCode::COMMAND_UPDATE_SKETCH_RATIO:
+        case IStreamRepeatIpcCode::COMMAND_ADD_DEFERRED_SURFACE:
+        case IStreamRepeatIpcCode::COMMAND_REMOVE_DEFERRED_SURFACE: {
             CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamRepeat::CheckSystemApp fail");
             break;
         }

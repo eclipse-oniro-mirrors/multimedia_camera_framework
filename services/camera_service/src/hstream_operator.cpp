@@ -248,6 +248,7 @@ void HStreamOperator::StartMovingPhotoStream(const std::shared_ptr<OHOS::Camera:
 
 void HStreamOperator::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
 {
+    std::lock_guard<std::mutex> lock(releaseOperatorLock_);
     if (displayListener_ == nullptr) {
         displayListener_ = new DisplayRotationListener();
         OHOS::Rosen::DisplayManager::GetInstance().RegisterDisplayListener(displayListener_);
@@ -257,7 +258,9 @@ void HStreamOperator::RegisterDisplayListener(sptr<HStreamRepeat> repeat)
 
 void HStreamOperator::UnRegisterDisplayListener(sptr<HStreamRepeat> repeatStream)
 {
-    CHECK_EXECUTE(displayListener_, displayListener_->RemoveHstreamRepeatForListener(repeatStream));
+    std::lock_guard<std::mutex> lock(releaseOperatorLock_);
+    CHECK_RETURN(!displayListener_);
+    displayListener_->RemoveHstreamRepeatForListener(repeatStream);
 }
 
 int32_t HStreamOperator::SetPreviewRotation(const std::string &deviceClass)
