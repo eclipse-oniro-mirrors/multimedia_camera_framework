@@ -259,8 +259,8 @@ size_t CameraServerPhotoProxy::GetFileSize()
     MEDIA_INFO_LOG("CameraServerPhotoProxy::GetFileSize");
     std::lock_guard<std::mutex> lock(mutex_);
     if (bufferHandle_ != nullptr && fileSize_ > static_cast<uint64_t>(bufferHandle_->size)) {
-        MEDIA_ERR_LOG("GetFileSize: fileSize_%{public}" PRIu64 " exceeds bufferHandle_->size %{public}u, capping",
-            fileSize_, bufferHandle_->size);
+        MEDIA_ERR_LOG("GetFileSize: fileSize_ %{public}" PRIu64 " exceeds bufferHandle_->size %{public}d, capping",
+            static_cast<uint64_t>(fileSize_), bufferHandle_->size);
         return static_cast<size_t>(bufferHandle_->size);
     }
     return fileSize_;
