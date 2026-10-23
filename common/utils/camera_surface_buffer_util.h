@@ -95,10 +95,10 @@ public:
             thumbnailStride, thumbnailHeight, thumbnailWidth);
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer format: %{public}d, usage: %{public}" PRIu64,
             surfaceBuffer->GetFormat(), surfaceBuffer->GetUsage());
-        // Validate extra data from producer (HAL) before use — untrusted values can cause OOB read
+        // Validate extra data from producer (HAL) before use - untrusted values can cause OOB read
         if (thumbnailStride <= 0 || thumbnailHeight <= 0 || thumbnailWidth <= 0) {
-            MEDIA_ERR_LOG("DeepCopyThumbnailBuffer invalid extra data: stride=%{public}d, height=%{public}d,
-                width=%{public}d", thumbnailStride, thumbnailHeight, thumbnailWidth);
+            MEDIA_ERR_LOG("DeepCopyThumbnailBuffer invalid extra data: stride=%{public}d, height=%{public}d, "
+                "width=%{public}d", thumbnailStride, thumbnailHeight, thumbnailWidth);
             return nullptr;
         }
         uint32_t srcSize = surfaceBuffer->GetSize();
@@ -122,14 +122,13 @@ public:
         bool isHdr = colorSpaceType ==  HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType::CM_BT2020_HLG_FULL;
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer colorSpaceType: %{public}d, isHdr: %{public}d", colorSpaceType, isHdr);
         const float ROW_FACTOR = 1.5;
-        int32_t bytesPerPixel = isHdr ? 2 : 1;
         int32_t newStride = newSurfaceBuffer->GetStride();
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer newSurfaceBuffer stride: %{public}u, size: %{public}u", newStride,
             newSurfaceBuffer->GetSize());
         int32_t copyRows = static_cast<int32_t>(std::round(thumbnailHeight * ROW_FACTOR));
         if (thumbnailStride > newStride) {
             // stride returned by GetStride() is already in bytes (graphic layer folds bytesPerPixel into stride),
-            // so we must NOT multiply by bytesPerPixel again — that would double the row length and cause
+            // so we must NOT multiply by bytesPerPixel again - that would double the row length and cause
             // a heap-buffer-overflow (CWE-787) on HDR (P010) paths.
             int32_t srcRowLen = thumbnailStride;
             int32_t dstRowLen = newStride;
@@ -141,8 +140,8 @@ public:
                 uint32_t dstRemaining = dstSize - static_cast<uint32_t>(h) * static_cast<uint32_t>(dstRowLen);
                 uint32_t srcOffset = static_cast<uint32_t>(h) * static_cast<uint32_t>(srcRowLen);
                 if (srcOffset + static_cast<uint32_t>(dstRowLen) > srcSize) {
-                    MEDIA_ERR_LOG("DeepCopyThumbnailBuffer OOB row %{public}d: offset=%{public}u, rowLen=%{public}d,
-                        srcSize=%{public}u", h, srcOffset, dstRowLen, srcSize);
+                    MEDIA_ERR_LOG("DeepCopyThumbnailBuffer row %{public}d: offset=%{public}u, rowLen=%{public}d, "
+                        "srcSize=%{public}u", h, srcOffset, dstRowLen, srcSize);
                     return nullptr;
                 }
                 if (memcpy_s(dstAddr + h * dstRowLen, dstRemaining, srcAddr + h * srcRowLen, dstRowLen) != EOK) {
@@ -360,6 +359,46 @@ public:
         GetImageCount(surfaceBuffer);
         GetDeferredProcessingType(surfaceBuffer);
         GetBurstSequenceId(surfaceBuffer);
+    }
+
+    static int32_t GetMetaActualSize(sptr<SurfaceBuffer> buffer)
+    {
+        sptr<BufferExtraData> bufferExtraData = buffer->GetExtraData();
+        int32_t metaActualSize = 0;
+        if (bufferExtraData != nullptr) {
+            bufferExtraData->ExtraGet(OHOS::Camera::dataSize, metaActualSize);
+            MEDIA_INFO_LOG("get GetMetaActualSize %{public}d", metaActualSize);
+        }
+        return metaActualSize;
+    }
+
+    static void DeepCopyMetaBuffer(sptr<SurfaceBuffer> surfaceBuffer, sptr<SurfaceBuffer>& newBuffer)
+    {
+        // LCOV_EXCL_START
+        BufferRequestConfig requestConfig = {
+            .width = surfaceBuffer->GetWidth(),
+            .height = surfaceBuffer->GetHeight(),
+            .strideAlignment = 0x8, // default stride is 8 Bytes.
+            .format = surfaceBuffer->GetFormat(),
+            .usage = surfaceBuffer->GetUsage(),
+            .timeout = 0,
+            .colorGamut = surfaceBuffer->GetSurfaceBufferColorGamut(),
+            .transform = surfaceBuffer->GetSurfaceBufferTransform(),
+        };
+        auto allocErrorCode = newBuffer->Alloc(requestConfig);
+        CHECK_RETURN_ELOG(allocErrorCode != GSERROR_OK, "SurfaceBuffer alloc ret: %d", allocErrorCode);
+        if (memcpy_s(newBuffer->GetVirAddr(), newBuffer->GetSize(),
+            surfaceBuffer->GetVirAddr(), surfaceBuffer->GetSize()) != EOK) {
+            MEDIA_ERR_LOG("SurfaceBuffer memcpy_s failed");
+            return;
+        }
+        int32_t metaSize = GetMetaActualSize(surfaceBuffer);
+        sptr<BufferExtraData> metaExtraData = newBuffer->GetExtraData();
+        if (metaExtraData != nullptr) {
+            metaExtraData->ExtraSet("dataSize", static_cast<int32_t>(metaSize));
+        }
+        newBuffer->SetExtraData(metaExtraData);
+        // LCOV_EXCL_STOP
     }
 
 private:
