@@ -1822,7 +1822,7 @@ int32_t HCaptureSession::CreateRecorder4CinematicVideo(sptr<IStreamCommon> strea
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreateRecorder start");
 
-    HStreamRepeat* movieFileStreamRepeat = dynamic_cast<HStreamRepeat*>(stream.GetRefPtr());
+    HStreamRepeat* movieFileStreamRepeat = static_cast<HStreamRepeat*>(stream.GetRefPtr());
     CHECK_RETURN_RET_ELOG(movieFileStreamRepeat == nullptr, CAMERA_INVALID_ARG,
         "HCameraService::CreateMovieFileOutput stream is nullptr");
     sptr<MovieFileRecorder> recorder = new (nothrow) MovieFileRecorder();
