@@ -916,6 +916,8 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
 int32_t HStreamRepeat::RemoveDeferredSurface()
 {
     MEDIA_INFO_LOG("HStreamRepeat::RemoveDeferredSurface called");
+    CHECK_RETURN_RET_ELOG(repeatStreamStatus_ == RepeatStreamStatus::STARTED, CAMERA_OPERATION_NOT_ALLOWED,
+        "HStreamRepeat::RemoveDeferredSurface stream is started, cannot remove deferred surface");
     {
         std::lock_guard<std::mutex> lock(producerLock_);
         producer_ = nullptr;
@@ -1361,7 +1363,9 @@ int32_t HStreamRepeat::CallbackEnter([[maybe_unused]] uint32_t code)
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "HStreamRepeat::OperatePermissionCheck fail");
     switch (static_cast<IStreamRepeatIpcCode>(code)) {
         case IStreamRepeatIpcCode::COMMAND_FORK_SKETCH_STREAM_REPEAT:
-        case IStreamRepeatIpcCode::COMMAND_UPDATE_SKETCH_RATIO: {
+        case IStreamRepeatIpcCode::COMMAND_UPDATE_SKETCH_RATIO:
+        case IStreamRepeatIpcCode::COMMAND_ADD_DEFERRED_SURFACE:
+        case IStreamRepeatIpcCode::COMMAND_REMOVE_DEFERRED_SURFACE: {
             CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HStreamRepeat::CheckSystemApp fail");
             break;
         }
@@ -1585,7 +1589,7 @@ void HStreamRepeat::SetFrameRate(std::shared_ptr<OHOS::Camera::CameraMetadata> &
     CHECK_RETURN(settings == nullptr);
     camera_metadata_item_t item;
     int res = OHOS::Camera::CameraMetadata::FindCameraMetadataItem(settings->get(), OHOS_CONTROL_FPS_RANGES, &item);
-    CHECK_RETURN(res != CAM_META_SUCCESS);
+    CHECK_RETURN(res != CAM_META_SUCCESS || item.count < INT32_TWO);
     int32_t minFrameRate = item.data.i32[0];
     int32_t maxFrameRate = item.data.i32[1];
     streamFrameRateRange_ = {minFrameRate, maxFrameRate};
