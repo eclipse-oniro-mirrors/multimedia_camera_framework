@@ -25,6 +25,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+constexpr int32_t MAX_SYNC_IMAGE_COUNT = 100;
+
 DeferredPhotoProcessingSession::DeferredPhotoProcessingSession(const int32_t userId)
     : userId_(userId)
 {
