@@ -2607,10 +2607,6 @@ int32_t HCameraService::NotifyCameraState(const std::string& cameraId, int32_t s
 int32_t HCameraService::SetPeerCallback(const sptr<ICameraBroker>& callback)
 {
     MEDIA_INFO_LOG("SetPeerCallback get callback");
-    int32_t uid = IPCSkeleton::GetCallingUid();
-    int32_t ret = CheckPermissionForBroker(uid);
-    CHECK_RETURN_RET_ELOG(
-        ret != CAMERA_OK, ret, "HCameraService::SetPeerCallback Check OHOS_PERMISSION_CAMERA fail %{public}d", ret);
     CHECK_RETURN_RET(callback == nullptr, CAMERA_INVALID_ARG);
     {
         std::lock_guard<std::mutex> lock(peerCallbackMutex_);
