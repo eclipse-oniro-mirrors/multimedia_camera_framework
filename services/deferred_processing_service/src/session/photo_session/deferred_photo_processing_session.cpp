@@ -53,11 +53,6 @@ int32_t DeferredPhotoProcessingSession::EndSynchronize()
 {
     DP_INFO_LOG("DPS_PHOTO: EndSynchronize photo job num: %{public}d", static_cast<int32_t>(imageIds_.size()));
     std::lock_guard<std::mutex> lock(mutex_);
-    if (imageIds_.size() >= MAX_SYNC_IMAGE_COUNT) {
-        DP_ERR_LOG("AddImage exceeded max sync image count: %{public}zu, imageId: %{public}s",
-            MAX_SYNC_IMAGE_COUNT, imageId.c_str());
-        return DP_INSUFFICIENT_RESOURCES;
-    }
     if (inSync_.load()) {
         auto ret = DPS_SendCommand<PhotoSyncCommand>(userId_, imageIds_);
         inSync_.store(false);
@@ -75,6 +70,11 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, con
 {
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
+        if (imageIds_.size() >= MAX_SYNC_IMAGE_COUNT) {
+            DP_ERR_LOG("AddImage exceeded max sync image count: %{public}zu, imageId: %{public}s",
+                MAX_SYNC_IMAGE_COUNT, imageId.c_str());
+            return DP_INSUFFICIENT_RESOURCES;
+        }
         DP_DEBUG_LOG("AddImage error, inSync!");
         auto info = std::make_shared<PhotoInfo>(discardable, metadata);
         imageIds_.emplace(imageId, info);
