@@ -92,6 +92,13 @@ public:
             thumbnailStride, thumbnailHeight, thumbnailWidth);
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer format: %{public}d, usage: %{public}" PRIu64,
             surfaceBuffer->GetFormat(), surfaceBuffer->GetUsage());
+        // Validate extra data from producer (HAL) before use - untrusted values can cause OOB read
+        if (thumbnailStride <= 0 || thumbnailHeight <= 0 || thumbnailWidth <= 0) {
+            MEDIA_ERR_LOG("DeepCopyThumbnailBuffer invalid extra data: stride=%{public}d, height=%{public}d, "
+                "width=%{public}d", thumbnailStride, thumbnailHeight, thumbnailWidth);
+            return nullptr;
+        }
+        uint32_t srcSize = surfaceBuffer->GetSize();
         // deep copy buffer
         BufferRequestConfig requestConfig = {
             .width = thumbnailWidth,
@@ -112,26 +119,44 @@ public:
         bool isHdr = colorSpaceType ==  HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType::CM_BT2020_HLG_FULL;
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer colorSpaceType: %{public}d, isHdr: %{public}d", colorSpaceType, isHdr);
         const float ROW_FACTOR = 1.5;
-        int32_t bytesPerPixel = isHdr ? 2 : 1;
         int32_t newStride = newSurfaceBuffer->GetStride();
         MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer newSurfaceBuffer stride: %{public}u, size: %{public}u", newStride,
             newSurfaceBuffer->GetSize());
+        int32_t copyRows = static_cast<int32_t>(std::round(thumbnailHeight * ROW_FACTOR));
         if (thumbnailStride > newStride) {
-            int32_t srcRowLen = thumbnailStride * bytesPerPixel;
-            int32_t dstRowLen = newStride * bytesPerPixel;
+            // stride returned by GetStride() is already in bytes (graphic layer folds bytesPerPixel into stride),
+            // so we must NOT multiply by bytesPerPixel again - that would double the row length and cause
+            // a heap-buffer-overflow (CWE-787) on HDR (P010) paths.
+            int32_t srcRowLen = thumbnailStride;
+            int32_t dstRowLen = newStride;
+            uint32_t dstSize = newSurfaceBuffer->GetSize();
             uint8_t* srcAddr = static_cast<uint8_t*>(surfaceBuffer->GetVirAddr());
             uint8_t* dstAddr = static_cast<uint8_t*>(newSurfaceBuffer->GetVirAddr());
-            // copy by line
-            for (int h = 0; h < std::round(thumbnailHeight * ROW_FACTOR); ++h) {
-                if (memcpy_s(dstAddr + h * dstRowLen, dstRowLen, srcAddr + h * srcRowLen, dstRowLen) != EOK) {
+            // copy by line; validate source bounds per row to prevent heap OOB read (CWE-125)
+            for (int h = 0; h < copyRows; ++h) {
+                uint32_t dstRemaining = dstSize - static_cast<uint32_t>(h) * static_cast<uint32_t>(dstRowLen);
+                uint32_t srcOffset = static_cast<uint32_t>(h) * static_cast<uint32_t>(srcRowLen);
+                if (srcOffset + static_cast<uint32_t>(dstRowLen) > srcSize) {
+                    MEDIA_ERR_LOG("DeepCopyThumbnailBuffer row %{public}d: offset=%{public}u, rowLen=%{public}d, "
+                        "srcSize=%{public}u", h, srcOffset, dstRowLen, srcSize);
+                    return nullptr;
+                }
+                if (memcpy_s(dstAddr + h * dstRowLen, dstRemaining, srcAddr + h * srcRowLen, dstRowLen) != EOK) {
                     MEDIA_ERR_LOG("DeepCopyThumbnailBuffer memcpy_s failed in copy by line");
                     return nullptr;
                 }
             }
         } else {
-            // directly copy
-            uint32_t colorLength = std::round(thumbnailStride * thumbnailHeight * ROW_FACTOR * bytesPerPixel);
+            // directly copy; stride is already in bytes, do not multiply by bytesPerPixel
+            uint32_t colorLength = static_cast<uint32_t>(std::round(
+                static_cast<float>(thumbnailStride) * thumbnailHeight * ROW_FACTOR));
             MEDIA_DEBUG_LOG("DeepCopyThumbnailBuffer colorLength: %{public}u", colorLength);
+            // Validate source bounds to prevent heap OOB read (CWE-125)
+            if (colorLength > srcSize) {
+                MEDIA_ERR_LOG("DeepCopyThumbnailBuffer colorLength %{public}u exceeds srcSize %{public}u",
+                    colorLength, srcSize);
+                return nullptr;
+            }
             if (memcpy_s(newSurfaceBuffer->GetVirAddr(), newSurfaceBuffer->GetSize(), surfaceBuffer->GetVirAddr(),
                     colorLength) != EOK) {
                 MEDIA_ERR_LOG("DeepCopyThumbnailBuffer memcpy_s failed");
