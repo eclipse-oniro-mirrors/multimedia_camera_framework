@@ -24,6 +24,8 @@
 namespace OHOS {
 namespace CameraStandard {
 namespace DeferredProcessing {
+constexpr int32_t MAX_SYNC_IMAGE_COUNT = 100;
+
 DeferredPhotoProcessingSession::DeferredPhotoProcessingSession(const int32_t userId)
     : userId_(userId)
 {
@@ -68,6 +70,11 @@ int32_t DeferredPhotoProcessingSession::AddImage(const std::string& imageId, con
     if (inSync_.load()) {
         std::lock_guard<std::mutex> lock(mutex_);
         DP_DEBUG_LOG("AddImage error, inSync!");
+        if (imageIds_.size() >= MAX_SYNC_IMAGE_COUNT) {
+            DP_ERR_LOG("AddImage exceeded max sync image count: %{public}zu, imageId: %{public}s",
+                MAX_SYNC_IMAGE_COUNT, imageId.c_str());
+            return DP_INSUFFICIENT_RESOURCES;
+        }
         auto info = std::make_shared<PhotoInfo>(discardable, metadata);
         imageIds_.emplace(imageId, info);
     } else {

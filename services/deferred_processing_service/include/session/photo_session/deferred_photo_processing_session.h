@@ -48,7 +48,6 @@ public:
 
 private:
     void ReportEvent(const std::string& imageId, int32_t event);
-
     std::mutex mutex_;
     const int32_t userId_;
     std::atomic<bool> inSync_ {false};

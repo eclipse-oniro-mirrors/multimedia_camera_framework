@@ -1693,7 +1693,9 @@ int32_t HCaptureSession::OperatePermissionCheck(uint32_t interfaceCode)
         CAMERA_INVALID_STATE,
         "HCaptureSession::OperatePermissionCheck session is released");
     switch (static_cast<ICaptureSessionIpcCode>(interfaceCode)) {
-        case ICaptureSessionIpcCode::COMMAND_START: {
+        case ICaptureSessionIpcCode::COMMAND_START:
+        case ICaptureSessionIpcCode::COMMAND_BEGIN_CONFIG:
+        case ICaptureSessionIpcCode::COMMAND_ADD_OUTPUT: {
             auto callerToken = IPCSkeleton::GetCallingTokenID();
             CHECK_RETURN_RET_ELOG(callerToken_ != callerToken, CAMERA_OPERATION_NOT_ALLOWED,
                 "HCaptureSession::OperatePermissionCheck fail, callerToken_ is : %{public}d, now token "
