@@ -362,10 +362,10 @@ void HStreamCapture::FillingPictureExtendLhdrGainmapStreamInfos(StreamInfo_V1_5 
 
 void HStreamCapture::FillingAuxiliaryPhotoStreamInfos(StreamInfo_V1_5 &streamInfo, int32_t format)
 {
-    // Snapshot the enabled types under the lock, the switch vector is written by the enable IPC.
+   // Snapshot the enabled types under the lock, the switch vector is written by the enable IPC.
     std::vector<int32_t> enabledTypes;
     {
-        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+        std::lock_guard<std::mutex> lock{auxPhotoEnableMutex_};
         enabledTypes = enabledAuxPhotoTypes_;
     }
     if (enabledTypes.empty()) {
@@ -890,41 +890,28 @@ int32_t HStreamCapture::CheckAuxiliaryPhotoMutex()
     return CAMERA_OK;
 }
 
-int32_t HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled(
-    const std::vector<int32_t>& auxPhotoTypes, bool enabled)
+namespace {
+// Checks the aux photo type list: at most 2 entries, only OXYGEN/PIGMENTATION, no duplicates.
+bool IsAuxPhotoTypesInvalid(const std::vector<int32_t>& auxPhotoTypes)
 {
-    MEDIA_INFO_LOG("HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled E, enabled:%{public}d, size:%{public}zu",
-        enabled, auxPhotoTypes.size());
     constexpr size_t maxAuxiliaryPhotoCount = 2;
-    if (auxPhotoTypes.empty()) {
-        // An empty enable list is invalid, an empty disable list is a no-op.
-        CHECK_RETURN_RET_ELOG(enabled, CAMERA_INVALID_ARG,
-            "SetAutoAuxiliaryPhotosDeliveryEnabled enable with an empty type list");
-        return CAMERA_OK;
-    }
-    bool isTypesInvalid = auxPhotoTypes.size() > maxAuxiliaryPhotoCount;
-    for (size_t i = 0; !isTypesInvalid && i < auxPhotoTypes.size(); i++) {
-        isTypesInvalid = (auxPhotoTypes[i] != AUXILIARY_PHOTO_TYPE_OXYGEN &&
+    bool isInvalid = auxPhotoTypes.size() > maxAuxiliaryPhotoCount;
+    for (size_t i = 0; !isInvalid && i < auxPhotoTypes.size(); i++) {
+        isInvalid = (auxPhotoTypes[i] != AUXILIARY_PHOTO_TYPE_OXYGEN &&
             auxPhotoTypes[i] != AUXILIARY_PHOTO_TYPE_PIGMENTATION) ||
             std::find(auxPhotoTypes.begin() + static_cast<std::ptrdiff_t>(i) + 1, auxPhotoTypes.end(),
                 auxPhotoTypes[i]) != auxPhotoTypes.end();
     }
-    if (isTypesInvalid) {
-        MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled auxPhotoTypes is invalid");
-        return CAMERA_INVALID_ARG;
-    }
-    std::lock_guard<std::mutex> enableLock{auxPhotoEnableMutex_};
-    if (enabled) {
-        int32_t ret = CheckAuxiliaryPhotoMutex();
-        CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret,
-            "SetAutoAuxiliaryPhotosDeliveryEnabled mutex check failed: %{public}d", ret);
-        CreateAuxiliaryPhotoSurfaces();
-    }
-    std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
-    // Per-type incremental switch: enable merges the types into the enabled set, disable removes
-    // them, so a type enabled or disabled by an earlier call is kept unless it is in this list.
-    std::vector<int32_t> newTypes = enabledAuxPhotoTypes_;
-    for (auto auxPhotoType : auxPhotoTypes) {
+    return isInvalid;
+}
+
+// Per-type incremental switch: enable merges the types into the enabled set, disable removes
+// them, so a type enabled or disabled by an earlier call is kept unless it is in this list.
+std::vector<int32_t> MergeAuxPhotoTypes(const std::vector<int32_t>& currentTypes,
+    const std::vector<int32_t>& deltaTypes, bool enabled)
+{
+    std::vector<int32_t> newTypes = currentTypes;
+    for (auto auxPhotoType : deltaTypes) {
         auto it = std::find(newTypes.begin(), newTypes.end(), auxPhotoType);
         if (enabled && it == newTypes.end()) {
             newTypes.push_back(auxPhotoType);
@@ -932,6 +919,56 @@ int32_t HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled(
             newTypes.erase(it);
         }
     }
+    return newTypes;
+}
+
+// Bitmask of the enabled aux photo types: bit0 OXYGEN, bit1 PIGMENTATION.
+int32_t GetAuxPhotoTypesBitmask(const std::vector<int32_t>& types)
+{
+    int32_t bitmask = 0;
+    for (auto type : types) {
+        if (type == AUXILIARY_PHOTO_TYPE_OXYGEN) {
+            bitmask |= 0x1; // bit0
+        } else if (type == AUXILIARY_PHOTO_TYPE_PIGMENTATION) {
+            bitmask |= 0x2; // bit1
+        }
+    }
+    return bitmask;
+}
+}
+
+int32_t HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled(
+    const std::vector<int32_t>& auxPhotoTypes, bool enabled)
+{
+    MEDIA_INFO_LOG("HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled E, enabled:%{public}d, size:%{public}zu",
+        enabled, auxPhotoTypes.size());
+    std::string bundleName = BmsAdapter::GetInstance()->GetBundleName(IPCSkeleton::GetCallingUid());
+    if (auxPhotoTypes.empty()) {
+        // An empty enable list is invalid, an empty disable list is a no-op.
+        if (enabled) {
+            MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled enable with an empty type list");
+            CameraReportUtils::GetInstance().ReportAuxPhotoEnable(bundleName, 0, enabled, CAMERA_INVALID_ARG);
+            return CAMERA_INVALID_ARG;
+        }
+        CameraReportUtils::GetInstance().ReportAuxPhotoEnable(bundleName, 0, enabled, CAMERA_OK);
+        return CAMERA_OK;
+    }
+    if (IsAuxPhotoTypesInvalid(auxPhotoTypes)) {
+        MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled auxPhotoTypes is invalid");
+        CameraReportUtils::GetInstance().ReportAuxPhotoEnable(bundleName, 0, enabled, CAMERA_INVALID_ARG);
+        return CAMERA_INVALID_ARG;
+    }
+    std::lock_guard<std::mutex> enableLock{auxPhotoEnableMutex_};
+    if (enabled) {
+        int32_t ret = CheckAuxiliaryPhotoMutex();
+        if (ret != CAMERA_OK) {
+            MEDIA_ERR_LOG("SetAutoAuxiliaryPhotosDeliveryEnabled mutex check failed: %{public}d", ret);
+            CameraReportUtils::GetInstance().ReportAuxPhotoEnable(bundleName, 0, enabled, ret);
+            return ret;
+        }
+        CreateAuxiliaryPhotoSurfaces();
+    }
+    std::vector<int32_t> newTypes = MergeAuxPhotoTypes(enabledAuxPhotoTypes_, auxPhotoTypes, enabled);
     bool isChanged = (newTypes != enabledAuxPhotoTypes_);
     enabledAuxPhotoTypes_ = newTypes;
     // The control tag is delivered after CommitStreams on the next config commit (deferred-effective);
@@ -940,6 +977,10 @@ int32_t HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled(
     if (isChanged) {
         isAuxControlTagDirty_ = !enabledAuxPhotoTypes_.empty();
     }
+    // DFX: report auxiliary photo enable/disable switch event (success path)
+    int32_t auxEnabledTypesBitmask = GetAuxPhotoTypesBitmask(newTypes);
+    CameraReportUtils::GetInstance().ReportAuxPhotoEnable(
+        bundleName, auxEnabledTypesBitmask, enabled, CAMERA_OK);
     MEDIA_INFO_LOG("HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled X, size:%{public}zu, dirty:%{public}d",
         enabledAuxPhotoTypes_.size(), isAuxControlTagDirty_.load());
     return CAMERA_OK;
@@ -947,7 +988,7 @@ int32_t HStreamCapture::SetAutoAuxiliaryPhotosDeliveryEnabled(
 
 bool HStreamCapture::IsAuxPhotoEnabled()
 {
-    std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+    std::lock_guard<std::mutex> lock{auxPhotoEnableMutex_};
     return !enabledAuxPhotoTypes_.empty();
 }
 
@@ -963,10 +1004,11 @@ void HStreamCapture::SendAuxiliaryPhotoControlTagIfDirty()
     if (!isAuxControlTagDirty_.load()) {
         return;
     }
-    // Snapshot the enabled types under the lock, the switch vector is written by the enable IPC.
+    // Snapshot the enabled types under the dedicated switch lock, the switch vector is written by
+    // the enable IPC.
     std::vector<int32_t> controlTypes;
     {
-        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+        std::lock_guard<std::mutex> lock{auxPhotoEnableMutex_};
         for (auto type : enabledAuxPhotoTypes_) {
             controlTypes.push_back(type);
         }
@@ -1247,18 +1289,6 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
         "HStreamCapture::Capture Failed to allocate a captureId");
     ret = CheckBurstCapture(captureSettings, preparedCaptureId);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "HStreamCapture::Capture Failed with burst state error");
-    // Auxiliary photos apply to normal single captures only. Burst captures and captures whose
-    // mutex conditions drifted after enable (e.g. zoom/beauty changed) degrade to main photo
-    // delivery without waiting for auxiliary buffers.
-    if (IsAuxPhotoEnabled()) {
-        // Burst always degrades: check it first so the burst shots skip the expensive
-        // mutex re-check (CloneCachedSettings per capture).
-        bool isDegraded = IsBurstCapture(preparedCaptureId) || (CheckAuxiliaryPhotoMutex() != CAMERA_OK);
-        std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
-        captureIdAuxDegradeMap_[preparedCaptureId] = isDegraded ? 1 : 0;
-        MEDIA_INFO_LOG("Capture aux degrade flag, captureId:%{public}d, degraded:%{public}d",
-            preparedCaptureId, isDegraded);
-    }
 
     CaptureDfxInfo captureDfxInfo;
     captureDfxInfo.captureId = preparedCaptureId;
@@ -1285,6 +1315,32 @@ int32_t HStreamCapture::Capture(const std::shared_ptr<OHOS::Camera::CameraMetada
     int32_t rotation = 0;
     rotationMap_.Find(preparedCaptureId, rotation);
     captureInfo.rotation = rotation;
+    // Auxiliary photos apply to normal single captures only: burst captures and captures whose
+    // mutex conditions drifted after enable (e.g. zoom/beauty changed) degrade to main photo
+    // delivery without waiting for auxiliary buffers. Burst always degrades: check it first so
+    // burst shots skip the expensive mutex re-check (CloneCachedSettings per capture).
+    if (IsAuxPhotoEnabled()) {
+        bool isDegraded = IsBurstCapture(preparedCaptureId) || (CheckAuxiliaryPhotoMutex() != CAMERA_OK);
+        std::vector<int32_t> enabledTypes;
+        {
+            std::lock_guard<std::mutex> lock{auxPhotoEnableMutex_};
+            enabledTypes = enabledAuxPhotoTypes_;
+        }
+        {
+            std::lock_guard<std::recursive_mutex> lock{g_photoImageMutex};
+            captureIdAuxDegradeMap_[preparedCaptureId] = static_cast<int32_t>(isDegraded);
+        }
+        for (auto type : enabledTypes) {
+            if (type == AUXILIARY_PHOTO_TYPE_OXYGEN) {
+                captureInfo.auxEnabledTypes |= 0x1;
+            } else if (type == AUXILIARY_PHOTO_TYPE_PIGMENTATION) {
+                captureInfo.auxEnabledTypes |= 0x2;
+            }
+        }
+        captureInfo.isAuxDegraded = static_cast<int32_t>(isDegraded);
+        MEDIA_INFO_LOG("Capture aux degrade flag, captureId:%{public}d, degraded:%{public}d",
+            preparedCaptureId, isDegraded);
+    }
     CameraReportUtils::GetInstance().SetCapturePerfStartInfo(captureInfo);
     CameraReportDfxUtils::GetInstance()->SetCaptureState(CaptureState::CAPTURE_START, preparedCaptureId);
     MEDIA_DEBUG_LOG("HStreamCapture::Capture is Bursting_ %{public}d", isBursting_);
@@ -1593,6 +1649,8 @@ int32_t HStreamCapture::ReleaseStream(bool isDelay)
         std::lock_guard<std::mutex> lock(callbackLock_);
         streamCaptureCallback_ = nullptr;
     }
+    // DFX: flush all pending capture perf reports on stream release
+    CameraReportUtils::GetInstance().FlushPendingCapture();
 #ifdef CAMERA_CAPTURE_YUV
     if (photoStateCallback_) {
         MEDIA_DEBUG_LOG("HStreamCapture::Release UnregisterPhotoStateCallback is called");
@@ -1919,6 +1977,8 @@ int32_t HStreamCapture::OnCaptureError(int32_t captureId, int32_t errorCode)
         captureIdAuxiliaryCountMap_.erase(captureId);
         captureIdCountMap_.erase(captureId);
     }
+    // DFX: flush pending capture perf report to avoid event loss on capture error
+    CameraReportUtils::GetInstance().FlushPendingCapture(captureId);
     std::lock_guard<std::mutex> lock(callbackLock_);
     if (streamCaptureCallback_ != nullptr) {
         // LCOV_EXCL_START

@@ -122,6 +122,12 @@ struct DfxCaptureInfo {
     bool isMovingPhoto = false;
     bool isDeferredImageDelivery = false;
     int32_t rotation = 0;
+    int32_t auxEnabledTypes = 0;
+    int32_t isAuxDegraded = 0;
+    int32_t auxCount = 0;
+    int32_t oxygenDelivered = 0;
+    int32_t melDelivered = 0;
+    bool isAuxPhotoPending = false;
 };
 
 struct DirectorModeRecord {
@@ -172,6 +178,10 @@ public:
     void SetCapturePerfStartInfo(DfxCaptureInfo captureInfo);
     void SetCapturePerfEndInfo(int32_t captureId, bool isOfflineCapture = false, int32_t offlineOutputCnt = 0,
         bool isMovingPhoto = false, bool isDeferredImageDelivery = false);
+    void SetCaptureAuxResult(int32_t captureId, int32_t oxygenDelivered, int32_t melDelivered, int32_t auxCount);
+    void FlushPendingCapture(int32_t captureId = -1);
+    void ReportAuxPhotoEnable(const std::string& bundleName, int32_t enabledTypes, bool isEnable,
+        int32_t resultCode);
 
     void SetSwitchCamPerfStartInfo(CallerInfo caller);
     void SetSwitchCamPerfEndInfo();
