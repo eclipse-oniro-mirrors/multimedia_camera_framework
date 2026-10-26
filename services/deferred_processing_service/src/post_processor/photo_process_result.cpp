@@ -254,7 +254,13 @@ sptr<SurfaceBuffer> PhotoProcessResult::TransBufferHandleToSurfaceBuffer(const B
 BufferHandle* PhotoProcessResult::CloneBufferHandle(const BufferHandle* handle)
 {
     DP_CHECK_ERROR_RETURN_RET_LOG(handle == nullptr, nullptr, "bufferHandle is nullptr.");
-
+    static constexpr uint32_t CLONE_RESERVE_MAX_SIZE = 1024;
+    if (handle->reserveFds > CLONE_RESERVE_MAX_SIZE || handle->reserveInts > CLONE_RESERVE_MAX_SIZE ||
+        (handle->reserveFds + handle->reserveInts) > CLONE_RESERVE_MAX_SIZE) {
+        DP_ERR_LOG("CloneBufferHandle: invalid reserve size, fds=%{public}u ints=%{public}u",
+            handle->reserveFds, handle->reserveInts);
+        return nullptr;
+    }
     BufferHandleGuard newHandleGuard(AllocateBufferHandle(handle->reserveFds, handle->reserveInts));
     DP_CHECK_ERROR_RETURN_RET_LOG(newHandleGuard.handle_ == nullptr, nullptr,
         "AllocateBufferHandle failed, newHandle is nullptr.");

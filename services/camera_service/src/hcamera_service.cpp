@@ -109,6 +109,7 @@ constexpr int32_t DEFAULT_ITEMS = 1;
 constexpr int32_t DEFAULT_DATA_LENGTH = 1;
 constexpr int32_t DEFAULT_COUNT = 1;
 constexpr int32_t UID_TO_USERID = 200000;
+constexpr int32_t MAX_SA_UID = 10000;
 
 static const std::map<OHOS::Rosen::FoldStatus, std::vector<OHOS::Rosen::FoldStatus>> g_foldStatusAssociations = {
     {OHOS::Rosen::FoldStatus::EXPAND,
@@ -1149,6 +1150,7 @@ int32_t HCameraService::CreateDeferredVideoProcessingSession(int32_t userId,
     sptr<DeferredProcessing::IDeferredVideoProcessingSession>& session)
 {
     CAMERA_SYNC_TRACE;
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     MEDIA_INFO_LOG("HCameraService::CreateDeferredVideoProcessingSession enter.");
     sptr<DeferredProcessing::IDeferredVideoProcessingSession> videoSession;
     int32_t uid = IPCSkeleton::GetCallingUid();
@@ -1171,19 +1173,38 @@ int32_t HCameraService::CreateMechSession(int32_t userId, sptr<IMechSession>& se
     int32_t ret = CheckPermission(permissionName, callerToken);
     CHECK_RETURN_RET_ELOG(ret != CAMERA_OK, ret, "HCameraService::CreateMechSession failed permission is: %{public}s",
         permissionName.c_str());
-
+    int32_t trustedUserId = userId;
+    OHOS::Security::AccessToken::ATokenTypeEnum tokenType =
+        OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(callerToken);
+    if (tokenType == OHOS::Security::AccessToken::TOKEN_HAP) {
+        int32_t uid = IPCSkeleton::GetCallingUid();
+        int32_t derivedUserId = 0;
+        int32_t rc = AccountSA::OsAccountManager::GetOsAccountLocalIdFromUid(uid, derivedUserId);
+        CHECK_RETURN_RET_ELOG(rc != 0 || derivedUserId <= 0, CAMERA_INVALID_ARG,
+            "CreateMechSession derive userId from calling uid failed, rc=%{public}d", rc);
+        trustedUserId = derivedUserId;
+    } else if (tokenType == OHOS::Security::AccessToken::TOKEN_NATIVE) {
+        int32_t uid = IPCSkeleton::GetCallingUid();
+        CHECK_RETURN_RET_ELOG(uid >= MAX_SA_UID, CAMERA_NO_PERMISSION,
+            "CreateMechSession native caller is not system ability, uid=%{private}d", uid);
+        CHECK_RETURN_RET_ELOG(trustedUserId <= 0, CAMERA_INVALID_ARG,
+            "CreateMechSession invalid userId from SA: %{private}d", trustedUserId);
+    } else {
+        MEDIA_ERR_LOG("CreateMechSession reject token type: %{public}d", tokenType);
+        return CAMERA_NO_PERMISSION;
+    }
     auto &sessionManager = HCameraSessionManager::GetInstance();
-    auto mechSession = sessionManager.GetMechSession(userId);
+    auto mechSession = sessionManager.GetMechSession(trustedUserId);
     if (mechSession != nullptr) {
         session = mechSession;
         return CAMERA_OK;
     }
 
-    mechSession = new (std::nothrow) HMechSession(userId);
+    mechSession = new (std::nothrow) HMechSession(trustedUserId);
     CHECK_RETURN_RET_ELOG(
         mechSession == nullptr, CAMERA_ALLOC_ERROR, "HMechSession::NewInstance mechSession is nullptr");
     session = mechSession;
-    sessionManager.AddMechSession(userId, mechSession);
+    sessionManager.AddMechSession(trustedUserId, mechSession);
     return CAMERA_OK;
 }
 
@@ -1471,6 +1492,8 @@ int32_t HCameraService::CreateMovieFileOutput(
 #ifdef CAMERA_MOVIE_FILE
     int32_t rc = CAMERA_OK;
     MEDIA_INFO_LOG("HCameraService::CreateMovieFileOutput start");
+    CHECK_RETURN_RET_ELOG(
+        !CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CreateMovieFileOutput CheckSystemApp failed");
     if (videoProfile.width <= 0 || videoProfile.height <= 0) {
         rc = CAMERA_INVALID_ARG;
         MEDIA_ERR_LOG("HCameraService::CreateMovieFileOutput width or height is invalid");
@@ -2210,6 +2233,9 @@ int32_t HCameraService::MuteCameraFunc(bool muteMode)
 int32_t HCameraService::EnableControlCenter(bool status, bool needPersistEnable)
 {
     MEDIA_INFO_LOG("HCameraService::EnableControlCenter");
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    int32_t permRet = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, IPCSkeleton::GetCallingTokenID());
+    CHECK_RETURN_RET_ELOG(permRet != CAMERA_OK, permRet, "HCameraService::EnableControlCenter permission denied");
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition_, CAMERA_INVALID_STATE, "ControlCenterPrecondition false.");
     lock_guard<mutex> lock(controlCenterStatusMutex_);
     auto ret = UpdateDataShareAndTag(status, needPersistEnable);
@@ -2235,6 +2261,10 @@ int32_t HCameraService::EnableControlCenter(bool status, bool needPersistEnable)
 int32_t HCameraService::SetControlCenterPrecondition(bool condition)
 {
     MEDIA_INFO_LOG("HCameraService::SetControlCenterPrecondition %{public}d", condition);
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
+    int32_t permRet = CheckPermission(OHOS_PERMISSION_CAMERA_CONTROL, IPCSkeleton::GetCallingTokenID());
+    CHECK_RETURN_RET_ELOG(permRet != CAMERA_OK, permRet,
+        "HCameraService::SetControlCenterPrecondition permission denied");
     sptr<HCaptureSession> sessionForControlCenter = GetSessionForControlCenter();
     controlCenterPrecondition_ = condition;
     if (sessionForControlCenter != nullptr) {
@@ -2268,6 +2298,7 @@ int32_t HCameraService::SetDeviceControlCenterAbility(bool ability)
 
 int32_t HCameraService::GetDeviceControlCenterAbility(bool &ability)
 {
+    CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION, "HCameraService::CheckSystemApp fail");
     ability = deviceControlCenterAbility_;
     return CAMERA_OK;
 }
@@ -2780,6 +2811,12 @@ void HCameraService::DumpCameraStreamInfo(common_metadata_header_t* metadataEntr
     ret =
         OHOS::Camera::FindCameraMetadataItem(metadataEntry, OHOS_ABILITY_STREAM_AVAILABLE_BASIC_CONFIGURATIONS, &item);
     if (ret == CAM_META_SUCCESS) {
+        if (item.count % unitLen != 0) {
+            MEDIA_ERR_LOG("DumpCameraStreamInfo: item count %{public}u is not a multiple of %{public}u",
+                item.count, unitLen);
+            infoDumper.Pop();
+            return;
+        }
         infoDumper.Title("Basic Stream Info Size: " + to_string(item.count / unitLen));
         for (uint32_t index = 0; index < item.count; index += unitLen) {
             map<int, string>::const_iterator iter = g_cameraFormat.find(item.data.i32[index]);
