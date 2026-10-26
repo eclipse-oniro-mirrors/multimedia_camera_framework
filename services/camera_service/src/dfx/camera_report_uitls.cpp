@@ -219,11 +219,87 @@ void CameraReportUtils::SetCapturePerfEndInfo(int32_t captureId, bool isOfflineC
             dfxCaptureInfo.offlineOutputCnt = static_cast<uint32_t>(offlineOutputCnt);
             dfxCaptureInfo.isMovingPhoto = isMovingPhoto;
             dfxCaptureInfo.isDeferredImageDelivery = isDeferredImageDelivery;
+            if (dfxCaptureInfo.auxEnabledTypes == 0) {
+                ReportCapturePerf(dfxCaptureInfo);
+                ReportImagingInfo(dfxCaptureInfo);
+                captureList_.erase(captureId);
+            } else {
+                dfxCaptureInfo.isAuxPhotoPending = true;
+                iter->second = dfxCaptureInfo;
+            }
+        }
+    }
+}
+
+void CameraReportUtils::SetCaptureAuxResult(int32_t captureId, int32_t oxygenDelivered,
+    int32_t melDelivered, int32_t auxCount)
+{
+    MEDIA_DEBUG_LOG("CameraReportUtils::SetCaptureAuxResult captureId:%{public}d oxy:%{public}d mel:%{public}d",
+        captureId, oxygenDelivered, melDelivered);
+    unique_lock<mutex> lock(mutex_);
+    {
+        map<int32_t, DfxCaptureInfo>::iterator iter = captureList_.find(captureId);
+        if (iter != captureList_.end() && iter->second.isAuxPhotoPending) {
+            auto dfxCaptureInfo = iter->second;
+            dfxCaptureInfo.oxygenDelivered = oxygenDelivered;
+            dfxCaptureInfo.melDelivered = melDelivered;
+            dfxCaptureInfo.auxCount = auxCount;
+            dfxCaptureInfo.isAuxPhotoPending = false;
             ReportCapturePerf(dfxCaptureInfo);
             ReportImagingInfo(dfxCaptureInfo);
             captureList_.erase(captureId);
         }
     }
+}
+
+void CameraReportUtils::FlushPendingCapture(int32_t captureId)
+{
+    MEDIA_DEBUG_LOG("CameraReportUtils::FlushPendingCapture captureId: %{public}d", captureId);
+    unique_lock<mutex> lock(mutex_);
+    if (captureId == -1) {
+        for (auto iter = captureList_.begin(); iter != captureList_.end();) {
+            if (iter->second.isAuxPhotoPending) {
+                auto dfxCaptureInfo = iter->second;
+                dfxCaptureInfo.isAuxPhotoPending = false;
+                ReportCapturePerf(dfxCaptureInfo);
+                ReportImagingInfo(dfxCaptureInfo);
+                iter = captureList_.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+    } else {
+        auto iter = captureList_.find(captureId);
+        if (iter != captureList_.end() && iter->second.isAuxPhotoPending) {
+            auto dfxCaptureInfo = iter->second;
+            dfxCaptureInfo.isAuxPhotoPending = false;
+            ReportCapturePerf(dfxCaptureInfo);
+            ReportImagingInfo(dfxCaptureInfo);
+            captureList_.erase(iter);
+        }
+    }
+}
+
+void CameraReportUtils::ReportAuxPhotoEnable(const string& bundleName, int32_t enabledTypes,
+    bool isEnable, int32_t resultCode)
+{
+    MEDIA_DEBUG_LOG("CameraReportUtils::ReportAuxPhotoEnable bundleName: %{public}s types: %{public}d "
+        "isEnable: %{public}d resultCode: %{public}d",
+        bundleName.c_str(), enabledTypes, isEnable ? 1 : 0, resultCode);
+    unique_lock<mutex> lock(mutex_);
+    stringstream ss;
+    ss << S_BEHAVIORNAME << "AuxPhotoEnable"
+       << S_VALUE << (isEnable ? "1" : "0")
+       << ",auxEnabledTypes:" << enabledTypes
+       << ",resultCode:" << resultCode
+       << S_CUR_MODE << curMode_
+       << S_CUR_CAMERAID << cameraId_
+       << S_CBUNDLENAME << bundleName;
+    HiSysEventWrite(
+        HiviewDFX::HiSysEvent::Domain::CAMERA,
+        "USER_BEHAVIOR",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "MSG", ss.str());
 }
 
 void CameraReportUtils::ReportCapturePerf(DfxCaptureInfo captureInfo)
@@ -245,7 +321,12 @@ void CameraReportUtils::ReportCapturePerf(DfxCaptureInfo captureInfo)
         "CUR_OFFLINE_COUNT", captureInfo.offlineOutputCnt,
         "IS_MOVING_PHOTO", captureInfo.isMovingPhoto,
         "IS_DEFERRED_IMAGE_DELIVERY", captureInfo.isDeferredImageDelivery,
-        "ROTATION", captureInfo.rotation);
+        "ROTATION", captureInfo.rotation,
+        "AUX_ENABLED_TYPES", captureInfo.auxEnabledTypes,
+        "IS_DEGRADED", captureInfo.isAuxDegraded,
+        "AUX_COUNT", captureInfo.auxCount,
+        "OXYGEN_DELIVERED", captureInfo.oxygenDelivered,
+        "MEL_DELIVERED", captureInfo.melDelivered);
 }
 
 void CameraReportUtils::SetSwitchCamPerfStartInfo(CallerInfo caller)
@@ -342,7 +423,7 @@ void CameraReportUtils::ReportCameraErrorWithoutErrcode(std::string funcName, Ca
         << " uid:" << callerInfo.uid
         << " tokenID:" << callerInfo.tokenID
         << " bundleName:" << callerInfo.bundleName;
-    
+
     HiSysEventWrite(
         HiviewDFX::HiSysEvent::Domain::CAMERA,
         "CAMERA_ERR",
@@ -391,7 +472,7 @@ void CameraReportUtils::ReportUserBehavior(string behaviorName,
         << S_CUID << callerInfo.uid
         << S_CTOKENID << callerInfo.tokenID
         << S_CBUNDLENAME << callerInfo.bundleName;
-        
+
         HiSysEventWrite(
             HiviewDFX::HiSysEvent::Domain::CAMERA,
             "USER_BEHAVIOR",
@@ -415,7 +496,7 @@ void CameraReportUtils::ReportUserBehaviorAddDevice(
         << S_CUID << callerInfo.uid
         << S_CTOKENID << callerInfo.tokenID
         << S_CBUNDLENAME << callerInfo.bundleName;
-        
+
         HiSysEventWrite(
             HiviewDFX::HiSysEvent::Domain::CAMERA,
             "USER_BEHAVIOR",

@@ -24,6 +24,7 @@
 #include "camera_server_photo_proxy.h"
 #include "picture_proxy.h"
 #include "camera_report_dfx_uitls.h"
+#include "camera_report_uitls.h"
 #include "watch_dog.h"
 
 namespace OHOS {
@@ -104,6 +105,9 @@ void PhotoBufferConsumer::ExecuteOnBufferAvailable()
         // Direct delivery (aux not enabled / degraded capture / imageCount declared none):
         // clean the per-capture auxiliary state so no orphan entries stay in the maps.
         if (streamCapture_->IsAuxPhotoEnabled()) {
+            // DFX: degraded/direct delivery path - no aux buffers delivered
+            int32_t auxCount = auxiliaryCount > 1 ? auxiliaryCount - 1 : 0;
+            CameraReportUtils::GetInstance().SetCaptureAuxResult(captureId, 0, 0, auxCount);
             streamCapture_->CleanAuxPhotoState(captureId);
         }
     }
@@ -234,6 +238,16 @@ void PhotoBufferConsumer::AssembleCompressedPhotoWithAux(int64_t timestamp, int3
     }
     CHECK_RETURN_ELOG(mainBuffer == nullptr, "AssembleCompressedPhotoWithAux mainBuffer is nullptr");
     streamCapture->OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer, timestamp, false);
+    // DFX: report aux photo delivery result at packaging closure
+    int32_t auxCount = 0;
+    if (oxygenBuffer != nullptr) {
+        auxCount++;
+    }
+    if (pigmentationBuffer != nullptr) {
+        auxCount++;
+    }
+    CameraReportUtils::GetInstance().SetCaptureAuxResult(captureId,
+        oxygenBuffer != nullptr ? 1 : 0, pigmentationBuffer != nullptr ? 1 : 0, auxCount);
     MEDIA_INFO_LOG("AssembleCompressedPhotoWithAux X, captureId:%{public}d", captureId);
 }
 
@@ -335,25 +349,31 @@ void PhotoBufferConsumer::CleanAfterTransPicture(int32_t captureId)
 
 namespace {
 // Embeds the oxygen/pigmentation auxiliary photo buffers (if delivered) into the main picture
-// as OXY_MAP/MEL_MAP auxiliary pictures, and clears the cached buffers on embed.
+// as OXY_MAP/MEL_MAP auxiliary pictures, clears the cached buffers on embed, and reports the
+// delivery result via DFX at YUV packaging closure.
 void AppendAuxiliaryPicturesToMain(const sptr<HStreamCapture>& streamCapture,
     const std::shared_ptr<PictureIntf>& picture, int32_t captureId)
 {
     CHECK_RETURN_ELOG(picture == nullptr, "AppendAuxiliaryPicturesToMain picture is nullptr");
-    if (streamCapture->captureIdOxygenMap_[captureId]) {
+    bool oxygenDelivered = streamCapture->captureIdOxygenMap_[captureId] != nullptr;
+    bool melDelivered = streamCapture->captureIdPigmentationMap_[captureId] != nullptr;
+    if (oxygenDelivered) {
         MEDIA_INFO_LOG("AssembleDeferredPicture oxygenSurfaceBuffer");
         LoggingSurfaceBufferInfo(streamCapture->captureIdOxygenMap_[captureId], "oxygenSurfaceBuffer");
         picture->SetAuxiliaryPicture(
             streamCapture->captureIdOxygenMap_[captureId], CameraAuxiliaryPictureType::OXY_MAP);
         streamCapture->captureIdOxygenMap_[captureId] = nullptr;
     }
-    if (streamCapture->captureIdPigmentationMap_[captureId]) {
+    if (melDelivered) {
         MEDIA_INFO_LOG("AssembleDeferredPicture pigmentationSurfaceBuffer");
         LoggingSurfaceBufferInfo(streamCapture->captureIdPigmentationMap_[captureId], "pigmentationSurfaceBuffer");
         picture->SetAuxiliaryPicture(
             streamCapture->captureIdPigmentationMap_[captureId], CameraAuxiliaryPictureType::MEL_MAP);
         streamCapture->captureIdPigmentationMap_[captureId] = nullptr;
     }
+    int32_t auxCount = (oxygenDelivered ? 1 : 0) + (melDelivered ? 1 : 0);
+    CameraReportUtils::GetInstance().SetCaptureAuxResult(captureId,
+        oxygenDelivered ? 1 : 0, melDelivered ? 1 : 0, auxCount);
 }
 }
 
