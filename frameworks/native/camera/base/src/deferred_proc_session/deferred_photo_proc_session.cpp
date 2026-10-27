@@ -39,7 +39,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnProcessImageDone(const std::st
     if (isCallbackSet) {
         if (addr == MAP_FAILED) {
             MEDIA_ERR_LOG("DeferredPhotoProcessingSessionCallback::OnProcessImageDone() mmap failed");
-            deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode::ERROR_IMAGE_PROC_FAILED);
+            deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode::ERROR_IMAGE_PROC_FAILED,
+                DpsMetadata());
             return 0;
         } else {
             deferredPhotoProcSession_->GetCallback()->OnProcessImageDone(imageId, static_cast<uint8_t*>(addr), bytes,
@@ -60,7 +61,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnError(const std::string &image
     MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnError() is called, errorCode: %{public}d", errorCode);
     bool isCallbackSet = deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr;
     if (isCallbackSet) {
-        deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode(errorCode));
+        DpsMetadata metaData;
+        deferredPhotoProcSession_->GetCallback()->OnError(imageId, DpsErrorCode(errorCode), metaData);
     } else {
         MEDIA_INFO_LOG("DeferredPhotoProcessingSessionCallback::OnError not set!, Discarding callback");
     }
@@ -110,7 +112,8 @@ int32_t DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage(const 
     bool isCallbackSet = deferredPhotoProcSession_ != nullptr && deferredPhotoProcSession_->GetCallback() != nullptr
         && pictureIntf != nullptr;
     if (isCallbackSet) {
-        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityImage(imageId, pictureIntf);
+        DpsMetadata metaData;
+        deferredPhotoProcSession_->GetCallback()->OnDeliveryLowQualityImage(imageId, pictureIntf, metaData);
     } else {
         HILOG_COMM_ERROR("DeferredPhotoProcessingSessionCallback::OnDeliveryLowQualityImage not set, Discard callback");
     }
@@ -327,7 +330,8 @@ void DeferredPhotoProcSession::AddImage(const std::string& imageId, DpsMetadata&
     // LCOV_EXCL_STOP
 }
 
-void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, const bool restorable)
+void DeferredPhotoProcSession::RemoveImage(const std::string& imageId, DpsMetadata& metadata,
+    const bool restorable)
 {
     // LCOV_EXCL_START
     CHECK_RETURN_ELOG(remoteSession_ == nullptr, "DeferredPhotoProcSession::RemoveImage failed due to binder died.");
@@ -345,7 +349,8 @@ void DeferredPhotoProcSession::RestoreImage(const std::string& imageId)
     // LCOV_EXCL_STOP
 }
 
-void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const std::string& imageId)
+void DeferredPhotoProcSession::ProcessImage(const std::string& appName, const std::string& imageId,
+    DpsMetadata& metadata)
 {
     // LCOV_EXCL_START
     if (remoteSession_ == nullptr) {
@@ -407,7 +412,7 @@ void DeferredPhotoProcSession::CameraServerDied(pid_t pid)
     ReconnectDeferredProcessingSession();
     if (callback_ != nullptr) {
         MEDIA_INFO_LOG("Reconnect session successful, send sync requestion.");
-        callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED);
+        callback_->OnError("", DpsErrorCode::ERROR_SESSION_SYNC_NEEDED, DpsMetadata());
     }
     return;
     // LCOV_EXCL_STOP

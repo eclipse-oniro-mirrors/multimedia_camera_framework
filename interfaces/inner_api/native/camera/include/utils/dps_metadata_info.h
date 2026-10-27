@@ -33,10 +33,18 @@ enum DpsMetadataError {
 };
 
 const char* const DEFERRED_PROCESSING_TYPE_KEY = "deferredProcessingType";
+const char* const DPS_PHOTO_COMPRESSION_QUALITY_KEY = "OHOS_PHOTO_COMPRESSION_QUALITY";
+const char* const DPS_LOCAL_IMAGE_ENHANCE_FLAG_KEY = "localImageEnhanceFlag";
+const char* const DEFERRED_IMAGE_PROCESS_TYPE_KEY = "imageProcessType";
 
 enum DeferredProcessingType {
     DPS_BACKGROUND = 0,
     DPS_OFFLINE,
+};
+
+enum ImageProcessType {
+    DPS_STAGE_TWO = 0,
+    DPS_LOCAL_IMAGE_ENHANCEMENT,
 };
 
 class DpsMetadata : public Parcelable{

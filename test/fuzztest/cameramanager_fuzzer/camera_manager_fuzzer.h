@@ -37,13 +37,14 @@ public:
         uint32_t cloudImageEnhanceFlag) override {}
     void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         const DpsMetadata& metadata) override {}
-    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) override {}
-    void OnError(const std::string& imageId, const DpsErrorCode errorCode) override {}
+    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
+        const DpsMetadata& metadata) override {}
+    void OnError(const std::string& imageId, const DpsErrorCode errorCode, const DpsMetadata& metadata) override {}
     void OnStateChanged(const DpsStatusCode status) override {}
     void OnDeliveryLowQualityLcd(const std::string& imageId, std::shared_ptr<PictureIntf> picture) override {}
     void OnProcessImageDone(const std::string& imageId, const std::vector<CameraStandard::ImageFd>& imageFds,
-        std::shared_ptr<CameraStandard::PictureIntf> lcdImage, const DpsMetadata& metadata) override
-    {}
+        std::shared_ptr<CameraStandard::PictureIntf> lcdImage, const DpsMetadata& metadata) override {}
+    void OnImageEnhancementProcessingProgress(const std::string& imageId, const float progress) override {}
 };
 
 class ITorchServiceCallbackFuzz : public ITorchServiceCallback {

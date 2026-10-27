@@ -35,14 +35,17 @@ public:
     virtual ~IDeferredPhotoProcSessionCallback() = default;
     virtual void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         const DpsMetadata& metadata) = 0;
-    virtual void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
+    virtual void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
+        const DpsMetadata& metadata) = 0;
     virtual void OnDeliveryLowQualityLcd(const std::string &imageId, std::shared_ptr<PictureIntf> picture) = 0;
     virtual void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         uint32_t cloudImageEnhanceFlag) = 0;
     virtual void OnProcessImageDone(const std::string& imageId, const std::vector<CameraStandard::ImageFd>& imageFds,
         std::shared_ptr<CameraStandard::PictureIntf> lcdImage, const DpsMetadata& metadata) = 0;
-    virtual void OnError(const std::string& imageId, const DpsErrorCode errorCode) = 0;
+    virtual void OnError(const std::string& imageId, const DpsErrorCode errorCode,
+        const DpsMetadata& metadata) = 0;
     virtual void OnStateChanged(const DpsStatusCode status) = 0;
+    virtual void OnImageEnhancementProcessingProgress(const std::string& imageId, const float progress) = 0;
 };
 
 class DeferredPhotoProcSession : public RefBase {
@@ -53,9 +56,9 @@ public:
     void EndSynchronize();
     void AddImage(const std::string& imageId, DpsMetadata& metadata, const bool discardable = false,
         const std::string& bundleName = "");
-    void RemoveImage(const std::string& imageId, const bool restorable = true);
+    void RemoveImage(const std::string& imageId, DpsMetadata& metadata, const bool restorable = true);
     void RestoreImage(const std::string& imageId);
-    void ProcessImage(const std::string& appName, const std::string& imageId);
+    void ProcessImage(const std::string& appName, const std::string& imageId, DpsMetadata& metadata);
     bool CancelProcessImage(const std::string& imageId);
     void NotifyProcessImage();
     std::shared_ptr<IDeferredPhotoProcSessionCallback> GetCallback();

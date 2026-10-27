@@ -157,14 +157,16 @@ class TestDeferredPhotoProcSessionCallback : public IDeferredPhotoProcSessionCal
 public:
     void OnProcessImageDone(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
         const DpsMetadata& dpsMetadata);
-    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture);
+    void OnDeliveryLowQualityImage(const std::string &imageId, std::shared_ptr<PictureIntf> picture,
+        const DpsMetadata& metadata);
     void OnDeliveryLowQualityLcd(const std::string &imageId, std::shared_ptr<PictureIntf> picture);
     void OnProcessImageDone(const std::string& imageId, const uint8_t* addr, const long bytes,
         uint32_t cloudImageEnhanceFlag);
     void OnProcessImageDone(const std::string& imageId, const std::vector<CameraStandard::ImageFd>& imageFds,
         std::shared_ptr<CameraStandard::PictureIntf> lcdImage, const DpsMetadata& metadata);
-    void OnError(const std::string& imageId, const DpsErrorCode errorCode);
+    void OnError(const std::string& imageId, const DpsErrorCode errorCode, const DpsMetadata& metadata);
     void OnStateChanged(const DpsStatusCode status);
+    void OnImageEnhancementProcessingProgress(const std::string& imageId, const float progress);
 };
 
 class TestDeferredVideoProcSessionCallback : public IDeferredVideoProcSessionCallback {

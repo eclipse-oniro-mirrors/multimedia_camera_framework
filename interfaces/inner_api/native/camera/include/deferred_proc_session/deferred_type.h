@@ -35,6 +35,10 @@ enum DpsErrorCode {
     ERROR_VIDEO_PROC_FAILED = 8,
     ERROR_VIDEO_PROC_TIMEOUT = 9,
     ERROR_VIDEO_PROC_INTERRUPTED = 10,
+
+    // image process model unavailable
+    ERROR_IMAGE_PROC_MODEL_UNAVAILABLE = 11,
+    ERROR_IMAGE_PROC_RESOURCE_REMOVED = 12
 };
 
 enum DpsStatusCode {
