@@ -339,7 +339,7 @@ void TestDeferredPhotoProcSessionCallback::OnProcessImageDone(const std::string&
 }
 
 void TestDeferredPhotoProcSessionCallback::OnDeliveryLowQualityImage(const std::string &imageId,
-    std::shared_ptr<PictureIntf> picture)
+    std::shared_ptr<PictureIntf> picture, const DpsMetadata& metadata)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnDeliveryLowQualityImage.");
 }
@@ -350,7 +350,8 @@ void TestDeferredPhotoProcSessionCallback::OnDeliveryLowQualityLcd(const std::st
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnDeliveryLowQualityLcd.");
 }
 
-void TestDeferredPhotoProcSessionCallback::OnError(const std::string& imageId, const DpsErrorCode errorCode)
+void TestDeferredPhotoProcSessionCallback::OnError(const std::string& imageId, const DpsErrorCode errorCode,
+    const DpsMetadata& metadata)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnError.");
 }
@@ -358,6 +359,12 @@ void TestDeferredPhotoProcSessionCallback::OnError(const std::string& imageId, c
 void TestDeferredPhotoProcSessionCallback::OnStateChanged(const DpsStatusCode status)
 {
     MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnStateChanged.");
+}
+
+void TestDeferredPhotoProcSessionCallback::OnImageEnhancementProcessingProgress(const std::string& imageId,
+    const float progress)
+{
+    MEDIA_INFO_LOG("TestDeferredPhotoProcSessionCallback OnImageEnhancementProcessingProgress.");
 }
 
 void TestDeferredVideoProcSessionCallback::OnProcessVideoDone(const std::string& videoId,

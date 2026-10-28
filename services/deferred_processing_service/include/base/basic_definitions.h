@@ -191,6 +191,11 @@ enum DpsError : int32_t {
     DPS_ERROR_VIDEO_PROC_FAILED = 10,
     DPS_ERROR_VIDEO_PROC_TIMEOUT = 11,
     DPS_ERROR_VIDEO_PROC_INTERRUPTED = 12,
+
+    // image process model unavailable
+    DPS_ERROR_IMAGE_PROC_MODEL_UNAVAILABLE = 13,
+    // resource removed by HDI
+    DPS_ERROR_IMAGE_PROC_RESOURCE_REMOVED = 14,
 };
 
 enum DpsStatus : int32_t {
