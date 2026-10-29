@@ -873,6 +873,7 @@ int32_t HStreamRepeat::AddDeferredSurface(const sptr<OHOS::IBufferProducer>& pro
         std::lock_guard<std::mutex> lock(producerLock_);
         CHECK_RETURN_RET_ELOG(
             producer == nullptr, CAMERA_INVALID_ARG, "HStreamRepeat::AddDeferredSurface producer is null");
+        producer->SetRequestBufferNoblockMode(true);
         producer_ = producer;
     }
 
