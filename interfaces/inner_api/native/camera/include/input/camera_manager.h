@@ -1092,7 +1092,7 @@ public:
     bool GetConcurrentType(std::vector<sptr<CameraDevice>> cameraDeviceArrray,
         std::vector<bool> &cameraConcurrentType);
     bool CheckConcurrentExecution(std::vector<sptr<CameraDevice>> cameraDeviceArrray);
-    std::vector<dmDeviceInfo> GetDmDeviceInfo();
+    std::vector<dmDeviceInfo> GetDmDeviceInfo(const std::vector<std::string> &cameraIds);
     CameraConcurrentLimtedCapability limtedCapabilitySave_;
     std::unordered_map<std::string, CameraConcurrentLimtedCapability> cameraConLimCapMap_;
     friend int CameraInput::Open(int32_t cameraConcurrentType);

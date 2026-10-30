@@ -3756,29 +3756,34 @@ int32_t HCameraService::ResetAllFreezeStatus()
     return CAMERA_OPERATION_NOT_ALLOWED;
 }
 
-int32_t HCameraService::GetDmDeviceInfo(std::vector<dmDeviceInfo> &deviceInfos)
+int32_t HCameraService::GetDmDeviceInfo(const std::vector<std::string> &cameraIds,
+    std::vector<dmDeviceInfo> &deviceInfos)
 {
 #ifdef DEVICE_MANAGER
     lock_guard<mutex> lock(g_dmDeviceInfoMutex);
-    std::vector <DistributedHardware::DmDeviceInfo> deviceInfoList;
     auto &deviceManager = DistributedHardware::DeviceManager::GetInstance();
     std::shared_ptr<DistributedHardware::DmInitCallback> initCallback = std::make_shared<DeviceInitCallBack>();
     std::string pkgName = std::to_string(IPCSkeleton::GetCallingTokenID());
     const string extraInfo = "";
     deviceManager.InitDeviceManager(pkgName, initCallback);
     deviceManager.RegisterDevStateCallback(pkgName, extraInfo, NULL);
-    deviceManager.GetTrustedDeviceList(pkgName, extraInfo, deviceInfoList);
-    deviceManager.UnInitDeviceManager(pkgName);
-    int32_t size = static_cast<int32_t>(deviceInfoList.size());
-    MEDIA_INFO_LOG("HCameraService::GetDmDeviceInfo size=%{public}d", size);
-    CHECK_RETURN_RET(size == 0, CAMERA_OK);
-    for (int32_t i = 0; i < size; i++) {
+    for (const auto &cameraId : cameraIds) {
+        DistributedHardware::DmDeviceInfo dmInfo;
+        int32_t ret = deviceManager.GetDeviceInfo(pkgName, cameraId, dmInfo);
+        if (ret != 0) {
+            MEDIA_DEBUG_LOG("HCameraService::GetDeviceInfo failed, cameraId=%{public}s, ret=%{public}d",
+                cameraId.c_str(), ret);
+            continue;
+        }
         dmDeviceInfo deviceInfo;
-        deviceInfo.deviceName = deviceInfoList[i].deviceName;
-        deviceInfo.deviceTypeId = deviceInfoList[i].deviceTypeId;
-        deviceInfo.networkId = deviceInfoList[i].networkId;
+        deviceInfo.deviceName = dmInfo.deviceName;
+        deviceInfo.deviceTypeId = dmInfo.deviceTypeId;
+        deviceInfo.networkId = dmInfo.networkId;
         deviceInfos.emplace_back(deviceInfo);
     }
+    deviceManager.UnInitDeviceManager(pkgName);
+    int32_t size = static_cast<int32_t>(deviceInfos.size());
+    MEDIA_DEBUG_LOG("HCameraService::GetDmDeviceInfo size=%{public}d", size);
 #endif
     return CAMERA_OK;
 }
