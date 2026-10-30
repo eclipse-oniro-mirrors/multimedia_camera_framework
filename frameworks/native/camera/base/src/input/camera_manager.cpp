@@ -1671,14 +1671,14 @@ std::vector<sptr<CameraInfo>> CameraManager::GetCameras()
     return {};
 }
 
-std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo()
+std::vector<dmDeviceInfo> CameraManager::GetDmDeviceInfo(const std::vector<std::string> &cameraIds)
 {
     auto serviceProxy = GetServiceProxy();
     CHECK_RETURN_RET_ELOG(
         serviceProxy == nullptr, {}, "CameraManager::GetDmDeviceInfo serviceProxy is null, returning empty list!");
 
     std::vector<dmDeviceInfo> deviceInfos;
-    int32_t retCode = serviceProxy->GetDmDeviceInfo(deviceInfos);
+    int32_t retCode = serviceProxy->GetDmDeviceInfo(cameraIds, deviceInfos);
     CHECK_RETURN_RET_ELOG(
         retCode != CAMERA_OK, {}, "CameraManager::GetDmDeviceInfo failed!, retCode: %{public}d", retCode);
 
@@ -1728,7 +1728,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraPhysicalDeviceListFromSe
             "GetCameraPhysicalDeviceListFromServer GetPhysicalCameraIds cameraId= %{public}s", cameraId.c_str());
     }
     if (retCode == CAMERA_OK) {
-        auto dmDeviceInfoList = GetDmDeviceInfo();
+        auto dmDeviceInfoList = GetDmDeviceInfo(cameraIds);
         for (auto& cameraId : cameraIds) {
             MEDIA_DEBUG_LOG(
                 "GetCameraPhysicalDeviceListFromServer InitCameraList cameraId= %{public}s", cameraId.c_str());
@@ -1775,7 +1775,7 @@ std::vector<sptr<CameraDevice>> CameraManager::GetCameraDeviceListFromServer()
     std::vector<sptr<CameraDevice>> deviceInfoList = {};
     int32_t retCode = serviceProxy->GetCameraIds(cameraIds);
     if (retCode == CAMERA_OK) {
-        auto dmDeviceInfoList = GetDmDeviceInfo();
+        auto dmDeviceInfoList = GetDmDeviceInfo(cameraIds);
         for (auto& cameraId : cameraIds) {
             MEDIA_DEBUG_LOG("InitCameraList cameraId= %{public}s", cameraId.c_str());
             std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility;

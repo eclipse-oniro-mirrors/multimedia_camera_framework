@@ -291,8 +291,13 @@ void ResetAllFreezeStatus(FuzzedDataProvider& provider)
 
 void GetDmDeviceInfo(FuzzedDataProvider& provider)
 {
+    std::vector<std::string> cameraIds;
+    int32_t count = provider.ConsumeIntegral<int32_t>() % 5;
+    for (int32_t i = 0; i < count; i++) {
+        cameraIds.emplace_back(provider.ConsumeRandomLengthString());
+    }
     std::vector<dmDeviceInfo> deviceInfos;
-    GetService().GetDmDeviceInfo(deviceInfos);
+    GetService().GetDmDeviceInfo(cameraIds, deviceInfos);
 }
 
 void SetFoldStatusCallback(FuzzedDataProvider& provider)

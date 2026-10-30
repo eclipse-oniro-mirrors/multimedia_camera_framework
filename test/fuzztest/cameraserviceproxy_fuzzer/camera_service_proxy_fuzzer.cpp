@@ -282,8 +282,13 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest13(FuzzedDataProvider &fdp)
     bool isProxy = fdp.ConsumeBool();
     fuzz_->ProxyForFreeze(pidList, isProxy);
     fuzz_->ResetAllFreezeStatus();
+    std::vector<std::string> cameraIds = {};
+    int32_t idCount = fdp.ConsumeIntegral<int32_t>() % 5;
+    for (int32_t i = 0; i < idCount; i++) {
+        cameraIds.emplace_back(fdp.ConsumeRandomLengthString());
+    }
     std::vector<dmDeviceInfo> deviceInfos = {};
-    fuzz_->GetDmDeviceInfo(deviceInfos);
+    fuzz_->GetDmDeviceInfo(cameraIds, deviceInfos);
 }
 
 void CameraServiceProxyFuzz::CameraServiceProxyTest14(FuzzedDataProvider &fdp)
@@ -559,8 +564,13 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest24(FuzzedDataProvider &fdp)
     bool isProxy = fdp.ConsumeBool();
     fuzz_->ProxyForFreeze(pidList, isProxy);
     fuzz_->ResetAllFreezeStatus();
+    std::vector<std::string> cameraIds = {};
+    int32_t idCount = fdp.ConsumeIntegral<int32_t>() % 5;
+    for (int32_t i = 0; i < idCount; i++) {
+        cameraIds.emplace_back(fdp.ConsumeRandomLengthString());
+    }
     std::vector<dmDeviceInfo> deviceInfos = {};
-    fuzz_->GetDmDeviceInfo(deviceInfos);
+    fuzz_->GetDmDeviceInfo(cameraIds, deviceInfos);
 
     sptr<IStreamDepthData> depthDataOutput = nullptr;
     fuzz_->CreateDepthDataOutput(producer, format, width, height, depthDataOutput);
@@ -680,8 +690,13 @@ void CameraServiceProxyFuzz::CameraServiceProxyTest25(FuzzedDataProvider &fdp)
     std::set<int32_t> pidList = {1, 2};
     fuzz_->ProxyForFreeze(pidList, true);
     fuzz_->ResetAllFreezeStatus();
+    std::vector<std::string> cameraIds = {};
+    int32_t idCount = fdp.ConsumeIntegral<int32_t>() % 5;
+    for (int32_t i = 0; i < idCount; i++) {
+        cameraIds.emplace_back(fdp.ConsumeRandomLengthString());
+    }
     std::vector<dmDeviceInfo> deviceInfos = {};
-    fuzz_->GetDmDeviceInfo(deviceInfos);
+    fuzz_->GetDmDeviceInfo(cameraIds, deviceInfos);
 
     sptr<IStreamDepthData> depthDataOutput = nullptr;
     fuzz_->CreateDepthDataOutput(producer, 0, 0, 0, depthDataOutput);
