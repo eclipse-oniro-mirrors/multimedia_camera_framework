@@ -1672,7 +1672,6 @@ int32_t HCameraService::CreatePreviewOutput(const sptr<OHOS::IBufferProducer>& p
         MEDIA_ERR_LOG("HCameraService::CreatePreviewOutput HookCreatePreviewFormat is failed");
     }
 #endif
-    producer->SetRequestBufferNoblockMode(true);
     streamRepeatPreview = new (nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::PREVIEW);
     if (streamRepeatPreview == nullptr) { // LCOV_EXCL_LINE
         rc = CAMERA_ALLOC_ERROR;
@@ -1749,7 +1748,6 @@ int32_t HCameraService::CreateVideoOutput(const sptr<OHOS::IBufferProducer>& pro
             "HCameraService::CreateVideoOutput", rc, false, CameraReportUtils::GetCallerInfo());
         return rc;
     }
-    producer->SetRequestBufferNoblockMode(true);
     streamRepeatVideo = new (nothrow) HStreamRepeat(producer, format, width, height, RepeatStreamType::VIDEO);
     if (streamRepeatVideo == nullptr) { // LCOV_EXCL_LINE
         rc = CAMERA_ALLOC_ERROR;
