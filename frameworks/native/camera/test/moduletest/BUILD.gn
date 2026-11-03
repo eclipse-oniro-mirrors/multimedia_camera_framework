@@ -278,6 +278,7 @@ ohos_moduletest("camera_moving_photo_moduletest") {
     "safwk:system_ability_fwk",
     "graphic_surface:buffer_handle",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+    "samgr:samgr_proxy",
   ]
 
   cflags = [ "-fPIC" ]
@@ -325,6 +326,7 @@ ohos_moduletest("camera_session_moduletest") {
     "init:libbegetutil",
     "ipc:ipc_core",
     "drivers_interface_camera:libbuffer_producer_sequenceable_1.0",
+    "samgr:samgr_proxy",
   ]
 
   cflags = [
