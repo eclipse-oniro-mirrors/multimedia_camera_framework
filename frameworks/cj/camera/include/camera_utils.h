@@ -168,6 +168,17 @@ struct CArrCJMetadataObject {
     int64_t size;
 };
 
+struct CJMetadataObjectV2 {
+    int32_t type;
+    int64_t timestamp;
+    CJRect boundingBox;
+};
+
+struct CArrCJMetadataObjectV2 {
+    CJMetadataObjectV2 *head;
+    int64_t size;
+};
+
 struct ErrInfo {
     int32_t errCode;
     char *errMessage;
@@ -184,6 +195,10 @@ enum CJOutputType { METADATA_OUTPUT = 0, PHOTO_OUTPUT, PREVIEW_OUTPUT, VIDEO_OUT
 CJMetadataObject MetadataObjectToCJMetadataObject(MetadataObject metaObject);
 
 CArrCJMetadataObject MetadataObjectsToCArrCJMetadataObject(std::vector<sptr<MetadataObject>> metaObjects);
+
+CJMetadataObjectV2 MetadataObjectToCJMetadataObjectV2(MetadataObject metaObject);
+
+CArrCJMetadataObjectV2 MetadataObjectsToCArrCJMetadataObjectV2(std::vector<sptr<MetadataObject>> metaObjects);
 
 CJErrorCallback ErrorCallBackToCJErrorCallBack(const int32_t errorType, const int32_t errorMsg);
 

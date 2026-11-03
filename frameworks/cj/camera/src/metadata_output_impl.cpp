@@ -95,6 +95,25 @@ void CJMetadataOutput::OnMetadataObjectsAvailable(int64_t callbackId)
     metadataOutputCallback_->SaveCallbackRef(callbackRef);
 }
 
+void CJMetadataOutput::OnMetadataObjectsAvailableV2(int64_t callbackId)
+{
+    if (metadataOutputCallback_ == nullptr) {
+        metadataOutputCallback_ = std::make_shared<CJMetadataOutputCallback>();
+        if (metadataOutputCallback_ == nullptr || metadataOutput_ == nullptr) {
+            return;
+        }
+        metadataOutput_->SetCallback(metadataOutputCallback_);
+    }
+    auto cFunc = reinterpret_cast<void (*)(CArrCJMetadataObjectV2 metaObjects)>(callbackId);
+    auto callback = [lambda = CJLambda::Create(cFunc)](std::vector<sptr<MetadataObject>> metaObjects) -> void {
+        auto res = MetadataObjectsToCArrCJMetadataObjectV2(metaObjects);
+        lambda(res);
+        free(res.head);
+    };
+    auto callbackRef = std::make_shared<CallbackRef<std::vector<sptr<MetadataObject>>>>(callback, callbackId);
+    metadataOutputCallback_->SaveCallbackRef(callbackRef);
+}
+
 void CJMetadataOutput::OffMetadataObjectsAvailable(int64_t callbackId)
 {
     if (metadataOutputCallback_ == nullptr) {

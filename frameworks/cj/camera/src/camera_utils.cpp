@@ -198,5 +198,28 @@ CArrCJMetadataObject MetadataObjectsToCArrCJMetadataObject(std::vector<sptr<Meta
     }
     return CArrCJMetadataObject{head, size};
 }
+
+CJMetadataObjectV2 MetadataObjectToCJMetadataObjectV2(MetadataObject metaObject)
+{
+    Rect rect = metaObject.GetBoundingBox();
+    CJRect cjRect = CJRect{rect.topLeftX, rect.topLeftY, rect.width, rect.height};
+    return CJMetadataObjectV2{static_cast<int32_t>(metaObject.GetType()), metaObject.GetTimestamp(), cjRect};
+}
+
+CArrCJMetadataObjectV2 MetadataObjectsToCArrCJMetadataObjectV2(std::vector<sptr<MetadataObject>> metaObjects)
+{
+    int64_t size = static_cast<int64_t>(metaObjects.size());
+    if (size <= 0) {
+        return CArrCJMetadataObjectV2{0};
+    }
+    CJMetadataObjectV2 *head = static_cast<CJMetadataObjectV2 *>(malloc(sizeof(CJMetadataObjectV2) * size));
+    if (head == nullptr) {
+        return CArrCJMetadataObjectV2{0};
+    }
+    for (int64_t i = 0; i < size; i++) {
+        head[i] = MetadataObjectToCJMetadataObjectV2(*(metaObjects[i]));
+    }
+    return CArrCJMetadataObjectV2{head, size};
+}
 } // namespace CameraStandard
 } // namespace OHOS

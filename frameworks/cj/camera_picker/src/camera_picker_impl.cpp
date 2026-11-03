@@ -59,7 +59,8 @@ static string PickerMediaTypeToString(int32_t type)
 
 static int32_t StringToPickerMediaType(std::string type)
 {
-    if (type == "photo") {
+    // The picker reports the mode as ModeType.PHOTO / ModeType.VIDEO (uppercase strings).
+    if (type == "PHOTO") {
         return 0;
     }
     return 1;
@@ -222,6 +223,9 @@ static std::shared_ptr<UIExtensionCallback> StartCameraAbility(std::shared_ptr<P
             extensionCallbacks.onResult(0, returnWant);
         } else {
             extensionCallbacks.onError(code, "", "");
+            if (onResultCallBack != nullptr) {
+                onResultCallBack(code, "", "PHOTO");
+            }
         }
         MEDIA_INFO_LOG("picker StartCameraAbility get result %{public}d %{public}d", code, isInner);
     };

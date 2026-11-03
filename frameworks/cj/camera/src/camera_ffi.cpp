@@ -1164,6 +1164,16 @@ int32_t FfiCameraMetadataOutputOnMetadataObjectsAvailable(int64_t id, int64_t ca
     return CameraError::NO_ERROR;
 }
 
+FFI_EXPORT int32_t FfiCameraMetadataOutputOnMetadataObjectsAvailableV2(int64_t id, int64_t callbackId)
+{
+    auto metadataOutput = FFIData::GetData<CJMetadataOutput>(id);
+    if (metadataOutput == nullptr) {
+        return CameraError::CAMERA_SERVICE_ERROR;
+    }
+    metadataOutput->OnMetadataObjectsAvailableV2(callbackId);
+    return CameraError::NO_ERROR;
+}
+
 int32_t FfiCameraMetadataOutputOffMetadataObjectsAvailable(int64_t id, int64_t callbackId)
 {
     auto metadataOutput = FFIData::GetData<CJMetadataOutput>(id);
