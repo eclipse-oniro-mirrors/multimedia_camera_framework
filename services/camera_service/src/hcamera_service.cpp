@@ -2888,6 +2888,17 @@ int32_t HCameraService::SetTorchLevel(float level)
         torchlevel_ = oldlevel;
     }
     MEDIA_INFO_LOG("HCameraService::SetTorchLevelBack = %{public}f", torchlevel_);
+    int32_t uid = IPCSkeleton::GetCallingUid();
+    int32_t pid = IPCSkeleton::GetCallingPid();
+    std::string bundleName = BmsAdapter::GetInstance().GetBundleName(uid);
+    std::unordered_map<std::string, std::string> mapPayload;
+    mapPayload["uid"] = std::to_string(uid);
+    mapPayload["pid"] = std::to_string(pid);
+    mapPayload["bundleName"] = bundleName;
+    mapPayload["torchLevel"] = std::to_string(level);
+    mapPayload["torchStatus"] = (level > 0) ? "ON" : "OFF";
+    OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
+        OHOS::ResourceSchedule::ResType::RES_TYPE_CAMERA_TORCH_STATE_CHANGE, 1, mapPayload);
     return ret;
 }
 
