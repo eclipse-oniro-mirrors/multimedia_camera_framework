@@ -2891,16 +2891,16 @@ int32_t HCameraService::SetTorchLevel(float level)
 
     int32_t uid = IPCSkeleton::GetCallingAppUid();
     int32_t pid = IPCSkeleton::GetCallingPid();
-    std::string bundleName = BmsAdapter::GetInstance().GetBundleName(uid);
     std::unordered_map<std::string, std::string> mapPayload;
     mapPayload["uid"] = std::to_string(uid);
     mapPayload["pid"] = std::to_string(pid);
-    mapPayload["bundleName"] = bundleName;
     mapPayload["torchLevel"] = std::to_string(level);
-    mapPayload["torchStatus"] = (level > 0) ? "ON" : "OFF";
+    int64_t value = level > 0 ?
+        static_cast<int64_t>(OHOS::ResourceSchedule::ResType::TorchState::TORCH_ON) :
+        static_cast<int64_t>(ResourceSchedule::ResType::TorchState::TORCH_OFF);
 
     OHOS::ResourceSchedule::ResSchedClient::GetInstance().ReportData(
-        OHOS::ResourceSchedule::ResType::RES_TYPE_CAMERA_TORCH_STATE_CHANGE, 1, mapPayload);
+        OHOS::ResourceSchedule::ResType::RES_TYPE_CAMERA_TORCH_STATE_CHANGE, value, mapPayload);
     return ret;
 }
 
