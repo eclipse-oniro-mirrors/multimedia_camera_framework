@@ -56,6 +56,7 @@ public:
     int32_t Start();
     int32_t Stop();
     void OnMetadataObjectsAvailable(int64_t callbackId);
+    void OnMetadataObjectsAvailableV2(int64_t callbackId);
     void OffMetadataObjectsAvailable(int64_t callbackId);
     void OffAllMetadataObjectsAvailable();
     void OnError(int64_t callbackId);
