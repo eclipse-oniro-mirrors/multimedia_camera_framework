@@ -66,6 +66,8 @@ class CameraRotatePlugin : public RefBase {
     bool HookVideoStreamStart(ParameterMap basicInfoMap, const sptr<OHOS::IBufferProducer>& producer,
         bool& mirror);
     bool HookCaptureStreamStart(ParameterMap basicInfoMap, int32_t& jpegOrientation, bool& mirror);
+    bool GetParameterResult(ParameterMap basicInfoMap, const std::string& functionName,
+        ParameterMap& parameterMap);    
     void SetCaptureSession(const std::string& bundleName, wptr<HCaptureSession> hcaptureSession);
     void DeleteCaptureSession(const std::string& bundleName);
 private:
@@ -86,7 +88,6 @@ private:
     bool VideoStreamStart(ParameterMap basicInfoMap, std::string& surfaceAppFwkType, uint32_t& transform,
         bool& mirror);
     void* GetFunction(const std::string& functionName);
-    bool GetParameterResult(ParameterMap basicInfoMap, const std::string& functionName, ParameterMap& parameterMap);
     int32_t OnParameterChange(ParameterMap ParameterMap);
 
     static std::mutex instanceMutex_;
