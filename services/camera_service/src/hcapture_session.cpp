@@ -395,6 +395,10 @@ HCaptureSession::HCaptureSession(const uint32_t callingTokenId, int32_t opMode)
 HCaptureSession::~HCaptureSession()
 {
     CAMERA_SYNC_TRACE;
+    if (autoFramingListener_ != nullptr) {
+        Rosen::DisplayManagerLite::GetInstance().UnregisterDisplayListener(autoFramingListener_);
+        autoFramingListener_ = nullptr;
+    }
     Release(CaptureSessionReleaseType::RELEASE_TYPE_OBJ_DIED);
 }
 
@@ -1512,6 +1516,19 @@ int32_t HCaptureSession::GetBeautyFromDataShareHelper(int32_t &value)
     return CAMERA_OK;
 }
 
+constexpr uint8_t AUTO_FRAMING_ENHANCED = 2; // enhanced auto-framing for landscape hook apps
+ 
+bool HCaptureSession::IsAutoFramingLandscape()
+{
+    sptr<Rosen::DisplayLite> display = Rosen::DisplayManagerLite::GetInstance().GetDefaultDisplay();
+    if (display == nullptr) {
+        display = Rosen::DisplayManagerLite::GetInstance().GetDisplayById(0);
+    }
+    CHECK_RETURN_RET_WLOG(display == nullptr, false, "IsAutoFramingLandscape display is nullptr");
+    Rosen::Rotation rotation = display->GetRotation();
+    return rotation == Rosen::Rotation::ROTATION_90 || rotation == Rosen::Rotation::ROTATION_270;
+}
+
 int32_t HCaptureSession::SetAutoFramingToDataShareHelper(bool value)
 {
     CHECK_RETURN_RET_ELOG(!CheckSystemApp(), CAMERA_NO_PERMISSION,
@@ -1610,8 +1627,85 @@ int32_t HCaptureSession::GetAutoFramingStatus(bool& status)
     return GetAutoFramingFromDataShareHelper(status);
 }
 
+// True if current app hits the black-bar optimization hook whitelist (plugin IsBlackBarsOptTarget).
+// Bundle fallback: session bundle -> control-center bundle -> IPC caller uid.
+bool HCaptureSession::IsAutoFramingHookEffective()
+{
+#ifdef HOOK_CAMERA_OPERATOR
+    CHECK_EXECUTE(bundleName_ == "", bundleName_ = GetBundleForControlCenter());
+    CHECK_EXECUTE(bundleName_ == "", bundleName_ = GetClientBundle(IPCSkeleton::GetCallingUid()));
+    CHECK_RETURN_RET_WLOG(bundleName_ == "", false, "IsAutoFramingHookEffective bundleName is empty");
+    auto device = GetCameraDevice();
+    CHECK_RETURN_RET_WLOG(device == nullptr, false, "IsAutoFramingHookEffective device is null");
+    ParameterMap param;
+    param[PLUGIN_BUNDLE_NAME] = bundleName_;
+    param[PLUGIN_CAMERA_POSITION] = std::to_string(device->GetCameraPosition());
+    ParameterMap result;
+    bool isTarget = CameraRotatePlugin::GetInstance()->GetParameterResult(param, "IsBlackBarsOptTarget", result);
+    MEDIA_INFO_LOG("HCaptureSession::IsAutoFramingHookEffective isTarget is %{public}d", isTarget);
+    return isTarget;
+#else
+    return false;
+#endif
+}
+ 
+// Re-applies auto-framing on display orientation change for hook effective sessions.
+class AutoFramingRotationListener : public Rosen::DisplayManagerLite::IDisplayListener {
+public:
+    explicit AutoFramingRotationListener(const wptr<HCaptureSession>& session) : session_(session) {};
+    virtual ~AutoFramingRotationListener() = default;
+    void OnCreate(Rosen::DisplayId) override {}
+    void OnDestroy(Rosen::DisplayId) override {}
+    void OnChange(Rosen::DisplayId displayId) override
+    {
+        auto session = session_.promote();
+        CHECK_RETURN(!session);
+        session->HandleAutoFramingRotationChange();
+    }
+private:
+    wptr<HCaptureSession> session_;
+};
+ 
+// Orientation follow-up (called by AutoFramingRotationListener): landscape -> enhanced(2),
+// portrait -> basic(1). Skips if value unchanged; stops following on device loss or
+// UpdateSetting failure (user off also stops, see EnableAutoFraming).
+void HCaptureSession::HandleAutoFramingRotationChange()
+{
+    std::lock_guard<std::mutex> lock(autoFramingLock_);
+    CHECK_RETURN_DLOG(!isAutoFramingEnhancedActive_, "HandleAutoFramingRotationChange monitor not active");
+    bool landscape = IsAutoFramingLandscape();
+    uint8_t metaVal = landscape ? AUTO_FRAMING_ENHANCED : 1;
+    CHECK_RETURN_DLOG(metaVal == lastAutoFramingMetaVal_, "HandleAutoFramingRotationChange orientation unchanged");
+    auto device = GetCameraDevice();
+    if (device == nullptr) {
+        isAutoFramingEnhancedActive_ = false;
+        MEDIA_WARNING_LOG("HandleAutoFramingRotationChange device is null, stop monitor");
+        return;
+    }
+    constexpr int32_t DEFAULT_ITEMS = 1;
+    constexpr int32_t DEFAULT_DATA_LENGTH = 1;
+    shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
+        make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
+    AddOrUpdateMetadata(changedMetadata, OHOS_CONTROL_AUTO_FRAMING_ENABLE, &metaVal, 1);
+    int32_t errCode = device->UpdateSetting(changedMetadata);
+    if (errCode != CAMERA_OK) {
+        isAutoFramingEnhancedActive_ = false;
+        MEDIA_WARNING_LOG("HandleAutoFramingRotationChange update setting failed: %{public}d, stop monitor",
+            errCode);
+        return;
+    }
+    lastAutoFramingMetaVal_ = metaVal;
+    MEDIA_INFO_LOG("HandleAutoFramingRotationChange autoFraming: %{public}d, landscape: %{public}d",
+        metaVal, landscape);
+}
+ 
+// Auto-framing entry (panel user switch and session-start stored-state apply).
+// off -> 0; on non-hook -> 1; on hook -> landscape enhanced(2)/portrait 1, plus orientation
+// follow-up listener. needPersist only for user action.
 int32_t HCaptureSession::EnableAutoFraming(bool enable, bool needPersist)
 {
+    MEDIA_INFO_LOG("HCaptureSession::EnableAutoFraming enable: %{public}d, needPersist: %{public}d",
+        enable, needPersist);
     CHECK_RETURN_RET_ELOG(!controlCenterPrecondition, CAMERA_INVALID_STATE,
         "HCaptureSession::EnableAutoFraming controlCenterPrecondition false");
     uint32_t callerToken = IPCSkeleton::GetCallingTokenID();
@@ -1635,13 +1729,30 @@ int32_t HCaptureSession::EnableAutoFraming(bool enable, bool needPersist)
     shared_ptr<OHOS::Camera::CameraMetadata> changedMetadata =
         make_shared<OHOS::Camera::CameraMetadata>(DEFAULT_ITEMS, DEFAULT_DATA_LENGTH);
     uint8_t metaVal = static_cast<uint8_t>(enable);
+    bool isHookEffective = enable && IsAutoFramingHookEffective();
+    if (isHookEffective) {
+        metaVal = IsAutoFramingLandscape() ? AUTO_FRAMING_ENHANCED : 1;
+        MEDIA_INFO_LOG("HCaptureSession::EnableAutoFraming hook effective, autoFraming %{public}d", metaVal);
+    }
     AddOrUpdateMetadata(changedMetadata,
         OHOS_CONTROL_AUTO_FRAMING_ENABLE, &metaVal, 1);
     errCode = device->UpdateSetting(changedMetadata);
     CHECK_RETURN_RET_ELOG(errCode != CAMERA_OK, errCode, "UpdateAutoFraming Failed");
+    // register orientation listener on first hook-effective enable
+    if (isHookEffective && autoFramingListener_ == nullptr) {
+        autoFramingListener_ = new AutoFramingRotationListener(wptr<HCaptureSession>(this));
+        Rosen::DisplayManagerLite::GetInstance().RegisterDisplayListener(autoFramingListener_);
+    }
+    {
+        // record follow-up state and last value for idempotent rotation callbacks
+        std::lock_guard<std::mutex> lock(autoFramingLock_);
+        isAutoFramingEnhancedActive_ = isHookEffective;
+        lastAutoFramingMetaVal_ = metaVal;
+    }
     if (needPersist) {
         SetAutoFramingToDataShareHelper(enable); // continue execution below logic even if it fails
     }
+    // notify panel only on state flip
     if (isAutoFramingActive == false && enable == true) {
         ControlCenterStatusInfo statusInfo = {ControlCenterEffectType::AUTO_FRAMING, true};
         SetControlCenterEffectCallbackStatus(statusInfo);

@@ -44,6 +44,7 @@
 #include "moving_photo_proxy.h"
 #endif
 #include "safe_map.h"
+#include "display_manager_lite.h"
 #ifdef CAMERA_USE_SENSOR
 #include "sensor_agent.h"
 #include "sensor_agent_type.h"
@@ -304,6 +305,14 @@ public:
     int32_t UpdateStarbursStatus(bool isSetStarburstEnable) override;
 
 private:
+    friend class AutoFramingRotationListener;
+    bool IsAutoFramingHookEffective();
+    void HandleAutoFramingRotationChange();
+    bool IsAutoFramingLandscape();
+    sptr<Rosen::DisplayManagerLite::IDisplayListener> autoFramingListener_;
+    bool isAutoFramingEnhancedActive_ = false;
+    uint8_t lastAutoFramingMetaVal_ = 0;
+    std::mutex autoFramingLock_;
 #ifdef CAMERA_FRAMEWORK_FEATURE_MEDIA_STREAM
     int32_t CreateRecorder4CinematicVideo(sptr<IStreamCommon> stream, sptr<ICameraRecorder> &movieRecorder);
 #endif
