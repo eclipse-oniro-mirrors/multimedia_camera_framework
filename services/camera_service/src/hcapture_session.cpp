@@ -2281,7 +2281,7 @@ bool HCaptureSession::QueryZoomPerformance(
                     "sessionID: %{public}d.",
         static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode),
         GetSessionId());
-    for (int i = 0; i < static_cast<int>(zoomItem.count);) {
+    for (int i = 0; i + headLenPerMode + j < static_cast<int>(zoomItem.count);) {
         int sceneMode = static_cast<int>(zoomItem.data.ui32[i]);
         int zoomPointsNum = static_cast<int>(zoomItem.data.ui32[i + 1]);
         if (static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode) == sceneMode) {

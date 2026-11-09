@@ -173,7 +173,7 @@ bool UnifyMovieFileOutput::IsMirrorSupported()
     const int32_t canMirrorVideoAndPhoto = 2;
     bool isMirrorSupported = false;
     SceneMode currentSceneMode = session->GetMode();
-    for (int i = 0; i < static_cast<int>(item.count); i += step) {
+    for (int i = 0; i + 1 < static_cast<int>(item.count); i += step) {
         MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d", i, item.data.u8[i], i + 1,
             item.data.u8[i + 1]);
         if (currentSceneMode == static_cast<int>(item.data.u8[i])) {

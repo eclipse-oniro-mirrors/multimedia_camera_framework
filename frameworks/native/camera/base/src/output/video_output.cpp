@@ -44,8 +44,11 @@ int32_t VideoOutputCallbackImpl::OnFrameStarted()
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto item = videoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnFrameStarted();
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnFrameStarted();
+        }
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameStarted callback in video");
     }
@@ -58,8 +61,11 @@ int32_t VideoOutputCallbackImpl::OnFrameEnded(const int32_t frameCount)
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;
     auto item = videoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnFrameEnded(frameCount);
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnFrameEnded(frameCount);
+        }
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameEnded callback in video");
     }
@@ -71,8 +77,11 @@ int32_t VideoOutputCallbackImpl::OnFrameError(const int32_t errorCode)
 {
     // LCOV_EXCL_START
     auto item = videoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnError(errorCode);
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnError(errorCode);
+        }
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnFrameError callback in video");
     }
@@ -91,8 +100,11 @@ int32_t VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo(const CaptureEnd
     // LCOV_EXCL_START
     MEDIA_INFO_LOG("VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
     auto item = videoOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnDeferredVideoEnhancementInfo(captureEndedInfo);
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnDeferredVideoEnhancementInfo(captureEndedInfo);
+        }
     } else {
         MEDIA_INFO_LOG("Discarding VideoOutputCallbackImpl::OnDeferredVideoEnhancementInfo callback in video");
     }
@@ -400,7 +412,7 @@ bool VideoOutput::IsMirrorSupported()
     const int32_t canMirrorVideoAndPhoto = 2;
     bool isMirrorEnabled = false;
     SceneMode currentSceneMode = session->GetMode();
-    for (int i = 0; i < static_cast<int>(item.count); i += step) {
+    for (int i = 0; i + 1 < static_cast<int>(item.count); i += step) {
         MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d",
             i, item.data.u8[i], i + 1, item.data.u8[i + 1]);
         if (currentSceneMode == static_cast<int>(item.data.u8[i])) {

@@ -230,8 +230,10 @@ CameraInput::~CameraInput()
         CameraManager::GetInstance()->UnregisterTimeforDevice(cameraIDforcloseDelayed_);
         SetClosedelayedState(false);
     }
-    std::lock_guard<std::mutex> lock(interfaceMutex_);
-    CHECK_PRINT_ILOG(cameraObj_, "CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
+    {
+        std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
+        CHECK_PRINT_ILOG(cameraObj_, "CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
+    }
     InputRemoveDeathRecipient();
 }
 
@@ -525,6 +527,7 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
     // LCOV_EXCL_START
     deviceObj->SetUsedAsPosition(translatePos);
     deviceObj->UpdateSetting(metadata);
+    std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
     CHECK_RETURN_ELOG(cameraObj_ == nullptr, "cameraObj_ is nullptr");
     cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
     // LCOV_EXCL_STOP
@@ -680,6 +683,7 @@ int32_t CameraInput::SetCameraSettings(std::string setting)
 
 std::shared_ptr<camera_metadata_item_t> CameraInput::GetMetaSetting(uint32_t metaTag)
 {
+    std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
     CHECK_RETURN_RET_ELOG(cameraObj_ == nullptr, nullptr, "CameraInput::GetMetaSetting cameraObj has release!");
     std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetCachedMetadata();
     CHECK_RETURN_RET_ELOG(baseMetadata == nullptr, nullptr, "CameraInput::GetMetaSetting Failed to find baseMetadata");

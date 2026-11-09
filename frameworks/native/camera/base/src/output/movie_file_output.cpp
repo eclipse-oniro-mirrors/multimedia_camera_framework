@@ -257,7 +257,7 @@ bool MovieFileOutput::IsMirrorSupported()
     const int32_t canMirrorVideoAndPhoto = 2;
     bool isMirrorEnabled = false;
     SceneMode currentSceneMode = session->GetMode();
-    for (int i = 0; i < static_cast<int>(item.count); i += step) {
+    for (int i = 0; i + 1 < static_cast<int>(item.count); i += step) {
         MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d",
             i, item.data.u8[i], i + 1, item.data.u8[i + 1]);
         if (currentSceneMode == static_cast<int>(item.data.u8[i])) {
@@ -362,8 +362,11 @@ int32_t MovieFileOutputCallbackImpl::OnRecordingStart()
 {
     CAMERA_SYNC_TRACE;
     auto item = movieFileOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnRecordingStart();
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnRecordingStart();
+        }
     } else {
         MEDIA_INFO_LOG("Discarding MovieFileOutputCallbackImpl::OnRecordingStart callback");
     }
@@ -374,8 +377,11 @@ int32_t MovieFileOutputCallbackImpl::OnRecordingPause()
 {
     CAMERA_SYNC_TRACE;
     auto item = movieFileOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnRecordingPause();
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnRecordingPause();
+        }
     } else {
         MEDIA_INFO_LOG("Discarding MovieFileOutputCallbackImpl::OnRecordingPause callback");
     }
@@ -386,8 +392,11 @@ int32_t MovieFileOutputCallbackImpl::OnRecordingResume()
 {
     CAMERA_SYNC_TRACE;
     auto item = movieFileOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnRecordingResume();
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnRecordingResume();
+        }
     } else {
         MEDIA_INFO_LOG("Discarding MovieFileOutputCallbackImpl::OnRecordingResume callback");
     }
@@ -398,8 +407,11 @@ int32_t MovieFileOutputCallbackImpl::OnRecordingStop()
 {
     CAMERA_SYNC_TRACE;
     auto item = movieFileOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnRecordingStop();
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnRecordingStop();
+        }
     } else {
         MEDIA_INFO_LOG("Discarding MovieFileOutputCallbackImpl::OnRecordingStop callback");
     }
@@ -411,8 +423,11 @@ int32_t MovieFileOutputCallbackImpl::OnPhotoAssetAvailable(const std::string& ur
     CAMERA_SYNC_TRACE;
     MEDIA_INFO_LOG("MovieFileOutputCallbackImpl::OnPhotoAssetAvailable is called");
     auto item = movieFileOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnPhotoAssetAvailable(uri);
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnPhotoAssetAvailable(uri);
+        }
     } else {
         MEDIA_ERR_LOG("Discarding MovieFileOutputCallbackImpl::OnMovieInfoAvailable callback");
     }
@@ -423,8 +438,11 @@ int32_t MovieFileOutputCallbackImpl::OnError(const int32_t errorCode)
 {
     CAMERA_SYNC_TRACE;
     auto item = movieFileOutput_.promote();
-    if (item != nullptr && item->GetApplicationCallback() != nullptr) {
-        item->GetApplicationCallback()->OnError(errorCode);
+    if (item != nullptr) {
+        auto callback = item->GetApplicationCallback();
+        if (callback) {
+            callback->OnError(errorCode);
+        }
     } else {
         MEDIA_INFO_LOG("Discarding MovieFileOutputCallbackImpl::OnError callback");
     }

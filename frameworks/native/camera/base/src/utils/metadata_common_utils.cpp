@@ -149,7 +149,7 @@ std::shared_ptr<vector<Size>> GetSupportedPreviewSizeRangeFromBasicConfig(
     const uint32_t heightOffset = 2;
     const uint32_t unitStep = 3;
 
-    for (uint32_t i = 0; i < item->count; i += unitStep) {
+    for (uint32_t i = 0; i + heightOffset < item->count; i += unitStep) {
         camera_format_t hdi_format = static_cast<camera_format_t>(item->data.i32[i]);
         CHECK_CONTINUE(hdi_format != targetFormat);
         Size size;

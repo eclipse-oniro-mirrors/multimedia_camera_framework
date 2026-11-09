@@ -456,6 +456,7 @@ bool HCameraDeviceManager::IsAllowOpen(pid_t pidOfOpenRequest)
     CHECK_RETURN_RET_ELOG(pidOfOpenRequest == -1, false,
         "HCameraDeviceManager::GetConflictDevices wrong pid of the process whitch is goning to turn on");
     std::string cameraId = GetACameraId();
+    std::lock_guard<std::mutex> lock(peerCbMutex_);
     CHECK_RETURN_RET_ELOG(
         peerCallback_ == nullptr, false, "HCameraDeviceManager::isAllowOpen falied to close peer device");
     peerCallback_->NotifyCloseCamera(cameraId);
@@ -563,6 +564,7 @@ bool HCameraDeviceManager::PermDisableSA()
 {
     MEDIA_INFO_LOG("HCameraDeviceManager::PermDisableSA close A camera");
     std::string cameraId = GetACameraId();
+    std::lock_guard<std::mutex> lock(peerCbMutex_);
     CHECK_RETURN_RET_ELOG(
         peerCallback_ == nullptr, false, "HCameraDeviceManager::PermDisableSA falied to close peer device");
     peerCallback_->NotifyCloseCamera(cameraId);
