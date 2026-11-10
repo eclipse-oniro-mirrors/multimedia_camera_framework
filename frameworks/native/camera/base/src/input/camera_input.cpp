@@ -232,7 +232,8 @@ CameraInput::~CameraInput()
     }
     {
         std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
-        CHECK_PRINT_ILOG(cameraObj_, "CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
+        CHECK_PRINT_ILOG(cameraObj_,
+            "CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
     }
     InputRemoveDeathRecipient();
 }
