@@ -2281,11 +2281,14 @@ bool HCaptureSession::QueryZoomPerformance(
                     "sessionID: %{public}d.",
         static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode),
         GetSessionId());
-    for (int i = 0; i + headLenPerMode + j < static_cast<int>(zoomItem.count);) {
+    for (int i = 0; i < static_cast<int>(zoomItem.count);) {
+        CHECK_BREAK(i + 1 >= static_cast<int>(zoomItem.count));
         int sceneMode = static_cast<int>(zoomItem.data.ui32[i]);
         int zoomPointsNum = static_cast<int>(zoomItem.data.ui32[i + 1]);
+        CHECK_BREAK(zoomPointsNum <= 0);
         if (static_cast<OHOS::HDI::Camera::V1_3::OperationMode>(operationMode) == sceneMode) {
             for (int j = 0; j < dataLenPerPoint * zoomPointsNum; j++) {
+                CHECK_BREAK(i + headLenPerMode + j >= static_cast<int>(zoomItem.data.ui32[i]));
                 crossZoomAndTime.push_back(zoomItem.data.ui32[i + headLenPerMode + j]);
                 MEDIA_DEBUG_LOG("HCaptureSession::QueryZoomPerformance()    crossZoomAndTime "
                                 "%{public}d, sessionID: %{public}d.",
