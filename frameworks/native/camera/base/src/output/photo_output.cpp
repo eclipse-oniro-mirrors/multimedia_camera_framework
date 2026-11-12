@@ -252,7 +252,7 @@ int32_t HStreamCaptureCallbackImpl::OnCaptureStarted(const int32_t captureId, ui
     CHECK_RETURN_RET_ELOG(
         callback == nullptr, CAMERA_OK, "HStreamCaptureCallbackImpl::OnCaptureStarted callback is nullptr");
     // LCOV_EXCL_START
-    photoOutput->GetApplicationCallback()->OnCaptureStarted(captureId, exposureTime);
+    callback->OnCaptureStarted(captureId, exposureTime);
     return CAMERA_OK;
     // LCOV_EXCL_STOP
 }
@@ -1009,7 +1009,7 @@ bool PhotoOutput::IsMirrorSupported()
     const int32_t canMirrorPhotoOnly = 1;
     bool isMirrorEnabled = false;
     SceneMode currentSceneMode = session->GetMode();
-    for (int i = 0; i < static_cast<int>(item.count); i += step) {
+    for (int i = 0; i + 1 < static_cast<int>(item.count); i += step) {
         MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d",
             i, item.data.u8[i], i + 1, item.data.u8[i + 1]);
         if (currentSceneMode == static_cast<int>(item.data.u8[i])) {
@@ -1185,7 +1185,7 @@ int32_t PhotoOutput::IsAutoHighQualityPhotoSupported(int32_t &isAutoHighQualityP
 
     int headLenPerMode = 2;
     SceneMode currentSceneMode = session->GetMode();
-    for (int i = 0; i < static_cast<int>(item.count); i += headLenPerMode) {
+    for (int i = 0; i + 1 < static_cast<int>(item.count); i += headLenPerMode) {
         if (currentSceneMode == static_cast<int>(item.data.u8[i])) {
             isAutoHighQualityPhotoSupported = (item.data.u8[i + 1] == 1) ? 0 : -1;
         }

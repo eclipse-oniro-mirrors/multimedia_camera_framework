@@ -78,6 +78,8 @@ private:
     int32_t stopCount_ {0};
     int32_t eosCount_ {0};
     std::map<int32_t, int64_t> bufferPtsMap_ {};
+    std::mutex bufferPtsMapMutex_;
+
     std::map<std::string, int32_t> trackIndexMap_ {};
     std::string videoCodecMimeType_;
     std::string audioCodecMimeType_;

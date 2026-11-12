@@ -1071,7 +1071,7 @@ bool HStreamRepeat::SetMirrorForLivePhoto(bool isEnable, int32_t mode)
     bool isMirrorSupported = false;
     if (res == CAM_META_SUCCESS) {
         int step = 2;
-        for (int i = 0; i < static_cast<int>(item.count); i += step) {
+        for (int i = 0; i + 1 < static_cast<int>(item.count); i += step) {
             MEDIA_DEBUG_LOG("mode u8[%{public}d]: %{public}d, u8[%{public}d], %{public}d",
                 i, item.data.u8[i], i + 1, item.data.u8[i + 1]);
             if (mode == static_cast<int>(item.data.u8[i])) {

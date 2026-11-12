@@ -338,6 +338,7 @@ Status MuxerFilter::OnLinked(CStreamType inType, const std::shared_ptr<Meta>& me
     CHECK_RETURN_RET_ELOG(inputBufferQueue == nullptr, Status::ERROR_UNKNOWN, "OnLinked:inputBufferQueue is null");
     inputBufferQueue->SetBufferFilledListener(listener);
     preFilterCount_++;
+    std::lock_guard<std::mutex> lock(bufferPtsMapMutex_);
     bufferPtsMap_.insert(std::pair<int32_t, int64_t>(trackIndex, 0));
     return Status::OK;
 }
@@ -369,12 +370,15 @@ void MuxerFilter::OnBufferFilled(std::shared_ptr<AVBuffer>& inputBuffer, int32_t
             asyncThread.detach();
         }
         int64_t anotherBufferPts = 0;
-        for (auto mapInterator = bufferPtsMap_.begin(); mapInterator != bufferPtsMap_.end(); mapInterator++) {
-            if (mapInterator->first != trackIndex) {
-                anotherBufferPts = mapInterator->second;
+        {
+            std::lock_guard<std::mutex> lock(bufferPtsMapMutex_);
+            for (auto mapInterator = bufferPtsMap_.begin(); mapInterator != bufferPtsMap_.end(); mapInterator++) {
+                if (mapInterator->first != trackIndex) {
+                    anotherBufferPts = mapInterator->second;
+                }
             }
+            bufferPtsMap_[trackIndex] = currentBufferPts;
         }
-        bufferPtsMap_[trackIndex] = currentBufferPts;
         CHECK_PRINT_ILOG(preFilterCount_ != 1 && std::abs(currentBufferPts - anotherBufferPts) >= WAIT_TIME_OUT_NS,
             "OnBufferFilled pts time interval is greater than 3 seconds");
         MEDIA_INFO_LOG("OnBufferFilled clusterId: %{public}d, trackIndex: %{public}d, streamType: %{public}d, "

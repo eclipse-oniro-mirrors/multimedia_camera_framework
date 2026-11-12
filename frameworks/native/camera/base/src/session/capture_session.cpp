@@ -3861,7 +3861,7 @@ int32_t CaptureSession::GetZoomRatioRange(std::vector<float>& zoomRatioRange)
     const uint32_t step = 3;
     uint32_t minOffset = 1;
     uint32_t maxOffset = 2;
-    for (uint32_t i = 0; i < item.count; i += step) {
+    for (uint32_t i = 0; i + maxOffset < item.count; i += step) {
         MEDIA_INFO_LOG("Scene zoom cap mode: %{public}d, min: %{public}d, max: %{public}d", item.data.i32[i],
             item.data.i32[i + minOffset], item.data.i32[i + maxOffset]);
         if (GetFeaturesMode().GetFeaturedMode() == item.data.i32[i]) {
@@ -7510,7 +7510,7 @@ int32_t CaptureSession::GetDefaultColorStyleSettings(std::vector<ColorStyleSetti
     CHECK_RETURN_RET_ELOG(ret != CAM_META_SUCCESS || item.count <= 0, CameraErrorCode::SUCCESS,
         "CaptureSession::GetDefaultColorStyleSettings Failed with return code %{public}d", ret);
     const uint32_t step = 4;
-    for (uint32_t i = 0; i < item.count; i += step) {
+    for (uint32_t i = 0; i + ColorStyleSetting::toneOffset < item.count; i += step) {
         MEDIA_INFO_LOG("defaultColorStyles, type:%{public}f, hue:%{public}f, saturation:%{public}f, tone:%{public}f",
             item.data.f[i + ColorStyleSetting::typeOffset], item.data.f[i + ColorStyleSetting::hueOffset],
             item.data.f[i + ColorStyleSetting::saturationOffset], item.data.f[i + ColorStyleSetting::toneOffset]);

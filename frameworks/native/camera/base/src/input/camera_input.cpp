@@ -230,8 +230,8 @@ CameraInput::~CameraInput()
         CameraManager::GetInstance()->UnregisterTimeforDevice(cameraIDforcloseDelayed_);
         SetClosedelayedState(false);
     }
-    std::lock_guard<std::mutex> lock(interfaceMutex_);
-    CHECK_PRINT_ILOG(cameraObj_, "CameraInput::CameraInput Destructor Camera: %{public}s", cameraObj_->GetID().c_str());
+    auto cameraObj = GetCameraDeviceInfo();
+    CHECK_PRINT_ILOG(cameraObj, "~CameraInput Destructor Camera: %{public}s", cameraObj->GetID().c_str());
     InputRemoveDeathRecipient();
 }
 
@@ -310,10 +310,9 @@ int CameraInput::Open(int32_t cameraConcurrentType)
             return CAMERA_DEVICE_ERROR;
         }
     }
-    std::lock_guard<std::mutex> lock2(cameraDeviceInfoMutex_);
-    cameraObj_ = cameraObjnow;
-    cameraObj_->SetConcurrentDeviceType(true);
-    CameraManager::GetInstance()->SetProfile(cameraObj_, cameraAbility);
+    cameraObjnow->SetConcurrentDeviceType(true);
+    CameraManager::GetInstance()->SetProfile(cameraObjnow, cameraAbility);
+    SetCameraDeviceInfo(cameraObjnow);
 
     if (cameraDevicePhysic) {
         retCode = cameraDevicePhysic->Open(cameraConcurrentType);
@@ -509,7 +508,6 @@ std::map<CameraPosition, camera_position_enum> createPositionMapping()
 void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
 {
     MEDIA_INFO_LOG("CameraInput::SetInputUsedAsPosition params: %{public}u", usedAsPosition);
-    std::lock_guard<std::mutex> lock(cameraDeviceInfoMutex_);
     uint8_t translatePos = OHOS_CAMERA_POSITION_OTHER;
     if (positionMapping.empty()) {
         positionMapping = createPositionMapping();
@@ -525,8 +523,9 @@ void CameraInput::SetInputUsedAsPosition(CameraPosition usedAsPosition)
     // LCOV_EXCL_START
     deviceObj->SetUsedAsPosition(translatePos);
     deviceObj->UpdateSetting(metadata);
-    CHECK_RETURN_ELOG(cameraObj_ == nullptr, "cameraObj_ is nullptr");
-    cameraObj_->SetCameraDeviceUsedAsPosition(usedAsPosition);
+    auto cameraObj = GetCameraDeviceInfo();
+    CHECK_RETURN_ELOG(!cameraObj, "cameraObj is nullptr");
+    cameraObj->SetCameraDeviceUsedAsPosition(usedAsPosition);
     // LCOV_EXCL_STOP
 }
 
@@ -680,8 +679,9 @@ int32_t CameraInput::SetCameraSettings(std::string setting)
 
 std::shared_ptr<camera_metadata_item_t> CameraInput::GetMetaSetting(uint32_t metaTag)
 {
-    CHECK_RETURN_RET_ELOG(cameraObj_ == nullptr, nullptr, "CameraInput::GetMetaSetting cameraObj has release!");
-    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj_->GetCachedMetadata();
+    auto cameraObj = GetCameraDeviceInfo();
+    CHECK_RETURN_RET_ELOG(!cameraObj, nullptr, "CameraInput::GetMetaSetting cameraObj has release!");
+    std::shared_ptr<OHOS::Camera::CameraMetadata> baseMetadata = cameraObj->GetCachedMetadata();
     CHECK_RETURN_RET_ELOG(baseMetadata == nullptr, nullptr, "CameraInput::GetMetaSetting Failed to find baseMetadata");
     std::shared_ptr<camera_metadata_item_t> item = MetadataCommonUtils::GetCapabilityEntry(baseMetadata, metaTag);
     CHECK_RETURN_RET_ELOG(item == nullptr || item->count == 0, nullptr,
