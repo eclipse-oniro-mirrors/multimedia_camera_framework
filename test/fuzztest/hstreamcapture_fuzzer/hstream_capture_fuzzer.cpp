@@ -46,7 +46,6 @@ const uint32_t MAX_AUX_PHOTO_TYPE_COUNT = 3;
 
 static sptr<IBufferProducer> g_producer;
 static sptr<Surface> g_photoSurface;
-static sptr<SurfaceBuffer> g_auxPhotoProxyBuffer;
 
 static HStreamCapture& GetInstance()
 {
@@ -218,6 +217,33 @@ void OnPhotoAvailableWithAuxiliary(FuzzedDataProvider& fdp)
         fdp.ConsumeIntegral<int64_t>(), fdp.ConsumeBool());
 }
 
+void WriteAuxBufferToParcel(MessageParcel& data, FuzzedDataProvider& fdp)
+{
+    if (!fdp.ConsumeBool()) {
+        data.WriteBool(false);
+        return;
+    }
+    sptr<SurfaceBuffer> buffer = SurfaceBuffer::Create();
+    if (buffer == nullptr || buffer->Alloc({
+        .width = 64,
+        .height = 64,
+        .strideAlignment = 0x8,
+        .format = GRAPHIC_PIXEL_FMT_RGBA_8888,
+        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
+        .timeout = 0,
+    }) != GSERROR_OK) {
+        data.WriteBool(false);
+        return;
+    }
+    data.WriteBool(true);
+    buffer->WriteToMessageParcel(data);
+    sptr<BufferExtraData> bufferExtraData = buffer->GetExtraData();
+    if (bufferExtraData == nullptr) {
+        return;
+    }
+    bufferExtraData->WriteToParcel(data);
+}
+
 void OnPhotoAvailableWithAuxiliaryStub(FuzzedDataProvider& fdp)
 {
     auto stub = sptr<MockStreamCapturePhotoCallback>::MakeSptr();
@@ -226,9 +252,9 @@ void OnPhotoAvailableWithAuxiliaryStub(FuzzedDataProvider& fdp)
     MessageParcel reply;
     MessageOption option;
     data.WriteInterfaceToken(stub->GetDescriptor());
-    data.WriteBool(fdp.ConsumeBool());
-    data.WriteBool(fdp.ConsumeBool());
-    data.WriteBool(fdp.ConsumeBool());
+    WriteAuxBufferToParcel(data, fdp);
+    WriteAuxBufferToParcel(data, fdp);
+    WriteAuxBufferToParcel(data, fdp);
     data.WriteInt64(fdp.ConsumeIntegral<int64_t>());
     data.WriteBool(fdp.ConsumeBool());
     stub->OnRemoteRequest(static_cast<uint32_t>(
@@ -244,9 +270,24 @@ void OnPhotoAvailableWithAuxiliaryProxy(FuzzedDataProvider& fdp)
     CHECK_RETURN(object == nullptr);
     auto proxy = iface_cast<IStreamCapturePhotoCallback>(object);
     CHECK_RETURN(proxy == nullptr);
-    sptr<SurfaceBuffer> mainBuffer = fdp.ConsumeBool() ? g_auxPhotoProxyBuffer : nullptr;
-    sptr<SurfaceBuffer> oxygenBuffer = fdp.ConsumeBool() ? g_auxPhotoProxyBuffer : nullptr;
-    sptr<SurfaceBuffer> pigmentationBuffer = fdp.ConsumeBool() ? g_auxPhotoProxyBuffer : nullptr;
+    auto createAllocateBuffer = []() -> sptr<SurfaceBuffer> {
+        sptr<SurfaceBuffer> buffer = SurfaceBuffer::Create();
+        if (buffer == nullptr) {
+            return nullptr;
+        }
+        BufferRequestConfig config = {
+            .width = 64,
+            .height = 64,
+            .strideAlignment = 0x8,
+            .format = GRAPHIC_PIXEL_FMT_RGBA_8888,
+            .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
+            .timeout = 0,
+        };
+        return buffer->Alloc(config) == GSERROR_OK ? buffer : nullptr;
+    };
+    sptr<SurfaceBuffer> mainBuffer = fdp.ConsumeBool() ? createAllocateBuffer() : nullptr;
+    sptr<SurfaceBuffer> oxygenBuffer = fdp.ConsumeBool() ? createAllocateBuffer() : nullptr;
+    sptr<SurfaceBuffer> pigmentationBuffer = fdp.ConsumeBool() ? createAllocateBuffer() : nullptr;
     proxy->OnPhotoAvailable(mainBuffer, oxygenBuffer, pigmentationBuffer,
         fdp.ConsumeIntegral<int64_t>(), fdp.ConsumeBool());
 }
@@ -335,20 +376,6 @@ void Init()
     CHECK_RETURN_ELOG(!TestToken().GetAllCameraPermission(), "Get permission fail");
     g_photoSurface = Surface::CreateSurfaceAsConsumer("g_hStreamCapture");
     g_producer = g_photoSurface->GetProducer();
-    sptr<SurfaceBuffer> auxPhotoBuffer = SurfaceBuffer::Create();
-    if (auxPhotoBuffer != nullptr) {
-        BufferRequestConfig config = {
-            .width = 64,
-            .height = 64,
-            .strideAlignment = 0x8,
-            .format = GRAPHIC_PIXEL_FMT_RGBA_8888,
-            .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE,
-            .timeout = 0,
-        };
-        if (auxPhotoBuffer->Alloc(config) == GSERROR_OK) {
-            g_auxPhotoProxyBuffer = auxPhotoBuffer;
-        }
-    }
     sptr<HDI::Camera::V1_0::IStreamOperator> streamOperator;
     std::shared_ptr<OHOS::Camera::CameraMetadata> cameraAbility =
         std::make_shared<OHOS::Camera::CameraMetadata>(ITEMCOUNT, DATASIZE);

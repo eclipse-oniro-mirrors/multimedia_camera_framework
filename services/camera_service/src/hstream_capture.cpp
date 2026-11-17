@@ -2087,7 +2087,7 @@ int32_t HStreamCapture::OnPhotoAvailable(sptr<SurfaceBuffer> surfaceBuffer, cons
 }
 
 int32_t HStreamCapture::OnPhotoAvailable(sptr<SurfaceBuffer> mainBuffer, sptr<SurfaceBuffer> oxygenBuffer,
-    sptr<SurfaceBuffer> pigmentationBuffer, const int64_t timestamp, bool isRaw)
+    sptr<SurfaceBuffer> pigmentationBuffer, const int64_t timestamp, bool isRaw) __attribute__((no_sanitize("cfi")))
 {
     // LCOV_EXCL_START
     CAMERA_SYNC_TRACE;

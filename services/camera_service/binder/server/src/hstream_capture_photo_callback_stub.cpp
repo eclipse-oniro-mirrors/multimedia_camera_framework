@@ -87,6 +87,7 @@ int32_t ReadAuxiliarySurfaceBuffer(MessageParcel& data, sptr<SurfaceBuffer>& sur
 }
 
 int HStreamCapturePhotoCallbackStub::HandleOnPhotoAvailableWithAuxiliary(MessageParcel& data)
+    __attribute__((no_sanitize("cfi")))
 {
     MEDIA_INFO_LOG("HStreamCapturePhotoCallbackStub::OnPhotoAvailableWithAuxiliary is called!");
     sptr<SurfaceBuffer> mainBuffer = nullptr;
