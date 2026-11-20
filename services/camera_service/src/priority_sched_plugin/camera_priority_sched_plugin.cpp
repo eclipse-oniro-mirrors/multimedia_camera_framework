@@ -114,8 +114,8 @@ std::vector<CameraAppInfo> CameraPrioritySchedPlugin::JudgePreempt(
         info.pid = holder->GetPid();
         info.accessTokenId = holder->GetAccessTokenId();
         info.bundleName = bundleName;
-        MEDIA_INFO_LOG("CameraPrioritySchedPlugin::JudgePreempt running uid:%{public}d pid:%{public}d bundleName:%{public}s",
-            info.uid, info.pid, info.bundleName.c_str());
+        MEDIA_INFO_LOG("CameraPrioritySchedPlugin::JudgePreempt running uid:%{public}d "
+            " pid:%{public}d bundleName:%{public}s", info.uid, info.pid, info.bundleName.c_str());
         runningInfoList.push_back(info);
     }
  
@@ -124,8 +124,9 @@ std::vector<CameraAppInfo> CameraPrioritySchedPlugin::JudgePreempt(
     requestInfo.pid = requestApp->GetPid();
     requestInfo.accessTokenId = requestApp->GetAccessTokenId();
     requestInfo.bundleName = BmsAdapter::GetInstance().GetBundleName(requestApp->GetUid());
-    MEDIA_INFO_LOG("CameraPrioritySchedPlugin::JudgePreempt cameraId:%{public}s request uid:%{public}d pid:%{public}d bundleName:%{public}s runningCount:%{public}zu",
-        cameraId.c_str(), requestInfo.uid, requestInfo.pid, requestInfo.bundleName.c_str(), runningInfoList.size());
+    MEDIA_INFO_LOG("CameraPrioritySchedPlugin::JudgePreempt cameraId:%{public}s request uid:%{public}d "
+        "pid:%{public}d bundleName:%{public}s runningCount:%{public}zu", cameraId.c_str(), requestInfo.uid,
+        requestInfo.pid, requestInfo.bundleName.c_str(), runningInfoList.size());
  
     JudgePreemptFunc judgePreemptFunc = (JudgePreemptFunc)GetFunction("CameraPrioritySched_JudgePreempt");
     CHECK_RETURN_RET_ELOG(judgePreemptFunc == nullptr, std::vector<CameraAppInfo>(),
