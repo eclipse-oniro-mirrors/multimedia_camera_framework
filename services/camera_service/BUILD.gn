@@ -302,6 +302,12 @@ ohos_shared_library("camera_service") {
     defines += [ "CAMERA_SERVICE_PRIORITY" ]
   }
 
+  if (camera_framework_feature_camera_priority_sched) {
+    defines += [ "CAMERA_PRIORITY_SCHED" ]
+    sources += [ "src/priority_sched_plugin/camera_priority_sched_plugin.cpp" ]
+    include_dirs += [ "${multimedia_camera_framework_path}/services/camera_service/include/priority_sched_plugin" ]
+  }
+
   if (camera_framework_feature_audio_resonance_protect) {
     external_deps += [ "movement:movement_client" ]
     defines += [ "CAMERA_FRAMEWORK_FEATURE_AUDIO_RESONANCE_PROTECT" , "CAMERA_USE_MOVEMENT"]
