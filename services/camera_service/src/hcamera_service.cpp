@@ -1307,7 +1307,8 @@ void HCameraService::ReleaseSessionWrapperFromSharedMode(const std::string& came
     sptr<HCaptureSessionWrapper> sessionWrapper = nullptr;
     {
         std::lock_guard<std::mutex> lock(sessionsMutex_);
-         MEDIA_INFO_LOG("HCameraService::ReleaseSessionWrapperFromSharedMode before sessions_ size:%{public}zu", sessions_.size());
+        MEDIA_INFO_LOG("HCameraService::ReleaseSessionWrapperFromSharedMode before sessions_"
+            " size:%{public}zu", sessions_.size());
         auto it = sessions_.begin();
         while (it != sessions_.end()) {
             sptr<HCaptureSessionWrapper> wrapper = it->promote();
