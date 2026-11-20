@@ -51,6 +51,9 @@
 #include "deferred_processing_service.h"
 #include "display_manager_lite.h"
 #include "hcamera_device_manager.h"
+#ifdef CAMERA_PRIORITY_SCHED
+#include "camera_priority_sched_plugin.h"
+#endif
 #include "hstream_operator_manager.h"
 #include "hcamera_preconfig.h"
 #ifdef CAMERA_MOVIE_FILE
@@ -245,6 +248,9 @@ void HCameraService::OnStart()
         CHECK_PRINT_ILOG(!initFunc, "CameraDisplay_Init function not found or failed to load");
         initFunc();
     }
+    #ifdef CAMERA_PRIORITY_SCHED
+        CameraPrioritySchedPlugin::GetInstance();
+    #endif
     uint64_t interval = 20; // 20s
     int32_t ret = HiviewDFX::IpcFull::GetInstance().AddIpcFull(interval);
     MEDIA_INFO_LOG("addIpcFull result: %{public}d.", ret);
@@ -1096,7 +1102,9 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     bool isPrivilegeApp = (CheckPermission(OHOS_PERMISSION_CAMERA_SHARED, callerToken) == CAMERA_OK);
     sptr<HCameraDevice> deviceForWrapper = nullptr;
     bool isSharedDevice = false;
-
+#ifdef CAMERA_PRIORITY_SCHED
+    HandleCameraPriorityPreempt(cameraId, callerPid, callerToken);
+#endif
     if (isPrivilegeApp) {
         sptr<HSharedCameraDevice> sharedDevice =
             HSharedCameraDevice::GetOrCreateSharedDevice(cameraId, cameraHostManager_, callerToken);
@@ -1129,6 +1137,7 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     {
         std::lock_guard<std::mutex> lock(camerasMutex_);
         cameras_.emplace_back(wrapper);
+        MEDIA_INFO_LOG("HCameraService::CreateCameraDevice cameras_ size:%{public}zu", cameras_.size());
     }
     CHECK_RETURN_RET_ELOG(GetServiceStatus() != CameraServiceStatus::SERVICE_READY, CAMERA_INVALID_STATE,
         "HCameraService::CreateCameraDevice CameraService not ready!");
@@ -1157,6 +1166,104 @@ int32_t HCameraService::CreateCameraDevice(const string& cameraId, sptr<ICameraD
     MEDIA_INFO_LOG("HCameraService::CreateCameraDevice execute success");
     return CAMERA_OK;
 }
+
+#ifdef CAMERA_PRIORITY_SCHED
+void HCameraService::HandleCameraPriorityPreempt(const std::string& cameraId, pid_t callerPid, uint32_t callerToken)
+{
+    auto activeHolders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
+    SortActiveHoldersPrivilegeFirst(activeHolders);
+    sptr<HCameraDeviceHolder> requestHolder = CreatePriorityRequestHolder(callerPid, callerToken, nullptr);
+    CHECK_RETURN(requestHolder == nullptr);
+    std::vector<pid_t> preemptPids = GetPreemptPidFromPlugin(cameraId, activeHolders, requestHolder);
+    CHECK_RETURN(preemptPids.empty());
+    std::lock_guard<std::mutex> lock(camerasMutex_);
+    MEDIA_INFO_LOG("HCameraService::HandleCameraPriorityPreempt before cameras_ size:%{public}zu", cameras_.size());
+    auto it = cameras_.begin();
+    while (it != cameras_.end()) {
+        sptr<HCameraDeviceWrapper> wrapper = it->promote();
+        if (wrapper == nullptr) {
+            it = cameras_.erase(it);
+            continue;
+        }
+        auto pidIt = std::find(preemptPids.begin(), preemptPids.end(), wrapper->GetOwnerPid());
+        if (pidIt == preemptPids.end()) {
+            wrapper->Close();
+            it = cameras_.erase(it);
+            continue;
+        }
+        ++it;
+    }
+    MEDIA_INFO_LOG("HCameraService::HandleCameraPriorityPreempt after cameras_ size:%{public}zu", cameras_.size());
+}
+ 
+void HCameraService::SortActiveHoldersPrivilegeFirst(std::vector<sptr<HCameraDeviceHolder>>& holders)
+{
+    std::stable_sort(holders.begin(), holders.end(),
+        [](const sptr<HCameraDeviceHolder>& lhs, const sptr<HCameraDeviceHolder>& rhs) {
+            bool lhsIsPrivilege = lhs != nullptr &&
+                CheckPermission(OHOS_PERMISSION_CAMERA_SHARED, lhs->GetAccessTokenId()) == CAMERA_OK;
+            bool rhsIsPrivilege = rhs != nullptr &&
+                CheckPermission(OHOS_PERMISSION_CAMERA_SHARED, rhs->GetAccessTokenId()) == CAMERA_OK;
+            return lhsIsPrivilege && !rhsIsPrivilege;
+        });
+}
+ 
+sptr<HCameraDeviceHolder> HCameraService::CreatePriorityRequestHolder(pid_t callerPid, uint32_t callerToken,
+    const sptr<HCameraDevice>& device)
+{
+    return new (std::nothrow) HCameraDeviceHolder(callerPid, IPCSkeleton::GetCallingUid(), 0, 0, device,
+        callerToken, 0, {}, IPCSkeleton::GetFirstTokenID());
+}
+ 
+std::vector<pid_t> HCameraService::GetPreemptPidFromPlugin(const std::string& cameraId,
+    const std::vector<sptr<HCameraDeviceHolder>>& activeHolders, const sptr<HCameraDeviceHolder>& requestHolder)
+{
+    std::vector<CameraAppInfo> preemptList =
+        CameraPrioritySchedPlugin::GetInstance()->JudgePreempt(cameraId, activeHolders, requestHolder);
+    MEDIA_INFO_LOG("HCameraService::GetPreemptPidFromPlugin cameraId:%{public}s size:%{public}zu",
+        cameraId.c_str(), preemptList.size());
+    std::vector<pid_t> preemptPids;
+    preemptPids.reserve(preemptList.size());
+    for (const auto& appInfo : preemptList) {
+        preemptPids.emplace_back(appInfo.pid);
+    }
+    return preemptPids;
+}
+ 
+void HCameraService::HandleSessionPriorityPreempt(pid_t callerPid, uint32_t callerToken)
+{
+    std::vector<sptr<HCameraDevice>> callerCameras =
+        HCameraDeviceManager::GetInstance()->GetCamerasByPid(callerPid);
+    CHECK_RETURN_ELOG(callerCameras.empty() || callerCameras.front() == nullptr,
+        "HCameraService::HandleSessionPriorityPreempt caller has no active camera");
+    std::string cameraId = callerCameras.front()->GetCameraId();
+ 
+    auto activeHolders = HCameraDeviceManager::GetInstance()->GetActiveCameraHolders();
+    SortActiveHoldersPrivilegeFirst(activeHolders);
+    sptr<HCameraDeviceHolder> requestHolder =
+        CreatePriorityRequestHolder(callerPid, callerToken, callerCameras.front());
+    CHECK_RETURN(requestHolder == nullptr);
+    std::vector<pid_t> preemptPids = GetPreemptPidFromPlugin(cameraId, activeHolders, requestHolder);
+    CHECK_RETURN(preemptPids.empty());
+    std::lock_guard<std::mutex> lock(sessionsMutex_);
+    auto it = sessions_.begin();
+    while (it != sessions_.end()) {
+        sptr<HCaptureSessionWrapper> wrapper = it->promote();
+        if (wrapper == nullptr) {
+            it = sessions_.erase(it);
+            continue;
+        }
+        auto pidIt = std::find(preemptPids.begin(), preemptPids.end(), wrapper->GetOwnerPid());
+        if (pidIt == preemptPids.end()) {
+            wrapper->Release();
+            it = sessions_.erase(it);
+            continue;
+        }
+        ++it;
+    }
+    MEDIA_INFO_LOG("HCameraService::HandleSessionPriorityPreempt after sessions_ size:%{public}zu", sessions_.size());
+}
+#endif
 
 void HCameraService::CollectSessionsForMigration(const std::string& cameraId, pid_t ownerPid,
     std::vector<sptr<HCaptureSessionWrapper>>& sessionWrappers)
@@ -1200,6 +1307,7 @@ void HCameraService::ReleaseSessionWrapperFromSharedMode(const std::string& came
     sptr<HCaptureSessionWrapper> sessionWrapper = nullptr;
     {
         std::lock_guard<std::mutex> lock(sessionsMutex_);
+         MEDIA_INFO_LOG("HCameraService::ReleaseSessionWrapperFromSharedMode before sessions_ size:%{public}zu", sessions_.size());
         auto it = sessions_.begin();
         while (it != sessions_.end()) {
             sptr<HCaptureSessionWrapper> wrapper = it->promote();
@@ -1353,7 +1461,9 @@ int32_t HCameraService::CreateCaptureSession(sptr<ICaptureSession>& session, int
     OHOS::Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
     pid_t callerPid = IPCSkeleton::GetCallingPid();
     bool isPrivilegeApp = (CheckPermission(OHOS_PERMISSION_CAMERA_SHARED, callerToken) == CAMERA_OK);
-
+#ifdef CAMERA_PRIORITY_SCHED
+    HandleSessionPriorityPreempt(callerPid, callerToken);
+#endif
     sptr<HCaptureSession> sessionForWrapper = nullptr;
 
     if (isPrivilegeApp) {

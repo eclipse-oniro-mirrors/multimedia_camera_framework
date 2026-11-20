@@ -121,6 +121,7 @@ enum ScanStatus : int32_t {
 };
 
 class CameraInfoDumper;
+class HCameraDeviceHolder;
 
 class ResSchedToCameraEventListener : public OHOS::ResourceSchedule::ResSchedEventListener {
 public:
@@ -462,6 +463,16 @@ private:
         const sptr<HSharedCaptureSession>& sharedSession);
     void HandleNonPrivilegedAppForSharedDevice(const std::string& cameraId, pid_t callerPid,
         sptr<HCameraDevice>& deviceForWrapper, bool& isSharedDevice);
+#ifdef CAMERA_PRIORITY_SCHED
+    void HandleCameraPriorityPreempt(const std::string& cameraId, pid_t callerPid, uint32_t callerToken);
+    void HandleSessionPriorityPreempt(pid_t callerPid, uint32_t callerToken);
+    void SortActiveHoldersPrivilegeFirst(std::vector<sptr<HCameraDeviceHolder>>& holders);
+    sptr<HCameraDeviceHolder> CreatePriorityRequestHolder(pid_t callerPid, uint32_t callerToken,
+        const sptr<HCameraDevice>& device);
+    std::vector<pid_t> GetPreemptPidFromPlugin(const std::string& cameraId,
+        const std::vector<sptr<HCameraDeviceHolder>>& activeHolders,
+        const sptr<HCameraDeviceHolder>& requestHolder);
+#endif
 
     mutex mutex_;
     mutex cameraCbMutex_;

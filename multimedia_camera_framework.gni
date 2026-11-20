@@ -36,6 +36,7 @@ declare_args() {
   camera_framework_feature_camera_service_priority = false
   camera_framework_feature_audio_resonance_protect = false
   camera_framework_feature_picker_pre_require_mem = false
+  camera_framework_feature_camera_priority_sched = false
 }
 use_sensor = false
 if (defined(global_parts_info) && defined(global_parts_info.sensors_sensor)) {
