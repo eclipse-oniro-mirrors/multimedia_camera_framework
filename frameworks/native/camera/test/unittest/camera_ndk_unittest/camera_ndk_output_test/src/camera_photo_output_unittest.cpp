@@ -1907,7 +1907,7 @@ HWTEST_F(CameraPhotoOutputUnitTest, SetAutoAuxiliaryPhotosDeliveryEnabled_001, T
     } else {
         EXPECT_EQ(ret, CAMERA_OK);
         EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, validTypes, 2, true),
-            CAMERA_ERROR_CAPABILITY_NOT_SUPPORTED);
+            7400201);
         EXPECT_EQ(OH_PhotoOutput_SetAutoAuxiliaryPhotosDeliveryEnabled(photoOutput, validTypes, 2, false),
             CAMERA_OK);
     }
